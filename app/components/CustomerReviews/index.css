@@ -1,0 +1,92 @@
+/* index.css */
+
+
+.slick-prev::before,
+.slick-next::before {
+  content: "" !important;
+  background-image: url("../../assets/Images/sliderRight.webp");
+  background-repeat: no-repeat;
+  position: relative;
+  background-size: 100% 100% !important;
+  display: inline-block !important;
+  width: 40px !important;
+  height: 40px !important;
+}
+
+.slick-prev::before {
+  transform: rotate(180deg);
+}
+
+.testimonials .slick-dots .slick-active button::before {
+  opacity: 1 !important;
+  color: #9f92ec !important;
+}
+
+.testimonials .slick-dots li button::before {
+  opacity: 0.25 !important;
+  color: #9f92ec !important;
+}
+
+@media (max-width: 1400px) {
+  .customerReviewsWrap {
+    padding-left: 30px;
+    padding-right: 80px;
+  }
+
+  .customerReviewsCardWrap {
+    margin-left: 23px;
+    margin-right: 23px;
+  }
+}
+
+@media (max-width: 1293px) {
+  .customerReviewsCardWrap {
+    margin-left: 27px;
+    margin-right: 27px;
+  }
+}
+
+@media (max-width: 1200px) {
+
+  .customerReviewsCard {
+    max-width: 240px;
+  }
+
+  .customerReviewsCardWrap {
+    margin-left: 40px;
+    margin-right: 0px;
+  }
+}
+
+@media (max-width: 1050px) {
+  .customerReviewsCard {
+    max-width: 200px;
+  }
+
+  .customerReviewsCardWrap {
+    margin-left: 40px;
+    margin-right: 0px;
+  }
+}
+
+@media (max-width: 992px) {
+  .customerReviewsWrap {
+    padding-right: 0px;
+  }
+}
+
+@media (max-width: 430px) {
+  .customerReviewsWrap {
+    padding-left: 0px;
+    padding-right: 10px;
+  }
+
+  .customerReviewsCard {
+    max-width: 100%;
+  }
+
+  .customerReviewsCardWrap {
+    margin-left: 60px;
+    /* margin-right: 40px; */
+  }
+}

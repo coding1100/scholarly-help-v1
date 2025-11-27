@@ -1,0 +1,20 @@
+
+.active-step {
+    border: 1px solid #565add;
+    background-color: #565add;
+    color: #fff
+}
+
+.bg-line {
+
+    background: #A3A3A3;
+    height: 1px;
+    max-width: 70%;
+    margin: 0 auto;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 18.5px
+
+
+}

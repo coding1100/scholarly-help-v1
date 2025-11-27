@@ -1,0 +1,35 @@
+/* .slick-prev::before,
+.slick-next::before {
+    content: "" !important;
+    background-image: url("../../assets/Images/sliderRight.webp");
+    background-repeat: no-repeat;
+    position: relative;
+    background-size: 100% 100% !important;
+    display: inline-block !important;
+    width: 40px !important;
+    height: 40px !important;
+}
+
+.slick-prev::before {
+    transform: rotate(180deg);
+}
+
+.slick-active button::before {
+    color: white !important;
+    font-size: 12px !important;
+} */
+.slick-prev::before,
+.slick-next::before {
+    content: "" !important;
+    background-image: url("../../assets/Images/thankyouProofright.png");
+    background-repeat: no-repeat;
+    position: relative;
+    background-size: 100% 100% !important;
+    display: inline-block !important;
+    width: 28px !important;
+    height: 80px !important;
+}
+
+.slick-next::before {
+    transform: rotate(180deg);
+}

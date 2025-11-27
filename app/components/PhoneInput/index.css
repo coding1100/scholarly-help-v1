@@ -1,0 +1,11 @@
+.PhoneInputInput {
+    border: 0;
+    border-radius: 6px;
+    height: 34px;
+    padding-left: 10px;
+    border: 0 !important
+}
+
+.react-international-phone-country-selector-button, .react-international-phone-input{
+    border: 0 !important
+}

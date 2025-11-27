@@ -1,0 +1,103 @@
+/* .customer-reviews-wrapper h2 {
+    color: var(--secondary-color);
+    margin-top: 70px;
+} */
+
+.price-calculator .card-body {
+    padding: 23px 30px;
+    border-radius: 10px;
+}
+
+.price-calculator .calculator-title {
+    font-size: 20px !important;
+    font-weight: 600 !important;
+}
+
+.price-calculator .card {
+    margin: 0 !important;
+    transform: rotate(12deg);
+    position: relative;
+    left: 5px;
+    top: 5px;
+    width: 100% !important;
+    padding: 0 !important;
+    border-radius: 15px !important;
+}
+
+.price-calculator .input-title {
+    color: var(--secondary-color);
+    margin-top: 8px;
+    font-size: 14px !important;
+}
+.price-calculator .p {
+    /* color: var(--secondary-color);
+  margin-top: 8px; */
+    font-size: 14px !important;
+}
+
+.price-calculator .primary-btn {
+    padding: 0 17px !important;
+    font-size: 14px !important;
+    height: 40px;
+    width: fit-content;
+    display: inline;
+    box-shadow: none;
+}
+.price-calculator .primary-btn.calculate-task {
+    font-size: 16px !important;
+}
+
+.price-calculator .input-container {
+    background-color: var(--extra-light-purple-color);
+    height: 42px;
+    border-radius: 10px;
+    margin-top: 8px;
+}
+
+.price-calculator .price {
+    color: var(--secondary-color);
+    font-size: 20px !important;
+}
+
+.price-calculator .decrement,
+.price-calculator .increment {
+    color: var(--secondary-color);
+    cursor: pointer;
+    width: 20px;
+}
+
+.date-time-picker .form-control {
+    background-color: transparent;
+    border: 0;
+}
+.date-time-picker .form-control:focus {
+    background-color: transparent;
+    border: 0;
+}
+
+.price-calculator .btns-container .primary-btn {
+    background-color: var(--extra-light-purple-color);
+    color: var(--secondary-color);
+    border-color: var(--extra-light-purple-color);
+}
+.price-calculator .btns-container .primary-btn:hover {
+    background-color: var(--primary-color);
+    color: var(--white-color);
+    border-color: var(--primary-color);
+}
+.price-calculator .btns-container .selected-service {
+    background-color: var(--primary-color);
+    color: var(--white-color);
+}
+
+@media (max-width: 450px) {
+    .price-calculator .primary-btn {
+        width: 47%;
+    }
+}
+@media (max-width: 352px) {
+    .price-calculator .primary-btn {
+        width: 100%;
+        max-width: 100%;
+    }
+}

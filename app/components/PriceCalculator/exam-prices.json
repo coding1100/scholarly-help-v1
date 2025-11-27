@@ -1,0 +1,100 @@
+{
+    "exam": {
+        "options": [
+            {
+              "name": "Online Quiz",
+              "undergraduate_fee": 90,
+              "graduate_fee": 100
+            },
+            {
+              "name": "Online Proctored Exam",
+              "undergraduate_fee": 140,
+              "graduate_fee": 150
+            },
+            {
+              "name": "Online Exam",
+              "undergraduate_fee": 90,
+              "graduate_fee": 100
+            },
+            {
+              "name": "Certification Exams",
+              "undergraduate_fee": 140,
+              "graduate_fee": 150
+            }
+          ]
+    },
+    "class": {
+        "options": [
+            {
+              "name": "Lab Course",
+              "undergraduate_fee": 400,
+              "graduate_fee": 450
+            },
+            {
+              "name": "8 Weeks Class",
+              "undergraduate_fee": 500,
+              "graduate_fee": 550
+            },
+            {
+              "name": "15 Weeks Class",
+              "undergraduate_fee": 550,
+              "graduate_fee": 600
+            }
+          ]
+    },
+    "assignment": {
+
+        "options": [
+          
+            {
+              "name": "Online Homework",
+              "undergraduate_fee": 30,
+              "graduate_fee": 35
+            },
+            {
+              "name": "Offline Homework",
+              "undergraduate_fee": 60,
+              "graduate_fee": 70
+            },
+            {
+              "name": "Powerpoint Presentation (Per Slide)",
+              "undergraduate_fee": 9,
+              "graduate_fee": 10
+            }
+          ]
+    },
+    "essay": {
+        "options": [
+          {
+            "name": "All Writing Assignments (Per Page/275 words)",
+            "undergraduate_fee": 14,
+            "graduate_fee": 15
+          },
+          {
+            "name": "Research Paper",
+            "undergraduate_fee": 14,
+            "graduate_fee": 15
+          },
+          {
+            "name": "Essay",
+            "undergraduate_fee": 14,
+            "graduate_fee": 15
+          },
+          {
+            "name": "Discussion",
+            "undergraduate_fee": 14,
+            "graduate_fee": 15
+          },
+          {
+            "name": "Thesis",
+            "undergraduate_fee": 14,
+            "graduate_fee": 15
+          },
+          {
+            "name": "Final Paper",
+            "undergraduate_fee": 14,
+            "graduate_fee": 15
+          }
+        ]
+    }
+}
