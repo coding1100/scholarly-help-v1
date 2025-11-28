@@ -2,8 +2,9 @@ import MainLayout from "@/app/MainLayout";
 import Hero from "@/app/components/Hero/Hero";
 import { processContent } from "@/app/components/Process/content";
 import dynamic from "next/dynamic";
-import { FC, Suspense } from "react";
-import { content } from "./content";
+import { Suspense } from "react";
+import fs from "fs";
+import path from "path";
 import { MetaData } from "@/app/metadata/metadata";
 
 // Dynamic imports for heavy components
@@ -66,9 +67,10 @@ const WhyScholarly = dynamic(
   }
 );
 
-interface PageProps {}
-
-const Page: FC<PageProps> = ({}) => {
+const Page = async () => {
+  const filePath = path.join(process.cwd(), 'data', 'online-class.json');
+  const jsonData = fs.readFileSync(filePath, 'utf8');
+  const content = JSON.parse(jsonData);
   return (
     <MainLayout>
       {/* Hero is loaded immediately as it's above the fold */}

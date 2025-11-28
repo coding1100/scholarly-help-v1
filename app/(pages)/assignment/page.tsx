@@ -10,8 +10,8 @@ import Qualities from "@/app/components/Qualities/Qualities";
 import Samples from "@/app/components/Samples/Samples";
 import SiteReviews from "@/app/components/SiteReviews/SiteReviews";
 import Subjects from "@/app/components/Subjects/Subjects";
-import { FC } from "react";
-import { content } from "./content";
+import fs from "fs";
+import path from "path";
 
 import dynamic from "next/dynamic";
 import { MetaData } from "@/app/metadata/metadata";
@@ -26,8 +26,10 @@ const WhyScholarly = dynamic(
 // export const metadata: Metadata = {
 //   title: "Help Me Do My Assignment | Online Assignment Help | Scholarly Help",
 // };
-interface PageProps {}
-const Page: FC<PageProps> = ({}) => {
+const Page = async () => {
+  const filePath = path.join(process.cwd(), 'data', 'assignment.json');
+  const jsonData = fs.readFileSync(filePath, 'utf8');
+  const content = JSON.parse(jsonData);
   // return <div>test</div>
   return (
     <MainLayout>
