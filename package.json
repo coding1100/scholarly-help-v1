@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@directus/api": "^32.1.1",
+    "@directus/app": "^14.3.0",
     "@next/third-parties": "^14.1.3",
     "@stripe/react-stripe-js": "^2.4.0",
     "@stripe/stripe-js": "^1.54.2",

@@ -61,7 +61,7 @@ const Faq: FC<FaqProps> = ({ content }) => {
                     isActive === i ? "-rotate-180" : "rotate-0"
                   }`}
                 >
-                  <Image src={DownArrow} alt="icon" />
+                  <Image src={DownArrow} alt="icon" width={20} height={20} />
                 </div>
               </div>
               {/* <p className="mt-5 whitespace-pre-line">{item.answer}</p> */}

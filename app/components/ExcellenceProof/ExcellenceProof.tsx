@@ -40,7 +40,7 @@ const ExcellenceProof: FC<ExcellenceProofProps> = ({ content, btnText }) => {
           {content.slice(0, !showMore ? 3 : content.length).map((items, i) => (
             <div key={i} className="flex justify-center">
               <div className="flex justify-center">
-                <Image src={items.img} alt="Icon" />
+                <Image src={items.img} alt="Icon" width={300} height={200} />
               </div>
             </div>
           ))}
@@ -48,7 +48,7 @@ const ExcellenceProof: FC<ExcellenceProofProps> = ({ content, btnText }) => {
         <div className="md:grid grid-cols-2 gap-5 pt-4 hidden">
           {content.map((items, i) => (
             <div key={i}>
-              <Image src={items.img} alt="Icon" />
+              <Image src={items.img} alt="Icon" width={300} height={200} />
             </div>
           ))}
         </div>

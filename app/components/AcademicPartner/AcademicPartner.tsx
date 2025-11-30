@@ -64,6 +64,8 @@ const AcademicPartner: FC<AcademicPartnerProps> = ({
                     className="sm:max-w-full max-w-[70%]"
                     src={items.icon}
                     alt="Icon"
+                    width={200}
+                    height={200}
                   />
                 </div>
               ) : (
@@ -74,6 +76,8 @@ const AcademicPartner: FC<AcademicPartnerProps> = ({
                         className="sm:min-w-full min-w-[25px]"
                         src={items.icon}
                         alt="Icon"
+                        width={50}
+                        height={50}
                       />
                     </div>
                   </div>

@@ -3,9 +3,8 @@ import Hero from "@/app/components/Hero/Hero";
 import { processContent } from "@/app/components/Process/content";
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
-import fs from "fs";
-import path from "path";
 import { MetaData } from "@/app/metadata/metadata";
+import { getOnlineClassContent } from "./content";
 
 // Dynamic imports for heavy components
 const AcademicPartner = dynamic(
@@ -68,9 +67,7 @@ const WhyScholarly = dynamic(
 );
 
 const Page = async () => {
-  const filePath = path.join(process.cwd(), 'data', 'online-class.json');
-  const jsonData = fs.readFileSync(filePath, 'utf8');
-  const content = JSON.parse(jsonData);
+  const content = await getOnlineClassContent();
   return (
     <MainLayout>
       {/* Hero is loaded immediately as it's above the fold */}

@@ -1,18 +1,13 @@
-import ScheduleIcon from "@/app/assets/Images/schedule-icon.webp";
-import Grades from "@/app/assets/Images/grades.webp";
-import Homework from "@/app/assets/Images/homework.webp";
-import Write from "@/app/assets/Images/write.webp";
-import Notes from "@/app/assets/Images/notes.webp";
-import GirlWithBoard from "@/app/assets/Images/girlsWithPaperBoard.webp";
-import Proof1 from "@/app/assets/Images/proof-1.webp";
-import Proof2 from "@/app/assets/Images/proof-2.webp";
-import Proof3 from "@/app/assets/Images/proof-3.webp";
-import Proof4 from "@/app/assets/Images/proof-4.webp";
-import Proof5 from "@/app/assets/Images/proof-5.webp";
-import Proof6 from "@/app/assets/Images/proof-6.webp";
+
+export async function getAssignmentContent() {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/admin/assignment`, {
+    cache: 'no-store'
+  });
+  return res.json();
+}
 
 export const content = {
-  btnText:"Do my assignment for me",
+  btnText:"Do my assignment for me tttttttttttttttttttt",
   heroContent: {
     // heading1: "",
     mainHeading: `Do My Assignment:\n100% Results with\nZero Stress!`,
@@ -24,38 +19,38 @@ export const content = {
     mainheading: "ScholarlyHelp Your All in One Academic Partner!",
     academicContent: [
       {
-        icon: ScheduleIcon,
+        icon: "/assets/Images/schedule-icon.webp",
         title: "Online Class Help",
         description:
           "Stuck with extensive daily tasks of your online classes, Fret Not, we are here for you to complete your online classes with perfect Grades!",
       },
       {
-        icon: Grades,
+        icon: "/assets/Images/grades.webp",
         title: "Online Exam Help",
         description:
           "Want to Ace your online exams without taking any stress, Scholarly Help tutors are at your service with Guaranteed best results in your online exams.",
       },
       {
-        icon: Write,
+        icon: "/assets/Images/write.webp",
         title: "Online Homework Assistance",
         description:
           "Online homeworks can be very tricky and mind-exhausting at all times, but with Scholarly Help Reliable & Affordable service of online homework assistance everything becomes smooth and easy.",
       },
       {
-        icon: Notes,
+        icon: "/assets/Images/notes.webp",
         title: "Essay Writing Services",
         description:
           "Wanting to write a compelling & plagiarism free essay, trust our credible tutors with excellent essay writing services with in due date delivery.",
       },
       {
-        icon: Homework,
+        icon: "/assets/Images/homework.webp",
         title: "Assignment Help",
         description:
           "Are you finding it difficult to complete your assignment questions correctly and on time? Worry not, Scholarly Help offers 24/7 homework aid with reliable client support at your service.",
       },
       {
         isLast: true,
-        icon: GirlWithBoard,
+        icon: "/assets/Images/girlsWithPaperBoard.webp",
       },
     ],
   },
@@ -124,22 +119,22 @@ export const content = {
   },
   excellenceProofContent: [
     {
-      img: Proof1,
+      img: "/assets/Images/proof-1.webp",
     },
     {
-      img: Proof2,
+      img: "/assets/Images/proof-2.webp",
     },
     {
-      img: Proof3,
+      img: "/assets/Images/proof-3.webp",
     },
     {
-      img: Proof4,
+      img: "/assets/Images/proof-4.webp",
     },
     {
-      img: Proof5,
+      img: "/assets/Images/proof-5.webp",
     },
     {
-      img: Proof6,
+      img: "/assets/Images/proof-6.webp",
     },
   ],
   subjects: {

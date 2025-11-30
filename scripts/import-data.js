@@ -8,7 +8,7 @@ async function importData() {
 
   try {
     await client.connect();
-    const db = client.db('directus'); // or whatever the db name is
+    const db = client.db('scholarly_help');
 
     // Import assignment data
     const assignmentData = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'assignment.json'), 'utf8'));

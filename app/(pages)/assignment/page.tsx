@@ -10,11 +10,10 @@ import Qualities from "@/app/components/Qualities/Qualities";
 import Samples from "@/app/components/Samples/Samples";
 import SiteReviews from "@/app/components/SiteReviews/SiteReviews";
 import Subjects from "@/app/components/Subjects/Subjects";
-import fs from "fs";
-import path from "path";
 
 import dynamic from "next/dynamic";
 import { MetaData } from "@/app/metadata/metadata";
+import { getAssignmentContent } from "./content";
 const WhyScholarly = dynamic(
   () => import("@/app/components/WhyScholarly/WhyScholarly"),
   {
@@ -27,9 +26,7 @@ const WhyScholarly = dynamic(
 //   title: "Help Me Do My Assignment | Online Assignment Help | Scholarly Help",
 // };
 const Page = async () => {
-  const filePath = path.join(process.cwd(), 'data', 'assignment.json');
-  const jsonData = fs.readFileSync(filePath, 'utf8');
-  const content = JSON.parse(jsonData);
+  const content = await getAssignmentContent();
   // return <div>test</div>
   return (
     <MainLayout>

@@ -1,15 +1,10 @@
-import ScheduleIcon from "@/app/assets/Images/schedule-icon.webp";
-import Grades from "@/app/assets/Images/grades.webp";
-import Homework from "@/app/assets/Images/homework.webp";
-import Write from "@/app/assets/Images/write.webp";
-import Notes from "@/app/assets/Images/notes.webp";
-import GirlWithBoard from "@/app/assets/Images/girlsWithPaperBoard.webp";
-import Proof1 from "@/app/assets/Images/proof-1.webp";
-import Proof2 from "@/app/assets/Images/proof-2.webp";
-import Proof3 from "@/app/assets/Images/proof-3.webp";
-import Proof4 from "@/app/assets/Images/proof-4.webp";
-import Proof5 from "@/app/assets/Images/proof-5.webp";
-import Proof6 from "@/app/assets/Images/proof-6.webp";
+
+export async function getOnlineClassContent() {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/admin/online-class`, {
+    cache: 'no-store'
+  });
+  return res.json();
+}
 
 export const content = {
   btnText: "Take my online class",
@@ -27,38 +22,38 @@ export const content = {
       "From exams and essays to full-class management, we handle it all so you don’t have to.",
     academicContent: [
       {
-        icon: ScheduleIcon,
+        icon: "/assets/Images/schedule-icon.webp",
         title: "Online Class Help",
         description:
           "Too busy or overwhelmed with daily tasks? We provide complete online class help — handling your entire course so you stay stress-free and on track.",
       },
       {
-        icon: Grades,
+        icon: "/assets/Images/grades.webp",
         title: "Online Exam Help",
         description:
           "No time to prep? No problem. Our experts take your exams for you, just like you'd expect when you pay someone to take my online class — with results that speak for themselves.",
       },
       {
-        icon: Write,
+        icon: "/assets/Images/write.webp",
         title: "Online Homework Assistance",
         description:
           "Tired of complex homework? We handle it quickly and accurately. Get real online classes help that saves time and gets results.",
       },
       {
-        icon: Notes,
+        icon: "/assets/Images/notes.webp",
         title: "Essay Writing Services",
         description:
           "Need a polished, plagiarism-free essay delivered on time? Our writers craft compelling, original essays that are ready to submit.",
       },
       {
-        icon: Homework,
+        icon: "/assets/Images/homework.webp",
         title: "Assignment Help",
         description:
           "Falling behind on assignments? Let us step in. When you ask us to do my online class for me, we make sure your coursework gets done right — and on time.",
       },
       {
         isLast: true,
-        icon: GirlWithBoard,
+        icon: "/assets/Images/girlsWithPaperBoard.webp",
       },
     ],
   },
@@ -135,22 +130,22 @@ export const content = {
   },
   excellenceProofContent: [
     {
-      img: Proof1,
+      img: "/assets/Images/proof-1.webp",
     },
     {
-      img: Proof2,
+      img: "/assets/Images/proof-2.webp",
     },
     {
-      img: Proof3,
+      img: "/assets/Images/proof-3.webp",
     },
     {
-      img: Proof4,
+      img: "/assets/Images/proof-4.webp",
     },
     {
-      img: Proof5,
+      img: "/assets/Images/proof-5.webp",
     },
     {
-      img: Proof6,
+      img: "/assets/Images/proof-6.webp",
     },
   ],
   subjects: {

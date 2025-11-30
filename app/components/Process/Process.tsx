@@ -48,6 +48,8 @@ const Process: FC<ProcessProps> = ({ content }) => {
                         src={item.img}
                         alt="process"
                         className="w-full max-h-[210px]"
+                        width={400}
+                        height={210}
                       />
                     </div>
                   </div>
