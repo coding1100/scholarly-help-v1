@@ -43,7 +43,7 @@ export default function SubjectsSection() {
   return (
     <section className="pt-[86px] pb-16 bg-[#ECECFC]">
       <div className="max-w-7xl mx-auto max-[1320px]:px-8 text-center">
-        <h2 className="sm:text-[42px] text-[32px] sm:font-bold font-semibold text-gray-900 mb-3">
+        <h2 className="text-[42px] font-bold sm:text-[32px] sm:font-bold font-semibold text-gray-900 mb-3">
           Subjects & Majors We Cover
         </h2>
         <p className="sm:text-base text-sm text-gray-600 max-w-3xl mx-auto mb-12">

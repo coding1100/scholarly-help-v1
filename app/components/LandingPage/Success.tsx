@@ -37,7 +37,7 @@ export default function ThreeDCarousel() {
     <section className="pt-9 pb-20 px-5 overflow-hidden bg-gray-50 text-[#171717]">
       <div className="max-w-6xl max-[992px]:max-w-4xl mx-auto">
         <div className="py-10 ">
-          <h2 className="sm:text-[42px] text-[32px] sm:font-bold font-semibold text-center">
+          <h2 className="text-[42px] font-bold sm:text-[32px] sm:font-bold font-semibold text-center">
             What Success Looks Like
           </h2>
           <p className="sm:text-[18px] text-sm text-center">
