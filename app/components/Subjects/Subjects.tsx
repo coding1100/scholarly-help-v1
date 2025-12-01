@@ -29,6 +29,13 @@ const Subjects: FC<SubjectsProps> = ({ content = [], mainHeading = "Subjects We 
   const toggleFaqs = () => {
     setShowMore(!showMore);
   };
+
+  const scrollToQuote = () => {
+    const quoteForm = document.getElementById('quote-form');
+    if (quoteForm) {
+      quoteForm.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
   return (
     <div className="py-8 sm:py-14 xl:flex justify-center bg-primary-200">
       <div className="xl:container px-10">
@@ -109,21 +116,13 @@ const Subjects: FC<SubjectsProps> = ({ content = [], mainHeading = "Subjects We 
           </div>
         )}
         <div className="flex justify-center mt-8">
-          {currentPage === "/take-my-class/" ? (
-            <Link href="#PhoneEmailMsgForm">
-              <Button className="md:w-64 w-48 bg-secondary-500 hover:text-secondary-500 hover:border-secondary-500">
-                {/* Place an Order Now */}
-                {btnText ? `${btnText}` : "Place an Order Now"}
-              </Button>
-            </Link>
-          ) : (
-            <Link href="javascript:void(Tawk_API.toggle())">
-              <Button className="md:w-64 w-48 bg-secondary-500 hover:text-secondary-500 hover:border-secondary-500">
-                {/* Place an Order Now */}
-                {btnText ? `${btnText}` : "Place an Order Now"}
-              </Button>
-            </Link>
-          )}
+          <Button
+            onClick={scrollToQuote}
+            className="md:w-64 w-48 bg-secondary-500 hover:text-secondary-500 hover:border-secondary-500"
+          >
+            {/* Place an Order Now */}
+            {btnText ? `${btnText}` : "Place an Order Now"}
+          </Button>
         </div>
       </div>
     </div>

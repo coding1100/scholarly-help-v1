@@ -9,6 +9,13 @@ const proof2 = "/images/proof-2.webp";
 const proof4 = "/images/proof-3.webp";
 
 export default function ThreeDCarousel() {
+  const scrollToQuote = () => {
+    const quoteForm = document.getElementById('quote-form');
+    if (quoteForm) {
+      quoteForm.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   const [active, setActive] = useState(0);
 
   const slides = [
@@ -98,6 +105,7 @@ export default function ThreeDCarousel() {
       <div className="flex justify-center mt-[60px]">
         <button
           type="button"
+          onClick={scrollToQuote}
           className="rounded-md px-3 cursor-pointer bg-[#ff641a] text-white border border-transparent transition duration-300 text-[15px] font-medium flex items-center justify-center hover:bg-white hover:text-[#ff641a] hover:border-[#ff641a] h-[54px] md:w-64 w-48"
         >
           Take my online class

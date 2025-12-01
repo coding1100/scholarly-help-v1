@@ -1,8 +1,15 @@
 import Image from "next/image";
 export default function AcademicPartners() {
+  const scrollToQuote = () => {
+    const quoteForm = document.getElementById('quote-form');
+    if (quoteForm) {
+      quoteForm.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <section className="pt-[90px] pb-[90px] px-4 bg-gradient-to-b from-white w-full to-gray-50 ">
-      <div className="max-w-7xl mx-auto flex max-[1450px]:flex-col">
+      <div className="max-w-7xl mx-auto flex max-[1450px]:flex-col max-[1320px]:px-8">
         {/* Hero Section */}
         <div className="text-left mb-12 w-[40%] max-[1450px]:w-[100%]">
           <h1 className="sm:text-4xl text-[32px] md:text-5xl sm:font-bold font-semibold text-gray-900 mb-4">
@@ -15,6 +22,7 @@ export default function AcademicPartners() {
           <div className="flex sm:justify-start justify-center mt-[30px]">
             <button
               type="button"
+              onClick={scrollToQuote}
               className="rounded-md px-3 cursor-pointer bg-[#ff641a] text-white border border-transparent transition duration-300 text-[15px] font-medium flex items-center justify-center hover:bg-white hover:text-[#ff641a] hover:border-[#ff641a] h-[54px] md:w-64 w-52"
             >
               Take my online class

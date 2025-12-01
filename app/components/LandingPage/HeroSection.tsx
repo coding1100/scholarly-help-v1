@@ -11,7 +11,7 @@ const Star: React.FC = () => (
 );
 const HeroSection: React.FC = () => {
   return (
-    <section className="w-full bg-[#F5F6FA] pb-[100px]">
+    <section id="hero-section" className="w-full bg-[#F5F6FA] pb-[100px] max-[1320px]:px-8">
       <div className="mx-auto max-w-7xl py-10 !pt-[100px] md:py-14">
         <div className="grid grid-cols-1 items-start gap-10 md:grid-cols-12 md:gap-12">
           <div className="md:col-span-5">

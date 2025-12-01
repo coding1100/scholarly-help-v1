@@ -93,8 +93,8 @@ const Faq: FC<FaqProps> = ({ content = faqContent }) => {
   const displayedFaqs = showMore ? content : content.slice(0, 3);
 
   return (
-    <section className="sm:pt-[83px] sm:pb-14 pt-8 pb-8 bg-white text-[#171717]">
-      <div className="max-w-7xl mx-auto">
+    <section className="sm:pt-[83px] sm:pb-14 max-[1320px]:px-8 pt-8 pb-8 bg-white text-[#171717]">
+      <div className="max-w-7xl mx-auto max-[1320px]:px-8">
         <h2 className="md:text-5xl text-2xl font-bold text-primary-500 text-center mb-10">
           Frequently Asked Questions
         </h2>

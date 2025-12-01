@@ -344,7 +344,7 @@ export default function Header() {
     return (
         <header className="sticky top-0 bg-white shadow-md z-50 relative max-[1020px]:py-3">
             {/* Header Top Bar */}
-            <div className="max-w-7xl mx-auto flex items-center justify-between pt-2 px-6">
+            <div className="max-w-7xl mx-auto max-[1320px]:px-8 flex items-center justify-between pt-2 px-6">
                 {/* Logo */}
                 <Link href="/">
                     <Image

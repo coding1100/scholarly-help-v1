@@ -1,6 +1,13 @@
 import React from "react";
 
 const HowWeHelp: React.FC = () => {
+  const scrollToQuote = () => {
+    const quoteForm = document.getElementById('quote-form');
+    if (quoteForm) {
+      quoteForm.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   const services = [
     {
       title: "Online Class Help",
@@ -36,7 +43,7 @@ const HowWeHelp: React.FC = () => {
 
   return (
     <section className="pt-[84px] pb-5 bg-white">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto  max-[1320px]:px-8">
         {/* Header */}
         <div className="text-center mb-12">
           <h2 className="sm:text-[42px] text-[32px] md:text-4xl sm:font-bold font-semibold text-gray-900 mb-4">
@@ -100,6 +107,7 @@ const HowWeHelp: React.FC = () => {
         <div className="flex justify-center mt-[30px]">
           <button
             type="button"
+            onClick={scrollToQuote}
             className="rounded-md px-3 cursor-pointer bg-[#ff641a] text-white border border-transparent transition duration-300 text-[15px] font-medium flex items-center justify-center hover:bg-white hover:text-[#ff641a] hover:border-[#ff641a] h-[54px] md:w-64 w-52"
           >
             Take my online class

@@ -22,13 +22,13 @@ import GuaranteedBlock from "@/app/components/LandingPage/GuaranteedBlock";
 import ProcessSection from "@/app/components/LandingPage/ProcessSection";
 import Success from "@/app/components/LandingPage/Success";
 import AcademicPartners from "@/app/components/LandingPage/AcademicPartners";
-import GetQoute from "@/app/components/LandingPage/GetQoute";
 const WhyScholarly = dynamic(
   () => import("@/app/components/WhyScholarly/WhyScholarly"),
   {
     ssr: false,
   }
 );
+const GetQoute = dynamic(() => import("@/app/components/LandingPage/GetQoute"), { ssr: false });
 // import type { Metadata } from "next";
 
 // export const metadata: Metadata = {

@@ -10,6 +10,7 @@ import Qualities from "@/app/components/Qualities/Qualities";
 import Samples from "@/app/components/Samples/Samples";
 import SiteReviews from "@/app/components/SiteReviews/SiteReviews";
 import Subjects from "@/app/components/Subjects/Subjects";
+const GetQoute = dynamic(() => import("@/app/components/LandingPage/GetQoute"), { ssr: false });
 import dynamic from "next/dynamic";
 import { FC } from "react";
 import { content } from "./content";
@@ -46,6 +47,7 @@ const Page: FC<PageProps> = ({}) => {
         <Process content={processContent} />
         <Samples btnText={content.btnText} />
         <CustomerReviews btnText={content.btnText} />
+        <GetQoute />
         <ContactSection />
         <Subjects
           btnText={content.btnText}

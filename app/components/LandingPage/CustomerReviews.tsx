@@ -201,7 +201,7 @@ const CustomerReviews: FC<CustomerReviewsProps> = ({
 
   return (
     <div className="bg-white text-[#171717] w-full">
-      <div className="max-w-7xl mx-auto pt-2 pb-3">
+      <div className="max-w-7xl mx-auto pt-2 pb-3  max-[1320px]:px-8">
         {/* Header */}
         <h2 className="md:text-5xl text-2xl font-bold text-primary-500 text-center">
           How Students Rate Us!

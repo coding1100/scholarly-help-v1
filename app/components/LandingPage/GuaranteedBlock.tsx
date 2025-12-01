@@ -17,6 +17,13 @@ interface GuaranteeItem {
 }
 
 export default function GuaranteeSection() {
+  const scrollToQuote = () => {
+    const quoteForm = document.getElementById('quote-form');
+    if (quoteForm) {
+      quoteForm.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   const guarantees: GuaranteeItem[] = [
     {
       title: (
@@ -103,7 +110,7 @@ export default function GuaranteeSection() {
   ];
 
   return (
-    <section className="w-full relative overflow-hidden mt-[60px] mb-[30px]  bg-white text-[#171717]">
+    <section className="w-full relative overflow-hidden mt-[60px] mb-[30px]  bg-white text-[#171717] max-[1320px]:px-8">
       <div className="mx-auto w-full max-w-7xl pt-3 pb-10 flex relative justify-between max-[1080px]:flex-col">
         {/* Header */}
         <div className="text-left mb-12 mt-10 w-[28%] max-[1080px]:w-[100%]">
@@ -114,7 +121,10 @@ export default function GuaranteeSection() {
             Your success is our mission. We back every service with guarantees
             that protect your grades, your investment, and your peace of mind.
           </p>
-          <button className="sm:mx-0 mx-auto rounded-md px-3 cursor-pointer bg-[#ff641a] text-white border border-transparent transition duration-300 text-[15px] font-medium flex items-center justify-center hover:bg-white hover:text-[#ff641a] hover:border-[#ff641a] h-[54px] md:w-64 w-48">
+          <button
+            onClick={scrollToQuote}
+            className="sm:mx-0 mx-auto rounded-md px-3 cursor-pointer bg-[#ff641a] text-white border border-transparent transition duration-300 text-[15px] font-medium flex items-center justify-center hover:bg-white hover:text-[#ff641a] hover:border-[#ff641a] h-[54px] md:w-64 w-48"
+          >
             Take my online class
           </button>
         </div>

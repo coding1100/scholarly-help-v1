@@ -9,10 +9,12 @@ import ProcessSection from "@/app/components/LandingPage/ProcessSection";
 import Success from "@/app/components/LandingPage/Success";
 import Subjects from "@/app/components/LandingPage/Subjects";
 import AcademicPartners from "@/app/components/LandingPage/AcademicPartners";
-import GetQoute from "@/app/components/LandingPage/GetQoute";
+import dynamic from "next/dynamic";
 import Faq from "@/app/components/LandingPage/Faq";
 import CustomerReviews from "@/app/components/LandingPage/CustomerReviews";
 import { MetaData } from "@/app/metadata/metadata";
+
+const GetQoute = dynamic(() => import("@/app/components/LandingPage/GetQoute"), { ssr: false });
 
 const Page = () => {
   return (

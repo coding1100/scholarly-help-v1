@@ -8,6 +8,13 @@ import dynamic from "next/dynamic";
 const HeroForm = dynamic(() => import("./HeroForm"), { ssr: false });
 
 export default function GetQuote() {
+  const scrollToQuote = () => {
+    const quoteForm = document.getElementById('quote-form');
+    if (quoteForm) {
+      quoteForm.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   const [formData, setFormData] = useState({
     email: "",
     phone: "",
@@ -27,8 +34,8 @@ export default function GetQuote() {
   };
 
   return (
-    <section className="w-full bg-[#F3F4F9] max-[1020px]:overflow-hidden">
-      <div className="max-w-7xl mx-auto flex max-[1080px]:flex-col-reverse pt-[130px] pb-[80px]">
+    <section id="quote-form" className="w-full bg-[#F3F4F9] max-[1020px]:overflow-hidden">
+      <div className="max-w-7xl mx-auto flex max-[1080px]:flex-col-reverse pt-[130px] pb-[80px] max-[1320px]:px-8">
         <div className="w-[70%] max-[1080px]:w-[100%] p-4 flex relative justify-end">
           <Image
             src="/assets/Icon/aGrade.png"
@@ -169,6 +176,7 @@ export default function GetQuote() {
                 {/* CTA */}
                 <button
                   type="button"
+                  onClick={scrollToQuote}
                   className="w-full mt-8 rounded-md px-3 cursor-pointer bg-[#ff641a] text-white border border-transparent transition duration-300 text-[15px] font-medium flex items-center justify-center hover:bg-white hover:text-[#ff641a] hover:border-[#ff641a] h-[54px]"
                 >
                   Take my online class

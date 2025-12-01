@@ -26,6 +26,13 @@ const ExcellenceProof: FC<ExcellenceProofProps> = ({ content, btnText }) => {
     setShowMore(!showMore);
   };
 
+  const scrollToQuote = () => {
+    const quoteForm = document.getElementById('quote-form');
+    if (quoteForm) {
+      quoteForm.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <div className="pt-8 pb-12 flex justify-center">
       <div className="container px-10">
@@ -63,21 +70,13 @@ const ExcellenceProof: FC<ExcellenceProofProps> = ({ content, btnText }) => {
           </p>
         </div>
         <div className="flex justify-center mt-8">
-          {currentPage === "/take-my-class/" ? (
-            <Link href="#PhoneEmailMsgForm">
-              <Button className="md:w-64 w-48 bg-secondary-500 hover:text-secondary-500 hover:border-secondary-500">
-                {/* Place an Order Now */}
-                {btnText ? `${btnText}` : "Place an Order Now"}
-              </Button>
-            </Link>
-          ) : (
-            <a href="javascript:void(Tawk_API.toggle())">
-              <Button className="md:w-64 w-48 bg-secondary-500 hover:text-secondary-500 hover:border-secondary-500">
-                {/* Place an Order Now */}
-                {btnText ? `${btnText}` : "Place an Order Now"}
-              </Button>
-            </a>
-          )}
+          <Button
+            onClick={scrollToQuote}
+            className="md:w-64 w-48 bg-secondary-500 hover:text-secondary-500 hover:border-secondary-500"
+          >
+            {/* Place an Order Now */}
+            {btnText ? `${btnText}` : "Place an Order Now"}
+          </Button>
         </div>
       </div>
     </div>

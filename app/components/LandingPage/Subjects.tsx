@@ -7,6 +7,16 @@ import Link from "next/link";
 export default function SubjectsSection() {
   const currentPage = usePathname();
   const basePath = currentPage.split('/').slice(0, 2).join('/');
+
+  const scrollToQuote = () => {
+    const quoteForm = document.getElementById('quote-form');
+    if (quoteForm) {
+      quoteForm.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const isHomePage = currentPage === '/';
+
   const subjects = [
     { src: "/assets/Icon/english.png", label: "English", url: `${basePath}/english` },
     { src: "/assets/Icon/math.png", label: "Math", url: `${basePath}/math` },
@@ -32,7 +42,7 @@ export default function SubjectsSection() {
 
   return (
     <section className="pt-[86px] pb-16 bg-[#ECECFC]">
-      <div className="max-w-7xl mx-auto text-center">
+      <div className="max-w-7xl mx-auto max-[1320px]:px-8 text-center">
         <h2 className="sm:text-[42px] text-[32px] sm:font-bold font-semibold text-gray-900 mb-3">
           Subjects & Majors We Cover
         </h2>
@@ -84,12 +94,24 @@ export default function SubjectsSection() {
         </div>
 
         <div className="flex justify-center mt-[60px]">
-          <button
-            type="button"
-            className="rounded-md px-3 cursor-pointer bg-[#ff641a] text-white border border-transparent transition duration-300 text-[15px] font-medium flex items-center justify-center hover:bg-white hover:text-[#ff641a] hover:border-[#ff641a] h-[54px] md:w-64 w-48"
-          >
-            Take my online class
-          </button>
+          {isHomePage ? (
+            <button
+              type="button"
+              onClick={scrollToQuote}
+              className="rounded-md px-3 cursor-pointer bg-[#ff641a] text-white border border-transparent transition duration-300 text-[15px] font-medium flex items-center justify-center hover:bg-white hover:text-[#ff641a] hover:border-[#ff641a] h-[54px] md:w-64 w-48"
+            >
+              Take my online class
+            </button>
+          ) : (
+            <Link href="/#quote-form">
+              <button
+                type="button"
+                className="rounded-md px-3 cursor-pointer bg-[#ff641a] text-white border border-transparent transition duration-300 text-[15px] font-medium flex items-center justify-center hover:bg-white hover:text-[#ff641a] hover:border-[#ff641a] h-[54px] md:w-64 w-48"
+              >
+                Take my online class
+              </button>
+            </Link>
+          )}
         </div>
       </div>
     </section>
