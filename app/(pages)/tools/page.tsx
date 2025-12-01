@@ -4,12 +4,15 @@ import ToolsGrid from "@/app/components/ToolsGrid/ToolsGrid";
 import { FC } from "react";
 import { content } from "./content";
 import { MetaData } from "@/app/metadata/metadata";
+import HeroSection from "@/app/components/LandingPage/HeroSection";
+import Ratings from "@/app/components/LandingPage/Ratings";
 
 interface PageProps {}
 const Page: FC<PageProps> = ({}) => {
   return (
     <MainLayout>
-      <Hero content={content.heroContent} />
+      <HeroSection />
+      <Ratings />
       <ToolsGrid
         mainHeading={content.conversionTools.mainheading}
         content={content.conversionTools.toolsContent}
