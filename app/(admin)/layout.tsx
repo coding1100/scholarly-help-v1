@@ -158,8 +158,40 @@ export default function AdminLayout({
       </div>
 
       {/* Main content */}
-      <div className="">
-      
+      <div className="lg:pl-64">
+        {/* Top bar */}
+        <div className="bg-white shadow-sm border-b">
+          <div className="px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center py-4">
+              <div className="flex items-center">
+                <button
+                  onClick={() => setSidebarOpen(true)}
+                  className="lg:hidden text-gray-500 hover:text-gray-700 mr-4"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                </button>
+                <h1 className="text-2xl font-semibold text-gray-900">
+                  {navigation.find(item => item.href === pathname)?.name || 'Admin'}
+                </h1>
+              </div>
+              <div className="flex items-center space-x-4">
+                <span className="text-sm text-gray-500">Welcome back!</span>
+                <button
+                  onClick={() => {
+                    localStorage.removeItem('adminToken');
+                    router.push('/admin/login');
+                  }}
+                  className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200"
+                >
+                  Logout
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Page content */}
         <main className="flex-1">
           {children}
