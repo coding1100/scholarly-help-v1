@@ -68,7 +68,6 @@ export default function AssignmentAdmin() {
             { id: 'academic', name: 'Academic Content', icon: '🎓' },
             { id: 'whyScholarly', name: 'Why Scholarly', icon: '⭐' },
             { id: 'subjects', name: 'Subjects', icon: '📚' },
-            { id: 'faq', name: 'FAQ', icon: '❓' },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -149,6 +148,44 @@ export default function AssignmentAdmin() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Academic Content Items</h3>
+                {content.academic?.academicContent?.filter((item: any) => !item.isLast).map((item: any, index: number) => (
+                  <div key={index} className="border border-gray-200 rounded-md p-4 mb-4">
+                    <h4 className="text-md font-medium text-gray-700 mb-2">Item {index + 1}</h4>
+                    <div className="grid grid-cols-1 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Icon URL</label>
+                        <input
+                          type="text"
+                          value={item.icon || ''}
+                          readOnly
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-500"
+                          placeholder="e.g., /assets/Images/schedule-icon.webp"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                        <input
+                          type="text"
+                          value={item.title || ''}
+                          onChange={(e) => updateContent(`academic.academicContent.${index}.title`, e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <textarea
+                          rows={3}
+                          value={item.description || ''}
+                          onChange={(e) => updateContent(`academic.academicContent.${index}.description`, e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
@@ -196,13 +233,6 @@ export default function AssignmentAdmin() {
           </div>
         )}
 
-        {/* FAQ */}
-        {activeTab === 'faq' && (
-          <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">FAQ Section</h2>
-            <p className="text-sm text-gray-600">FAQ content is managed through the JSON structure. Edit the faqContent array in the data file for detailed FAQ management.</p>
-          </div>
-        )}
 
         {/* Save Button */}
         <div className="flex justify-end">

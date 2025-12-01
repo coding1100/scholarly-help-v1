@@ -26,7 +26,11 @@ const WhyScholarly = dynamic(
 //   title: "Help Me Do My Assignment | Online Assignment Help | Scholarly Help",
 // };
 const Page = async () => {
-  const content = await getAssignmentContent();
+  const [content, faq] = await Promise.all([
+    getAssignmentContent(),
+    fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/admin/faq`).then(res => res.json())
+  ]);
+  content.faqContent = faq.faqContent || [];
   // return <div>test</div>
   return (
     <MainLayout>
