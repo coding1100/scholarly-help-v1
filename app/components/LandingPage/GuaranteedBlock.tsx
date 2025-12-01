@@ -1,3 +1,5 @@
+"use client";
+
 // app/components/GuaranteeSection.tsx
 import Image from "next/image"; // optional – replace with your own button
 
