@@ -3,7 +3,7 @@ import React from "react";
 export default function ProcessSection() {
   return (
     <section className="w-full bg-white text-[#171717]">
-      <div className="mx-auto w-full max-w-screen-xl px-6 pb-10">
+      <div className="mx-auto max-w-7xl pb-10">
         <div className="relative rounded-2xl bg-[#3C3D5D] px-6 py-12 sm:px-10 lg:px-14 lg:py-16 text-white">
           <div className="mx-auto max-w-4xl text-center">
             <h2 className="sm:text-[42px] text-[32px] sm:font-bold font-semibold leading-tight">

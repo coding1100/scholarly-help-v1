@@ -94,7 +94,7 @@ const Faq: FC<FaqProps> = ({ content = faqContent }) => {
 
   return (
     <section className="sm:pt-[83px] sm:pb-14 pt-8 pb-8 bg-white text-[#171717]">
-      <div className="max-w-screen-xl mx-auto px-5 sm:px-10">
+      <div className="max-w-7xl mx-auto">
         <h2 className="md:text-5xl text-2xl font-bold text-primary-500 text-center mb-10">
           Frequently Asked Questions
         </h2>

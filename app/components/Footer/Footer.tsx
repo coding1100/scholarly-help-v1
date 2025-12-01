@@ -80,7 +80,7 @@ const Footer: FC<FooterProps> = ({}) => {
     return (
       <div>
         <div className="bg-primary-200 md:flex justify-center py-14">
-          <div className="md:container md:flex justify-between gap-6 px-10 text-primary-600">
+          <div className="md:container md:flex justify-between gap-6 px-15 text-primary-600">
             <div className="md:max-w-[372px]">
               <div className="mb-4">
                 <Logo />

@@ -1,30 +1,38 @@
+"use client";
+
 import Image from "next/image";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
 
 export default function SubjectsSection() {
+  const currentPage = usePathname();
+  const basePath = currentPage.split('/').slice(0, 2).join('/');
   const subjects = [
-    { src: "/assets/Icon/english.png", label: "English" },
-    { src: "/assets/Icon/math.png", label: "Math" },
+    { src: "/assets/Icon/english.png", label: "English", url: `${basePath}/english` },
+    { src: "/assets/Icon/math.png", label: "Math", url: `${basePath}/math` },
     {
       src: "/assets/Icon/anatomyandphysiology.png",
       label: "Anatomy and Physiology",
+      url: `${basePath}/anatomy`,
     },
-    { src: "/assets/Icon/statistics.png", label: "Statistics" },
-    { src: "/assets/Icon/hrmclass.png", label: "HRM Class" },
+    { src: "/assets/Icon/statistics.png", label: "Statistics", url: `${basePath}/statistics` },
+    { src: "/assets/Icon/hrmclass.png", label: "HRM Class", url: `${basePath}/human-resource` },
     {
       src: "/assets/Icon/operationmanagement.png",
       label: "Operation Management",
+      url: `${basePath}/operation-management`,
     },
-    { src: "/assets/Icon/computerscience.png", label: "Computer Science" },
-    { src: "/assets/Icon/accounting.png", label: "Accounting" },
-    { src: "/assets/Icon/history.png", label: "History" },
-    { src: "/assets/Icon/marketing.png", label: "Marketing" },
-    { src: "/assets/Icon/psychology.png", label: "Psychology" },
-    { src: "/assets/Icon/philosophy.png", label: "Philosophy" },
+    { src: "/assets/Icon/computerscience.png", label: "Computer Science", url: `${basePath}/computer-science` },
+    { src: "/assets/Icon/accounting.png", label: "Accounting", url: `${basePath}/accounting` },
+    { src: "/assets/Icon/history.png", label: "History", url: `${basePath}/history` },
+    { src: "/assets/Icon/marketing.png", label: "Marketing", url: `${basePath}/marketing` },
+    { src: "/assets/Icon/psychology.png", label: "Psychology", url: `${basePath}/psychology` },
+    { src: "/assets/Icon/philosophy.png", label: "Philosophy", url: `${basePath}/philosophy` },
   ];
 
   return (
     <section className="pt-[86px] pb-16 bg-[#ECECFC]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <div className="max-w-7xl mx-auto text-center">
         <h2 className="sm:text-[42px] text-[32px] sm:font-bold font-semibold text-gray-900 mb-3">
           Subjects & Majors We Cover
         </h2>
@@ -36,23 +44,42 @@ export default function SubjectsSection() {
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 mb-12">
           {subjects.map((subject, index) => (
-            <div
-              key={index}
-              className="bg-[#F2F2FD] rounded-lg p-6 h-[200px] flex flex-col items-center justify-center cursor-pointer"
-            >
-              <div className="w-12 h-12 mb-3 relative">
-                <Image
-                  src={subject.src}
-                  alt={subject.label}
-                  fill
-                  className="object-contain"
-                  sizes="48px"
-                />
+            subject.url ? (
+              <Link key={index} href={subject.url}>
+                <div className="bg-[#F2F2FD] rounded-lg p-6 h-[200px] flex flex-col items-center justify-center cursor-pointer">
+                  <div className="w-12 h-12 mb-3 relative">
+                    <Image
+                      src={subject.src}
+                      alt={subject.label}
+                      fill
+                      className="object-contain"
+                      sizes="48px"
+                    />
+                  </div>
+                  <span className="text-sm font-medium text-gray-800 text-center sm:text-[23px]">
+                    {subject.label}
+                  </span>
+                </div>
+              </Link>
+            ) : (
+              <div
+                key={index}
+                className="bg-[#F2F2FD] rounded-lg p-6 h-[200px] flex flex-col items-center justify-center cursor-pointer"
+              >
+                <div className="w-12 h-12 mb-3 relative">
+                  <Image
+                    src={subject.src}
+                    alt={subject.label}
+                    fill
+                    className="object-contain"
+                    sizes="48px"
+                  />
+                </div>
+                <span className="text-sm font-medium text-gray-800 text-center sm:text-[23px]">
+                  {subject.label}
+                </span>
               </div>
-              <span className="text-sm font-medium text-gray-800 text-center sm:text-[23px]">
-                {subject.label}
-              </span>
-            </div>
+            )
           ))}
         </div>
 

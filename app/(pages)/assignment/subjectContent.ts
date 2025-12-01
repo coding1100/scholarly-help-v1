@@ -184,6 +184,8 @@ export const assignmentSubjects = [
   "nursing",
   "operation-management",
   "organizational-behavior",
+  "philosophy",
+  "statistics",
 ] as const;
 
 export type AssignmentSubject = typeof assignmentSubjects[number];

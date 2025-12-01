@@ -11,7 +11,7 @@ export default function ReviewRatings() {
   return (
     <div className="xl:flex justify-center py-8 mt-[-96px]">
       <div
-        className="max-w-screen-xl container py-6 px-12 rounded-lg lg:flex justify-between grid grid-cols-2 gap-6 bg-[#fff] "
+        className="max-w-7xl container py-6 px-12 rounded-lg lg:flex justify-between grid grid-cols-2 gap-6 bg-[#fff] "
         style={{ boxShadow: " 0px 11px 32px 0px #DFE5FF " }}
       >
         {/* Sitejabber */}
@@ -27,7 +27,7 @@ export default function ReviewRatings() {
             />
           </div>
           <div>
-            <p className="md:text-lg text-sm font-semibold font-['Poppins'] tracking-normal text-[#171717]">
+            <p className="md:text-lg text-sm font-semibold tracking-normal text-[#171717]">
               4.9
             </p>
             <div className="flex">
@@ -44,7 +44,7 @@ export default function ReviewRatings() {
                 />
               ))}
             </div>
-            <p className="md:text-lg text-sm text-gray-600 font-['Poppins'] tracking-normal">
+            <p className="md:text-lg text-sm text-gray-600 tracking-normal">
               Sitejabber
             </p>
           </div>
@@ -63,7 +63,7 @@ export default function ReviewRatings() {
             />
           </div>
           <div>
-            <p className="md:text-lg text-sm font-semibold font-['Poppins'] tracking-normal text-[#171717]">
+            <p className="md:text-lg text-sm font-semibold tracking-normal text-[#171717]">
               4.8
             </p>
             <div className="flex">
@@ -80,7 +80,7 @@ export default function ReviewRatings() {
                 />
               ))}
             </div>
-            <p className="md:text-lg text-sm text-gray-600 font-['Poppins'] tracking-normal">
+            <p className="md:text-lg text-sm text-gray-600 tracking-normal">
               Google Reviews
             </p>
           </div>
@@ -99,7 +99,7 @@ export default function ReviewRatings() {
             />
           </div>
           <div>
-            <p className="md:text-lg text-sm font-semibold font-['Poppins'] tracking-normal text-[#171717]">
+            <p className="md:text-lg text-sm font-semibold tracking-normal text-[#171717]">
               4.9
             </p>
             <div className="flex">
@@ -116,7 +116,7 @@ export default function ReviewRatings() {
                 />
               ))}
             </div>
-            <p className="md:text-lg text-sm text-gray-600 font-['Poppins'] tracking-normal">
+            <p className="md:text-lg text-sm text-gray-600 tracking-normal">
               Trustpilot
             </p>
           </div>
@@ -135,7 +135,7 @@ export default function ReviewRatings() {
             />
           </div>
           <div>
-            <p className="md:text-lg text-sm font-semibold font-['Poppins'] tracking-normal text-[#171717]">
+            <p className="md:text-lg text-sm font-semibold tracking-normal text-[#171717]">
               4.9
             </p>
             <div className="flex">
@@ -152,7 +152,7 @@ export default function ReviewRatings() {
                 />
               ))}
             </div>
-            <p className="md:text-lg text-sm text-gray-600 font-['Poppins'] tracking-normal">
+            <p className="md:text-lg text-sm text-gray-600 tracking-normal">
               Review.io
             </p>
           </div>

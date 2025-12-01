@@ -36,13 +36,13 @@ const HowWeHelp: React.FC = () => {
 
   return (
     <section className="pt-[84px] pb-5 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
           <h2 className="sm:text-[42px] text-[32px] md:text-4xl sm:font-bold font-semibold text-gray-900 mb-4">
             How We Help You Succeed
           </h2>
-          <p className="text-sm sm:text-base md:text-lg text-gray-600 w-full html font-['Poppins'] font-normal text-[17px] leading[1.4] tracking-normal text-center">
+          <p className="text-sm sm:text-base md:text-lg text-gray-600 w-full html font-normal text-[17px] leading[1.4] tracking-normal text-center">
             Your go-to source for top-notch academic writing services. Get
             excellence in every assignment. From essays and research papers to
             online classes and exam assistance, we offer a range of
@@ -58,10 +58,10 @@ const HowWeHelp: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-x-64 gap-y-8 mb-12">
           {services.map((service, index) => (
             <div key={index} className="bg-white">
-              <h3 className="font-['Poppins'] font-semibold text-[19.22px] leading-[120%] tracking-normal mb-3 text-[#171717]">
+              <h3 className="font-semibold text-[19.22px] leading-[120%] tracking-normal mb-3 text-[#171717]">
                 {service.title}
               </h3>
-              <p className="text-gray-600 text-sm leading-relaxed font-['Poppins'] font-normal text-[17px] leading-none tracking-normal">
+              <p className="text-gray-600 text-sm leading-relaxed font-normal text-[17px] leading-none tracking-normal">
                 {service.description}
               </p>
             </div>
@@ -91,7 +91,7 @@ const HowWeHelp: React.FC = () => {
                   clipRule="evenodd"
                 />
               </svg>
-              <p className="font-['Poppins'] font-semibold text-[19.22px] leading-[120%] tracking-normal text-[#171717]">
+              <p className="font-semibold text-[19.22px] leading-[120%] tracking-normal text-[#171717]">
                 {badge}
               </p>
             </div>

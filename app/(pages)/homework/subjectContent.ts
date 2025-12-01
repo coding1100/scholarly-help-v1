@@ -232,7 +232,13 @@ export const homeworkSubjects = [
   "english",
   "finance",
   "history",
+  "human-resource",
+  "marketing",
   "math",
+  "operation-management",
+  "philosophy",
+  "psychology",
+  "statistics",
 ] as const;
 
 export type HomeworkSubject = typeof homeworkSubjects[number];

@@ -103,8 +103,8 @@ export default function GuaranteeSection() {
   ];
 
   return (
-    <section className="w-full relative overflow-hidden bg-white text-[#171717]">
-      <div className="mx-auto w-full max-w-screen-xl px-6 pt-3 pb-10 flex relative justify-between max-[1080px]:flex-col">
+    <section className="w-full relative overflow-hidden mt-[60px] mb-[30px]  bg-white text-[#171717]">
+      <div className="mx-auto w-full max-w-7xl pt-3 pb-10 flex relative justify-between max-[1080px]:flex-col">
         {/* Header */}
         <div className="text-left mb-12 mt-10 w-[28%] max-[1080px]:w-[100%]">
           <h2 className="font-poppins sm:font-bold font-semibold sm:text-[42px] text-[32px] leading-[120%] tracking-[0] mb-[30px]">

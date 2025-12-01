@@ -90,6 +90,8 @@ export default function CardCarousel() {
     dots: true,
     arrows: false,
     infinite: true,
+    autoplay: true,
+    autoplaySpeed: 3000,
     afterChange: (current) => setCenterIndex(current),
   };
 
@@ -97,7 +99,7 @@ export default function CardCarousel() {
   const goNext = () => sliderRef.current?.slickNext();
 
   return (
-    <section className="w-full mt-[100px] px-4">
+    <section className="w-full mt-[15px] px-4">
       <div className="w-full overflow-hidden"> {/* Header */} 
         <div className="text-center mb-12"> 
           <h2 className="sm:text-[42px] text-[32px] font-bold text-gray-900 mb-3"> The Academic Pressure You're Facing Every Day </h2> 
@@ -111,9 +113,7 @@ export default function CardCarousel() {
               <div key={card.id} className="px-2 cursor-pointer">
                 <div
                   className={`
-                  carousel-card
-                  p-6 shadow-md rounded-[21px] cursor-pointer h-[510px] flex flex-col bg-white
-                  transition-all duration-300 relative
+                  carousel-card p-6 shadow-md rounded-[21px] cursor-pointer h-[510px] flex flex-col bg-white transition-all hover:!scale-100 duration-300 relative
                   ${isCenter ? "center-card" : "scale-90"}
                 `}
                 >

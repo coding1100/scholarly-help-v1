@@ -28,7 +28,7 @@ export default function GetQuote() {
 
   return (
     <section className="w-full bg-[#F3F4F9] max-[1020px]:overflow-hidden">
-      <div className="max-w-screen-xl mx-auto flex max-[1080px]:flex-col-reverse pt-[130px] pb-[80px]">
+      <div className="max-w-7xl mx-auto flex max-[1080px]:flex-col-reverse pt-[130px] pb-[80px]">
         <div className="w-[70%] max-[1080px]:w-[100%] p-4 flex relative justify-end">
           <Image
             src="/assets/Icon/aGrade.png"

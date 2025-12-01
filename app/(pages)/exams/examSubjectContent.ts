@@ -278,6 +278,7 @@ export const examSubjects = [
   "nursing",
   "operation-management",
   "organizational-behavior",
+  "philosophy",
   "psychology",
   "statistics"
 ] as const;
@@ -340,6 +341,7 @@ const examSubjectContent: Record<ExamSubject, Partial<ExamSubjectContent>> = {
     nursing: {},
     "operation-management": {},
     "organizational-behavior": {},
+    philosophy: {},
     psychology: {},
     statistics: {},
 };

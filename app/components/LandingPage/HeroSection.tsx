@@ -12,7 +12,7 @@ const Star: React.FC = () => (
 const HeroSection: React.FC = () => {
   return (
     <section className="w-full bg-[#F5F6FA] pb-[100px]">
-      <div className="mx-auto w-full max-w-screen-xl px-6 py-10 md:py-14">
+      <div className="mx-auto max-w-7xl py-10 md:py-14">
         <div className="grid grid-cols-1 items-start gap-10 md:grid-cols-12 md:gap-12">
           <div className="md:col-span-5">
           <HeroLead />

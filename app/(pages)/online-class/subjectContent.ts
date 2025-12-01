@@ -974,6 +974,8 @@ export const subjects = [
   "nursing",
   "operation-management",
   "organizational-behavior",
+  "philosophy",
+  "statistics",
 ] as const;
 
 export type SubjectType = typeof subjects[number];

@@ -2,7 +2,7 @@ import Image from "next/image";
 export default function AcademicPartners() {
   return (
     <section className="pt-[90px] pb-[90px] px-4 bg-gradient-to-b from-white w-full to-gray-50 ">
-      <div className="max-w-screen-xl mx-auto flex max-[1450px]:flex-col">
+      <div className="max-w-7xl mx-auto flex max-[1450px]:flex-col">
         {/* Hero Section */}
         <div className="text-left mb-12 w-[40%] max-[1450px]:w-[100%]">
           <h1 className="sm:text-4xl text-[32px] md:text-5xl sm:font-bold font-semibold text-gray-900 mb-4">

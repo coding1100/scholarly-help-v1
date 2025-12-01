@@ -1,27 +1,20 @@
 import { notFound } from "next/navigation";
-import { FC } from "react";
 import MainLayout from "@/app/MainLayout";
-import dynamic from "next/dynamic";
-import Hero from "@/app/components/Hero/Hero";
-import Qualities from "@/app/components/Qualities/Qualities";
-import SiteReviews from "@/app/components/SiteReviews/SiteReviews";
-import AcademicPartner from "@/app/components/AcademicPartner/AcademicPartner";
-import ExcellenceProof from "@/app/components/ExcellenceProof/ExcellenceProof";
-import Process from "@/app/components/Process/Process";
-import { processContent } from "@/app/components/Process/content";
-import Samples from "@/app/components/Samples/Samples";
-import CustomerReviews from "@/app/components/CustomerReviews/CustomerReviews";
-import ExamType from "@/app/components/ExamType/ExamType";
-import VariousName from "@/app/components/VariousName/VariousName";
-import Subjects from "@/app/components/Subjects/Subjects";
-import Faq from "@/app/components/Faq/Faq";
+import HeroSection from "@/app/components/LandingPage/HeroSection";
+import Ratings from "@/app/components/LandingPage/Ratings";
+import WhySlider from "@/app/components/LandingPage/WhySlider";
+import CardCarousel from "@/app/components/LandingPage/CardCarousel";
+import Description from "@/app/components/LandingPage/Description";
+import GuaranteedBlock from "@/app/components/LandingPage/GuaranteedBlock";
+import ProcessSection from "@/app/components/LandingPage/ProcessSection";
+import Success from "@/app/components/LandingPage/Success";
+import Subjects from "@/app/components/LandingPage/Subjects";
+import AcademicPartners from "@/app/components/LandingPage/AcademicPartners";
+import GetQoute from "@/app/components/LandingPage/GetQoute";
+import Faq from "@/app/components/LandingPage/Faq";
+import CustomerReviews from "@/app/components/LandingPage/CustomerReviews";
 import { MetaData } from "@/app/metadata/metadata";
 import { examSubjects, getExamSubjectContent, isValidExamSubject } from "../examSubjectContent";
-
-const WhyScholarly = dynamic(
-  () => import("@/app/components/WhyScholarly/WhyScholarly"),
-  { ssr: false }
-);
 
 interface PageProps {
   params: {
@@ -35,45 +28,26 @@ export async function generateStaticParams() {
   }));
 }
 
-const Page: FC<PageProps> = ({ params }) => {
+const Page: React.FC<PageProps> = ({ params }) => {
   if (!isValidExamSubject(params.subject)) {
     notFound();
   }
 
-  const content = getExamSubjectContent(params.subject);
-
   return (
     <MainLayout>
-      <Hero content={content.heroContent} />
-      <Qualities />
-      <SiteReviews />
-      <WhyScholarly
-        header={content.whyScholarly}
-        content={content.whyScholarly.whyScholarlyContent}
-      />
-      <AcademicPartner
-        btnText={content.btnText}
-        mainHeading={content.academic.mainheading}
-        content={content.academic.academicContent}
-      />
-      <ExcellenceProof
-        btnText={content.btnText}
-        content={content.excellenceProofContent}
-      />
-      <Process content={processContent} />
-      <Samples btnText={content.btnText} />
-      <CustomerReviews btnText={content.btnText} />
-      <ExamType content={content.examTypeContent} />
-      <VariousName
-        mainHeading={content.variousNames.mainHeading}
-        content={content.variousNames.variousNamesContent}
-      />
-      <Subjects
-        btnText={content.btnText}
-        mainHeading={content.subjects.mainHeading}
-        content={content.subjects.subjectsContent}
-      />
-      <Faq content={content.faqContent} />
+      <HeroSection />
+      <Ratings />
+      <WhySlider />
+      <CardCarousel />
+      <Description />
+      <GuaranteedBlock />
+      <CustomerReviews />
+      <ProcessSection />
+      <Success />
+      <Subjects />
+      <AcademicPartners />
+      <GetQoute />
+      <Faq />
     </MainLayout>
   );
 };
