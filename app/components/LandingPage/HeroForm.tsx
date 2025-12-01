@@ -164,7 +164,7 @@ const HeroForm: FC<ZohoForm2Props> = ({ nameValue, textAreaRows = 4 }) => {
         >
 
           {/* Email Field */}
-          <div className="flex items-center sm:h-18 h-12 border rounded-md bg-[#EDEFFE] border-[#E3E5F3] px-4">
+          <div className="flex items-center sm:h-18 h-[65px] border rounded-md bg-[#EDEFFE] border-[#E3E5F3] px-4">
             <input
               type="email"
               id="Email"
@@ -179,7 +179,7 @@ const HeroForm: FC<ZohoForm2Props> = ({ nameValue, textAreaRows = 4 }) => {
           </div>
 
           {/* Phone Field */}
-          <div className="flex items-center sm:h-18 h-12 border rounded-md bg-[#EDEFFE] border-[#E3E5F3] px-4">
+          <div className="flex items-center sm:h-18 h-[65px] border rounded-md bg-[#EDEFFE] border-[#E3E5F3] px-4">
             <input
               type="text"
               id="Phone"
@@ -195,7 +195,7 @@ const HeroForm: FC<ZohoForm2Props> = ({ nameValue, textAreaRows = 4 }) => {
           </div>
 
           {/* Instructions Field */}
-          <div className="flex items-start border rounded-md bg-[#EDEFFE] border-[#E3E5F3] px-4 pt-3 pb-2 min-h-50">
+          <div className="flex items-start border rounded-md bg-[#EDEFFE] border-[#E3E5F3] px-4 pt-3 pb-2 min-h-[150px">
             <textarea
               id="Description"
               name="Description"
@@ -204,7 +204,7 @@ const HeroForm: FC<ZohoForm2Props> = ({ nameValue, textAreaRows = 4 }) => {
               value={formData.Description}
               onChange={handleChange}
               required
-              className="flex-1 bg-transparent text-black outline-none resize-none text-sm placeholder-[#9CA3AF] pr-3 bg-[#EDEFFE]"
+              className="flex-1 bg-transparent text-black outline-none resize-none text-sm placeholder-[#9CA3AF] pr-3 bg-[#EDEFFE] min-h-[150px]"
             />
             <IoChatbubbles className="text-[#6B7280] text-xl mt-1 flex-shrink-0" />
           </div>

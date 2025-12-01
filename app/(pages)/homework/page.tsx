@@ -1,55 +1,35 @@
 import MainLayout from "@/app/MainLayout";
-import Hero from "@/app/components/Hero/Hero";
-import { processContent } from "@/app/components/Process/content";
-import { FC } from "react";
-import { content } from "./content";
+import HeroSection from "@/app/components/LandingPage/HeroSection";
+import Ratings from "@/app/components/LandingPage/Ratings";
+import WhySlider from "@/app/components/LandingPage/WhySlider";
+import CardCarousel from "@/app/components/LandingPage/CardCarousel";
+import Description from "@/app/components/LandingPage/Description";
+import GuaranteedBlock from "@/app/components/LandingPage/GuaranteedBlock";
+import ProcessSection from "@/app/components/LandingPage/ProcessSection";
+import Success from "@/app/components/LandingPage/Success";
+import Subjects from "@/app/components/LandingPage/Subjects";
+import AcademicPartners from "@/app/components/LandingPage/AcademicPartners";
+import GetQoute from "@/app/components/LandingPage/GetQoute";
+import Faq from "@/app/components/LandingPage/Faq";
+import CustomerReviews from "@/app/components/LandingPage/CustomerReviews";
 import { MetaData } from "@/app/metadata/metadata";
-import {
-  DynamicAcademicPartner,
-  DynamicCustomerReviews,
-  DynamicExcellenceProof,
-  DynamicFaq,
-  DynamicProcess,
-  DynamicQualities,
-  DynamicSamples,
-  DynamicSiteReviews,
-  DynamicSubjects,
-  DynamicWhyScholarly,
-} from "@/app/components/DynamicComponents";
 
-interface PageProps {}
-
-const Page: FC<PageProps> = ({}) => {
+const Page = () => {
   return (
     <MainLayout>
-      {/* Hero is loaded immediately as it's above the fold */}
-      <Hero content={content.heroContent} />
-
-      {/* Other components are loaded dynamically */}
-      <DynamicQualities />
-      <DynamicSiteReviews />
-      <DynamicWhyScholarly
-        header={content.whyScholarly}
-        content={content.whyScholarly.whyScholarlyContent}
-      />
-      <DynamicAcademicPartner
-        btnText={content.btnText}
-        mainHeading={content.academic.mainheading}
-        content={content.academic.academicContent}
-      />
-      <DynamicExcellenceProof
-        btnText={content.btnText}
-        content={content.excellenceProofContent}
-      />
-      <DynamicProcess content={processContent} />
-      <DynamicSamples btnText={content.btnText} />
-      <DynamicCustomerReviews btnText={content.btnText} />
-      <DynamicSubjects
-        btnText={content.btnText}
-        mainHeading={content.subjects.mainHeading}
-        content={content.subjects.subjectsContent}
-      />
-      <DynamicFaq content={content.faqContent} />
+      <HeroSection />
+      <Ratings />
+      <WhySlider />
+      <CardCarousel />
+      <Description />
+      <GuaranteedBlock />
+      <CustomerReviews />
+      <ProcessSection />
+      <Success />
+      <Subjects />
+      <AcademicPartners />
+      <GetQoute />
+      <Faq />
     </MainLayout>
   );
 };

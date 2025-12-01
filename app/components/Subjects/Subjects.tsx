@@ -19,11 +19,11 @@ type Content = {
 // }
 
 interface SubjectsProps {
-  content: Content[];
-  mainHeading: string;
+  content?: Content[];
+  mainHeading?: string;
   btnText?: string;
 }
-const Subjects: FC<SubjectsProps> = ({ content, mainHeading, btnText }) => {
+const Subjects: FC<SubjectsProps> = ({ content = [], mainHeading = "Subjects We Work On", btnText }) => {
   const currentPage = usePathname();
   const [showMore, setShowMore] = useState(false);
   const toggleFaqs = () => {
