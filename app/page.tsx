@@ -1,67 +1,38 @@
 "use client";
 
 import type { NextPage } from "next";
-import dynamic from "next/dynamic";
 import MainLayout from "./MainLayout";
-import AcademicPartner from "./components/AcademicPartner/AcademicPartner";
-import CustomerReviews from "./components/CustomerReviews/CustomerReviews";
-import ExcellenceProof from "./components/ExcellenceProof/ExcellenceProof";
-import Faq from "./components/Faq/Faq";
-import Hero from "./components/Hero/Hero";
-import Process from "./components/Process/Process";
-import { processContent } from "./components/Process/content";
-import Qualities from "./components/Qualities/Qualities";
-import Samples from "./components/Samples/Samples";
-import SiteReviews from "./components/SiteReviews/SiteReviews";
-import { content } from "./content";
-import { useTextHtmlRatio } from "./hooks/useTextHtmlRatio";
-import { useEffect } from "react";
-
-const WhyScholarly = dynamic(
-  () => import("./components/WhyScholarly/WhyScholarly"),
-  {
-    ssr: false,
-  }
-);
+import HeroSection from "./components/LandingPage/HeroSection";
+import WhySlider from "./components/LandingPage/WhySlider";
+import ProcessSection from "./components/LandingPage/ProcessSection";
+import Success from "./components/LandingPage/Success";
+import Subjects from "./components/LandingPage/Subjects";
+import AcademicPartners from "./components/LandingPage/AcademicPartners";
+import GetQoute from "./components/LandingPage/GetQoute";
+import Faq from "./components/LandingPage/Faq";
+import CustomerReviews from "./components/LandingPage/CustomerReviews";
+import CardCarousel from "./components/LandingPage/CardCarousel";
+import GuaranteedBlock from "./components/LandingPage/GuaranteedBlock";
+import Description from "./components/LandingPage/Description";
+import Ratings from "./components/LandingPage/Ratings";
 
 const Home: NextPage = () => {
-  const ratioInfo = useTextHtmlRatio();
-
-  useEffect(() => {
-    if (ratioInfo) {
-      console.log("Text Length:", ratioInfo.textLength);
-      console.log("HTML Length:", ratioInfo.htmlLength);
-      console.log("Text-to-HTML Ratio:", ratioInfo.ratio + "%");
-
-      if (ratioInfo.ratio < 15) {
-        console.warn("⚠️ Low Text-to-HTML ratio:", ratioInfo.ratio + "%");
-      }
-    }
-  }, [ratioInfo]);
   return (
     <div>
       <MainLayout>
-        {/* Include various components */}
-        <Hero content={content.heroContent} />
-        <Qualities />
-        <SiteReviews />
-        <AcademicPartner
-          btnText={content.btnText}
-          mainHeading={content.academic.mainheading}
-          content={content.academic.academicContent}
-        />
-        <WhyScholarly
-          header={content.whyScholarly}
-          content={content.whyScholarly.whyScholarlyContent}
-        />
-        <ExcellenceProof
-          btnText={content.btnText}
-          content={content.excellenceProofContent}
-        />
-        <Process content={processContent} />
-        <Samples btnText={content.btnText} />
-        <CustomerReviews btnText={content.btnText} />
-        <Faq content={content.faqContent} />
+        <HeroSection />
+        <Ratings />
+        <WhySlider />
+        <CardCarousel />
+        <Description />
+        <GuaranteedBlock />
+        <CustomerReviews />
+        <ProcessSection />
+        <Success />
+        <Subjects />
+        <AcademicPartners />
+        <GetQoute />
+        <Faq />
       </MainLayout>
     </div>
   );

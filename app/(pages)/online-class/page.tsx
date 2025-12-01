@@ -67,11 +67,7 @@ const WhyScholarly = dynamic(
 );
 
 const Page = async () => {
-  const [content, faq] = await Promise.all([
-    getOnlineClassContent(),
-    fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/admin/faq`).then(res => res.json())
-  ]);
-  content.faqContent = faq.faqContent || [];
+  const content = await getOnlineClassContent();
   return (
     <MainLayout>
       {/* Hero is loaded immediately as it's above the fold */}

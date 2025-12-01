@@ -1,9 +1,7 @@
 
 export async function getAssignmentContent() {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/admin/assignment`, {
-    cache: 'no-store'
-  });
-  return res.json();
+  // Return static content for public pages to avoid API dependency
+  return content;
 }
 
 export const content = {
