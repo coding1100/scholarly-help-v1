@@ -54,7 +54,7 @@ export default function GetQuote() {
               style={{
                 position: "absolute",
                 left: "56px",
-                top: "-40px",
+                top: "-75px",
                 width: "auto",
                 height: "auto",
                 zIndex: "8",
@@ -69,7 +69,7 @@ export default function GetQuote() {
               style={{
                 position: "absolute",
                 left: "300px",
-                top: "-37px",
+                top: "-77px",
                 width: "auto",
                 zIndex: "8",
                 height: "auto",
@@ -82,7 +82,7 @@ export default function GetQuote() {
               height={50}
               style={{
                 position: "absolute",
-                right: "-25px",
+                right: "-50px",
                 bottom: "56px",
                 width: "auto",
                 zIndex: "8",

@@ -26,9 +26,9 @@ const HeroRight: React.FC = () => {
       <div className="relative flex items-start gap-6">
         {/* background decorative layer behind the form */}
         <div className="pointer-events-none absolute inset-0 z-0 hidden md:block">
-          <Image src={Bg1} alt="bg1" className="absolute  -left-18 top-30 opacity-50" />
-          <Image src={Bg3} alt="bg3" className="absolute -left-18 -top-10 opacity-50" />
-          <Image src={Bg2} alt="bg2" className="absolute -left-18 top-70 opacity-50" />
+          <Image src={Bg1} alt="bg1" className="absolute  -left-[80px] top-[130px] opacity-50" />
+          <Image src={Bg3} alt="bg3" className="absolute -left-[80px] -top-10 opacity-50" />
+          <Image src={Bg2} alt="bg2" className="absolute -left-[80px] top-[300px] opacity-50" />
           <Image src={Bg4} alt="bg4" className="absolute left-28 -top-20 opacity-50" />
           {/* <Image src={Heart} alt="heart" className="absolute right-[220px] top-8" /> */}
           {/* <Image src={Update} alt="update" className="absolute right-20 top-10" /> */}
