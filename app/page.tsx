@@ -29,7 +29,7 @@ const Home: NextPage = () => {
         <CustomerReviews />
         <ProcessSection />
         <Success />
-        <Subjects />
+        {/* <Subjects /> */}
         <AcademicPartners />
         <GetQoute />
         <Faq />
