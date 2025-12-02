@@ -23,6 +23,7 @@
     "moment": "^2.29.4",
     "mongodb": "^6.21.0",
     "next": "14.2.5",
+    "nextjs-current-url": "^1.0.3",
     "react": "^18",
     "react-code-blocks": "^0.0.8",
     "react-datetime": "^3.2.0",
