@@ -11,7 +11,7 @@ export default function ProcessSection() {
             </h2>
             <p className="mt-3 sm:text-[18px] text-sm font-medium text-white/80">
               Beyond the subjects listed below, we excel at handling diverse
-              topics effectively. Our expertise knows no bounds, ensuring we're
+              topics effectively. Our expertise knows no bounds, ensuring we&apos;re
               ready for any challenge that comes our way.
             </p>
           </div>

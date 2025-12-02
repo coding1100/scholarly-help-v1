@@ -19,7 +19,7 @@ export default function AcademicPartners() {
           </h1>
           <p className="sm:text-lg text-sm text-gray-600 max-w-3xl mb-8">
             From exams and essays to full-class management, we handle it all so
-            you don't have to.
+            you don&apos;t have to.
           </p>
           <div className="flex sm:justify-start justify-center mt-[30px]">
             <button
@@ -88,7 +88,7 @@ export default function AcademicPartners() {
                 <p className="text-sm text-gray-600 font-poppins font-normal text-[15px] leading-[1.4] tracking-normal">
                   Our CEO worked 30-hour shifts while enrolled full-time and was
                   on the verge of expulsion twice due to academic pressure. We
-                  get it — we're solving the system that punishes people with
+                  get it — we&apos;re solving the system that punishes people with
                   real lives.
                 </p>
               </div>
@@ -109,7 +109,7 @@ export default function AcademicPartners() {
               </div>
               <div className="flex flex-col">
                 <h3 className="font-semibold text-gray-900 mb-4 font-poppins sm:text-2xl text-xl leading-[1.2]  tracking-normal font-poppins">
-                  40+ Master's Level Tutors
+                  40+ Master&apos;s Level Tutors
                 </h3>
                 <p className="text-sm text-gray-600 font-poppins font-normal text-[15px] leading-[1.4] tracking-normal">
                   Every tutor is hand-selected through a 7-stage vetting process
@@ -137,7 +137,7 @@ export default function AcademicPartners() {
                 </h3>
                 <p className="text-sm text-gray-600 font-poppins font-normal text-[15px] leading-[1.4] tracking-normal">
                   No time to study for the exam? Our experts take your exams for
-                  you, just like you're sitting there — with results that speak
+                  you, just like you&apos;re sitting there — with results that speak
                   for themselves.
                 </p>
               </div>
