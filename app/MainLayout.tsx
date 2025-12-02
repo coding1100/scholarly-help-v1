@@ -1,6 +1,7 @@
 "use client";
 import { FC, ReactNode, useState, useCallback, useEffect } from "react"; // Added useEffect
-import AppNav from "./components/NavBar/AppNav";
+// import AppNav from "./components/NavBar/AppNav";
+import AppNav from "./components/LandingPage/Header";
 import Footer from "./components/Footer/Footer";
 import type { Metadata } from "next";
 import AuthProvider from "./context/auth/AuthProvider";
