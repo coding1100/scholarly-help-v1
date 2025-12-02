@@ -23,12 +23,9 @@ import ProcessSection from "@/app/components/LandingPage/ProcessSection";
 import Success from "@/app/components/LandingPage/Success";
 import AcademicPartners from "@/app/components/LandingPage/AcademicPartners";
 const WhyScholarly = dynamic(
-  () => import("@/app/components/WhyScholarly/WhyScholarly"),
-  {
-    ssr: false,
-  }
+  () => import("@/app/components/WhyScholarly/WhyScholarly")
 );
-const GetQoute = dynamic(() => import("@/app/components/LandingPage/GetQoute"), { ssr: false });
+const GetQoute = dynamic(() => import("@/app/components/LandingPage/GetQoute"));
 // import type { Metadata } from "next";
 
 // export const metadata: Metadata = {
