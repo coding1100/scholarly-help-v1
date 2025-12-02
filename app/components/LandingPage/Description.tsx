@@ -48,7 +48,7 @@ const HowWeHelp: React.FC = () => {
       <div className="max-w-7xl mx-auto  max-[1320px]:px-8">
         {/* Header */}
         <div className="text-center mb-12">
-          <h2 className="text-[42px] text-primary-500 font-bold  mb-4">
+          <h2 className="text-[42px] text-[#000] font-bold  mb-4">
             How We Help You Succeed
           </h2>
           <p className="text-sm sm:text-base md:text-lg text-gray-600 w-full html font-normal text-[17px] leading[1.4] tracking-normal text-center">

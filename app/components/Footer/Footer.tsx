@@ -475,7 +475,7 @@ const Footer: FC<FooterProps> = ({}) => {
                       <Image src={Tiktok} alt="Tiktok" />
                     </a>
                   </div>
-                  <div className="w-5 h-5 text-[21px] text-primary-500 mr-1">
+                  <div className="w-5 h-5 text-[21px] text-[#000] mr-1">
                     <a
                       target="_blank"
                       href="https://www.snapchat.com/add/helpscholarly"
@@ -483,7 +483,7 @@ const Footer: FC<FooterProps> = ({}) => {
                       <FaSnapchat />
                     </a>
                   </div>
-                  <div className="w-5 h-5 text-[21px] text-primary-500">
+                  <div className="w-5 h-5 text-[21px] text-[#000]">
                     <a
                       target="_blank"
                       href="https://www.youtube.com/@ScholarlyHelp/"

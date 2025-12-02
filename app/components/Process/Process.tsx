@@ -33,7 +33,7 @@ const Process: FC<ProcessProps> = ({ content }) => {
     <div className="py-8 flex justify-center bg-primary-100">
       <div className="container px-10">
         <div>
-          <h2 className="font-bold text-primary-500 text-center text-[42px]  mb-3">
+          <h2 className="font-bold text-[#000] text-center text-[42px]  mb-3">
             State-of-the-Art Process We Follow
           </h2>
         </div>
@@ -55,7 +55,7 @@ const Process: FC<ProcessProps> = ({ content }) => {
                   </div>
                 )}
                 {activeProcessIndex === index && (
-                  <div className="flex flex-col justify-center text-primary-500 md:col-span-1 col-span-2 md:pt-0 pt-4">
+                  <div className="flex flex-col justify-center text-[#000] md:col-span-1 col-span-2 md:pt-0 pt-4">
                     <div className="font-bold text-lg">
                       <h3>{item.title}</h3>
                     </div>

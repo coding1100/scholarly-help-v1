@@ -27,7 +27,7 @@ const SampleSubjectCard: FC<SampleSubjectCardProps> = ({ content }) => {
             <div className="max-w-[40px] mr-2">
               <Image src={SamplePdfImg} alt="" />
             </div>
-            <div className="font-bold text-primary-500">{content.title}</div>
+            <div className="font-bold text-[#000]">{content.title}</div>
           </div>
           <div className="col-span-4">{content.pages}</div>
         </div>

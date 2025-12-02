@@ -14,7 +14,7 @@ const TermsConditons: FC<TermsConditonsProps> = ({}) => {
           <Image src={AboutUsImg} alt="image" className="max-w-80" />
         </div>
         <div className="my-4 ">
-          <h1 className="text-center md:text-5xl text-2xl font-bold text-primary-500">
+          <h1 className="text-center md:text-5xl text-2xl font-bold text-[#000]">
             Terms And Conditions
           </h1>
         </div>
@@ -48,7 +48,7 @@ const TermsConditons: FC<TermsConditonsProps> = ({}) => {
           &apos;We,&apos; &apos;Us,&apos; and &apos;Our&apos; are used to denote
           Scholarly Help or the website itself.
         </p>
-        <p className="leading-7 pt-4 font-semibold text-primary-500">
+        <p className="leading-7 pt-4 font-semibold text-[#000]">
           Services Provided
         </p>
         <p className="leading-7">
@@ -70,7 +70,7 @@ const TermsConditons: FC<TermsConditonsProps> = ({}) => {
           policy, which may be subject to modification or enhancement over time.
         </p>
 
-        <p className="leading-7 pt-4 font-semibold text-primary-500">
+        <p className="leading-7 pt-4 font-semibold text-[#000]">
           Payment Details
         </p>
         <p className="leading-7">
@@ -85,7 +85,7 @@ const TermsConditons: FC<TermsConditonsProps> = ({}) => {
           updates posted on the website for immediate user awareness.
         </p>
 
-        <p className="leading-7 pt-4 font-semibold text-primary-500">
+        <p className="leading-7 pt-4 font-semibold text-[#000]">
           Verification Process
         </p>
         <p className="leading-7">
@@ -100,7 +100,7 @@ const TermsConditons: FC<TermsConditonsProps> = ({}) => {
           for communication and accounting purposes.
         </p>
 
-        <p className="leading-7 pt-4 font-semibold text-primary-500">
+        <p className="leading-7 pt-4 font-semibold text-[#000]">
           Discount Policy
         </p>
         <p className="leading-7">
@@ -108,7 +108,7 @@ const TermsConditons: FC<TermsConditonsProps> = ({}) => {
           customer satisfaction.
         </p>
 
-        <p className="leading-7 pt-4 font-semibold text-primary-500">
+        <p className="leading-7 pt-4 font-semibold text-[#000]">
           Refund Policy
         </p>
         <p className="leading-7">
@@ -122,7 +122,7 @@ const TermsConditons: FC<TermsConditonsProps> = ({}) => {
           reports or grade records.
         </p>
 
-        <p className="leading-7 pt-4 font-semibold text-primary-500">
+        <p className="leading-7 pt-4 font-semibold text-[#000]">
           Revisions
         </p>
         <p className="leading-7">
@@ -135,7 +135,7 @@ const TermsConditons: FC<TermsConditonsProps> = ({}) => {
           charges.
         </p>
 
-        <p className="leading-7 pt-4 font-semibold text-primary-500">
+        <p className="leading-7 pt-4 font-semibold text-[#000]">
           Limitations of Liability
         </p>
         <p className="leading-7">
@@ -144,7 +144,7 @@ const TermsConditons: FC<TermsConditonsProps> = ({}) => {
           for any error or miscommunication from the user’s side.
         </p>
 
-        <p className="leading-7 pt-4 font-semibold text-primary-500">
+        <p className="leading-7 pt-4 font-semibold text-[#000]">
           Disclaimer
         </p>
         <p className="leading-7">
@@ -153,7 +153,7 @@ const TermsConditons: FC<TermsConditonsProps> = ({}) => {
           jurisdictions are responsible for compliance with applicable laws.
         </p>
 
-        <p className="leading-7 pt-4 font-semibold text-primary-500">
+        <p className="leading-7 pt-4 font-semibold text-[#000]">
           Copyrights
         </p>
         <p className="leading-7">
@@ -165,7 +165,7 @@ const TermsConditons: FC<TermsConditonsProps> = ({}) => {
           user consent is prohibited.
         </p>
 
-        <p className="leading-7 pt-4 font-semibold text-primary-500">
+        <p className="leading-7 pt-4 font-semibold text-[#000]">
           Testimonials
         </p>
         <p className="leading-7">
@@ -179,7 +179,7 @@ const TermsConditons: FC<TermsConditonsProps> = ({}) => {
           violating principles.
         </p>
 
-        <p className="leading-7 pt-4 font-semibold text-primary-500">
+        <p className="leading-7 pt-4 font-semibold text-[#000]">
           Notification Alerts
         </p>
         <p className="leading-7">

@@ -88,7 +88,7 @@ const AppNav: FC<AppNavProps> = ({}) => {
                 {/* <Logo /> */}
               </Link>
             </div>
-            <div className="text-primary-500 font-bold text-center py-3 md:block hidden grow rounded-md mr-2">
+            <div className="text-[#000] font-bold text-center py-3 md:block hidden grow rounded-md mr-2">
               Get 10% Discount - Limited Time Offer!
             </div>
             {/* <div className="flex items-center"> */}

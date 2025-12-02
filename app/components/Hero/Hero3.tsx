@@ -88,7 +88,7 @@ const Hero3: FC<Hero3Props> = () => {
     >
       <div className="container mx-auto  flex flex-col justify-center h-full">
         <div className="lg:max-w-[550px]">
-          <h1 className="lg:text-[31px] sm:text-2xl text-xl font-medium text-primary-500 sm:mb-7 mb-4 lg:leading-[42px]">
+          <h1 className="lg:text-[31px] sm:text-2xl text-xl font-medium text-[#000] sm:mb-7 mb-4 lg:leading-[42px]">
             Reclaim{" "}
             <span className="lg:text-[38px] sm:text-3xl text-2xl font-semibold text-secondary-500">
               40+ Hours a Month!
@@ -97,7 +97,7 @@ const Hero3: FC<Hero3Props> = () => {
             <span className="text-primary-400 font-semibold">Classes</span>{" "}
             While You Start a Profitable Business
           </h1>
-          <p className="lg:text-[31px] sm:text-2xl text-xl font-medium text-primary-500 mb-[30px] lg:leading-[42px]">
+          <p className="lg:text-[31px] sm:text-2xl text-xl font-medium text-[#000] mb-[30px] lg:leading-[42px]">
             Here&#39;s 5 Profitable Business Ideas You Can Launch By Saving Your{" "}
             <br className="lg:block sm:hidden" />
             <span className="bg-primary-400 pt-[5px] pb-[6px] px-2 rounded-[6px] text-white lg:text-[28px] sm:text-xl text-lg font-medium">

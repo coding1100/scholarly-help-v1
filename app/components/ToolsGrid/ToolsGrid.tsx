@@ -25,7 +25,7 @@ const ToolsGrid: FC<ToolsGridProps> = ({ content, mainHeading }) => {
       <div className="xl:container px-10">
         <div>
           <h2
-            className="md:text-5xl text-2xl font-bold text-primary-500"
+            className="md:text-5xl text-2xl font-bold text-[#000]"
             // style={{ lineHeight: "65px" }}
           >
             {mainHeading}

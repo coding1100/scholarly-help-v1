@@ -47,7 +47,7 @@ const Hero: FC<HeroProps> = ({ content }) => {
         <div className="xl:container sm:pl-10 pl-5 xl:pr-10 sm:pr-0 pr-5">
           <div className="grid grid-cols-12">
             <div className="xl:col-span-6 lg:col-span-7 col-span-12">
-              <div className="text-primary-500 sm:text-5xl text-3xl font-bold">
+              <div className="text-[#000] sm:text-5xl text-3xl font-bold">
                 {content.heading1 && <p>{content.heading1}</p>}
                 {content.mainHeading && (
                   <h1 className="sm:mt-6 mt-2 sm:mb-6 mb-2">
@@ -122,7 +122,7 @@ const Hero: FC<HeroProps> = ({ content }) => {
             {content.heading1 && (
               <div className="w-auto flex">
                 <p
-                  className={`text-primary-500 font-bold ${
+                  className={`text-[#000] font-bold ${
                     currentPage !== "/"
                       ? "md:text-5xl text-3xl mb-4"
                       : "md:text-3xl text-xl"
@@ -137,13 +137,13 @@ const Hero: FC<HeroProps> = ({ content }) => {
             )}
             <div>
               {content.mainHeading && (
-                <h1 className="text-primary-500 md:font-bold font-extrabold md:text-5xl text-3xl md:leading-[65px]">
+                <h1 className="text-[#000] md:font-bold font-extrabold md:text-5xl text-3xl md:leading-[65px]">
                   {content.mainHeading}
                 </h1>
               )}
               {content.heading2 && (
                 <p
-                  className={`text-primary-500 font-bold ${
+                  className={`text-[#000] font-bold ${
                     currentPage !== "/"
                       ? "md:text-5xl text-3xl mt-4"
                       : "md:text-3xl text-xl"
@@ -154,7 +154,7 @@ const Hero: FC<HeroProps> = ({ content }) => {
               )}
               <div className={`${!isMobile && "max-w-[520px]"} py-5`}>
                 <div
-                  className="text-primary-500 md:text-lg"
+                  className="text-[#000] md:text-lg"
                   dangerouslySetInnerHTML={{ __html: content.description }}
                 ></div>
               </div>

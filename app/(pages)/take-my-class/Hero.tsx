@@ -108,12 +108,12 @@ const Hero: FC<HeroProps> = ({ content }) => {
           <div className="grid lg:grid-cols-2 gap-5">
             <div className="col-span-1">
               <div className="lg:max-w-[590px] max-w-[325px]">
-                <h1 className="text-primary-500 md:font-bold font-extrabold lg:text-3xl text-2xl">
+                <h1 className="text-[#000] md:font-bold font-extrabold lg:text-3xl text-2xl">
                   {content.mainHeading}
                 </h1>
                 <div>
                   <div
-                    className="text-primary-500 md:pt-4"
+                    className="text-[#000] md:pt-4"
                     dangerouslySetInnerHTML={{ __html: content.description }}
                   ></div>
                 </div>
@@ -132,7 +132,7 @@ const Hero: FC<HeroProps> = ({ content }) => {
                         alt=""
                         className="lg:w-auto w-[39px]"
                       />
-                      <p className="md:text-[13px] text-[10px] font-semibold text-primary-500">
+                      <p className="md:text-[13px] text-[10px] font-semibold text-[#000]">
                         Check Spam / Junk If You Don’t
                         <br className="md:block hidden" />
                         See Our Email Within Minutes

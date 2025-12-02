@@ -15,7 +15,7 @@ const Reasons: FC<ReasonsProps> = ({}) => {
       <div className="md:container md:mx-auto mx-8">
         <div>
           <h2
-            className="font-bold text-primary-500 text-center text-[42px]  mb-3 px-3"
+            className="font-bold text-[#000] text-center text-[42px]  mb-3 px-3"
             style={{ lineHeight: "65px" }}
           >
             Reasons Why You Can Ask Us To “Take My Exam Help”
@@ -28,10 +28,10 @@ const Reasons: FC<ReasonsProps> = ({}) => {
                 <Image className="max-w-[60px]" src={item.icon} alt="" />
               </div>
               <div>
-                <div className="text-primary-500 md:text-xl font-semibold">
+                <div className="text-[#000] md:text-xl font-semibold">
                   {item.title}
                 </div>
-                <div className="text-primary-500 leading-7">
+                <div className="text-[#000] leading-7">
                   {item.description}
                 </div>
               </div>

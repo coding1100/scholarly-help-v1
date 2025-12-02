@@ -89,14 +89,14 @@ const Hero4: FC<Hero4Props> = () => {
       <div className="container mx-auto  flex flex-col justify-center h-full">
         <div className="lg:max-w-[550px]">
           <h1 className="sm:w-[442px]">
-            <span className="sm:text-[41px] text-3xl font-bold text-primary-500 sm:leading-[52px]">
+            <span className="sm:text-[41px] text-3xl font-bold text-[#000] sm:leading-[52px]">
               Still thinking about Outsourcing Your
             </span>{" "}
-            <span className="sm:text-[54px] text-3xl sm:leading-[70px] font-bold text-primary-500">
+            <span className="sm:text-[54px] text-3xl sm:leading-[70px] font-bold text-[#000]">
               Online Classes?
             </span>
           </h1>
-          <p className="text-lg text-primary-500 mb-5 leading-8">
+          <p className="text-lg text-[#000] mb-5 leading-8">
             500+ students trust us to handle their toughest classes.
             <br className="sm:block hidden" />
             Now, it’s your turn—with an exclusive{" "}

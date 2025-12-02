@@ -47,10 +47,10 @@ const AcademicPartner: FC<AcademicPartnerProps> = ({
       <div className="xl:container px-10">
         <div>
           <h2
-            className="font-bold text-primary-500 text-center text-[42px]  mb-3 md:leading-[65px]"
+            className="font-bold text-[#000] text-center text-[42px]  mb-3 md:leading-[65px]"
             dangerouslySetInnerHTML={{ __html: mainHeading }}
           />
-          {/* <p className="font-bold text-primary-500 text-center text-[42px]  mb-3 md:leading-[65px]">
+          {/* <p className="font-bold text-[#000] text-center text-[42px]  mb-3 md:leading-[65px]">
             {mainHeading}
           </p> */}
         </div>

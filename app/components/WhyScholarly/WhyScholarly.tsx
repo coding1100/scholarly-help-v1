@@ -43,7 +43,7 @@ const WhyScholarly: FC<WhyScholarlyProps> = ({ content, header }) => {
     >
       <div className="container xxl:px-10 sm:px-0 px-10">
         <div>
-          <h2 className="font-bold text-primary-500 text-center text-[42px]  mb-3">
+          <h2 className="font-bold text-[#000] text-center text-[42px]  mb-3">
             {header.mainHeading}
           </h2>
           <div
@@ -81,7 +81,7 @@ const WhyScholarly: FC<WhyScholarlyProps> = ({ content, header }) => {
                           <Idea />
                         </div>
                       </div>
-                      <div className="mx-3 text-start font-semibold text-primary-500 leading-5">
+                      <div className="mx-3 text-start font-semibold text-[#000] leading-5">
                         <h3>{items.title}</h3>
                       </div>
                     </div>

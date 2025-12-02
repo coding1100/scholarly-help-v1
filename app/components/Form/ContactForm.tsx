@@ -85,7 +85,7 @@ const ContactUs = () => {
               }}
             />
             {errors.phoneNumber && (
-              <div className="text-primary-500">
+              <div className="text-[#000]">
                 {errors.phoneNumber.message}
               </div>
             )}

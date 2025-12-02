@@ -20,7 +20,7 @@ const AboutUs: FC<AboutUsProps> = ({}) => {
           />
         </div>
         <div className="my-4 ">
-          <h1 className="text-center text-5xl font-bold text-primary-500">
+          <h1 className="text-center text-5xl font-bold text-[#000]">
             About Us
           </h1>
         </div>
@@ -40,7 +40,7 @@ const AboutUs: FC<AboutUsProps> = ({}) => {
           includes dedicated writers and keen editors, who are always there to
           help you with your complicated academic projects.
         </p>
-        <p className="text-5xl leading-7 py-12 font-bold text-primary-500 text-center">
+        <p className="text-5xl leading-7 py-12 font-bold text-[#000] text-center">
           Our Mission
         </p>
         <p className="text-lg leading-7">
@@ -49,7 +49,7 @@ const AboutUs: FC<AboutUsProps> = ({}) => {
           specific field in an online class, we try our best to meet their
           expectations and make them 100% satisfied.
         </p>
-        <p className="text-5xl leading-7 py-12 font-bold text-primary-500 text-center">
+        <p className="text-5xl leading-7 py-12 font-bold text-[#000] text-center">
           Our Vision
         </p>
         <p className="text-lg leading-7">
@@ -58,7 +58,7 @@ const AboutUs: FC<AboutUsProps> = ({}) => {
           project type and help you find the finest means to accomplish your
           goal.
         </p>
-        <p className="text-5xl leading-7 py-12 font-bold text-primary-500 text-center">
+        <p className="text-5xl leading-7 py-12 font-bold text-[#000] text-center">
           Ownership
         </p>
         <p className="text-lg leading-7">

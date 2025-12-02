@@ -98,7 +98,7 @@ const DetailsAndMsgForm: FC<DetailsAndMsgFormProps> = ({}) => {
   };
   return (
     <div className="w-full pt-10 pb-5">
-      <p className="font-bold text-center md:text-4xl text-2xl text-primary-500">
+      <p className="font-bold text-center md:text-4xl text-2xl text-[#000]">
         Get a Text Back in 5 Minutes!
       </p>
       <div className="py-5 px-5 rounded-md mt-3">

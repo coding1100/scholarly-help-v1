@@ -95,7 +95,7 @@ const Faq: FC<FaqProps> = ({ content = faqContent }) => {
   return (
     <section className="sm:pt-[83px] sm:pb-14 max-[1320px]:px-8 pt-8 pb-8 bg-white text-[#171717]">
       <div className="max-w-7xl mx-auto max-[1320px]:px-8">
-        <h2 className="font-bold text-primary-500 text-center text-[42px]  mb-3 mb-10">
+        <h2 className="font-bold text-[#000] text-center text-[42px]  mb-3 mb-10">
           Frequently Asked Questions
         </h2>
 
@@ -187,7 +187,7 @@ const Faq: FC<FaqProps> = ({ content = faqContent }) => {
         <div className="flex justify-center mt-8 lg:hidden">
           <button
             onClick={toggleShowMore}
-            className="text-primary-500 font-bold hover:underline focus:outline-none"
+            className="text-[#000] font-bold hover:underline focus:outline-none"
           >
             {showMore ? "Show Less FAQs" : "Show More FAQs"}
           </button>

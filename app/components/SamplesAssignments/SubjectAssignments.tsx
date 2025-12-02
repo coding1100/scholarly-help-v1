@@ -15,7 +15,7 @@ const SubjectAssignments: FC<SubjectAssignmentsProps> = ({
   const currentPage = usePathname();
   return (
     <div className="mt-10">
-      <div className="md:text-5xl sm:text-3xl text-xl text-primary-500 font-bold text-center my-16">
+      <div className="md:text-5xl sm:text-3xl text-xl text-[#000] font-bold text-center my-16">
         {mainTitle}
       </div>
       <div className="grid grid-cols-12 gap-4">

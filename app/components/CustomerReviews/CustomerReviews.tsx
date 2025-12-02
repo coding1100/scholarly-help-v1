@@ -96,10 +96,10 @@ const CustomerReviews: FC<CustomerReviewsProps> = ({ btnText }) => {
     //   {/* <div className="container 2xl:px-16 lg:px-10 z-10"> */}
     //   <div className="z-10 customerReviewsWrap">
     //     <div>
-    //       <h2 className="font-bold text-primary-500 text-center text-[42px]  mb-3">
+    //       <h2 className="font-bold text-[#000] text-center text-[42px]  mb-3">
     //         Customer Reviews
     //       </h2>
-    //       <p className="md:text-xl text-primary-500 text-center mt-6">
+    //       <p className="md:text-xl text-[#000] text-center mt-6">
     //         15000+ Customers’ genuine feedback with the ratings of 4.9/5
     //       </p>
     //     </div>
@@ -122,7 +122,7 @@ const CustomerReviews: FC<CustomerReviewsProps> = ({ btnText }) => {
     //   </div>
     // </div>
     <div className="container mx-auto sm:py-14 py-8 ">
-      <h2 className="font-bold text-primary-500 text-center text-[42px]  mb-3">
+      <h2 className="font-bold text-[#000] text-center text-[42px]  mb-3">
         How Student Rate Us!
       </h2>
       <p className="md:text-5xl text-2xl text-[#00B67A] text-center">

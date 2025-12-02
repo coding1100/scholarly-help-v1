@@ -25,7 +25,7 @@ const Tool: FC<ToolProps> = ({ content }) => {
           <Image src={content.icon} alt="img" />
         </div>
         <div>
-          <p className="text-lg text-primary-500 ms-3 mt-3">{content.title}</p>
+          <p className="text-lg text-[#000] ms-3 mt-3">{content.title}</p>
         </div>
       </div>
     // </Link>

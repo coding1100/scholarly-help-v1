@@ -13,7 +13,7 @@ const Privacy: FC<PrivacyProps> = ({}) => {
           <Image src={AboutUsImg} alt="image" className="max-w-80" />
         </div>
         <div className="my-4 ">
-          <h1 className="text-center md:text-5xl text-2xl font-bold text-primary-500">
+          <h1 className="text-center md:text-5xl text-2xl font-bold text-[#000]">
             Privacy Policy
           </h1>
         </div>
@@ -36,7 +36,7 @@ const Privacy: FC<PrivacyProps> = ({}) => {
           the website authorities, while executing your projects.
         </p>
 
-        <p className="leading-7 pt-4 font-semibold text-primary-500">
+        <p className="leading-7 pt-4 font-semibold text-[#000]">
           Collection of Personal Data
         </p>
         <p className="leading-7">
@@ -50,7 +50,7 @@ const Privacy: FC<PrivacyProps> = ({}) => {
           protections.
         </p>
 
-        <p className="leading-7 pt-4 font-semibold text-primary-500">
+        <p className="leading-7 pt-4 font-semibold text-[#000]">
           Use of Personal Data
         </p>
         <p className="leading-7">
@@ -69,7 +69,7 @@ const Privacy: FC<PrivacyProps> = ({}) => {
           information to detect the website issues.
         </p>
 
-        <p className="leading-7 pt-4 font-semibold text-primary-500">Cookies</p>
+        <p className="leading-7 pt-4 font-semibold text-[#000]">Cookies</p>
         <p className="leading-7">
           Cookies are the small files created by the website you visit. This is
           used to make your online experience simpler by saving your browsing

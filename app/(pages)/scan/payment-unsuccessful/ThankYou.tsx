@@ -14,7 +14,7 @@ const ThankYou: FC<ThankYouProps> = ({}) => {
   return (
     <div className="bg-[#d1d1f7] pt-10 min-h-screen">
       <div className="sm:container sm:mx-auto mx-5 bg-[#d1d1f7]">
-        <div className="text-center pt-24 md:text-5xl sm:text-3xl text-xl font-bold text-primary-500">
+        <div className="text-center pt-24 md:text-5xl sm:text-3xl text-xl font-bold text-[#000]">
           <div>Payment Unsuccessful!</div>
           <div className="mt-8 flex justify-center ">
             <Image src={BrokenCard} alt="img"/>

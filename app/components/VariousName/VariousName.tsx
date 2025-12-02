@@ -29,7 +29,7 @@ const VariousName: FC<VariousNameProps> = ({ content, mainHeading }) => {
       <div className="xl:container px-10">
         <div>
           <h2
-            className="font-bold text-primary-500 text-center text-[42px]  mb-3"
+            className="font-bold text-[#000] text-center text-[42px]  mb-3"
             // style={{ lineHeight: "65px" }}
           >
             {/* Help with Online Exam Under Various Names: You Name It, We Can Do

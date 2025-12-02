@@ -124,18 +124,18 @@ const Hero2: FC<HeroProps> = ({ content }) => {
           >
             <div className="w-auto flex">
               <h1
-                className={`text-primary-500 font-bold md:text-3xl text-xl mt-2 mr-2`}
+                className={`text-[#000] font-bold md:text-3xl text-xl mt-2 mr-2`}
               >
                 {content.heading1}
               </h1>
             </div>
             <div>
-              <h1 className="text-primary-500 md:font-bold font-extrabold text-3xl">
+              <h1 className="text-[#000] md:font-bold font-extrabold text-3xl">
                 {content.mainHeading}
               </h1>
               {content.heading2 && (
                 <h1
-                  className={`text-primary-500 font-bold ${
+                  className={`text-[#000] font-bold ${
                     currentPage !== "/"
                       ? "md:text-5xl text-3xl mt-4"
                       : "md:text-3xl text-xl"
@@ -146,7 +146,7 @@ const Hero2: FC<HeroProps> = ({ content }) => {
               )}
               <div className={`${!isMobile && "max-w-[520px]"} py-5`}>
                 <div
-                  className="text-primary-500"
+                  className="text-[#000]"
                   dangerouslySetInnerHTML={{ __html: content.description }}
                 ></div>
               </div>
@@ -264,7 +264,7 @@ const Hero2: FC<HeroProps> = ({ content }) => {
                   <div className="w-[80%] mx-auto p-5 rounded-b-lg border border-white">
                     <div className="flex justify-center items-center mx-auto gap-3">
                       <Image src={yellowEnvalop} alt="" />
-                      <p className="text-[13px] font-semibold text-primary-500">
+                      <p className="text-[13px] font-semibold text-[#000]">
                         Check Spam / Junk If You Don’t
                         <br />
                         See Our Email Within Minutes

@@ -37,7 +37,7 @@ const ExcellenceProof: FC<ExcellenceProofProps> = ({ content, btnText }) => {
     <div className="pt-8 pb-12 flex justify-center">
       <div className="container px-10">
         <div>
-          <h2 className="font-bold text-primary-500 text-center text-[42px]  mb-3 md:leading-[72px]">
+          <h2 className="font-bold text-[#000] text-center text-[42px]  mb-3 md:leading-[72px]">
             Proof of Our Excellence:
             <br />
             Achieved A-Grades for Students!
@@ -63,7 +63,7 @@ const ExcellenceProof: FC<ExcellenceProofProps> = ({ content, btnText }) => {
           className="flex justify-center mt-8 mb-6 md:hidden"
           onClick={toggleImgs}
         >
-          <p className="w-64 text-primary-500 text-center font-bold">
+          <p className="w-64 text-[#000] text-center font-bold">
             {showMore === true
               ? "Show Less ScreenShots"
               : "Show More ScreenShots"}

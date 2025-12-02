@@ -29,13 +29,13 @@ const ToolsHero: FC<ToolsHeroProps> = ({ content }) => {
         <div className="xl:container xl:px-10 grid lg:grid-cols-2">
           <div>
             <h1
-              className="text-primary-500 md:font-bold font-extrabold md:text-5xl text-3xl whitespace-pre-line"
+              className="text-[#000] md:font-bold font-extrabold md:text-5xl text-3xl whitespace-pre-line"
               style={{ lineHeight: "65px" }}
             >
               {content.mainHeading}
             </h1>
             <div className={`${!isMobile && "max-w-[520px]"} py-5`}>
-              <p className="text-primary-500 text-lg">{content.description}</p>
+              <p className="text-[#000] text-lg">{content.description}</p>
             </div>
             <div className="flex justify-center md:justify-start">
               <Button

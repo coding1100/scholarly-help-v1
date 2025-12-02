@@ -177,8 +177,8 @@ const Footer: FC<FooterProps> = () => {
                   { href: "https://www.instagram.com/scholarlyhelp/", icon: <Image src={Instagram} alt="Instagram" /> },
                   { href: "https://www.linkedin.com/company/scholarlyhelp/", icon: <Image src={Linkedin} alt="LinkedIn" /> },
                   { href: "https://www.tiktok.com/@scholarlyhelp.com", icon: <Image src={Tiktok} alt="TikTok" /> },
-                  { href: "https://www.snapchat.com/add/helpscholarly", icon: <FaSnapchat className="text-[21px] text-primary-500" /> },
-                  { href: "https://www.youtube.com/@ScholarlyHelp/", icon: <SiYoutubemusic className="text-[21px] text-primary-500" /> },
+                  { href: "https://www.snapchat.com/add/helpscholarly", icon: <FaSnapchat className="text-[21px] text-[#000]" /> },
+                  { href: "https://www.youtube.com/@ScholarlyHelp/", icon: <SiYoutubemusic className="text-[21px] text-[#000]" /> },
                 ].map((social, i) => (
                   <a key={i} href={social.href} target="_blank" rel="noopener noreferrer" className="w-5 h-5">
                     {social.icon}
