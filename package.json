@@ -28,6 +28,7 @@
     "react-icons": "^5.0.1",
     "react-international-phone": "^4.2.6",
     "react-loader-spinner": "^6.1.6",
+    "react-responsive-modal": "^6.4.2",
     "react-slick": "^0.30.1",
     "react-spinners": "^0.13.8",
     "slick-carousel": "^1.8.1",
