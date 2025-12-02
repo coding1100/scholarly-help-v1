@@ -116,7 +116,7 @@ export default function GuaranteeSection() {
       <div className="mx-auto w-full max-w-7xl pt-3 pb-10 flex relative justify-between max-[1080px]:flex-col">
         {/* Header */}
         <div className="text-left mb-12 mt-10 w-[28%] max-[1080px]:w-[100%]">
-          <h2 className="text-[42px] text-primary-500 font-bold sm:text-[32px] leading-[120%] tracking-[0] mb-[30px]">
+          <h2 className="text-[42px] text-primary-500 font-bold  leading-[120%] tracking-[0] mb-[30px]">
             We&apos;ve Got You Covered — Guaranteed!
           </h2>
           <p className="font-poppins font-normal sm:text-[17px] text-sm leading-[1.5] tracking-[0] mb-[30px]">

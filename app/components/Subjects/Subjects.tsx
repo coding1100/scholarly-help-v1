@@ -41,7 +41,7 @@ const Subjects: FC<SubjectsProps> = ({ content = [], mainHeading = "Subjects We 
       <div className="xl:container px-10">
         <div>
           <h2
-            className="md:text-5xl text-2xl font-bold text-primary-500 text-center"
+            className="font-bold text-primary-500 text-center text-[42px]  mb-3"
             style={{ lineHeight: "65px" }}
           >
             {/* Subjects We Work On */}

@@ -143,7 +143,7 @@ export default function WhySlider() {
     <section className="w-full overflow-hidden mt-[-100px] pt-[110px] pb-[30px] bg-white">
       <div className="w-full px-6 pb-10 scale-[1.03]">
         <div className="py-10 ">
-          <h2 className="text-[42px] text-primary-500font-bold mb-2 sm:text-[32px] sm:font-bold font-semibold text-center text-[#171717]">
+          <h2 className="text-[42px] text-primary-500 font-bold mb-2  font-bold text-center text-[#171717]">
             Why choose Scholarly
           </h2>
           <p className="sm:text-[18px] text-sm text-center text-[#171717]">

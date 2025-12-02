@@ -15,7 +15,7 @@ const Reasons: FC<ReasonsProps> = ({}) => {
       <div className="md:container md:mx-auto mx-8">
         <div>
           <h2
-            className="md:text-5xl text-2xl font-bold text-primary-500 text-center px-3"
+            className="font-bold text-primary-500 text-center text-[42px]  mb-3 px-3"
             style={{ lineHeight: "65px" }}
           >
             Reasons Why You Can Ask Us To “Take My Exam Help”

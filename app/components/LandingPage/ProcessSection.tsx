@@ -6,7 +6,7 @@ export default function ProcessSection() {
       <div className="mx-auto max-w-7xl pb-10 max-[1320px]:px-8">
         <div className="relative rounded-2xl bg-[#3C3D5D] px-6 py-12 sm:px-10 lg:px-14 lg:py-16 text-white">
           <div className="mx-auto max-w-4xl text-center">
-            <h2 className="text-[42px] text-primary-500font-bold sm:text-[32px] sm:font-bold font-semibold leading-tight">
+            <h2 className="text-[42px] text-primary-500font-bold  sm:font-bold font-semibold leading-tight">
               State-of-the-Art Process We Follow
             </h2>
             <p className="mt-3 sm:text-[18px] text-sm font-medium text-white/80">

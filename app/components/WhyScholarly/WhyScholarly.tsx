@@ -43,7 +43,7 @@ const WhyScholarly: FC<WhyScholarlyProps> = ({ content, header }) => {
     >
       <div className="container xxl:px-10 sm:px-0 px-10">
         <div>
-          <h2 className="md:text-5xl text-2xl font-bold text-primary-500 text-center">
+          <h2 className="font-bold text-primary-500 text-center text-[42px]  mb-3">
             {header.mainHeading}
           </h2>
           <div

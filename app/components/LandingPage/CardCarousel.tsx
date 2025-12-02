@@ -101,8 +101,8 @@ export default function CardCarousel() {
   return (
     <section className="w-full mt-[15px] px-4 text-[#171717]">
       <div className="w-full overflow-hidden"> {/* Header */} 
-        <div className="text-center mb-12"> 
-          <h2 className="text-[42px] text-primary-500font-bold font-bold sm:text-[32px] font-bold text-gray-900 mb-3 "> The Academic Pressure You're Facing Every Day </h2> 
+        <div className="text-center mb-12 mx-auto max-w-[740px]"> 
+          <h2 className="text-[42px] text-primary-500 font-bold   mb-3"> The Academic Pressure You're Facing Every Day </h2> 
           <p className="sm:text-lg text-sm text-gray-600 max-w-3xl mx-auto"> We understand the weight on your shoulders — and we're here to lighten the load. </p> 
         </div>
         </div>

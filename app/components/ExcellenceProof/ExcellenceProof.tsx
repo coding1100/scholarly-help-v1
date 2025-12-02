@@ -37,7 +37,7 @@ const ExcellenceProof: FC<ExcellenceProofProps> = ({ content, btnText }) => {
     <div className="pt-8 pb-12 flex justify-center">
       <div className="container px-10">
         <div>
-          <h2 className="md:text-5xl text-2xl font-bold text-primary-500 text-center md:leading-[72px]">
+          <h2 className="font-bold text-primary-500 text-center text-[42px]  mb-3 md:leading-[72px]">
             Proof of Our Excellence:
             <br />
             Achieved A-Grades for Students!

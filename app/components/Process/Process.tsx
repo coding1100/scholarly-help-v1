@@ -33,7 +33,7 @@ const Process: FC<ProcessProps> = ({ content }) => {
     <div className="py-8 flex justify-center bg-primary-100">
       <div className="container px-10">
         <div>
-          <h2 className="md:text-5xl text-2xl font-bold text-primary-500 text-center">
+          <h2 className="font-bold text-primary-500 text-center text-[42px]  mb-3">
             State-of-the-Art Process We Follow
           </h2>
         </div>
