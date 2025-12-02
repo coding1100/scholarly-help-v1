@@ -14,29 +14,21 @@
     "@stripe/react-stripe-js": "^2.4.0",
     "@stripe/stripe-js": "^1.54.2",
     "@szhsin/react-accordion": "^1.2.3",
-    "@tiptap/core": "^3.0.7",
-    "@tiptap/extension-bubble-menu": "^3.0.7",
-    "@tiptap/extension-table": "^3.1.0",
-    "@tiptap/extension-table-cell": "^3.1.0",
-    "@tiptap/extension-table-header": "^3.1.0",
-    "@tiptap/extension-table-row": "^3.1.0",
-    "@tiptap/pm": "^3.0.7",
-    "@tiptap/react": "^3.0.7",
-    "@tiptap/starter-kit": "^3.0.7",
+
     "@types/react-slick": "^0.23.13",
     "axios": "^1.6.7",
     "clsx": "^2.1.0",
     "dayjs": "^1.11.10",
     "dotenv": "^17.2.3",
     "google-libphonenumber": "^3.2.34",
-    "jsonwebtoken": "^9.0.2",
+
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.555.0",
-    "mongodb": "^7.0.0",
+
     "next": "^15.0.0",
     "nextjs-current-url": "^1.0.3",
     "react": "^18",
-    "react-code-blocks": "^0.1.6",
+
     "react-datetime": "^3.2.0",
     "react-dom": "^18",
     "react-hook-form": "^7.51.2",
@@ -50,17 +42,17 @@
     "react-spinners": "^0.13.8",
     "react-spring": "^9.7.3",
     "react-switch": "^7.1.0",
-    "rehype-katex": "^7.0.1",
-    "rehype-raw": "^7.0.0",
-    "remark-gfm": "^4.0.0",
-    "remark-math": "^6.0.0",
+
     "slick-carousel": "^1.8.1",
     "tailwind-merge": "^2.2.1",
     "tailwind-scrollbar-hide": "^1.1.7"
   },
+  "overrides": {
+    "isolated-vm": false
+  },
   "devDependencies": {
     "@types/google-libphonenumber": "^7.4.30",
-    "@types/jsonwebtoken": "^9.0.10",
+
 
     "@types/node": "^20",
     "@types/react": "^18",
