@@ -36,7 +36,7 @@ const HeroLead: React.FC = () => {
       >
         Stop Sacrificing
         <br />
-        Your Time, We'll
+        Your Time, We&apos;ll
         <br />
         Handle Your
         <br />
