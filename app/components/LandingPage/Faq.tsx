@@ -8,7 +8,7 @@ const DownArrow = "/assets/Icon/faqDropdown.webp";
 const faqContent = [
   {
     id: 1,
-    question: "Will anyone know if I’m getting your services...?",
+    question: "Will anyone know if I’m getting your services?",
     answer:
       "Absolutely not! Your work will be 100% confidential and won’t be shared with any third party. Your personal information and data will be in safe hands.",
   },

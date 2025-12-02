@@ -6,7 +6,7 @@ import megaMenuImage from "@/app/assets/Images/mega-menu-image.svg"
 import Image from "next/image";
 import LogoSmall from "@/app/assets/Images/logoSmall.png";
 import LogoNormal from "@/app/assets/Images/logo.png";
-import Phone from "@/app/assets/Icon/phone.svg";
+import Phone from "@/app/assets/Icons/phone.svg";
 
 export default function Header() {
     const [mobileOpen, setMobileOpen] = useState(false);
@@ -18,64 +18,46 @@ export default function Header() {
             title: "Online Class",
             submenu: [
                 {
-                    title: "Take My Math Class",
+                    title: "Subjects",
                     links: [
-                        { name: "Algebra", href: "/math/algebra" },
-                        { name: "Calculus", href: "/math/calculus" },
-                        { name: "Statistics", href: "/math/statistics" },
-                        { name: "Business", href: "/math/Business" },
-                        { name: "Computer Science & IT", href: "/math/Computer Science & IT" },
-                        { name: "Nursing", href: "/math/Nursing" },
+                        { name: "Take My Chemistry Class", href: "/online-class/chemistry" },
+                        { name: "Take My Biology Class", href: "/online-class/biology/" },
+                        { name: "Take My Economics Class", href: "/online-class/biology/" },
+                        { name: "Take My Math Class", href: "/online-class/math" },
+                        { name: "Take My Law Class", href: "/math/law" },
                     ],
                     button: [
-                        { name: "See All Subjects", href: "#" },
+                        { name: "See All Subjects", href: "/online-class" },
                     ]
                 },
                 {
-                    title: "Take My Psychology Class",
+                    title: "The Stress We Solve",
                     links: [
-                        { name: "Algebra", href: "/math/algebra" },
-                        { name: "Calculus", href: "/math/calculus" },
-                        { name: "Statistics", href: "/math/statistics" },
-                        { name: "Business", href: "/math/Business" },
-                        { name: "Computer Science & IT", href: "/math/Computer Science & IT" },
-                        { name: "Nursing", href: "/math/Nursing" },
+                        { name: "Struggling to manage online classes?", href: "" },
+                        { name: "No time for discussions or quizzes?", href: "" },
+                        { name: "Need guaranteed grades for your class?", href: "" },
+                        { name: "Balancing work, study, and life?", href: "" },
+                        { name: "Computer Science & IT", href: "" },
+                        { name: "This Prerequisite is Tanking My GPA", href: "" },
 
                     ],
                     button: [
-                        { name: "Find Your Solution", href: "#" },
+                        { name: "Find Your Solution", href: "" },
                     ]
                 },
                 {
-                    title: "Take My Business Class",
+                    title: "How It Works & Proof",
                     links: [
-                        { name: "Algebra", href: "/math/algebra" },
-                        { name: "Calculus", href: "/math/calculus" },
-                        { name: "Statistics", href: "/math/statistics" },
-                        { name: "Business", href: "/math/Business" },
-                        { name: "Computer Science & IT", href: "/math/Computer Science & IT" },
-                        { name: "Nursing", href: "/math/Nursing" },
+                        { name: "How We Guarantee 100% Anonymity", href: "" },
+                        { name: "Our Plagiarism-Free Process", href: "" },
+                        { name: "Our US-Based PhD Experts", href: "" },
+                        { name: "Success Stories & Reviews", href: "" },
 
                     ],
                     button: [
                         { name: "See Success Stories", href: "#" },
                     ]
-                },
-                {
-                    title: "Computer Science & IT",
-                    links: [
-                        { name: "Algebra", href: "/math/algebra" },
-                        { name: "Calculus", href: "/math/calculus" },
-                        { name: "Statistics", href: "/math/statistics" },
-                        { name: "Business", href: "/math/Business" },
-                        { name: "Computer Science & IT", href: "/math/Computer Science & IT" },
-                        { name: "Nursing", href: "/math/Nursing" },
-
-                    ],
-                    button: [
-                        { name: "See Tools", href: "#" },
-                    ]
-                },
+                }
 
             ],
         },
@@ -83,126 +65,74 @@ export default function Header() {
             title: "Exam Help",
             submenu: [
                 {
-                    title: "Take My Math Class",
+                    title: "Subjects",
                     links: [
-                        { name: "Algebra", href: "/math/algebra" },
-                        { name: "Calculus", href: "/math/calculus" },
-                        { name: "Statistics", href: "/math/statistics" },
-                        { name: "Business", href: "/math/Business" },
-                        { name: "Computer Science & IT", href: "/math/Computer Science & IT" },
-                        { name: "Nursing", href: "/math/Nursing" },
+                        { name: "Take My Nursing Exam", href: "/exams/nursing" },
+                        { name: "Take My Statistics Exam", href: "/exams/statistics" },
+                        { name: "Take My Economics Exam", href: "/exams/economics" },
+                        { name: "Take My Accounting  Exam", href: "/exams/accounting" },
+                        { name: "Take My English Exam", href: "/exams/english" },
                     ],
                     button: [
-                        { name: "See All Subjects", href: "#" },
+                        { name: "See All Subjects", href: "/exams" },
                     ]
                 },
                 {
-                    title: "Take My Psychology Class",
+                    title: "Our Guarantees",
                     links: [
-                        { name: "Algebra", href: "/math/algebra" },
-                        { name: "Calculus", href: "/math/calculus" },
-                        { name: "Statistics", href: "/math/statistics" },
-                        { name: "Business", href: "/math/Business" },
-                        { name: "Computer Science & IT", href: "/math/Computer Science & IT" },
-                        { name: "Nursing", href: "/math/Nursing" },
+                        { name: "Our Promise (Risk-Free)", href: "" },
+                        { name: "A or B Grade Guarantee", href: "" },
+                        { name: "100% Confidentiality Pact", href: "" },
+                        { name: "0% Plagiarism Guarantee", href: "" },
+                        { name: "On-Time Delivery Guarantee", href: "" },
 
                     ],
                     button: [
-                        { name: "Find Your Solution", href: "#" },
+                        { name: "Find Your Solution", href: "" },
                     ]
                 },
                 {
-                    title: "Take My Business Class",
+                    title: "How It Works & Proof",
                     links: [
-                        { name: "Algebra", href: "/math/algebra" },
-                        { name: "Calculus", href: "/math/calculus" },
-                        { name: "Statistics", href: "/math/statistics" },
-                        { name: "Business", href: "/math/Business" },
-                        { name: "Computer Science & IT", href: "/math/Computer Science & IT" },
-                        { name: "Nursing", href: "/math/Nursing" },
+                        { name: "How We Guarantee 100% Anonymity", href: "" },
+                        { name: "Our Plagiarism-Free Process", href: "" },
+                        { name: "Our US-Based PhD Experts", href: "" },
+                        { name: "Success Stories & Reviews", href: "" },
 
                     ],
                     button: [
-                        { name: "See Success Stories", href: "#" },
+                        { name: "See Success Stories", href: "" },
                     ]
-                },
-                {
-                    title: "Computer Science & IT",
-                    links: [
-                        { name: "Algebra", href: "/math/algebra" },
-                        { name: "Calculus", href: "/math/calculus" },
-                        { name: "Statistics", href: "/math/statistics" },
-                        { name: "Business", href: "/math/Business" },
-                        { name: "Computer Science & IT", href: "/math/Computer Science & IT" },
-                        { name: "Nursing", href: "/math/Nursing" },
-
-                    ],
-                    button: [
-                        { name: "See Tools", href: "#" },
-                    ]
-                },
+                }
             ],
         },
         {
             title: "Assignment Help",
             submenu: [
                 {
-                    title: "Take My Math Class",
+                    title: "Subjects",
                     links: [
-                        { name: "Algebra", href: "/math/algebra" },
-                        { name: "Calculus", href: "/math/calculus" },
-                        { name: "Statistics", href: "/math/statistics" },
-                        { name: "Business", href: "/math/Business" },
-                        { name: "Computer Science & IT", href: "/math/Computer Science & IT" },
-                        { name: "Nursing", href: "/math/Nursing" },
+                        { name: "Statistics Assignment Help", href: "/assignment/statistics" },
+                        { name: "Finance Assignment Help", href: "/assignment/finance" },
+                        { name: "Marketing Assignment Help", href: "/assignment/marketing" },
+                        { name: "Math Assignment Help", href: "/assignment/math" },
+                        { name: "Accounting Assignment Help", href: "/assignment/accounting" },
                     ],
                     button: [
-                        { name: "See All Subjects", href: "#" },
+                        { name: "See All Subjects", href: "/assignment" },
                     ]
                 },
                 {
-                    title: "Take My Psychology Class",
+                    title: "How It Works & Proof",
                     links: [
-                        { name: "Algebra", href: "/math/algebra" },
-                        { name: "Calculus", href: "/math/calculus" },
-                        { name: "Statistics", href: "/math/statistics" },
-                        { name: "Business", href: "/math/Business" },
-                        { name: "Computer Science & IT", href: "/math/Computer Science & IT" },
-                        { name: "Nursing", href: "/math/Nursing" },
+                        { name: "How We Guarantee 100% Anonymity", href: "" },
+                        { name: "Our Plagiarism-Free Process", href: "" },
+                        { name: "Our US-Based PhD Experts", href: "" },
+                        { name: "Success Stories & Reviews", href: "" },
 
                     ],
                     button: [
-                        { name: "Find Your Solution", href: "#" },
-                    ]
-                },
-                {
-                    title: "Take My Business Class",
-                    links: [
-                        { name: "Algebra", href: "/math/algebra" },
-                        { name: "Calculus", href: "/math/calculus" },
-                        { name: "Statistics", href: "/math/statistics" },
-                        { name: "Business", href: "/math/Business" },
-                        { name: "Computer Science & IT", href: "/math/Computer Science & IT" },
-                        { name: "Nursing", href: "/math/Nursing" },
-
-                    ],
-                    button: [
-                        { name: "See Success Stories", href: "#" },
-                    ]
-                },
-                {
-                    title: "Computer Science & IT",
-                    links: [
-                        { name: "Algebra", href: "/math/algebra" },
-                        { name: "Calculus", href: "/math/calculus" },
-                        { name: "Statistics", href: "/math/statistics" },
-                        { name: "Business", href: "/math/Business" },
-                        { name: "Computer Science & IT", href: "/math/Computer Science & IT" },
-                        { name: "Nursing", href: "/math/Nursing" },
-
-                    ],
-                    button: [
-                        { name: "See Tools", href: "#" },
+                        { name: "Find Your Solution", href: "" },
                     ]
                 },
             ],
@@ -211,128 +141,38 @@ export default function Header() {
             title: "Homework",
             submenu: [
                 {
-                    title: "Take My Math Class",
+                    title: "Subjects",
                     links: [
-                        { name: "Algebra", href: "/math/algebra" },
-                        { name: "Calculus", href: "/math/calculus" },
-                        { name: "Statistics", href: "/math/statistics" },
-                        { name: "Business", href: "/math/Business" },
-                        { name: "Computer Science & IT", href: "/math/Computer Science & IT" },
-                        { name: "Nursing", href: "/math/Nursing" },
+                        { name: "Math Homework Help", href: "/homework/math" },
+                        { name: "Statistics Homework Help", href: "/homework/statistics" },
+                        { name: "Chemistry Homework Help", href: "/homework/chemistry" },
+                        { name: "Accounting Homework Help", href: "/homework/accounting" },
+                        { name: "Computer science Homework Help", href: "/homework/computer-science" },
                     ],
                     button: [
-                        { name: "See All Subjects", href: "#" },
+                        { name: "See All Subjects", href: "/homework" },
                     ]
                 },
-                {
-                    title: "Take My Psychology Class",
-                    links: [
-                        { name: "Algebra", href: "/math/algebra" },
-                        { name: "Calculus", href: "/math/calculus" },
-                        { name: "Statistics", href: "/math/statistics" },
-                        { name: "Business", href: "/math/Business" },
-                        { name: "Computer Science & IT", href: "/math/Computer Science & IT" },
-                        { name: "Nursing", href: "/math/Nursing" },
-
-                    ],
-                    button: [
-                        { name: "Find Your Solution", href: "#" },
-                    ]
-                },
-                {
-                    title: "Take My Business Class",
-                    links: [
-                        { name: "Algebra", href: "/math/algebra" },
-                        { name: "Calculus", href: "/math/calculus" },
-                        { name: "Statistics", href: "/math/statistics" },
-                        { name: "Business", href: "/math/Business" },
-                        { name: "Computer Science & IT", href: "/math/Computer Science & IT" },
-                        { name: "Nursing", href: "/math/Nursing" },
-
-                    ],
-                    button: [
-                        { name: "See Success Stories", href: "#" },
-                    ]
-                },
-                {
-                    title: "Computer Science & IT",
-                    links: [
-                        { name: "Algebra", href: "/math/algebra" },
-                        { name: "Calculus", href: "/math/calculus" },
-                        { name: "Statistics", href: "/math/statistics" },
-                        { name: "Business", href: "/math/Business" },
-                        { name: "Computer Science & IT", href: "/math/Computer Science & IT" },
-                        { name: "Nursing", href: "/math/Nursing" },
-
-                    ],
-                    button: [
-                        { name: "See Tools", href: "#" },
-                    ]
-                },
+                
             ],
         },
         {
             title: "Essay Writing",
             submenu: [
                 {
-                    title: "Take My Math Class",
+                    title: "Subjects",
                     links: [
-                        { name: "Algebra", href: "/math/algebra" },
-                        { name: "Calculus", href: "/math/calculus" },
-                        { name: "Statistics", href: "/math/statistics" },
-                        { name: "Business", href: "/math/Business" },
-                        { name: "Computer Science & IT", href: "/math/Computer Science & IT" },
-                        { name: "Nursing", href: "/math/Nursing" },
+                        { name: "Statistics Assignment Help", href: "" },
+                        { name: "Finance Assignment Help", href: "" },
+                        { name: "Marketing Assignment Help", href: "" },
+                        { name: "Computer Science Assignment Help", href: "" },
+                        { name: "Law Assignment Help", href: "" },
                     ],
                     button: [
-                        { name: "See All Subjects", href: "#" },
+                        { name: "See All Subjects", href: "/essay-writing" },
                     ]
                 },
-                {
-                    title: "Take My Psychology Class",
-                    links: [
-                        { name: "Algebra", href: "/math/algebra" },
-                        { name: "Calculus", href: "/math/calculus" },
-                        { name: "Statistics", href: "/math/statistics" },
-                        { name: "Business", href: "/math/Business" },
-                        { name: "Computer Science & IT", href: "/math/Computer Science & IT" },
-                        { name: "Nursing", href: "/math/Nursing" },
-
-                    ],
-                    button: [
-                        { name: "Find Your Solution", href: "#" },
-                    ]
-                },
-                {
-                    title: "Take My Business Class",
-                    links: [
-                        { name: "Algebra", href: "/math/algebra" },
-                        { name: "Calculus", href: "/math/calculus" },
-                        { name: "Statistics", href: "/math/statistics" },
-                        { name: "Business", href: "/math/Business" },
-                        { name: "Computer Science & IT", href: "/math/Computer Science & IT" },
-                        { name: "Nursing", href: "/math/Nursing" },
-
-                    ],
-                    button: [
-                        { name: "See Success Stories", href: "#" },
-                    ]
-                },
-                {
-                    title: "Computer Science & IT",
-                    links: [
-                        { name: "Algebra", href: "/math/algebra" },
-                        { name: "Calculus", href: "/math/calculus" },
-                        { name: "Statistics", href: "/math/statistics" },
-                        { name: "Business", href: "/math/Business" },
-                        { name: "Computer Science & IT", href: "/math/Computer Science & IT" },
-                        { name: "Nursing", href: "/math/Nursing" },
-
-                    ],
-                    button: [
-                        { name: "See Tools", href: "#" },
-                    ]
-                },
+                
             ],
         },
         {
@@ -363,13 +203,13 @@ export default function Header() {
                 {/* Mobile Toggle */}
                 <button
                     onClick={() => setMobileOpen(!mobileOpen)}
-                    className="lg:hidden text-gray-700"
+                    className="min-[1200px]:hidden text-gray-700"
                 >
                     {mobileOpen ? <X size={28} /> : <Menu size={28} />}
                 </button>
 
                 {/* Desktop Navigation */}
-                <nav className="hidden lg:flex items-center font-medium text-gray-700 ">
+                <nav className="hidden min-[1200px]:flex items-center font-medium text-gray-700 ">
                     {navItems.map((item, index) => (
                         <div
                             key={index}
@@ -396,42 +236,43 @@ export default function Header() {
                                 <div className="absolute left-0 right-0 top-full bg-[#F9FBFF] flex gap-y-8 px-10 py-10 max-h-[400px] overflow-auto">
                                     {/* Invisible hover buffer to prevent flicker */}
                                     <div className="absolute top-[-12px] left-0 w-full h-12 bg-transparent"></div>
-
-                                    <div className="w-full mx-auto grid grid-cols-4 gap-8 pr-[32px] max-[1500px]:grid-cols-2">
-                                        {item.submenu.map((sub, idx) => (
-                                            <div key={idx} className="flex flex-col shadow-[0px_0px_31.8px_0px_#00000012] p-[30px] rounded-[5px]" >
-                                                {/* <h3 className="text-gray-900 mb-2 font-semibold">{sub.title}</h3> */}
-                                                {sub.links.map((link, linkIdx) => (
-                                                    <Link
-                                                        key={linkIdx}
-                                                        href={link.href}
-                                                        className="block text-gray-700 hover:text-blue-600 transition mb-1"
-                                                    >
-                                                        {link.name}
-                                                    </Link>
-                                                ))}
-                                                {sub.button && sub.button.map((btn, btnIdx) => (
-                                                    <Link
-                                                        key={`button-${btnIdx}`}
-                                                        href={btn.href}
-                                                        className="mt-4 rounded-md flex cursor-pointer bg-[#ff641a] text-white border border-transparent transition duration-300 text-[15px] font-medium flex items-center justify-center hover:bg-white hover:text-[#ff641a] hover:border-[#ff641a] h-[54px]"
-                                                    >
-                                                        {btn.name}
-                                                    </Link>
-                                                ))}
-                                            </div>
-                                        ))}
+                                    <div className="flex mx-auto">
+                                        <div className=" flex mx-auto gap-8 max-[1500px]:grid-cols-2">
+                                            {item.submenu.map((sub, idx) => (
+                                                <div key={idx} className="flex flex-col justify-between shadow-[0px_0px_31.8px_0px_#00000012] p-[30px] rounded-[5px] w-[350px]" >
+                                                    {/* <h3 className="text-gray-900 mb-2 font-semibold">{sub.title}</h3> */}
+                                                    {sub.links.map((link, linkIdx) => (
+                                                        <Link
+                                                            key={linkIdx}
+                                                            href={link.href}
+                                                            className="block text-gray-700 hover:text-blue-600 transition mb-1"
+                                                        >
+                                                            {link.name}
+                                                        </Link>
+                                                    ))}
+                                                    {sub.button && sub.button.map((btn, btnIdx) => (
+                                                        <Link
+                                                            key={`button-${btnIdx}`}
+                                                            href={btn.href}
+                                                            className="rounded-md flex cursor-pointer bg-[#ff641a] text-white border border-transparent transition duration-300 text-[15px] font-medium flex items-center justify-center hover:bg-white hover:text-[#ff641a] hover:border-[#ff641a] min-h-[54px]"
+                                                        >
+                                                            {btn.name}
+                                                        </Link>
+                                                    ))}
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className=" ">
+                                            <Image
+                                            src={megaMenuImage}
+                                            alt="SiteJabber"
+                                            width={367}
+                                            height={250}
+                                            loading="lazy"
+                                            className="h-[100%]"
+                                        />
+                                        </div>
                                     </div>
-                                    <div className=" ">
-                                        <Image
-                                        src={megaMenuImage}
-                                        alt="SiteJabber"
-                                        width={367}
-                                        height={250}
-                                        loading="lazy"
-                                    />
-                                    </div>
-                                    
                                 </div>
                             )}
                         </div>
@@ -461,7 +302,7 @@ export default function Header() {
 
             {/* Mobile Navigation */}
             {mobileOpen && (
-                <div className="lg:hidden bg-white border-t shadow-inner max-h-[90vh] overflow-auto">
+                <div className="min-[1200px]:hidden bg-white border-t shadow-inner max-h-[90vh] overflow-auto">
                     <ul className="flex flex-col divide-y ">
                         {navItems.map((item, index) => (
                             <li key={index} className="p-3 ">
