@@ -206,9 +206,9 @@ const CustomerReviews: FC<CustomerReviewsProps> = ({
         <h2 className="font-bold text-[#000] text-center text-[42px]  mb-3">
           How Students Rate Us!
         </h2>
-        <p className="md:text-5xl text-2xl text-[#00B67A] text-center mt-2">
+        {/* <p className="md:text-5xl text-2xl text-[#00B67A] text-center mt-2">
           Excellent
-        </p>
+        </p> */}
 
         {/* Trustpilot Rating */}
         <div className="flex justify-center items-center gap-2 mt-4">
