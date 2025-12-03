@@ -20,9 +20,9 @@ interface GuaranteeItem {
 
 export default function GuaranteeSection() {
   const scrollToQuote = () => {
-    const quoteForm = document.getElementById('quote-form');
+    const quoteForm = document.getElementById("quote-form");
     if (quoteForm) {
-      quoteForm.scrollIntoView({ behavior: 'smooth' });
+      quoteForm.scrollIntoView({ behavior: "smooth" });
     }
   };
 
@@ -112,7 +112,7 @@ export default function GuaranteeSection() {
   ];
 
   return (
-    <section className="w-full relative overflow-hidden mt-[60px] mb-[30px]  bg-white text-[#171717] max-[1320px]:px-8">
+    <section className="w-full relative overflow-hidden pt-[60px] pb-[30px]  bg-white text-[#171717] max-[1320px]:px-8">
       <div className="mx-auto w-full max-w-7xl pt-3 pb-10 flex relative justify-between max-[1080px]:flex-col">
         {/* Header */}
         <div className="text-left mb-12 mt-10 w-[28%] max-[1080px]:w-[100%]">
