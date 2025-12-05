@@ -99,21 +99,21 @@ export default function CardCarousel() {
 
   const goPrev = () => sliderRef.current?.slickPrev();
   const goNext = () => sliderRef.current?.slickNext();
+  const goToSlide = (index: number) => {
+    sliderRef.current?.slickGoTo(index);
+  };
 
   return (
     <section className="w-full pt-[15px] px-4 text-[#171717] bg-white">
       <div className="w-full overflow-hidden">
-        {" "}
         {/* Header */}
         <div className="text-center mb-12 mx-auto max-w-[740px]">
           <h2 className="text-[42px] text-[#000] font-bold   mb-3">
-            {" "}
-            The Academic Pressure You&apos;re Facing Every Day{" "}
+            The Academic Pressure You&apos;re Facing Every Day
           </h2>
           <p className="sm:text-lg text-sm text-gray-600 max-w-3xl mx-auto">
-            {" "}
             We understand the weight on your shoulders — and we&apos;re here to
-            lighten the load.{" "}
+            lighten the load.
           </p>
         </div>
       </div>
@@ -123,6 +123,7 @@ export default function CardCarousel() {
           return (
             <div key={card.id} className="px-2 cursor-pointer">
               <div
+                onClick={() => goToSlide(index)}
                 className={`
                   carousel-card p-6 shadow-md rounded-[21px] cursor-pointer h-[510px] flex flex-col bg-white transition-all hover:!scale-100 duration-300 relative
                   ${isCenter ? "center-card" : "scale-90"}

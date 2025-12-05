@@ -9,9 +9,9 @@ const HeroForm = dynamic(() => import("./HeroForm"), { ssr: false });
 
 export default function GetQuote() {
   const scrollToQuote = () => {
-    const quoteForm = document.getElementById('quote-form');
+    const quoteForm = document.getElementById("quote-form");
     if (quoteForm) {
-      quoteForm.scrollIntoView({ behavior: 'smooth' });
+      quoteForm.scrollIntoView({ behavior: "smooth" });
     }
   };
 
@@ -34,7 +34,10 @@ export default function GetQuote() {
   };
 
   return (
-    <section id="quote-form" className="w-full bg-[#F3F4F9] max-[1020px]:overflow-hidden">
+    <section
+      id="quote-form"
+      className="w-full bg-[#F3F4F9] max-[1020px]:overflow-hidden"
+    >
       <div className="max-w-7xl mx-auto flex max-[1080px]:flex-col-reverse pt-[130px] pb-[80px] max-[1320px]:px-8">
         <div className="w-[70%] max-[1080px]:w-[100%] p-4 flex relative justify-end">
           <Image
@@ -186,9 +189,9 @@ export default function GetQuote() {
           </div>
         </div>
         <div className="w-[30%] p-4 bg-gray-100 max-[1080px]:w-[100%] max-[1080px]:mb-20">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 leading-tight">
+          <h3 className="text-3xl md:text-4xl font-bold text-gray-900 leading-tight">
             Stop Sacrificing Your Time, We’ll Handle Your Classes
-          </h1>
+          </h3>
           <p className="text-gray-600 mt-4 text-sm md:text-base">
             From exams and essays to full‑class management, we handle it all so
             you don’t have to.

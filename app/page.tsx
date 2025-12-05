@@ -1,4 +1,4 @@
-"use client";
+// "use client";
 
 import type { NextPage } from "next";
 import MainLayout from "./MainLayout";
@@ -40,16 +40,16 @@ const Home: NextPage = () => {
 
 export default Home;
 
-// export function generateMetadata({}) {
-//   const baseUrl =
-//     process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com/";
-//   const canonicalUrl = `${baseUrl}`;
-//   return {
-//     title: "Scholarly Help - Academic Writing Services For You",
-//     description:
-//       "Struggling with online classes, exams, assignments or essays? Scholarly Help provides professional academic writing services tailored to your needs. Get timely, plagiarism-free solutions crafted by experts. Your success starts here!",
-//     alternates: {
-//       canonical: canonicalUrl,
-//     },
-//   };
-// }
+export function generateMetadata({}) {
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com/";
+  const canonicalUrl = `${baseUrl}`;
+  return {
+    title: "Scholarly Help - Academic Writing Services For You",
+    description:
+      "Struggling with online classes, exams, assignments or essays? Scholarly Help provides professional academic writing services tailored to your needs. Get timely, plagiarism-free solutions crafted by experts. Your success starts here!",
+    alternates: {
+      canonical: canonicalUrl,
+    },
+  };
+}

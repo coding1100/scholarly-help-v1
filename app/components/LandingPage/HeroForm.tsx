@@ -186,13 +186,13 @@ const HeroForm: FC<ZohoForm2Props> = ({ nameValue, textAreaRows = 4 }) => {
               value={formData.Email}
               onChange={handleChange}
               required
-              className="flex-1 bg-transparent outline-none text-sm placeholder-[#9CA3AF] pr-3 "
+              className="flex-1 text-black bg-transparent outline-none text-sm placeholder-[#9CA3AF] pr-3 "
             />
             <IoIosMail className="text-[#6B7280] text-xl" />
           </div>
 
           {/* Phone Field */}
-          <div className="flex items-center sm:h-18 h-[65px] border rounded-md bg-[#EDEFFE] border-[#E3E5F3] px-4">
+          <div className="flex text-black items-center sm:h-18 h-[65px] border rounded-md bg-[#EDEFFE] border-[#E3E5F3] px-4">
             <input
               type="text"
               id="Phone"
