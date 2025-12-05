@@ -1,6 +1,7 @@
 "use client";
 
 import { FC, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { IoCheckmarkCircle } from "react-icons/io5";
 import { PiNotePencilDuotone, PiLightbulbDuotone } from "react-icons/pi";
 import { GrMagic } from "react-icons/gr";
@@ -83,18 +84,18 @@ const AiMission: FC<AiMissionProps> = ({ missionSection, guideSection }) => {
   return (
     <section
       ref={sectionRef}
-      className="bg-gradient-to-b from-white to-[#f8f9ff] pt-20"
+      className="bg-gradient-to-b from-white to-[#f8f9ff] dark:from-[#0a0a0f] dark:to-[#1a1a2e] pt-20 transition-colors duration-300"
     >
       <div className="mx-auto flex w-full flex-col pb-24 px-5 sm:px-10 xl:container xl:px-10">
         <p
-          className={`mb-4 text-center text-xs font-semibold uppercase tracking-[4px] text-[#8953e6] transition-all duration-1000 ${
+          className={`mb-4 text-center text-xs font-semibold uppercase tracking-[4px] text-[#8953e6] dark:text-[#a78bfa] transition-all duration-1000 ${
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >
           {missionSection.subTitle}
         </p>
         <p
-          className={`mb-4 text-center text-[32px] font-medium leading-[40px] text-[#1e2938] sm:text-[36px] sm:leading-[44px] lg:text-[40px] lg:leading-[48px] transition-all duration-1000 delay-200 ${
+          className={`mb-4 text-center text-[32px] font-medium leading-[40px] text-[#1e2938] dark:text-gray-100 sm:text-[36px] sm:leading-[44px] lg:text-[40px] lg:leading-[48px] transition-all duration-1000 delay-200 ${
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
           dangerouslySetInnerHTML={{
@@ -102,7 +103,7 @@ const AiMission: FC<AiMissionProps> = ({ missionSection, guideSection }) => {
           }}
         />
         <p
-          className={`mx-auto mb-10 max-w-[922px] text-center text-base text-[#364153] sm:text-lg transition-all duration-1000 delay-300 ${
+          className={`mx-auto mb-10 max-w-[922px] text-center text-base text-[#364153] dark:text-gray-300 sm:text-lg transition-all duration-1000 delay-300 ${
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >
@@ -116,7 +117,7 @@ const AiMission: FC<AiMissionProps> = ({ missionSection, guideSection }) => {
               ref={(el) => {
                 stepRefs.current[index] = el;
               }}
-              className={`group space-y-2 rounded-xl px-6 py-6 bg-white transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 ${
+              className={`group space-y-2 rounded-xl px-6 py-6 bg-white dark:bg-[#1a1a2e] transition-all duration-500 hover:shadow-2xl dark:hover:shadow-[#8953e6]/20 hover:-translate-y-2 ${
                 visibleSteps.has(index)
                   ? "opacity-100 translate-y-0"
                   : "opacity-0 translate-y-8"
@@ -130,15 +131,15 @@ const AiMission: FC<AiMissionProps> = ({ missionSection, guideSection }) => {
                 {(() => {
                   const IconComponent = iconMap[step.icon];
                   return IconComponent ? (
-                    <IconComponent className="text-2xl text-[#535ced] sm:text-3xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3" />
+                    <IconComponent className="text-2xl text-[#535ced] dark:text-[#a78bfa] sm:text-3xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3" />
                   ) : null;
                 })()}
-                <div className="absolute inset-0 bg-gradient-to-br from-[#8953e6]/20 to-[#323dd6]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-[#8953e6]/20 to-[#323dd6]/20 dark:from-[#8953e6]/30 dark:to-[#323dd6]/30 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl"></div>
               </div>
-              <p className="text-xl font-medium text-[#1E2938] sm:text-2xl transition-colors duration-300 group-hover:text-[#535ced]">
+              <p className="text-xl font-medium text-[#1E2938] dark:text-gray-100 sm:text-2xl transition-colors duration-300 group-hover:text-[#535ced] dark:group-hover:text-[#a78bfa]">
                 {step.title}
               </p>
-              <p className="text-sm text-[#697282] sm:text-base leading-relaxed">
+              <p className="text-sm text-[#697282] dark:text-gray-400 sm:text-base leading-relaxed">
                 {step.description}
               </p>
             </div>
@@ -149,10 +150,13 @@ const AiMission: FC<AiMissionProps> = ({ missionSection, guideSection }) => {
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >
-          <button className="group mx-auto inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-[#323dd6] to-[#535ced] px-[21px] py-[11px] text-[18px] font-medium text-white shadow-lg shadow-[#323dd6]/30 transition-all duration-300 hover:bg-gradient-to-r hover:from-[#2a36b9] hover:to-[#4a52d4] hover:shadow-xl hover:shadow-[#323dd6]/40 hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#323dd6]">
+          <Link
+            href={missionSection.buttonUrl}
+            className="group mx-auto inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-[#323dd6] to-[#535ced] px-[21px] py-[11px] text-[18px] font-medium text-white shadow-lg shadow-[#323dd6]/30 transition-all duration-300 hover:bg-gradient-to-r hover:from-[#2a36b9] hover:to-[#4a52d4] hover:shadow-xl hover:shadow-[#323dd6]/40 hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#323dd6] relative"
+          >
             <span className="relative z-10">{missionSection.buttonText}</span>
             <span className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#535ced] to-[#323dd6] opacity-0 transition-opacity duration-300 group-hover:opacity-100"></span>
-          </button>
+          </Link>
         </div>
       </div>
     </section>

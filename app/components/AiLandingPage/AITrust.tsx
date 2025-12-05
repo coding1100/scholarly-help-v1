@@ -83,18 +83,18 @@ const AiTrust: FC<AiTrustProps> = ({ trustSection }) => {
   return (
     <section
       ref={sectionRef}
-      className="bg-gradient-to-b from-[#f8f9ff] to-white pt-20"
+      className="bg-gradient-to-b from-[#f8f9ff] to-white dark:from-[#1a1a2e] dark:to-[#0a0a0f] pt-20 transition-colors duration-300"
     >
       <div className="mx-auto flex w-full flex-col pb-24 px-5 text-center sm:px-10 xl:container xl:px-10">
         <p
-          className={`mb-4 text-xl font-medium text-[#1e2938] sm:text-2xl transition-all duration-1000 ${
+          className={`mb-4 text-xl font-medium text-[#1e2938] dark:text-gray-100 sm:text-2xl transition-all duration-1000 ${
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >
           {trustSection.heading}
         </p>
         <p
-          className={`mb-9 text-sm text-[#333333] sm:text-base lg:text-lg transition-all duration-1000 delay-200 ${
+          className={`mb-9 text-sm text-[#333333] dark:text-gray-300 sm:text-base lg:text-lg transition-all duration-1000 delay-200 ${
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >
@@ -108,7 +108,7 @@ const AiTrust: FC<AiTrustProps> = ({ trustSection }) => {
           onMouseLeave={() => setIsHovered(false)}
         >
           <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-white via-transparent to-white z-10 pointer-events-none"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-white via-transparent to-white dark:from-[#1a1a2e] dark:via-transparent dark:to-[#1a1a2e] z-10 pointer-events-none"></div>
             <Slider {...settings}>
               {trustSection.sliderImgs.map((image, index) => (
                 <div
@@ -119,7 +119,7 @@ const AiTrust: FC<AiTrustProps> = ({ trustSection }) => {
                     <Image
                       src={image}
                       alt="Trusted institution logo"
-                      className="h-12 w-auto object-contain grayscale hover:grayscale-0 transition-all duration-300"
+                      className="h-12 w-auto object-contain grayscale dark:invert dark:opacity-80 hover:grayscale-0 dark:hover:opacity-100 transition-all duration-300"
                       style={filterStyle}
                     />
                   </div>

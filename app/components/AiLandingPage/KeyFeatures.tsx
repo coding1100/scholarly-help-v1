@@ -49,18 +49,18 @@ const KeyFeatures: FC<KeyFeaturesProps> = ({ featuresSection }) => {
   }, []);
 
   return (
-    <section className="bg-white pt-20">
+    <section className="bg-white dark:bg-[#0a0a0f] pt-20 transition-colors duration-300">
       <div className="mx-auto flex w-full flex-col pb-24 px-5 text-center sm:px-10 xl:container xl:px-10">
-        <p className="mb-4 text-center text-xs font-semibold uppercase tracking-[4px] text-[#8953e6] animate-fade-in">
+        <p className="mb-4 text-center text-xs font-semibold uppercase tracking-[4px] text-[#8953e6] dark:text-[#a78bfa] animate-fade-in">
           {featuresSection.subTitle}
         </p>
         <p
-          className="mb-4 text-center text-[32px] font-medium leading-[40px] text-[#1e2938] sm:text-[36px] sm:leading-[44px] lg:text-[40px] lg:leading-[48px] animate-fade-in"
+          className="mb-4 text-center text-[32px] font-medium leading-[40px] text-[#1e2938] dark:text-gray-100 sm:text-[36px] sm:leading-[44px] lg:text-[40px] lg:leading-[48px] animate-fade-in"
           dangerouslySetInnerHTML={{
             __html: featuresSection.heading,
           }}
         />
-        <p className="mx-auto mb-16 max-w-[922px] text-center text-base text-[#364153] sm:text-lg lg:mb-20 animate-fade-in">
+        <p className="mx-auto mb-16 max-w-[922px] text-center text-base text-[#364153] dark:text-gray-300 sm:text-lg lg:mb-20 animate-fade-in">
           {featuresSection.description}
         </p>
         {featuresSection.features.map((feature, index) => (
@@ -83,15 +83,15 @@ const KeyFeatures: FC<KeyFeaturesProps> = ({ featuresSection }) => {
                 index % 2 === 1 ? "lg:order-2" : "lg:order-1"
               }`}
             >
-              <p className="text-2xl font-medium text-[#1E2938] lg:text-[28px] transition-colors duration-300 hover:text-[#8953e6]">
+              <p className="text-2xl font-medium text-[#1E2938] dark:text-gray-100 lg:text-[28px] transition-colors duration-300 hover:text-[#8953e6] dark:hover:text-[#a78bfa]">
                 {feature.heading}
               </p>
-              <p className="text-base text-[#364153] sm:text-lg leading-relaxed">
+              <p className="text-base text-[#364153] dark:text-gray-300 sm:text-lg leading-relaxed">
                 {feature.description}
               </p>
               <Link
                 href={feature.url}
-                className="group inline-flex items-center gap-2 text-[#1722be] font-medium transition-all duration-300 hover:text-[#8953e6] hover:gap-3"
+                className="group inline-flex items-center gap-2 text-[#1722be] dark:text-[#818cf8] font-medium transition-all duration-300 hover:text-[#8953e6] dark:hover:text-[#a78bfa] hover:gap-3"
               >
                 <span>{feature.linkText}</span>
                 <svg
@@ -114,12 +114,12 @@ const KeyFeatures: FC<KeyFeaturesProps> = ({ featuresSection }) => {
                 index % 2 === 1 ? "lg:order-1" : "lg:order-2"
               }`}
             >
-              <div className="relative overflow-hidden rounded-xl shadow-lg transition-all duration-500 hover:shadow-2xl">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#8953e6]/20 to-[#323dd6]/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10"></div>
+              <div className="relative overflow-hidden rounded-xl shadow-lg dark:shadow-[#8953e6]/20 transition-all duration-500 hover:shadow-2xl dark:hover:shadow-[#8953e6]/30">
+                <div className="absolute inset-0 bg-gradient-to-br from-[#8953e6]/20 to-[#323dd6]/20 dark:from-[#8953e6]/30 dark:to-[#323dd6]/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10"></div>
                 <Image
                   src={feature.img}
                   alt={feature.heading}
-                  className="h-auto w-full max-w-[520px] rounded-xl object-cover transition-transform duration-700 group-hover:scale-110"
+                  className="h-auto w-full max-w-[520px] rounded-xl object-cover transition-transform duration-700 group-hover:scale-110 dark:opacity-90"
                   sizes="(max-width: 1024px) 100vw, 520px"
                 />
               </div>

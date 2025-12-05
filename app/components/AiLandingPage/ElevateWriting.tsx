@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { FC, useEffect, useRef, useState } from "react";
 
 interface ElevateWritingProps {
@@ -35,20 +36,20 @@ const ElevateWriting: FC<ElevateWritingProps> = ({ elevateSection }) => {
   return (
     <section
       ref={sectionRef}
-      className="relative bg-gradient-to-b from-white via-[#f8f9ff] to-white pt-20 overflow-hidden"
+      className="relative bg-gradient-to-b from-white via-[#f8f9ff] to-white dark:from-[#0a0a0f] dark:via-[#1a1a2e] dark:to-[#0a0a0f] pt-20 overflow-hidden transition-colors duration-300"
     >
       {/* Decorative background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-[#8953e6]/5 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute top-20 left-10 w-72 h-72 bg-[#8953e6]/5 dark:bg-[#8953e6]/10 rounded-full blur-3xl animate-pulse"></div>
         <div
-          className="absolute bottom-20 right-10 w-96 h-96 bg-[#323dd6]/5 rounded-full blur-3xl animate-pulse"
+          className="absolute bottom-20 right-10 w-96 h-96 bg-[#323dd6]/5 dark:bg-[#323dd6]/10 rounded-full blur-3xl animate-pulse"
           style={{ animationDelay: "1s" }}
         ></div>
       </div>
 
       <div className="relative mx-auto flex w-full flex-col pb-24 px-5 sm:px-10 xl:container xl:px-10">
         <h1
-          className={`mb-6 text-center text-[32px] font-medium leading-[40px] text-[#101828] sm:text-[36px] sm:leading-[44px] lg:mb-[31px] lg:text-[40px] lg:leading-tight transition-all duration-1000 ${
+          className={`mb-6 text-center text-[32px] font-medium leading-[40px] text-[#101828] dark:text-gray-100 sm:text-[36px] sm:leading-[44px] lg:mb-[31px] lg:text-[40px] lg:leading-tight transition-all duration-1000 ${
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
           dangerouslySetInnerHTML={{
@@ -60,7 +61,7 @@ const ElevateWriting: FC<ElevateWritingProps> = ({ elevateSection }) => {
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >
-          <p className="text-base text-[#333333] sm:text-lg leading-relaxed">
+          <p className="text-base text-[#333333] dark:text-gray-300 sm:text-lg leading-relaxed">
             {elevateSection.description}
           </p>
         </div>
@@ -69,7 +70,10 @@ const ElevateWriting: FC<ElevateWritingProps> = ({ elevateSection }) => {
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >
-          <button className="group relative mx-auto mb-10 inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-[#323dd6] to-[#535ced] px-[21px] py-[11px] text-[18px] font-medium text-white shadow-lg shadow-[#323dd6]/30 transition-all duration-300 hover:bg-gradient-to-r hover:from-[#2a36b9] hover:to-[#4a52d4] hover:shadow-xl hover:shadow-[#323dd6]/40 hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#323dd6] overflow-hidden">
+          <Link
+            href={elevateSection.buttonUrl}
+            className="group relative mx-auto mb-10 inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-[#323dd6] to-[#535ced] px-[21px] py-[11px] text-[18px] font-medium text-white shadow-lg shadow-[#323dd6]/30 transition-all duration-300 hover:bg-gradient-to-r hover:from-[#2a36b9] hover:to-[#4a52d4] hover:shadow-xl hover:shadow-[#323dd6]/40 hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#323dd6] overflow-hidden"
+          >
             <span className="relative z-10 flex items-center gap-2">
               {elevateSection.buttonText}
               <svg
@@ -88,7 +92,7 @@ const ElevateWriting: FC<ElevateWritingProps> = ({ elevateSection }) => {
             </span>
             <span className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#535ced] to-[#323dd6] opacity-0 transition-opacity duration-300 group-hover:opacity-100"></span>
             <span className="absolute inset-0 rounded-xl bg-white/20 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></span>
-          </button>
+          </Link>
         </div>
       </div>
     </section>

@@ -6,6 +6,7 @@ import KeyFeatures from "@/app/components/AiLandingPage/KeyFeatures";
 import AiMission from "@/app/components/AiLandingPage/AiMission";
 import AiFaq from "@/app/components/AiLandingPage/AiFaq";
 import ElevateWriting from "@/app/components/AiLandingPage/ElevateWriting";
+import ThemeToggle from "@/app/components/AiLandingPage/ThemeToggle";
 import { AiEssayContent } from "@/app/components/AiLandingPage/AiContent";
 
 interface PageProps {}
@@ -13,6 +14,7 @@ const Page: FC<PageProps> = ({}) => {
   // return <div>test</div>
   return (
     <>
+      <ThemeToggle />
       <AiHero
         heroContent={AiEssayContent.heroContent}
         imgSection={AiEssayContent.imgSection}

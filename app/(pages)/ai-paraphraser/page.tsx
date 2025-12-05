@@ -7,12 +7,15 @@ import AiMission from "@/app/components/AiLandingPage/AiMission";
 import AiFaq from "@/app/components/AiLandingPage/AiFaq";
 import ElevateWriting from "@/app/components/AiLandingPage/ElevateWriting";
 import { AiParahrasingContent } from "@/app/components/AiLandingPage/AiContent";
+import ThemeToggle from "@/app/components/AiLandingPage/ThemeToggle";
 
 interface PageProps {}
 const Page: FC<PageProps> = ({}) => {
   // return <div>test</div>
   return (
     <>
+      <ThemeToggle />
+
       <AiHero
         heroContent={AiParahrasingContent.heroContent}
         imgSection={AiParahrasingContent.imgSection}
