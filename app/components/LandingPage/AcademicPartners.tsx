@@ -3,9 +3,9 @@
 import Image from "next/image";
 export default function AcademicPartners() {
   const scrollToQuote = () => {
-    const quoteForm = document.getElementById('quote-form');
+    const quoteForm = document.getElementById("quote-form");
     if (quoteForm) {
-      quoteForm.scrollIntoView({ behavior: 'smooth' });
+      quoteForm.scrollIntoView({ behavior: "smooth" });
     }
   };
 
@@ -14,9 +14,9 @@ export default function AcademicPartners() {
       <div className="max-w-7xl mx-auto flex max-[1450px]:flex-col max-[1320px]:px-8">
         {/* Hero Section */}
         <div className="text-left mb-12 w-[40%] max-[1450px]:w-[100%]">
-          <h1 className="sm:text-4xl text-[32px] md:text-5xl sm:font-bold font-semibold text-gray-900 mb-4">
+          <h3 className="sm:text-4xl text-[32px] md:text-5xl sm:font-bold font-semibold text-gray-900 mb-4">
             Your Academic Partners for Success
-          </h1>
+          </h3>
           <p className="sm:text-lg text-sm text-gray-600 max-w-3xl mb-8">
             From exams and essays to full-class management, we handle it all so
             you don&apos;t have to.
@@ -88,8 +88,8 @@ export default function AcademicPartners() {
                 <p className="text-sm text-gray-600 font-poppins font-normal text-[15px] leading-[1.4] tracking-normal">
                   Our CEO worked 30-hour shifts while enrolled full-time and was
                   on the verge of expulsion twice due to academic pressure. We
-                  get it — we&apos;re solving the system that punishes people with
-                  real lives.
+                  get it — we&apos;re solving the system that punishes people
+                  with real lives.
                 </p>
               </div>
             </div>
@@ -137,8 +137,8 @@ export default function AcademicPartners() {
                 </h3>
                 <p className="text-sm text-gray-600 font-poppins font-normal text-[15px] leading-[1.4] tracking-normal">
                   No time to study for the exam? Our experts take your exams for
-                  you, just like you&apos;re sitting there — with results that speak
-                  for themselves.
+                  you, just like you&apos;re sitting there — with results that
+                  speak for themselves.
                 </p>
               </div>
             </div>

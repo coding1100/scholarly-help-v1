@@ -143,7 +143,7 @@ export default function WhySlider() {
     <section className="w-full overflow-hidden mt-[-100px] pt-[110px] pb-[30px] bg-white">
       <div className="w-full px-6 pb-10 scale-[1.03]">
         <div className="py-10 ">
-          <h2 className="text-[42px] text-[#000] font-bold mb-2  font-bold text-center text-[#171717]">
+          <h2 className="text-[42px] mb-2  font-bold text-center text-[#171717]">
             Why choose Scholarly
           </h2>
           <p className="sm:text-[18px] text-sm text-center text-[#171717]">
@@ -152,9 +152,9 @@ export default function WhySlider() {
           </p>
         </div>
         <div className="flex flex-col gap-5">
-          <SliderRow items={items} direction="left" intervalMs={1500} />
-          <SliderRow items={items} direction="right" intervalMs={3000} />
-          <SliderRow items={items} direction="left" intervalMs={2500} />
+          <SliderRow items={items} direction="left" intervalMs={4500} />
+          <SliderRow items={items} direction="right" intervalMs={4000} />
+          <SliderRow items={items} direction="left" intervalMs={3500} />
         </div>
         <div>
           <button></button>
