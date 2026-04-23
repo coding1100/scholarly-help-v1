@@ -7,6 +7,7 @@ import {
 } from "@/app/utilities/api";
 import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
+import { requestTokenUsageRefresh } from "@/app/utils/tokenUsageClient";
 
 interface Step10Props {
   conversationId: string;
@@ -44,6 +45,7 @@ export default function Step10({
         const message =
           'Generate a quick 2-3 question micro-quiz about the lesson to test understanding. Use the generate_quiz tool with topic="the lesson", num_questions=2, difficulty="medium".';
         const response = await sendChatMessage(message, conversationId);
+        requestTokenUsageRefresh(0);
         const parsedQuestions = parseQuizFromResponse(response.message);
 
         if (parsedQuestions.length === 0) {

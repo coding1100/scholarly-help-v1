@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useMemo, useState } from "react";
 import { sendChatMessage } from "../utilities/api";
+import { requestTokenUsageRefresh } from "@/app/utils/tokenUsageClient";
 
 export type CEFRLevel = "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
 
@@ -221,6 +222,7 @@ export function LanguagePracticeProvider({
 
       const res = await sendChatMessage(message, conversationId);
       setConversationId(res.conversation_id);
+      requestTokenUsageRefresh(0);
 
       const parsed = safeJsonExtract(res.message);
       let ai: AiResult | null = null;
