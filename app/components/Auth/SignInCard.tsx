@@ -217,7 +217,6 @@ const SignInCard: FC<SignInCardProps> = ({
           )}
         />
       </form>
-      {/* here is tetx */}
       <p className="text-center text-sm  mt-8 relative">
         Do not have an account?
         {switchAuthForm === "" ? (
