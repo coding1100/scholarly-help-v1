@@ -6,7 +6,7 @@ import { FaArrowRight } from "react-icons/fa";
 import Image from "next/image";
 import Logo from "@/app/assets/Images/logo.png";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { CgRename } from "react-icons/cg";
 import axios from "axios";
 import { ColorRing } from "react-loader-spinner";
@@ -26,6 +26,7 @@ const SignUpCard: FC<SignUpCardProps> = ({
 }) => {
   const route = useRouter();
   const currentPage = usePathname();
+  const searchParams = useSearchParams();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
