@@ -9,6 +9,7 @@ import ActionButtons from "@/app/components/AiTools/ActionButtons";
 import ResultDisplay from "@/app/components/AiTools/ResultDisplay";
 import { countWords } from "@/app/utils/text";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
+import { requestTokenUsageRefresh } from "@/app/utils/tokenUsageClient";
 
 type HumanizerTone = "natural" | "simple" | "polished";
 type VariantId = "best" | "alternate_1" | "alternate_2";
@@ -159,6 +160,7 @@ const HumanizerTool: React.FC = () => {
       );
 
       setResult(response.data);
+      requestTokenUsageRefresh(0);
       toast.success("Humanized successfully!");
     } catch (err: any) {
       const status = err?.response?.status;

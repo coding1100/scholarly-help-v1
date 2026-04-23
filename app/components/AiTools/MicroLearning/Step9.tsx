@@ -3,6 +3,7 @@
 import { sendChatMessage } from "@/app/utilities/api";
 import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
+import { requestTokenUsageRefresh } from "@/app/utils/tokenUsageClient";
 
 interface Step9Props {
   duration: number;
@@ -32,6 +33,7 @@ export default function Step9({
       const response = await sendChatMessage(message, conversationId);
       setLessonContent(response.message);
       setConversationId(response.conversation_id);
+      requestTokenUsageRefresh(0);
     } catch (err) {
       const errorMessage =
         err instanceof Error
