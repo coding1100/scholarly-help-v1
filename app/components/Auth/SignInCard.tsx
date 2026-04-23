@@ -191,6 +191,7 @@ const SignInCard = () => {
 
         <SocialAuthButtons returnUrl={returnUrl} />
       </form>
+      {/* here is tetx */}
       <p className="text-center text-sm  mt-8 relative">
         Do not have an account?
         <Link href="/sign-up/" className="hover:underline pl-1">
