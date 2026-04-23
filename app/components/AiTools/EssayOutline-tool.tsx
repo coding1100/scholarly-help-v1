@@ -5,7 +5,6 @@ import axios from "axios";
 import { FaRegCopy } from "react-icons/fa";
 import toast from "react-hot-toast";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
-import { requestTokenUsageRefresh } from "@/app/utils/tokenUsageClient";
 
 type OutlineItem = {
   section: string;
@@ -47,7 +46,6 @@ const EssayOutlinetool = () => {
       );
       // console.log("response essay outline", response.data.data.outline);
       setOutlineData(response.data.data.outline || []);
-      requestTokenUsageRefresh(0);
     } catch (error: any) {
       toast.error(error.response?.data?.message);
     } finally {
