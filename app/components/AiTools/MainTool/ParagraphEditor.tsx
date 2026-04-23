@@ -35,7 +35,6 @@ import axios from "axios";
 import { MdOutlineDragIndicator, MdAdd } from "react-icons/md";
 import { WordCountContext, EditorContext } from "./MainToolLayout";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
-import { requestTokenUsageRefresh } from "@/app/utils/tokenUsageClient";
 
 // Custom node views by extending built-in nodes
 const CustomHeading = Heading.extend({
@@ -333,7 +332,6 @@ const fetchAISuggestion = async (
     },
   });
   console.log("API Response:", res.data);
-  requestTokenUsageRefresh(0);
   return res.data.section_content as string;
 };
 

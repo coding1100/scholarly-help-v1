@@ -5,7 +5,6 @@ import { HiDocumentText, HiCalendar } from "react-icons/hi2";
 import { HiChevronDown } from "react-icons/hi";
 import { sendChatMessage, ChatResponse } from "@/app/utilities/api";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
-import { requestTokenUsageRefresh } from "@/app/utils/tokenUsageClient";
 
 interface Step1Props {
   onContinue?: (data: {
@@ -109,7 +108,6 @@ export default function Step1({ onContinue }: Step1Props) {
 
       // Call the API
       const response = await sendChatMessage(message, null);
-      requestTokenUsageRefresh(0);
 
       // Pass data to next step
       if (onContinue) {
