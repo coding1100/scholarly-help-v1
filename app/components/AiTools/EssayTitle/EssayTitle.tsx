@@ -4,6 +4,7 @@ import React, { FC, useEffect, useState } from "react";
 import { FaChevronDown, FaRegCopy, FaSyncAlt } from "react-icons/fa";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 
 interface EssayTitleProps {
   setFlag: (value: boolean) => void;
@@ -87,6 +88,7 @@ const EssayTitle: FC<EssayTitleProps> = ({ setFlag }) => {
       return;
     }
 
+    trackToolGenerate({ toolName: "Essay Title Generator" });
     setIsSubmitting(true);
     setError("");
     setTitles([]);
@@ -428,9 +430,9 @@ const EssayTitle: FC<EssayTitleProps> = ({ setFlag }) => {
       {/* Footer Quote */}
       <div className="text-sm font-serif text-center pt-8 text-gray-500 dark:text-gray-400 transition-colors duration-300">
         <q>
-          Struggling to find the perfect essay title? ScholarlyHelp's AI-powered
+          Struggling to find the perfect essay title? ScholarlyHelp&apos;s AI-powered
           Essay Title Generator creates compelling, academic-appropriate titles
-          that capture your topic's essence and engage your readers from the
+          that capture your topic&apos;s essence and engage your readers from the
           start.
         </q>
       </div>

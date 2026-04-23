@@ -5,15 +5,17 @@ import { FaArrowRight } from "react-icons/fa";
 import Image from "next/image";
 import Logo from "@/app/assets/Images/logo.png";
 import axios from "axios";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ColorRing } from "react-loader-spinner";
 import toast from "react-hot-toast";
+import { appendQueryString } from "@/app/utils/url";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const handleRecover = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,7 +86,9 @@ const ForgotPassword = () => {
       <button
         type="button"
         className="w-[90%] font-bold py-3 px-4 rounded-lg hover:bg-gray-300 transition duration-300 flex items-center justify-center gap-2"
-        onClick={() => router.push("/sign-in")}
+        onClick={() =>
+          router.push(appendQueryString("/sign-in", searchParams?.toString() || ""))
+        }
       >
         Or Sign In Instead
       </button>

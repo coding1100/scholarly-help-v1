@@ -4,6 +4,7 @@ import React, { FC, useEffect, useState } from "react";
 import { FaChevronDown, FaRegCopy, FaSyncAlt } from "react-icons/fa";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 
 interface ResearchQuestionProps {
   setFlag: (value: boolean) => void;
@@ -94,6 +95,7 @@ const ResearchQuestion: FC<ResearchQuestionProps> = ({ setFlag }) => {
       return;
     }
 
+    trackToolGenerate({ toolName: "Research Question Generator" });
     setIsSubmitting(true);
     setError("");
     setQuestions([]);
@@ -133,7 +135,7 @@ const ResearchQuestion: FC<ResearchQuestionProps> = ({ setFlag }) => {
         "";
       const endpoint = baseUrl.includes("/v1/")
         ? `${baseUrl}/tools/research-question-generator`
-        : `${baseUrl}/v1/tools/research-question-generator`;
+        : `${baseUrl}/tools/research-question-generator`;
 
       const response = await axios.post<QuestionResponse>(endpoint, payload, {
         headers: {

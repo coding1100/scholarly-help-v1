@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { HiOutlineChevronUpDown } from "react-icons/hi2";
 import { BiChevronsLeft } from "react-icons/bi";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import axiosInstance from "@/app/axios";
 import toast from "react-hot-toast";
 import { FiTool } from "react-icons/fi";
@@ -12,6 +12,9 @@ import AccountPopover from "./AccountPopover";
 import UsageAndPricing from "./UsageAndPricing";
 import PromptModal from "./PromptModal";
 import axios from "axios";
+import { appendQueryString } from "@/app/utils/url";
+import { upsertFbclidToolContext } from "@/app/utils/fbclidTracking";
+import { __TOOLS_SHEET_EVENT_NAME__ } from "@/app/utils/toolsSheetClient";
 
 interface SidebarProps {
   onToggle?: () => void;
@@ -30,6 +33,7 @@ const MTSidebar = ({
 }: SidebarProps) => {
   const currentRoute = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
   // Normalize route by removing trailing slash for consistent comparison
   const normalizedRoute = currentRoute?.endsWith("/")
     ? currentRoute.slice(0, -1)
@@ -39,6 +43,7 @@ const MTSidebar = ({
     { name: "Main Tool", href: "/tools/main-tool" },
     { name: "Paraphraser Tool", href: "/tools/paraphraser-tool" },
     { name: "Summarizer Tool", href: "/tools/summarizer-tool" },
+    { name: "Humanizer Tool", href: "/tools/humanizer-tool" },
     { name: "Thesis Generator Tool", href: "/tools/thesis-generator-tool" },
     { name: "Essay Outline Tool", href: "/tools/essay-outline-tool" },
     { name: "Essay Title Generator", href: "/tools/essay-title" },
@@ -108,6 +113,199 @@ const MTSidebar = ({
   }, []);
 
   useEffect(() => {
+    const fbclid = searchParams?.get("fbclid");
+    if (!fbclid) return;
+    if (!normalizedRoute?.startsWith("/tools/")) return;
+
+    const user_id =
+      typeof window !== "undefined" ? localStorage.getItem("user_id") : null;
+    const user_email =
+      typeof window !== "undefined" ? localStorage.getItem("user_email") : null;
+    const user_name =
+      typeof window !== "undefined" ? localStorage.getItem("user_name") : null;
+
+    const activeTool =
+      tools.find((t) => t.href === normalizedRoute) ||
+      tools.find((t) => normalizedRoute?.startsWith(t.href));
+
+    upsertFbclidToolContext({
+      fbclid,
+      user_id: user_id || undefined,
+      user_email: user_email || undefined,
+      user_name: user_name || undefined,
+      current_path: normalizedRoute,
+      current_active_tool: activeTool?.name || "Tools",
+    });
+  }, [normalizedRoute, searchParams]);
+
+  const toolsSheetPostingRef = useRef(false);
+  const toolsSheetDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toolsSheetNeedFlushRef = useRef(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const readFbclidState = () => {
+      try {
+        const raw = window.localStorage.getItem("sh_fbclid_tracking_v1");
+        if (!raw) return {};
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== "object") return {};
+        return parsed as {
+          fbclid?: string;
+          user_name?: string;
+          user_id?: string;
+          user_email?: string;
+          current_active_tool?: string;
+          tool_visits?: Array<{ tool_name: string; path: string }>;
+        };
+      } catch {
+        return {};
+      }
+    };
+
+    const getDeviceLabel = () => {
+      const ua = navigator.userAgent || "";
+      if (/Mobi|Android|iPhone|iPad|iPod/i.test(ua)) return "Mobile";
+      return "Desktop";
+    };
+
+    const getFbclid = () => {
+      const urlFbclid = searchParams?.get("fbclid") || undefined;
+      const state = readFbclidState();
+      return (urlFbclid || state.fbclid || "").trim() || null;
+    };
+
+    const postToToolsSheet = async (opts: { keepalive?: boolean } = {}) => {
+      const fbclid = getFbclid();
+      if (!fbclid) return;
+
+      const state = readFbclidState();
+      const toolsKey = `sh_toolssheet_tools_${fbclid}`;
+      let nextTools: string[] = [];
+      try {
+        const prevRaw = window.localStorage.getItem(toolsKey);
+        const prev = prevRaw ? (JSON.parse(prevRaw) as unknown) : [];
+        nextTools = Array.isArray(prev) ? prev.filter((t) => typeof t === "string") : [];
+      } catch {
+        nextTools = [];
+      }
+
+      if (nextTools.length === 0) return;
+      if (toolsSheetPostingRef.current) {
+        toolsSheetNeedFlushRef.current = true;
+        return;
+      }
+
+      const payload = {
+        timestamp: new Date().toISOString(),
+        email: state.user_email || localStorage.getItem("user_email") || undefined,
+        userId: state.user_id || localStorage.getItem("user_id") || undefined,
+        fbc: fbclid,
+        toolUsed: nextTools,
+        device: getDeviceLabel(),
+        source: "meta",
+      };
+
+      toolsSheetPostingRef.current = true;
+      try {
+        const res = await fetch("/api/toolssheet/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+          keepalive: opts.keepalive === true,
+        });
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          throw new Error(`toolssheet failed: ${res.status} ${text}`);
+        }
+      } catch (e) {
+        console.error("ToolsSheet POST failed:", e);
+      } finally {
+        toolsSheetPostingRef.current = false;
+        if (toolsSheetNeedFlushRef.current) {
+          toolsSheetNeedFlushRef.current = false;
+          void postToToolsSheet();
+        }
+      }
+    };
+
+    const schedulePost = (delayMs: number) => {
+      if (toolsSheetDebounceRef.current) {
+        clearTimeout(toolsSheetDebounceRef.current);
+        toolsSheetDebounceRef.current = null;
+      }
+      toolsSheetDebounceRef.current = setTimeout(() => {
+        toolsSheetDebounceRef.current = null;
+        void postToToolsSheet();
+      }, delayMs);
+    };
+
+    const onGenerate = (evt: Event) => {
+      const urlFbclid = searchParams?.get("fbclid") || undefined;
+      const state = readFbclidState();
+      const fbclid = (urlFbclid || state.fbclid || "").trim();
+      if (!fbclid) return;
+
+      const detail = (evt as CustomEvent).detail as { toolName?: string } | undefined;
+      const toolFromEvent = detail?.toolName;
+
+      const toolsKey = `sh_toolssheet_tools_${fbclid}`;
+      let toolsList: string[] = [];
+      try {
+        const prevRaw = window.localStorage.getItem(toolsKey);
+        const prev = prevRaw ? (JSON.parse(prevRaw) as unknown) : [];
+        toolsList = Array.isArray(prev) ? prev.filter((t) => typeof t === "string") : [];
+      } catch {
+        toolsList = [];
+      }
+
+      const visitedTools = Array.isArray(state.tool_visits)
+        ? state.tool_visits.map((v) => v?.tool_name).filter(Boolean)
+        : [];
+
+      const merged = new Set<string>([...toolsList, ...visitedTools]);
+      if (toolFromEvent) merged.add(toolFromEvent);
+      const nextTools = Array.from(merged).filter(Boolean);
+
+      try {
+        window.localStorage.setItem(toolsKey, JSON.stringify(nextTools));
+      } catch {
+        // ignore
+      }
+
+      if (nextTools.length === 0) return;
+      // Debounce: merge many tool clicks, then one request; server upserts by fbclid.
+      schedulePost(800);
+    };
+
+    const onPageHide = () => {
+      if (toolsSheetDebounceRef.current) {
+        clearTimeout(toolsSheetDebounceRef.current);
+        toolsSheetDebounceRef.current = null;
+      }
+      void postToToolsSheet({ keepalive: true });
+    };
+
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") onPageHide();
+    };
+
+    window.addEventListener(__TOOLS_SHEET_EVENT_NAME__, onGenerate);
+    window.addEventListener("pagehide", onPageHide);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener(__TOOLS_SHEET_EVENT_NAME__, onGenerate);
+      window.removeEventListener("pagehide", onPageHide);
+      document.removeEventListener("visibilitychange", onVisibility);
+      if (toolsSheetDebounceRef.current) {
+        clearTimeout(toolsSheetDebounceRef.current);
+        toolsSheetDebounceRef.current = null;
+      }
+    };
+  }, [searchParams]);
+
+  useEffect(() => {
     const verifyToken = async () => {
       if (!accessToken || isVerifying.current) return;
 
@@ -122,6 +320,35 @@ const MTSidebar = ({
           },
         );
         console.log("Token verification response:", response);
+        const user = response?.data?.user;
+        const resolvedEmail = String(user?.email || user?.user_email || "")
+          .trim()
+          .toLowerCase();
+        if (resolvedEmail) {
+          try {
+            if (!localStorage.getItem("user_email")) {
+              localStorage.setItem("user_email", resolvedEmail);
+            }
+          } catch {
+            // ignore
+          }
+
+          // If we have fbclid tracking active, enrich it with the newly-known email.
+          const fbclid = searchParams?.get("fbclid");
+          if (fbclid && normalizedRoute?.startsWith("/tools/")) {
+            const activeTool =
+              tools.find((t) => t.href === normalizedRoute) ||
+              tools.find((t) => normalizedRoute?.startsWith(t.href));
+            upsertFbclidToolContext({
+              fbclid,
+              user_id: localStorage.getItem("user_id") || undefined,
+              user_email: resolvedEmail,
+              user_name: localStorage.getItem("user_name") || undefined,
+              current_path: normalizedRoute,
+              current_active_tool: activeTool?.name || "Tools",
+            });
+          }
+        }
       } catch (error) {
         console.error("❌ Token verification failed:", error);
         toast.error("Session expired. Please sign in again.");
@@ -136,7 +363,13 @@ const MTSidebar = ({
         localStorage.removeItem("profile_image");
 
         if (currentRoute.includes("tools") || currentRoute === "/pricing/") {
-          router.push("/sign-in");
+          const currentQs = searchParams?.toString();
+          const signInBase = currentQs ? `/sign-in?${currentQs}` : "/sign-in";
+          const signInHref = appendQueryString(
+            signInBase,
+            `returnUrl=${encodeURIComponent(currentRoute)}`,
+          );
+          router.push(signInHref);
         } else {
           router.push("/");
         }
@@ -144,7 +377,7 @@ const MTSidebar = ({
     };
 
     verifyToken();
-  }, []);
+  }, [accessToken, normalizedRoute, router, searchParams]);
   useEffect(() => {
     if (!userToggled) {
       if (currentRoute.startsWith("/tools/")) {
@@ -246,7 +479,10 @@ const MTSidebar = ({
           {tools.map((tool, index) => (
             <Link
               key={index}
-              href={tool.href}
+              href={appendQueryString(
+                tool.href,
+                searchParams?.toString() || "",
+              )}
               className={` py-1 px-2 text-sm rounded-md transition-colors ${
                 normalizedRoute === tool.href
                   ? "font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30"
