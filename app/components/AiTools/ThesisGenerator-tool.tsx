@@ -7,7 +7,6 @@ import ActionButtons from "./ActionButtons";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
-import { requestTokenUsageRefresh } from "@/app/utils/tokenUsageClient";
 
 const ThesisGenerator = () => {
   const [token, setToken] = useState<string | null>(null);
@@ -65,7 +64,6 @@ const ThesisGenerator = () => {
       console.log("Response", response);
 
       setResultText(response.data?.final_thesis);
-      requestTokenUsageRefresh(0);
     } catch (error: any) {
       // console.error("API Error:", error);
       toast.error(
