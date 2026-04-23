@@ -6,6 +6,7 @@ import ResultDisplay from "./ResultDisplay";
 import ActionButtons from "./ActionButtons";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 
 const ThesisGenerator = () => {
   const [token, setToken] = useState<string | null>(null);
@@ -40,6 +41,7 @@ const ThesisGenerator = () => {
       return;
     }
 
+    trackToolGenerate({ toolName: "Thesis Generator Tool" });
     setSubmitting(true);
     setResultText("Generating thesis...");
 
@@ -57,7 +59,7 @@ const ThesisGenerator = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       console.log("Response", response);
 
@@ -66,7 +68,7 @@ const ThesisGenerator = () => {
       // console.error("API Error:", error);
       toast.error(
         error?.response?.data?.message ||
-          "Something went wrong. Please try again."
+          "Something went wrong. Please try again.",
       );
     } finally {
       setSubmitting(false);
@@ -84,7 +86,7 @@ const ThesisGenerator = () => {
           <ActionButtons
             onClear={handleClear}
             onSubmit={handleGenerate}
-            submitButtonText="Generate"
+            submitButtonText="Generate Thesis"
             isSubmitting={isSubmitting}
             isDisabled={!formData.topic}
           />

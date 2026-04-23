@@ -34,6 +34,11 @@ const SocialAuthButtons = ({ returnUrl }: SocialAuthButtonsProps) => {
       localStorage.setItem("access_token", data.access_token);
       localStorage.setItem("user_id", data.user.user_id);
       localStorage.setItem("user_name", data.user.name);
+      const resolvedEmail =
+        String(data?.user?.email || data?.user?.user_email || "")
+          .trim()
+          .toLowerCase() || "";
+      if (resolvedEmail) localStorage.setItem("user_email", resolvedEmail);
       localStorage.setItem("package_type", data.user.package_type);
       document.cookie = `access_token=${data.access_token}; path=/; max-age=86400`;
 

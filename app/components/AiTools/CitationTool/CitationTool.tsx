@@ -4,6 +4,7 @@ import React, { FC, useEffect, useState } from "react";
 import { FaChevronDown, FaRegCopy } from "react-icons/fa";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 
 interface CitationToolProps {
   setFlag: (value: boolean) => void;
@@ -83,6 +84,7 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
       return;
     }
 
+    trackToolGenerate({ toolName: "Citation Tool" });
     setIsSubmitting(true);
     setError("");
     setResult(null);
@@ -672,7 +674,7 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
       {/* Footer Quote */}
       <div className="text-sm font-serif text-center pt-8 text-gray-500 dark:text-gray-400 transition-colors duration-300">
         <q>
-          Create perfect academic citations effortlessly with ScholarlyHelp's
+          Create perfect academic citations effortlessly with ScholarlyHelp&apos;s
           Citation Generator. Generate properly formatted citations in APA, MLA,
           Chicago, or Harvard style for books, websites, journals, and
           articles—all with in-text citation support.

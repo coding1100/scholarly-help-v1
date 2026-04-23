@@ -11,6 +11,7 @@ import { CgRename } from "react-icons/cg";
 import axios from "axios";
 import { ColorRing } from "react-loader-spinner";
 import SocialAuthButtons from "./SocialAuthButtons";
+import { appendQueryString } from "@/app/utils/url";
 
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
 
@@ -117,7 +118,7 @@ const SignUpCard: FC<SignUpCardProps> = ({
       setName("");
       setEmail("");
       setPassword("");
-      route.push("/otp");
+      route.push(appendQueryString("/otp", searchParams?.toString() || ""));
     } catch (err: any) {
       const networkMsg = getAuthNetworkErrorMessage(err);
       const message =

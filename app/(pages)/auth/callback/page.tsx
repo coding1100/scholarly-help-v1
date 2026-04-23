@@ -53,6 +53,10 @@ const AuthCallbackPage = () => {
         localStorage.setItem("access_token", accessToken);
         localStorage.setItem("user_id", user.user_id);
         localStorage.setItem("user_name", user.name || "User");
+        const resolvedEmail = String(user?.email || user?.user_email || "")
+          .trim()
+          .toLowerCase();
+        if (resolvedEmail) localStorage.setItem("user_email", resolvedEmail);
         localStorage.setItem("package_type", user.package_type || "none");
         document.cookie = `access_token=${accessToken}; path=/; max-age=86400`;
 

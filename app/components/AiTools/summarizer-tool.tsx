@@ -5,6 +5,7 @@ import TextSummarizerInput from "./TextSummarizerInput";
 import ResultDisplay from "./ResultDisplay";
 import ActionButtons from "./ActionButtons";
 import axios from "axios";
+import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 type SummarizeData = {
   format: string;
   length: string;
@@ -51,7 +52,7 @@ const SummarizerTool: React.FC = () => {
       if (!token) throw new Error("Token not found");
 
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_NGROX_URL}/v1/tools/parse-document`,
+        `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/parse-document`,
         formData,
         {
           headers: {
@@ -78,6 +79,7 @@ const SummarizerTool: React.FC = () => {
       return;
     }
 
+    trackToolGenerate({ toolName: "Summarizer Tool" });
     setIsLoading(true);
 
     try {

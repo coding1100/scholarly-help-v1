@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { HiDocumentText, HiCalendar } from "react-icons/hi2";
 import { HiChevronDown } from "react-icons/hi";
 import { sendChatMessage, ChatResponse } from "@/app/utilities/api";
+import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 
 interface Step1Props {
   onContinue?: (data: {
@@ -100,6 +101,7 @@ export default function Step1({ onContinue }: Step1Props) {
     setIsLoading(true);
 
     try {
+      trackToolGenerate({ toolName: "Exam Prep" });
       // Format the message payload
       const currentLevel = knowledgeLevel.toLowerCase();
       const message = `Use the create_study_schedule tool with:\n- exam_date: "${examDate}"\n- subjects: "${subject}"\n- hours_per_day: ${hoursPerDay}\n- current_level: "${currentLevel}"`;
@@ -144,7 +146,7 @@ export default function Step1({ onContinue }: Step1Props) {
               <HiDocumentText className="text-2xl text-[#51a2ff]" />
             </div>
             <p className="text-black text-sm mt-2">
-              Tell us about the exam you're preparing for
+              Tell us about the exam you&apos;re preparing for
               <br />
               so we can create a personalized study plan.
             </p>

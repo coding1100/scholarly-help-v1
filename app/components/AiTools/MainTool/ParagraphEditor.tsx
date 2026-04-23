@@ -34,6 +34,7 @@ import ParagraphToolbar from "./ParagraphToolbar";
 import axios from "axios";
 import { MdOutlineDragIndicator, MdAdd } from "react-icons/md";
 import { WordCountContext, EditorContext } from "./MainToolLayout";
+import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 
 // Custom node views by extending built-in nodes
 const CustomHeading = Heading.extend({
@@ -631,6 +632,7 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
 
   const handleAccept = useCallback(() => {
     if (editor && aiSuggestion && suggestionCursorPos !== null) {
+      trackToolGenerate({ toolName: "Main Tool" });
       const commands = editor.commands as any;
       commands.acceptAISuggestion(suggestionCursorPos, aiSuggestion);
       setAISuggestion("");
@@ -640,6 +642,7 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
 
   const handleTryAgain = useCallback(async () => {
     if (!editor) return;
+    trackToolGenerate({ toolName: "Main Tool" });
     const pos = editor.state.selection.from;
 
     const topic = getTopic();
