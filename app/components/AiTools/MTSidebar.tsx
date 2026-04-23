@@ -198,13 +198,13 @@ const MTSidebar = ({
       }
 
       const payload = {
-        timestamp: state.user_name || localStorage.getItem("user_name") || "User",
+        timestamp: new Date().toISOString(),
         email: state.user_email || localStorage.getItem("user_email") || undefined,
         userId: state.user_id || localStorage.getItem("user_id") || undefined,
         fbc: fbclid,
         toolUsed: nextTools,
         device: getDeviceLabel(),
-        source: "fbclid",
+        source: "meta",
       };
 
       toolsSheetPostingRef.current = true;

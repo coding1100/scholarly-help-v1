@@ -135,7 +135,7 @@ const ResearchQuestion: FC<ResearchQuestionProps> = ({ setFlag }) => {
         "";
       const endpoint = baseUrl.includes("/v1/")
         ? `${baseUrl}/tools/research-question-generator`
-        : `${baseUrl}/v1/tools/research-question-generator`;
+        : `${baseUrl}/tools/research-question-generator`;
 
       const response = await axios.post<QuestionResponse>(endpoint, payload, {
         headers: {
