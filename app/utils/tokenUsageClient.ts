@@ -20,6 +20,7 @@ const listeners = new Set<Listener>();
 let initialized = false;
 let inFlight: Promise<void> | null = null;
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+let autoRefreshTimers: Array<ReturnType<typeof setTimeout>> = [];
 export const __TOKEN_USAGE_UNAUTHORIZED_EVENT__ = "sh:token-usage-unauthorized";
 
 function emit() {
@@ -166,9 +167,29 @@ export function initTokenUsageAutoRefresh(toolGenerateEventName: string) {
   initialized = true;
   if (typeof window === "undefined") return;
 
+  const clearAutoRefreshTimers = () => {
+    for (const timer of autoRefreshTimers) {
+      clearTimeout(timer);
+    }
+    autoRefreshTimers = [];
+  };
+
+  const scheduleAutoRefreshSequence = () => {
+    // Some tools dispatch the "generate" event before API completion.
+    // Use staged retries so the token bar updates after backend usage settles.
+    clearAutoRefreshTimers();
+    const delays = [800, 2200, 4500];
+    autoRefreshTimers = delays.map((delayMs) =>
+      setTimeout(() => {
+        void refreshTokenUsageNow().catch(() => {
+          // ignored; callers handle auth redirects elsewhere
+        });
+      }, delayMs),
+    );
+  };
+
   window.addEventListener(toolGenerateEventName, () => {
-    // tool request happens first; usage updates slightly after server processes it
-    requestTokenUsageRefresh(800);
+    scheduleAutoRefreshSequence();
   });
 }
 
