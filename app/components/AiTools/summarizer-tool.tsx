@@ -5,6 +5,7 @@ import TextSummarizerInput from "./TextSummarizerInput";
 import ResultDisplay from "./ResultDisplay";
 import ActionButtons from "./ActionButtons";
 import axios from "axios";
+import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 type SummarizeData = {
   format: string;
   length: string;
@@ -78,6 +79,7 @@ const SummarizerTool: React.FC = () => {
       return;
     }
 
+    trackToolGenerate({ toolName: "Summarizer Tool" });
     setIsLoading(true);
 
     try {

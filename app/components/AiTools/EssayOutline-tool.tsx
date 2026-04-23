@@ -4,6 +4,7 @@ import EssayOutlinerForm from "./EssayOutlineForm";
 import axios from "axios";
 import { FaRegCopy } from "react-icons/fa";
 import toast from "react-hot-toast";
+import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 
 type OutlineItem = {
   section: string;
@@ -26,6 +27,7 @@ const EssayOutlinetool = () => {
     essay_type: string;
   }) => {
     const { topic, essay_level, essay_type } = formData;
+    trackToolGenerate({ toolName: "Essay Outline Tool" });
     setSubmitting(true);
     try {
       const response = await axios.post(

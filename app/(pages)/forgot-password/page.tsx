@@ -1,12 +1,14 @@
 import AuthLayout from "@/app/components/Auth/AuthLayout";
 import ForgotPassword from "@/app/components/Auth/ForgotPassword";
-import React from "react";
+import React, { Suspense } from "react";
 
 const page = () => {
   return (
     <div>
       <AuthLayout>
-        <ForgotPassword />
+        <Suspense fallback={null}>
+          <ForgotPassword />
+        </Suspense>
       </AuthLayout>
     </div>
   );

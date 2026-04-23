@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { LuZap } from "react-icons/lu";
 import PricingPopup from "./PricingPopup";
 import axios from "axios";
+import { appendQueryString } from "@/app/utils/url";
 
 interface UsageAndPricingProps {
   setFlag: (value: boolean) => void;
@@ -12,6 +13,8 @@ interface UsageAndPricingProps {
 
 const UsageAndPricing: React.FC<UsageAndPricingProps> = ({ setFlag, flag }) => {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const user_id =
     typeof window !== "undefined" ? localStorage.getItem("user_id") : null;
 
@@ -63,7 +66,14 @@ const UsageAndPricing: React.FC<UsageAndPricingProps> = ({ setFlag, flag }) => {
       // Handle unauthorized (401) - redirect to /login
       if (error?.response?.status === 401) {
         console.log("🔄 Unauthorized - redirecting to /login");
-        router.push("/sign-in");
+        const currentQs = searchParams?.toString();
+        const signInBase = currentQs ? `/sign-in?${currentQs}` : "/sign-in";
+        router.push(
+          appendQueryString(
+            signInBase,
+            `returnUrl=${encodeURIComponent(pathname || "/tools/dashboard")}`,
+          ),
+        );
         return;
       }
 

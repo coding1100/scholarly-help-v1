@@ -4,36 +4,45 @@ import { FaRegFileAlt, FaFileUpload } from "react-icons/fa";
 interface TextSummarizerInputProps {
   onTextChange: (text: string) => void;
   onPdfUpload?: (file: File) => void;
+  onFileUpload?: (file: File) => void;
   initialText?: string;
   placeholder?: string;
   title: string;
   onWordLimitExceeded?: (exceeded: boolean) => void;
+  maxWords?: number;
+  accept?: string;
 }
 
 const TextSummarizerInput: React.FC<TextSummarizerInputProps> = ({
   title,
   onTextChange,
   onPdfUpload,
+  onFileUpload,
   initialText = "",
   placeholder = "Start typing or paste text here...",
   onWordLimitExceeded,
+  maxWords = 200,
+  accept = ".pdf",
 }) => {
   const [inputText, setInputText] = useState<string>(initialText);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const countWords = (text: string) =>
+    text.trim() ? text.trim().split(/\s+/).filter(Boolean).length : 0;
 
   useEffect(() => {
     setInputText(initialText);
   }, [initialText]);
   useEffect(() => {
-    const wordCount = inputText.trim().split(/\s+/).filter(Boolean).length;
+    const wordCount = countWords(inputText);
 
     if (onWordLimitExceeded) {
-      const isExceeded = wordCount > 200;
+      const isExceeded = wordCount > maxWords;
       onWordLimitExceeded(isExceeded);
     }
-  }, [inputText, onWordLimitExceeded]);
+  }, [inputText, maxWords, onWordLimitExceeded]);
 
-  const wordCount = inputText.trim().split(/\s+/).filter(Boolean).length;
+  const wordCount = countWords(inputText);
 
   const handleInputChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     const newText = e.target.value;
@@ -63,12 +72,25 @@ const TextSummarizerInput: React.FC<TextSummarizerInputProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.type !== "application/pdf") {
-      alert("Please upload a PDF file.");
+    const allowedExts = accept
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const fileExt = (file.name.split(".").pop() || "").toLowerCase();
+    const allowedByExt =
+      allowedExts.length === 0
+        ? true
+        : allowedExts.some(
+            (ext) => ext.replace(".", "").toLowerCase() === fileExt,
+          );
+
+    if (!allowedByExt) {
+      alert(`Please upload one of the following: ${allowedExts.join(", ")}`);
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
 
+    onFileUpload?.(file);
     onPdfUpload?.(file);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -106,7 +128,7 @@ const TextSummarizerInput: React.FC<TextSummarizerInputProps> = ({
               type="file"
               ref={fileInputRef}
               onChange={handleFileChange}
-              accept=".pdf"
+              accept={accept}
               className="hidden"
             />
             <button
@@ -122,7 +144,7 @@ const TextSummarizerInput: React.FC<TextSummarizerInputProps> = ({
         {/* Word count in bottom right */}
         <div
           className={`absolute bottom-2 right-4 text-sm ${
-            wordCount > 200
+            wordCount > maxWords
               ? "text-[#fb2c36] dark:text-red-400 font-semibold"
               : "text-gray-500 dark:text-gray-400"
           } transition-colors duration-300`}

@@ -29,6 +29,7 @@
     "clsx": "^2.1.1",
     "dayjs": "^1.11.10",
     "google-libphonenumber": "^3.2.34",
+    "googleapis": "^171.4.0",
     "jsonwebtoken": "^9.0.2",
     "jwt-decode": "^4.0.0",
     "katex": "^0.16.9",

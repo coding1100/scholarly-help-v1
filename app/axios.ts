@@ -19,7 +19,7 @@ axiosInstance.interceptors.request.use(
   (error) => {
     // Handle request error
     return Promise.reject(error);
-  }
+  },
 );
 
 // Response interceptor: This will be called when the response is received
@@ -36,7 +36,7 @@ axiosInstance.interceptors.response.use(
     // console.log(error);
     // Handle response error
     return Promise.reject(error);
-  }
+  },
 );
 
 export default axiosInstance;

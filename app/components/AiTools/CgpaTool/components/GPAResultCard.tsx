@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import { CalculatorState } from "../types";
 import { computeCumulativeTotals } from "../utils/calc";
 import { formatGpaMaybe, roundTo } from "../utils/numbers";
 import { createId } from "../utils/id";
 import { Button, Card, CardBody, CardHeader, Input, Label, Stat } from "./ui";
+import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 
 export default function GPAResultCard(props: {
   state: CalculatorState;
@@ -15,6 +16,20 @@ export default function GPAResultCard(props: {
   const { state, onChange, onReset } = props;
 
   const totals = useMemo(() => computeCumulativeTotals(state), [state]);
+  const prevDisplayRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const nextDisplay = formatGpaMaybe(totals.cgpa);
+    const prevDisplay = prevDisplayRef.current;
+    prevDisplayRef.current = nextDisplay;
+
+    // Fire only when display changes from "0.00" to any other numeric value.
+    if (prevDisplay === null) return;
+    if (prevDisplay !== "0.00") return;
+    if (nextDisplay === "0.00" || nextDisplay === "—") return;
+
+    trackToolGenerate({ toolName: "CGPA Calculator" });
+  }, [totals.cgpa]);
 
   return (
     <Card>

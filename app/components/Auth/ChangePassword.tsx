@@ -8,6 +8,7 @@ import { FiEye, FiEyeOff } from "react-icons/fi";
 import { ColorRing } from "react-loader-spinner";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { appendQueryString } from "@/app/utils/url";
 
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
 
@@ -85,7 +86,9 @@ const ChangePassword = () => {
       toast.success(res?.data?.message || "Password changed successfully.");
 
       setSuccess("Password changed successfully.");
-      router.push("/sign-in");
+      const qs =
+        typeof window !== "undefined" ? window.location.search : "";
+      router.push(appendQueryString("/sign-in", qs));
       setNewPassword("");
       setConfirmPassword("");
     } catch (err: any) {

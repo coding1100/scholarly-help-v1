@@ -6,16 +6,18 @@ import { FaArrowRight } from "react-icons/fa";
 import Image from "next/image";
 import Logo from "@/app/assets/Images/logo.png";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { CgRename } from "react-icons/cg";
 import axios from "axios";
 import { ColorRing } from "react-loader-spinner";
 import SocialAuthButtons from "./SocialAuthButtons";
+import { appendQueryString } from "@/app/utils/url";
 
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
 
 const SignUpCard = () => {
   const route = useRouter();
+  const searchParams = useSearchParams();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -107,7 +109,7 @@ const SignUpCard = () => {
       setName("");
       setEmail("");
       setPassword("");
-      route.push("/otp");
+      route.push(appendQueryString("/otp", searchParams?.toString() || ""));
     } catch (err: any) {
       const networkMsg = getAuthNetworkErrorMessage(err);
       const message =
@@ -228,7 +230,10 @@ const SignUpCard = () => {
       </form>
       <p className="text-center text-sm  mt-8 relative">
         If you have an account?
-        <Link href="/sign-in/" className="hover:underline pl-1">
+        <Link
+          href={appendQueryString("/sign-in/", searchParams?.toString() || "")}
+          className="hover:underline pl-1"
+        >
           Sign in Here
         </Link>
       </p>

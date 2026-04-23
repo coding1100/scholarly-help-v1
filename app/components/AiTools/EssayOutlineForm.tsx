@@ -112,7 +112,7 @@ const EssayOutlinerForm: React.FC<EssayOutlinerFormProps> = ({
         <ActionButtons
           onClear={handleClearInputs}
           onSubmit={handleGenerate}
-          submitButtonText="Generate"
+          submitButtonText="Generate Essay Outline"
           isSubmitting={isSubmitting}
           isDisabled={!essayTitle.trim()}
         />
