@@ -10,11 +10,17 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
 import { ColorRing } from "react-loader-spinner";
 import SocialAuthButtons from "./SocialAuthButtons";
+import { appendQueryString, mergeSearchParams } from "@/app/utils/url";
 
 const SignInCard = () => {
   const route = useRouter();
   const searchParams = useSearchParams();
   const returnUrl = searchParams.get("returnUrl");
+  const preservedParams = useCallback(() => {
+    const sp = new URLSearchParams(searchParams?.toString() || "");
+    sp.delete("returnUrl");
+    return sp;
+  }, [searchParams]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -49,15 +55,22 @@ const SignInCard = () => {
       localStorage.setItem("access_token", data.access_token);
       localStorage.setItem("user_id", data.user.user_id);
       localStorage.setItem("user_name", data.user.name);
+      // Some backends include user email; fallback to the entered email.
+      const resolvedEmail =
+        String(data?.user?.email || data?.user?.user_email || email || "")
+          .trim()
+          .toLowerCase() || "";
+      if (resolvedEmail) localStorage.setItem("user_email", resolvedEmail);
       localStorage.setItem("package_type", data.user.package_type);
       document.cookie = `access_token=${data.access_token}; path=/; max-age=86400`;
 
       setTimeout(() => {
-        const redirectUrl = returnUrl || "/tools/dashboard/";
-        route.replace(redirectUrl);
+        const target = returnUrl || "/tools/dashboard/";
+        const finalTarget = mergeSearchParams(target, preservedParams());
+        route.replace(finalTarget);
       }, 100);
     },
-    [returnUrl, route],
+    [returnUrl, route, preservedParams, email],
   );
 
   const currentPage = usePathname();
@@ -73,11 +86,11 @@ const SignInCard = () => {
         console.log("Redirecting to:", returnUrl);
         // Small delay to ensure cookie is set before redirect
         setTimeout(() => {
-          route.replace(returnUrl);
+          route.replace(mergeSearchParams(returnUrl, preservedParams()));
         }, 100);
       }
     }
-  }, [returnUrl, route]);
+  }, [returnUrl, route, preservedParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -189,11 +202,19 @@ const SignInCard = () => {
           {!submitError && <FaArrowRight />}
         </button>
 
-        <SocialAuthButtons returnUrl={returnUrl} />
+        <SocialAuthButtons
+          returnUrl={mergeSearchParams(
+            returnUrl || "/tools/dashboard/",
+            preservedParams(),
+          )}
+        />
       </form>
       <p className="text-center text-sm  mt-8 relative">
         Do not have an account?
-        <Link href="/sign-up/" className="hover:underline pl-1">
+        <Link
+          href={appendQueryString("/sign-up/", searchParams?.toString() || "")}
+          className="hover:underline pl-1"
+        >
           Sign up Here
         </Link>
       </p>

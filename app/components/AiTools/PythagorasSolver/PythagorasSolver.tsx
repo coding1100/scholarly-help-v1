@@ -4,6 +4,7 @@ import React, { FC, useEffect, useState } from "react";
 import { FaRegCopy } from "react-icons/fa";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 
 interface PythagorasSolverProps {
   setFlag: (value: boolean) => void;
@@ -65,6 +66,7 @@ const PythagorasSolver: FC<PythagorasSolverProps> = ({ setFlag }) => {
       return;
     }
 
+    trackToolGenerate({ toolName: "Pythagoras Equation Solver" });
     setIsSubmitting(true);
     setError("");
     setResult(null);

@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { useLanguagePractice } from "@/app/context/LanguagePracticeContext";
+import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 
 const PRESET_LANGUAGES = [
   "Spanish",
@@ -74,6 +75,7 @@ export default function Step1() {
 
   const handleContinue = async () => {
     if (!canContinue || isLoading) return;
+    trackToolGenerate({ toolName: "Language Practice" });
     setIsLoading(true);
     // Small delay for smooth UX transition
     await new Promise((resolve) => setTimeout(resolve, 300));
@@ -107,7 +109,7 @@ export default function Step1() {
             </div>
           </div>
           <div className="text-sm text-gray-600">
-            I'll personalize your learning journey based on your level and
+          I&apos;ll personalize your learning journey based on your level and
             goals.
           </div>
         </div>
@@ -283,8 +285,8 @@ export default function Step1() {
             </svg>
           </div>
           <div className="text-sm text-gray-700">
-            <span className="font-semibold">Tip:</span> Don't worry about being
-            "ready" — we'll start easy and level up fast! 🚀
+            <span className="font-semibold">Tip:</span> Don&apos;t worry about being
+            &quot;ready&quot; — we&apos;ll start easy and level up fast! 🚀
           </div>
         </div>
       </div>

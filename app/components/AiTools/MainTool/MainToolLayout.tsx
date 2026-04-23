@@ -1,12 +1,13 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import DocumentsSidebar from "./DocumentsSidebar";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import MTSidebar from "../MTSidebar";
 import MTHeader from "./MTHeader";
 import FooterBar from "./FooterBar";
 import SettingsSidePanel from "./PopupModal/SettingsSidePanel";
 import PromptModal from "../PromptModal";
+import { appendQueryString } from "@/app/utils/url";
 export interface TitleContextValue {
   title: string;
   setTitle: React.Dispatch<React.SetStateAction<string>>;
@@ -56,6 +57,8 @@ const MainToolLayout: React.FC<MainToolLayoutProps> = ({
   const [documentsOpen, setDocumentsOpen] = useState(false);
   const [isPromptModalOpen, setPromptModalOpen] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [token, setToken] = useState<string | null>(null);
   const [checked, setChecked] = useState(false);
 
@@ -65,12 +68,18 @@ const MainToolLayout: React.FC<MainToolLayoutProps> = ({
         ? localStorage.getItem("access_token")
         : null;
     if (!t) {
-      router.push("/sign-in");
+      const currentQs = searchParams?.toString();
+      const signInBase = currentQs ? `/sign-in?${currentQs}` : "/sign-in";
+      const signInHref = appendQueryString(
+        signInBase,
+        `returnUrl=${encodeURIComponent(pathname || "/tools/main-tool")}`,
+      );
+      router.push(signInHref);
     } else {
       setToken(t);
     }
     setChecked(true);
-  }, [router]);
+  }, [router, pathname, searchParams]);
 
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
 

@@ -13,6 +13,7 @@ import Step8 from "./Step8";
 import { useChat } from "@/app/context/ChatContext";
 import { ParsedQuestion } from "@/app/utilities/api";
 import FloatingChat from "../FloatingChat/FloatingChat";
+import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 
 export default function TutorFlow() {
   const { sendMessage, isLoading } = useChat();
@@ -41,6 +42,7 @@ export default function TutorFlow() {
   const handleStep2Continue = async (subj: string) => {
     setSubject(subj);
     try {
+      trackToolGenerate({ toolName: "Tutor Tool" });
       await sendMessage(
         `The student ${childName} wants to learn "${subj}". \n\nPlease validate if this is a valid educational subject. \n\nIf it's valid, respond with:\n**VALID_SUBJECT:** [subject name]\n\nIf it's not a valid subject, respond with:\n**INVALID_SUBJECT:** Please enter a valid educational subject. Examples include: Mathematics, Science, English, History, Geography, Physics, Chemistry, Biology, Literature, Art, Music, etc.`
       );

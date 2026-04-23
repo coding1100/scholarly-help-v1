@@ -10,6 +10,7 @@ import Step6 from "./Step6";
 import Step9 from "./Step9";
 import Step10 from "./Step10";
 import Step11 from "./Step11";
+import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 
 export default function MicroLearningFlow() {
     const [currentStep, setCurrentStep] = useState(1);
@@ -32,6 +33,7 @@ export default function MicroLearningFlow() {
                 <Step2
                     onBack={() => setCurrentStep(1)}
                     onContinue={(goals) => {
+                        trackToolGenerate({ toolName: "Micro Learning" });
                         setSelectedGoals(goals);
                         setCurrentStep(3);
                     }}

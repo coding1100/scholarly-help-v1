@@ -6,6 +6,7 @@ import TextSummarizerInput from "./TextSummarizerInput";
 import ResultDisplay from "./ResultDisplay";
 import ActionButtons from "./ActionButtons";
 import axios from "axios";
+import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 
 type ResData = {
   data: {
@@ -133,6 +134,7 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag }) => {
       setResultText("Text exceeds 200-word limit. Please shorten your input.");
       return;
     }
+    trackToolGenerate({ toolName: "Paraphraser Tool" });
     await processinput();
   };
 
