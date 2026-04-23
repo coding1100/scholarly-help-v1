@@ -11,6 +11,7 @@ import Image, { StaticImageData } from "next/image";
 import FormBackImg from "@/app/assets/Images/Hero-Group-195.webp";
 import { usePageData } from "./usePageData";
 import SignInCard from "../Auth/SignInCard";
+import SignUpCard from "../Auth/SignUpCard";
 
 interface HeroFormProps {
   nameValue?: string;
@@ -319,6 +320,10 @@ const HeroForm: FC<HeroFormProps> = ({
   const currentPage = usePathname();
   const normalizedPage = normalizePathname(currentPage);
   const isTakeMyClass2Route = normalizedPage === "/take-my-class-2";
+  const [switchAuthForm, setSwitchAuthForm] = useState<"signin" | "signup">(
+    "signin",
+  );
+
   const shouldShowPriceHeader = useMemo(() => {
     return (
       PRICE_HEADER_ROUTES.has(normalizedPage) ||
@@ -753,7 +758,19 @@ const HeroForm: FC<HeroFormProps> = ({
         variant="default"
       />
       {currentPage === "/tools/" ? (
-        <SignInCard />
+        <>
+          {switchAuthForm === "signin" ? (
+            <SignInCard
+              switchAuthForm={switchAuthForm}
+              setSwitchAuthForm={setSwitchAuthForm}
+            />
+          ) : (
+            <SignUpCard
+              switchAuthForm={switchAuthForm}
+              setSwitchAuthForm={setSwitchAuthForm}
+            />
+          )}
+        </>
       ) : (
         <div className="w-full mx-auto cus-div">
           {shouldShowPriceHeader && (

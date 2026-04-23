@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, FC } from "react";
 import { MdOutlineEmail } from "react-icons/md";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { FaArrowRight } from "react-icons/fa";
@@ -10,9 +10,17 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
 import { ColorRing } from "react-loader-spinner";
 import SocialAuthButtons from "./SocialAuthButtons";
-import { appendQueryString, mergeSearchParams } from "@/app/utils/url";
+import { mergeSearchParams } from "@/app/utils/url";
 
-const SignInCard = () => {
+interface SignInCardProps {
+  switchAuthForm?: string;
+  setSwitchAuthForm?: React.Dispatch<React.SetStateAction<"signin" | "signup">>;
+}
+
+const SignInCard: FC<SignInCardProps> = ({
+  switchAuthForm = "",
+  setSwitchAuthForm,
+}) => {
   const route = useRouter();
   const searchParams = useSearchParams();
   const returnUrl = searchParams.get("returnUrl");
@@ -211,12 +219,18 @@ const SignInCard = () => {
       </form>
       <p className="text-center text-sm  mt-8 relative">
         Do not have an account?
-        <Link
-          href={appendQueryString("/sign-up/", searchParams?.toString() || "")}
-          className="hover:underline pl-1"
-        >
-          Sign up Here
-        </Link>
+        {switchAuthForm === "" ? (
+          <Link href="/sign-up/" className="hover:underline pl-1">
+            Sign up Here
+          </Link>
+        ) : (
+          <span
+            className="hover:underline pl-1 cursor-pointer"
+            onClick={() => setSwitchAuthForm?.("signup") || undefined}
+          >
+            Sign up Here
+          </span>
+        )}
       </p>
     </div>
   );

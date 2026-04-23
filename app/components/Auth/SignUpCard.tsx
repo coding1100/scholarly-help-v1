@@ -1,12 +1,12 @@
 "use client";
-import { useState } from "react";
+import { FC, useState } from "react";
 import { MdOutlineEmail } from "react-icons/md";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { FaArrowRight } from "react-icons/fa";
 import Image from "next/image";
 import Logo from "@/app/assets/Images/logo.png";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { CgRename } from "react-icons/cg";
 import axios from "axios";
 import { ColorRing } from "react-loader-spinner";
@@ -15,9 +15,18 @@ import { appendQueryString } from "@/app/utils/url";
 
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
 
-const SignUpCard = () => {
+interface SignUpCardProps {
+  switchAuthForm?: string;
+  setSwitchAuthForm?: React.Dispatch<React.SetStateAction<"signin" | "signup">>;
+}
+
+const SignUpCard: FC<SignUpCardProps> = ({
+  switchAuthForm = "",
+  setSwitchAuthForm,
+}) => {
   const route = useRouter();
-  const searchParams = useSearchParams();
+  const currentPage = usePathname();
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -124,16 +133,20 @@ const SignUpCard = () => {
   };
 
   return (
-    <div className=" space-y-6 text-[#2B1C50]">
-      <div className="flex items-center justify-center ">
-        <Image
-          src={Logo}
-          alt="logo is here"
-          width={225}
-          height={56}
-          className="object-cover"
-        />
-      </div>
+    <div
+      className={`${currentPage === "/tools/" ? "bg-white max-[768px]:bg-transparent max-[768px]:shadow-none max-[768px]:p-0 rounded-lg shadow-sm p-6 flex flex-col gap-4 -z-[999]" : " space-y-6 text-[#2B1C50]"}`}
+    >
+      {currentPage !== "/tools/" && (
+        <div className="flex items-center justify-center ">
+          <Image
+            src={Logo}
+            alt="logo is here"
+            width={225}
+            height={56}
+            className="object-cover"
+          />
+        </div>
+      )}
 
       <form className="flex flex-col gap-2 md:gap-5" onSubmit={handleSubmit}>
         <div>
@@ -230,12 +243,18 @@ const SignUpCard = () => {
       </form>
       <p className="text-center text-sm  mt-8 relative">
         If you have an account?
-        <Link
-          href={appendQueryString("/sign-in/", searchParams?.toString() || "")}
-          className="hover:underline pl-1"
-        >
-          Sign in Here
-        </Link>
+        {switchAuthForm === "" ? (
+          <Link href="/sign-in/" className="hover:underline pl-1">
+            Sign in Here
+          </Link>
+        ) : (
+          <span
+            className="hover:underline pl-1 cursor-pointer"
+            onClick={() => setSwitchAuthForm?.("signin") || undefined}
+          >
+            Sign in Here
+          </span>
+        )}
       </p>
     </div>
   );

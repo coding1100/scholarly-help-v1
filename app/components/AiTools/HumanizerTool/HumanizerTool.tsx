@@ -98,7 +98,7 @@ const HumanizerTool: React.FC = () => {
       formData.append("file", file);
 
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_NGROX_URL}/v1/tools/parse-document`,
+        `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/parse-document`,
         formData,
         {
           headers: {
