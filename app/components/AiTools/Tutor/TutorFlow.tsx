@@ -14,7 +14,6 @@ import { useChat } from "@/app/context/ChatContext";
 import { ParsedQuestion } from "@/app/utilities/api";
 import FloatingChat from "../FloatingChat/FloatingChat";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
-import { requestTokenUsageRefresh } from "@/app/utils/tokenUsageClient";
 
 export default function TutorFlow() {
   const { sendMessage, isLoading } = useChat();
@@ -47,7 +46,6 @@ export default function TutorFlow() {
       await sendMessage(
         `The student ${childName} wants to learn "${subj}". \n\nPlease validate if this is a valid educational subject. \n\nIf it's valid, respond with:\n**VALID_SUBJECT:** [subject name]\n\nIf it's not a valid subject, respond with:\n**INVALID_SUBJECT:** Please enter a valid educational subject. Examples include: Mathematics, Science, English, History, Geography, Physics, Chemistry, Biology, Literature, Art, Music, etc.`
       );
-      requestTokenUsageRefresh(0);
       setCurrentStep(3);
     } catch (error) {
       toast.error("Failed to send message. Please try again.");
@@ -60,7 +58,6 @@ export default function TutorFlow() {
       const response = await sendMessage(
         `I need you to generate a list of ${subj.toLowerCase()} learning topics suitable for a ${skillLevelValue.toLowerCase()} level student named ${childName}.\n\nIMPORTANT: Please provide the topics in this EXACT format (one topic per line):\n**Topic 1:** [Topic Name] [Emoji]\n**Topic 2:** [Topic Name] [Emoji]\n**Topic 3:** [Topic Name] [Emoji]\n...continue for 8-12 topics...\n\nCRITICAL FORMATTING RULES:\n- Start IMMEDIATELY with **Topic 1:** - NO introductory text before it\n- Each topic must be on its own line\n- Each line must start with **Topic N:** where N is the number\n- Include an appropriate emoji for each topic\n- Generate 8-12 topics total\n- NO other text, explanations, or conversational content - ONLY the topic list`
       );
-      requestTokenUsageRefresh(0);
 
       // Parse topics from response
       const topicRegex = /\*\*Topic (\d+):\*\*\s*(.+?)(?=\n\*\*Topic|$)/g;
@@ -117,7 +114,6 @@ export default function TutorFlow() {
       const response = await sendMessage(
         `Generate a quiz about ${topic} (${subject.toLowerCase()} subject) with exactly 5 multiple choice questions at ${apiDifficulty} difficulty level. \n\nIMPORTANT: \n- The quiz must be specifically about "${topic}" in ${subject.toLowerCase()}\n- Use the generate_quiz tool\n- Generate exactly 5 questions\n- Difficulty level: ${apiDifficulty}`
       );
-      requestTokenUsageRefresh(0);
 
       // Parse quiz from response
       const parsedQuestions = parseQuizFromResponse(response);

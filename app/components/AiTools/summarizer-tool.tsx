@@ -6,7 +6,6 @@ import ResultDisplay from "./ResultDisplay";
 import ActionButtons from "./ActionButtons";
 import axios from "axios";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
-import { requestTokenUsageRefresh } from "@/app/utils/tokenUsageClient";
 type SummarizeData = {
   format: string;
   length: string;
@@ -104,7 +103,6 @@ const SummarizerTool: React.FC = () => {
       const result = response;
       console.log("Response Summ", result.data);
       setSummarizedResult(result.data.summary);
-      requestTokenUsageRefresh(0);
     } catch (error: any) {
       console.error("Summarization failed:", error);
       setSummarizedResult(
