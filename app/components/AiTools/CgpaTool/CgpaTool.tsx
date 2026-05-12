@@ -22,6 +22,7 @@ import {
   hasAnyCalculableCgpaInput,
 } from "./utils/calc";
 import { formatCgpaForEmailAndSync, isValidEmail } from "./utils/gpaEmail";
+import { buildCgpaGhlSnapshot } from "./utils/cgpaGhlSnapshot";
 import { syncCgpaToGhl } from "./utils/ghlCgpaSync";
 import { usePathname } from "next/navigation";
 
@@ -195,6 +196,7 @@ export default function CgpaTool(props: CgpaToolProps = {}) {
       const ghlOutcome = await syncCgpaToGhl({
         email: trimmedEmail,
         cgpa: cgpaDisplay,
+        snapshot: buildCgpaGhlSnapshot(state),
       });
 
       if (!ghlOutcome.ok) {

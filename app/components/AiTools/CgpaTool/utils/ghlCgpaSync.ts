@@ -1,3 +1,5 @@
+import type { CgpaGhlSnapshot } from "./cgpaGhlSnapshot";
+
 type CgpaGhlResponse = {
   success?: boolean;
   message?: string;
@@ -10,17 +12,20 @@ type CgpaGhlResponse = {
 export async function syncCgpaToGhl({
   email,
   cgpa,
+  snapshot,
 }: {
   email: string;
   cgpa: string;
+  snapshot: CgpaGhlSnapshot;
 }): Promise<{ ok: true } | { ok: false; message: string }> {
   let res: Response;
   try {
     res = await fetch("/api/cgpa-ghl", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, cgpa }),
+      body: JSON.stringify({ email, cgpa, snapshot }),
     });
+    console.log("whole data", { email, cgpa, snapshot });
   } catch {
     return { ok: false, message: "Network error calling GHL sync" };
   }
