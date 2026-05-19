@@ -44,7 +44,10 @@ const HeroSection: FC<HeroSectionProps> = ({
   const data = usePageData();
   const heroContent = propHeroContent || data?.heroSection;
 const cuurentRoute = usePathname();
-const increaseSpace = ["/take-my-class-professor-does-not-care/"];
+const increaseSpace = [
+  "/take-my-class-professor-does-not-care/",
+  "/take-my-class-still-doing/",
+];
   return (
     <section
       id="hero-section"
