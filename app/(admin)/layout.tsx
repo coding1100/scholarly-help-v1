@@ -155,6 +155,7 @@ const pagesNavigation = [
   { name: 'Edit Take My Class (Still Doing)', href: '/admin/take-my-class-still-doing', icon: TakeMyClassIcon },
   { name: 'Edit Take My Class (Protect GPA)', href: '/admin/take-my-class-protect-gpa', icon: TakeMyClassIcon },
   { name: 'Edit Take My Class (Always Working Harder)', href: '/admin/take-my-class-always-working-harder', icon: TakeMyClassIcon },
+  { name: 'Edit Take My Class (Saving Your Future)', href: '/admin/take-my-class-saving-your-future', icon: TakeMyClassIcon },
   { name: 'Edit Take My Exam', href: '/admin/take-my-exam', icon: TakeMyExamIcon },
   { name: 'Edit Take My Proctored Exam', href: '/admin/take-my-proctored-exam-for-me', icon: TakeMyExamIcon },
 ];

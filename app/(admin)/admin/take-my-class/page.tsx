@@ -4,6 +4,12 @@ import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 
 function resolveTakeMyClassAdminPage(pathname: string | null) {
+  if (pathname?.includes("take-my-class-saving-your-future")) {
+    return {
+      pageId: "take-my-class-saving-your-future",
+      pageLabel: "Take My Class (Saving Your Future)",
+    };
+  }
   if (pathname?.includes("take-my-class-always-working-harder")) {
     return {
       pageId: "take-my-class-always-working-harder",
