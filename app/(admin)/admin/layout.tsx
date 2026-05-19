@@ -66,6 +66,7 @@ const navigation = [
   { name: 'Edit Take My Class 3', href: '/admin/take-my-class-3', icon: HomeIcon },
   { name: 'Edit Take My Class (Professor)', href: '/admin/take-my-class-professor-does-not-care', icon: HomeIcon },
   { name: 'Edit Take My Class (Still Doing)', href: '/admin/take-my-class-still-doing', icon: HomeIcon },
+  { name: 'Edit Take My Class (Protect GPA)', href: '/admin/take-my-class-protect-gpa', icon: HomeIcon },
   // { name: 'Edit FAQ', href: '/admin/faq', icon: FaqIcon },
 ];
 
