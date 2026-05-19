@@ -48,6 +48,7 @@ const increaseSpace = [
   "/take-my-class-professor-does-not-care/",
   "/take-my-class-still-doing/",
   "/take-my-class-protect-gpa/",
+  "/take-my-class-always-working-harder/",
 ];
   return (
     <section
