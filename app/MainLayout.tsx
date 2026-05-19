@@ -44,6 +44,8 @@ const MainLayout: FC<MainLayoutProps> = ({ children }) => {
     "/take-my-class-protect-gpa/",
     "/take-my-class-always-working-harder",
     "/take-my-class-always-working-harder/",
+    "/take-my-class-saving-your-future",
+    "/take-my-class-saving-your-future/",
     "/take-my-exam",
     "/take-my-exam/",
   ];
@@ -70,6 +72,8 @@ const MainLayout: FC<MainLayoutProps> = ({ children }) => {
     "/take-my-class-protect-gpa/",
     "/take-my-class-always-working-harder",
     "/take-my-class-always-working-harder/",
+    "/take-my-class-saving-your-future",
+    "/take-my-class-saving-your-future/",
     "/take-my-exam",
     "/take-my-exam/",
   ];
