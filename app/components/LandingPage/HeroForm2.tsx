@@ -206,7 +206,7 @@ const HeroForm2: FC<ZohoForm2Props> = ({
           src={FormBackImg}
           alt="Academic success illustration"
           width={400}
-          className="cus-img absolute w-[400px] min-[1200px]:right-[-258px] -z-[1] max-[1025px]:hidden min-[1100px]:right-[-208px] min-[1150px]:right-[-150px]"
+          className={`cus-img absolute -z-[1] max-[1025px]:hidden ${isProfessorPage ? "w-[300px] min-[1100px]:right-[-208px] min-[1150px]:right-[-150px] min-[1200px]:right-[-225px] top-[-46px]" : "w-[400px] min-[1100px]:right-[-208px] min-[1150px]:right-[-150px] min-[1200px]:right-[-258px]"}`}
         />
       )}
       <div className="w-full mx-auto cus-div">
