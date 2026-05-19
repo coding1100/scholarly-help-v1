@@ -637,6 +637,12 @@ export const MetaData = {
       "Need online class help? Willing to hire someone to take my online class? We heard you! Let us help you get the grade you want. Instead, you pay someone, pay us to do your online class.",
     url: "take-my-class-professor-does-not-care/",
   },
+  takeMyClassStillDoing: {
+    title: "FB Online Class Help",
+    description:
+      "Need online class help? Willing to hire someone to take my online class? We heard you! Let us help you get the grade you want. Instead, you pay someone, pay us to do your online class.",
+    url: "take-my-class-still-doing/",
+  },
   // MetaData for Take My Exam Page
   takeMyExam: {
     title: "Take My Exam",
