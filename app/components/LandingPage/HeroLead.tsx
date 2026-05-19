@@ -16,6 +16,7 @@ import {
   TAKE_MY_CLASS_PROFESSOR_PATH,
   TAKE_MY_CLASS_STILL_DOING_PATH,
   TAKE_MY_CLASS_PROTECT_GPA_PATH,
+  TAKE_MY_CLASS_ALWAYS_WORKING_HARDER_PATH,
 } from "@/app/lib/takeMyClassLandingRoutes";
 
 const CHECK_BG = "#9F92EC";
@@ -81,6 +82,8 @@ const HeroLead: FC<HeroLeadProps> = ({ heroContent, hideHeading }) => {
       `${TAKE_MY_CLASS_STILL_DOING_PATH}/`,
       TAKE_MY_CLASS_PROTECT_GPA_PATH,
       `${TAKE_MY_CLASS_PROTECT_GPA_PATH}/`,
+      TAKE_MY_CLASS_ALWAYS_WORKING_HARDER_PATH,
+      `${TAKE_MY_CLASS_ALWAYS_WORKING_HARDER_PATH}/`,
       "/take-my-exam",
       "/take-my-exam/",
     ].map((route) => route.replace(/\/+$/, "") || "/"),
@@ -123,6 +126,8 @@ const HeroLead: FC<HeroLeadProps> = ({ heroContent, hideHeading }) => {
       `${TAKE_MY_CLASS_STILL_DOING_PATH}/`,
       TAKE_MY_CLASS_PROTECT_GPA_PATH,
       `${TAKE_MY_CLASS_PROTECT_GPA_PATH}/`,
+      TAKE_MY_CLASS_ALWAYS_WORKING_HARDER_PATH,
+      `${TAKE_MY_CLASS_ALWAYS_WORKING_HARDER_PATH}/`,
       "/take-my-class-2",
       "/take-my-class-2/",
       "/take-my-exam",
