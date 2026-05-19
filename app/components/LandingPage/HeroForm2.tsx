@@ -1,7 +1,7 @@
 "use client";
 
 import axiosInstance from "@/app/axios";
-import { isTakeMyClassProfessorLandingPage } from "@/app/lib/takeMyClassLandingRoutes";
+import { isTakeMyClassEmailOnlyHeroFormPage } from "@/app/lib/takeMyClassLandingRoutes";
 import { usePathname, useRouter } from "next/navigation";
 import React, { FC, useEffect, useState, useRef } from "react";
 import { IoIosMail } from "react-icons/io";
@@ -29,7 +29,7 @@ const HeroForm2: FC<ZohoForm2Props> = ({
   const getQuote = data?.getQuote;
   const pathname = usePathname();
   const router = useRouter();
-  const isProfessorPage = isTakeMyClassProfessorLandingPage(pathname);
+  const isEmailOnlyFormPage = isTakeMyClassEmailOnlyHeroFormPage(pathname);
 
   const [formData, setFormData] = useState({
     Email: "",
@@ -117,7 +117,7 @@ const HeroForm2: FC<ZohoForm2Props> = ({
   };
 
   const checkMandatory = () => {
-    if (isProfessorPage) {
+    if (isEmailOnlyFormPage) {
       return validateEmail(true);
     }
     if (!formData.Last_Name.trim()) {
@@ -136,7 +136,7 @@ const HeroForm2: FC<ZohoForm2Props> = ({
     }
 
     try {
-      if (isProfessorPage) {
+      if (isEmailOnlyFormPage) {
         await axiosInstance.post(`/order/take-my-class/`, {
           phoneNumber: "",
           PageURL: wholeUrl,
@@ -206,7 +206,7 @@ const HeroForm2: FC<ZohoForm2Props> = ({
           src={FormBackImg}
           alt="Academic success illustration"
           width={400}
-          className="cus-img absolute w-[400px] min-[1200px]:right-[-258px] -z-[1] max-[1025px]:hidden min-[1100px]:right-[-208px] min-[1150px]:right-[-150px]"
+          className={`cus-img absolute -z-[1] max-[1025px]:hidden ${isEmailOnlyFormPage ? "w-[300px] min-[1100px]:right-[-208px] min-[1150px]:right-[-150px] min-[1200px]:right-[-225px] top-[-46px]" : "w-[400px] min-[1100px]:right-[-208px] min-[1150px]:right-[-150px] min-[1200px]:right-[-258px]"}`}
         />
       )}
       <div className="w-full mx-auto cus-div">
@@ -225,7 +225,7 @@ const HeroForm2: FC<ZohoForm2Props> = ({
           className="bg-white max-[768px]:bg-transparent max-[768px]:shadow-none max-[768px]:p-0 rounded-lg shadow-sm p-6 flex flex-col sm:gap-4 gap-2 -z-[999]"
           id="quote-form"
         >
-          {!isProfessorPage && (
+          {!isEmailOnlyFormPage && (
             <div className="flex items-start border rounded-md bg-[#EDEFFE] border-[#E3E5F3] h-[65px] max-[768px]:bg-[#F5F6FA] px-4 pt-3 pb-2 min-[768px]:min-h-[150px] max-[768px]:relative">
             <textarea
               id="Description"
@@ -258,7 +258,7 @@ const HeroForm2: FC<ZohoForm2Props> = ({
             <IoIosMail className="text-[#9ea9bf] text-xl flex-shrink-0 max-[768px]:absolute max-[768px]:right-4" />
           </div>
 
-          {!isProfessorPage && (
+          {!isEmailOnlyFormPage && (
             <div className="flex text-black items-center sm:h-18 h-[65px] max-[768px]:h-[50px] border rounded-md bg-[#EDEFFE] max-[768px]:bg-[#F5F6FA] border-[#E3E5F3] px-4 max-[768px]:relative">
               <input
                 type="text"
