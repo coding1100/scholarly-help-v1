@@ -43,6 +43,8 @@ const ToolHeader: React.FC = () => {
                               ? "AI Micro Learning"
                               : normalizedPath === "/tools/language-practice"
                                 ? "AI Language Practice"
+                                : normalizedPath === "/tools/study-workspace"
+                                  ? "AI Study Workspace"
                                 : normalizedPath === "/tools/cgpa-calculator"
                                   ? "CGPA Calculator"
                                   : ""}

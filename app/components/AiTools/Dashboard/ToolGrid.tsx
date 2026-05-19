@@ -1,6 +1,7 @@
 import {
   FiBookOpen,
   FiBarChart,
+  FiBookmark,
   FiEdit3,
   FiFileText,
   FiHash,
@@ -18,6 +19,14 @@ import {
 import ToolCard, { type ToolCardData } from "./ToolCard";
 
 const tools: ToolCardData[] = [
+  {
+    name: "Study Workspace",
+    description:
+      "Upload content and generate notes, summaries, flashcards, quizzes, and tutor help.",
+    href: "/tools/study-workspace",
+    icon: FiBookmark,
+    badge: "New",
+  },
   {
     name: "Main Tool",
     description: "Draft, rewrite, and improve with one focused editor.",
