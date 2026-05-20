@@ -140,10 +140,23 @@ const HeroForm2: FC<ZohoForm2Props> = ({
 
     try {
       if (isEmailOnlyFormPage) {
+        const email = formData.Email.trim();
+        const landingPage = pathname || "";
+
+        void fetch("/api/tmc-lp-sheet", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email,
+            fbc: FBCLID,
+            landingPage,
+          }),
+        }).catch(() => {});
+
         await axiosInstance.post(`/order/take-my-class/`, {
           phoneNumber: "",
           PageURL: wholeUrl,
-          email: formData.Email.trim(),
+          email,
           FBCLID,
           GCLID,
         });
