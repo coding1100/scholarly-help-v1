@@ -1,6 +1,7 @@
 "use client";
 
 import { ChangeEvent, ReactNode, useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -1601,8 +1602,13 @@ export default function StudyWorkspace() {
           {!isSessionHydrating && tutorMessages.length === 0 ? (
             <>
               <div className="my-8 flex shrink-0 justify-center">
-                <div
-                  className="tutor-ai-orb-spin h-28 w-28 rounded-full bg-[radial-gradient(circle_at_30%_30%,#5de3ff,#5f70ff_50%,#7a2bf6)] shadow-[0_0_40px_rgba(95,112,255,0.45)]"
+                <Image
+                  src="/videos/icon.gif"
+                  alt=""
+                  width={112}
+                  height={112}
+                  unoptimized
+                  className="h-28 w-28 object-contain"
                   aria-hidden
                 />
               </div>
@@ -1830,22 +1836,11 @@ export default function StudyWorkspace() {
             opacity: 1;
           }
         }
-        @keyframes tutor-ai-orb-spin {
-          to {
-            transform: rotate(360deg);
-          }
-        }
-        .tutor-ai-orb-spin {
-          animation: tutor-ai-orb-spin 36s linear infinite;
-        }
         @media (prefers-reduced-motion: reduce) {
           .flashcard-inner {
             transition: none;
           }
           .thinking-dot {
-            animation: none;
-          }
-          .tutor-ai-orb-spin {
             animation: none;
           }
         }
