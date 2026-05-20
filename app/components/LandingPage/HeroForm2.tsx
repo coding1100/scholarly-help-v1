@@ -30,6 +30,9 @@ const HeroForm2: FC<ZohoForm2Props> = ({
   const pathname = usePathname();
   const router = useRouter();
   const isEmailOnlyFormPage = isTakeMyClassEmailOnlyHeroFormPage(pathname);
+  const ctaButtonText = isEmailOnlyFormPage
+    ? "Get My Academic Plan Now"
+    : getQuote?.ctaButton?.text || "SECURE MY 'A' OR 'B' GRADES";
 
   const [formData, setFormData] = useState({
     Email: "",
@@ -211,13 +214,20 @@ const HeroForm2: FC<ZohoForm2Props> = ({
       )}
       <div className="w-full mx-auto cus-div">
         <div className="w-full bg-[#263238] rounded-t-lg px-2 sm:py-3 py-2">
-          <p className="text-white text-center lg:text-[28px] md:text-2xl sm:text-xl text-lg font-semibold">
+          {isEmailOnlyFormPage ? (<p className="text-white text-center lg:text-[28px] md:text-2xl sm:text-xl text-lg font-semibold">
+            Before You{" "}
+            <span className="bg-[#F56200] rounded-full px-4 -rotate-3 inline-block">
+              Lose
+            </span>{" "}
+            Another Grade
+          </p>) : (<p className="text-white text-center lg:text-[28px] md:text-2xl sm:text-xl text-lg font-semibold">
             Check Your{" "}
             <span className="bg-[#F56200] rounded-full px-4 -rotate-3 inline-block">
               Class
             </span>{" "}
             Price
-          </p>
+          </p>)}
+
         </div>
         <form
           ref={formRef}
@@ -227,23 +237,24 @@ const HeroForm2: FC<ZohoForm2Props> = ({
         >
           {!isEmailOnlyFormPage && (
             <div className="flex items-start border rounded-md bg-[#EDEFFE] border-[#E3E5F3] h-[65px] max-[768px]:bg-[#F5F6FA] px-4 pt-3 pb-2 min-[768px]:min-h-[150px] max-[768px]:relative">
-            <textarea
-              id="Description"
-              name="Description"
-              placeholder="What do you need help with? *"
-              rows={textAreaRows}
-              value={formData.Description}
-              onChange={handleChange}
-              required
-              className="flex-1 bg-transparent text-black outline-none resize-none text-sm pr-3 bg-[#EDEFFE] outline-none min-[768px]:min-h-[130px] max-[768px]:h-[50px]"
-            />
-            <div className="absolute top-[15px] right-[50px] w-[2px] h-[20px] bg-gray-200 min-[768px]:hidden"></div>
-            <IoChatbubbles className="text-[#9ea9bf] text-xl mt-1 flex-shrink-0" />
+              <textarea
+                id="Description"
+                name="Description"
+                placeholder="What do you need help with? *"
+                rows={textAreaRows}
+                value={formData.Description}
+                onChange={handleChange}
+                required
+                className="flex-1 bg-transparent text-black outline-none resize-none text-sm pr-3 bg-[#EDEFFE] outline-none min-[768px]:min-h-[130px] max-[768px]:h-[50px]"
+              />
+              <div className="absolute top-[15px] right-[50px] w-[2px] h-[20px] bg-gray-200 min-[768px]:hidden"></div>
+              <IoChatbubbles className="text-[#9ea9bf] text-xl mt-1 flex-shrink-0" />
             </div>
           )}
 
+
           {/* Email */}
-          <div className="flex items-center sm:h-18 h-[65px] max-[768px]:h-[50px] border rounded-md bg-[#EDEFFE] max-[768px]:bg-[#F5F6FA] border-[#E3E5F3] px-4 max-[768px]:relative">
+          <div className={`flex items-center sm:h-18 h-[65px] max-[768px]:h-[50px] border rounded-md bg-[#EDEFFE] max-[768px]:bg-[#F5F6FA] border-[#E3E5F3] px-4 max-[768px]:relative ${isEmailOnlyFormPage && "md:my-5"}`}>
             <input
               type="email"
               id="Email"
@@ -285,7 +296,7 @@ const HeroForm2: FC<ZohoForm2Props> = ({
             {loading ? (
               <ClipLoader color="#fff" size={22} />
             ) : (
-              getQuote?.ctaButton?.text || "SECURE MY 'A' OR 'B' GRADES"
+              ctaButtonText
             )}
           </button>
         </form>
@@ -299,7 +310,7 @@ const HeroForm2: FC<ZohoForm2Props> = ({
           onClick={scrollToForm}
           className="fixed bottom-2 left-1/2 -translate-x-1/2 px-4 sm:w-fit w-[75%] h-12 rounded-md font-medium text-sm text-white uppercase tracking-wider bg-[#ff641a] hover:bg-white hover:text-[#ff641a] hover:border-[#ff641a] border border-transparent shadow-lg transition-all duration-300 z-50 cursor-pointer"
         >
-          {getQuote?.ctaButton?.text || "SECURE MY 'A' OR 'B' GRADES"}
+          {ctaButtonText}
         </button>
       ) : null}
     </div>
