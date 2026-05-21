@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAdminConfirm } from "@/app/components/Admin/AdminConfirmProvider";
 import { useAdminDuplicateEditorOptional } from "@/app/components/Admin/AdminDuplicateEditorContext";
+import { dynamicLandingCanonicalUrl } from "@/app/lib/dynamicLandingUrls";
 import AdminButton from "@/app/components/Admin/AdminButton";
 
 type PageData = Record<string, unknown> & {
@@ -33,6 +34,9 @@ export function AdminDuplicateMetaPanel({
   const slug = String(
     pageData.dynamicLandingSlug || pageData.id || "",
   ).replace(/^\/+/, "");
+  const canonicalPreview = slug
+    ? dynamicLandingCanonicalUrl(slug, null)
+    : "";
 
   return (
     <div className="w-full space-y-4 rounded-md border border-amber-200 bg-amber-50 p-4">
@@ -49,6 +53,14 @@ export function AdminDuplicateMetaPanel({
       <p className="text-xs text-gray-600">
         Public URL:{" "}
         <code className="rounded bg-white px-1">/{slug || "…"}/</code>
+      </p>
+      {canonicalPreview ? (
+        <p className="text-xs text-gray-600">
+          Canonical URL (updated on save):{" "}
+          <code className="break-all rounded bg-white px-1">{canonicalPreview}</code>
+        </p>
+      ) : null}
+      <p className="text-xs text-gray-600">
         {!pageData.published ? (
           <span className="mt-1 block text-amber-800">
             Enable Published and save for this URL to work on the site.

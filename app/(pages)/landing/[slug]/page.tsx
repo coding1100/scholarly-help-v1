@@ -1,6 +1,7 @@
 import MainLayout from "@/app/MainLayout";
 import DynamicDuplicateLandingView from "@/app/components/LandingPage/DynamicDuplicateLandingView";
 import {
+  dynamicLandingCanonicalUrl,
   fetchPublishedDynamicLanding,
   dynamicLandingPublicPath,
   normalizePublicSlug,
@@ -49,13 +50,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const doc = pageData as {
     meta?: { title?: string; description?: string; canonicalUrl?: string };
     adminNavLabel?: string;
+    isDynamicLandingDuplicate?: boolean;
   };
+  const canonical = doc?.isDynamicLandingDuplicate
+    ? dynamicLandingCanonicalUrl(slug, null)
+    : doc?.meta?.canonicalUrl || dynamicLandingPublicPath(slug).replace(/\/$/, "");
+
   return {
     title: doc?.meta?.title || doc?.adminNavLabel || "Scholarly Help",
     description: doc?.meta?.description,
     alternates: {
-      canonical:
-        doc?.meta?.canonicalUrl || dynamicLandingPublicPath(slug).replace(/\/$/, ""),
+      canonical: canonical.replace(/\/$/, ""),
     },
   };
 }
