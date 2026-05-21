@@ -1,9 +1,17 @@
 "use client";
 
+import { useAdminConfirm } from "@/app/components/Admin/AdminConfirmProvider";
+import { useAdminSuccess } from "@/app/components/Admin/AdminSuccessProvider";
 import { useState, useEffect } from "react";
+import AdminPageHeader from "@/app/components/Admin/AdminPageHeader";
+import { AdminDuplicateProvider } from "@/app/components/Admin/AdminDuplicateContext";
 import { homeworkSubjects } from "@/app/(pages)/homework/subjectContent";
+import AdminButton from "@/app/components/Admin/AdminButton";
 
 export default function HomeworkAdmin() {
+  const { confirmDelete } = useAdminConfirm();
+  const { showSuccess } = useAdminSuccess();
+
   const [availablePages, setAvailablePages] = useState<Array<{ id: string; slug?: string; title?: string }>>([]);
   const [selectedPage, setSelectedPage] = useState<string>('homework_page');
   const [pageData, setPageData] = useState<any>(null);
@@ -412,7 +420,7 @@ export default function HomeworkAdmin() {
       });
       const result = await response.json();
       if (result.success) {
-        alert('Page saved successfully!');
+        showSuccess();
         // Refresh available pages list
         const res = await fetch('/api/admin/homework?list=all');
         const data = await res.json();
@@ -493,9 +501,7 @@ export default function HomeworkAdmin() {
       return;
     }
 
-    if (!confirm(`Are you sure you want to delete "${pageData.id}"? This action cannot be undone.`)) {
-      return;
-    }
+    if (!(await confirmDelete({ variant: "delete", message: `Are you sure you want to delete "${pageData.id}"? This action cannot be undone.` }))) return;
 
     setPageLoading(true);
     try {
@@ -628,7 +634,15 @@ export default function HomeworkAdmin() {
     });
   };
 
-  const removeArrayItem = (path: string, index: number) => {
+  const removeArrayItem = async (path: string, index: number) => {
+    if (
+      !(await confirmDelete({
+        variant: "remove",
+        message: "Are you sure you want to remove this item?",
+      }))
+    )
+      return;
+
     const keys = path.split('.');
     setPageData((prev: any) => {
       const newData = { ...prev };
@@ -785,13 +799,7 @@ export default function HomeworkAdmin() {
                 <div key={index} className="mb-4 p-4 border border-gray-200 rounded-md">
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-medium">Item {index + 1}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeArrayItem('whySlider.sliderItems', index)}
-                      className="text-red-600 hover:text-red-800 text-sm"
-                    >
-                      Remove
-                    </button>
+                    <AdminButton type="button" variant="remove" onClick={() => removeArrayItem('whySlider.sliderItems', index)}>Remove</AdminButton>
                   </div>
                   <div className="grid grid-cols-1 gap-3">
                     <input
@@ -811,13 +819,7 @@ export default function HomeworkAdmin() {
                   </div>
                 </div>
               ))}
-              <button
-                type="button"
-                onClick={() => addArrayItem('whySlider.sliderItems', { text: '', alt: '' })}
-                className="mt-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-              >
-                + Add Slider Item
-              </button>
+              <AdminButton type="button" variant="add" onClick={() => addArrayItem('whySlider.sliderItems', { text: '', alt: '' })}>Add Slider Item</AdminButton>
             </div>
           </div>
         </div>
@@ -859,13 +861,7 @@ export default function HomeworkAdmin() {
                 <div key={index} className="mb-4 p-4 border border-gray-200 rounded-md">
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-medium">Card {index + 1}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeArrayItem('cardCarousel.cards', index)}
-                      className="text-red-600 hover:text-red-800 text-sm"
-                    >
-                      Remove
-                    </button>
+                    <AdminButton type="button" variant="remove" onClick={() => removeArrayItem('cardCarousel.cards', index)}>Remove</AdminButton>
                   </div>
                   <div className="grid grid-cols-1 gap-3">
                     <input
@@ -885,13 +881,7 @@ export default function HomeworkAdmin() {
                   </div>
                 </div>
               ))}
-              <button
-                type="button"
-                onClick={() => addArrayItem('cardCarousel.cards', { id: Date.now(), title: '', description: '' })}
-                className="mt-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-              >
-                + Add Carousel Card
-              </button>
+              <AdminButton type="button" variant="add" onClick={() => addArrayItem('cardCarousel.cards', { id: Date.now(), title: '', description: '' })}>Add Carousel Card</AdminButton>
             </div>
           </div>
         </div>
@@ -944,13 +934,7 @@ export default function HomeworkAdmin() {
                 <div key={index} className="mb-4 p-4 border border-gray-200 rounded-md">
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-medium">Service {index + 1}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeArrayItem('description.services', index)}
-                      className="text-red-600 hover:text-red-800 text-sm"
-                    >
-                      Remove
-                    </button>
+                    <AdminButton type="button" variant="remove" onClick={() => removeArrayItem('description.services', index)}>Remove</AdminButton>
                   </div>
                   <div className="grid grid-cols-1 gap-3">
                     <input
@@ -970,13 +954,7 @@ export default function HomeworkAdmin() {
                   </div>
                 </div>
               ))}
-              <button
-                type="button"
-                onClick={() => addArrayItem('description.services', { title: '', description: '' })}
-                className="mt-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-              >
-                + Add Service
-              </button>
+              <AdminButton type="button" variant="add" onClick={() => addArrayItem('description.services', { title: '', description: '' })}>Add Service</AdminButton>
             </div>
           </div>
         </div>
@@ -1009,13 +987,7 @@ export default function HomeworkAdmin() {
                 <div key={platform.key || index} className="mb-4 p-4 border border-gray-200 rounded-md">
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-medium text-gray-700">Card {index + 1}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeArrayItem('onlinePlatform.platforms', index)}
-                      className="text-red-600 hover:text-red-800 text-sm"
-                    >
-                      Remove
-                    </button>
+                    <AdminButton type="button" variant="remove" onClick={() => removeArrayItem('onlinePlatform.platforms', index)}>Remove</AdminButton>
                   </div>
                   <div className="grid grid-cols-1 gap-3">
                     <input
@@ -1042,18 +1014,11 @@ export default function HomeworkAdmin() {
                   </div>
                 </div>
               ))}
-              <button
-                type="button"
-                onClick={() =>
+              <AdminButton type="button" variant="add" onClick={() =>
                   updatePageData('onlinePlatform.platforms', [
                     ...(pageData.onlinePlatform?.platforms || []),
                     { key: `platform_${Date.now()}`, name: '', description: '', logoUrl: '' },
-                  ])
-                }
-                className="mt-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-              >
-                + Add Platform Card
-              </button>
+                  ])}>Add Platform Card</AdminButton>
             </div>
           </div>
         </div>
@@ -1095,13 +1060,7 @@ export default function HomeworkAdmin() {
                 <div key={index} className="mb-4 p-4 border border-gray-200 rounded-md">
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-medium">SubSubject {index + 1}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeArrayItem("SubSubjects.SubSubjectsContent", index)}
-                      className="text-red-600 hover:text-red-800 text-sm"
-                    >
-                      Remove
-                    </button>
+                    <AdminButton type="button" variant="remove" onClick={() => removeArrayItem("SubSubjects.SubSubjectsContent", index)}>Remove</AdminButton>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <input
@@ -1148,20 +1107,13 @@ export default function HomeworkAdmin() {
                   </div>
                 </div>
               ))}
-              <button
-                type="button"
-                onClick={() =>
+              <AdminButton type="button" variant="add" onClick={() =>
                   addArrayItem("SubSubjects.SubSubjectsContent", {
                     title: "",
                     icon: "",
                     url: "",
                     description: "",
-                  })
-                }
-                className="mt-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-              >
-                + Add SubSubject Card
-              </button>
+                  })}>Add SubSubject Card</AdminButton>
             </div>
           </div>
         </div>
@@ -1238,30 +1190,19 @@ export default function HomeworkAdmin() {
                     }}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm"
                   />
-                  <button
-                    type="button"
-                    onClick={() => {
+                  <AdminButton type="button" variant="remove" className="whitespace-nowrap" onClick={() => {
                       const next = (pageData.priceSection?.benefits || []).filter((_: string, i: number) => i !== index);
                       updatePageData('priceSection.benefits', next);
-                    }}
-                    className="text-red-600 hover:text-red-800 text-sm whitespace-nowrap"
-                  >
-                    Remove
-                  </button>
+                    }}>Remove</AdminButton>
                 </div>
               ))}
-              <button
-                type="button"
-                onClick={() =>
+              <AdminButton type="button" variant="add" onClick={() =>
                   updatePageData('priceSection.benefits', [
                     ...(pageData.priceSection?.benefits || []),
                     '',
                   ])
-                }
-                className="mt-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-              >
-                + Add Benefit
-              </button>
+                }>Add Benefit
+              </AdminButton>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-4">Price Items</label>
@@ -1269,13 +1210,7 @@ export default function HomeworkAdmin() {
                 <div key={index} className="mb-4 p-4 border border-gray-200 rounded-md">
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-medium">Item {index + 1}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeArrayItem('priceSection.priceItems', index)}
-                      className="text-red-600 hover:text-red-800 text-sm"
-                    >
-                      Remove
-                    </button>
+                    <AdminButton type="button" variant="remove" onClick={() => removeArrayItem('priceSection.priceItems', index)}>Remove</AdminButton>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <input
@@ -1302,18 +1237,11 @@ export default function HomeworkAdmin() {
                   </div>
                 </div>
               ))}
-              <button
-                type="button"
-                onClick={() =>
+              <AdminButton type="button" variant="add" onClick={() =>
                   updatePageData('priceSection.priceItems', [
                     ...(pageData.priceSection?.priceItems || []),
                     { service: '', price: '', unit: '' },
-                  ])
-                }
-                className="mt-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-              >
-                + Add Price Item
-              </button>
+                  ])}>Add Price Item</AdminButton>
             </div>
           </div>
         </div>
@@ -1380,13 +1308,7 @@ export default function HomeworkAdmin() {
                 <div key={index} className="mb-4 p-4 border border-gray-200 rounded-md">
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-medium">Step {step.stepNumber || index + 1}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeArrayItem('processSection.steps', index)}
-                      className="text-red-600 hover:text-red-800 text-sm"
-                    >
-                      Remove
-                    </button>
+                    <AdminButton type="button" variant="remove" onClick={() => removeArrayItem('processSection.steps', index)}>Remove</AdminButton>
                   </div>
                   <div className="grid grid-cols-1 gap-3">
                     <input
@@ -1413,13 +1335,7 @@ export default function HomeworkAdmin() {
                   </div>
                 </div>
               ))}
-              <button
-                type="button"
-                onClick={() => addArrayItem('processSection.steps', { stepNumber: (pageData.processSection?.steps?.length || 0) + 1, title: '', description: '' })}
-                className="mt-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-              >
-                + Add Step
-              </button>
+              <AdminButton type="button" variant="add" onClick={() => addArrayItem('processSection.steps', { stepNumber: (pageData.processSection?.steps?.length || 0) + 1, title: '', description: '' })}>Add Step</AdminButton>
             </div>
           </div>
         </div>
@@ -1499,13 +1415,7 @@ export default function HomeworkAdmin() {
                 <div key={index} className="mb-4 p-4 border border-gray-200 rounded-md">
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-medium">Slide {index + 1}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeArrayItem('success.slides', index)}
-                      className="text-red-600 hover:text-red-800 text-sm"
-                    >
-                      Remove
-                    </button>
+                    <AdminButton type="button" variant="remove" onClick={() => removeArrayItem('success.slides', index)}>Remove</AdminButton>
                   </div>
                   <div className="grid grid-cols-1 gap-3">
                     <input
@@ -1518,13 +1428,7 @@ export default function HomeworkAdmin() {
                   </div>
                 </div>
               ))}
-              <button
-                type="button"
-                onClick={() => addArrayItem('success.slides', { id: Date.now(), image: '' })}
-                className="mt-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-              >
-                + Add Slide
-              </button>
+              <AdminButton type="button" variant="add" onClick={() => addArrayItem('success.slides', { id: Date.now(), image: '' })}>Add Slide</AdminButton>
             </div>
           </div>
         </div>
@@ -1567,13 +1471,7 @@ export default function HomeworkAdmin() {
                 <div key={index} className="mb-4 p-4 border border-gray-200 rounded-md">
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-medium">Subject {index + 1}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeArrayItem('subjects.subjectsContent', index)}
-                      className="text-red-600 hover:text-red-800 text-sm"
-                    >
-                      Remove
-                    </button>
+                    <AdminButton type="button" variant="remove" onClick={() => removeArrayItem('subjects.subjectsContent', index)}>Remove</AdminButton>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
@@ -1626,20 +1524,13 @@ export default function HomeworkAdmin() {
                   </div>
                 </div>
               ))}
-              <button
-                type="button"
-                onClick={() =>
+              <AdminButton type="button" variant="add" onClick={() =>
                   addArrayItem('subjects.subjectsContent', {
                     title: '',
                     icon: '',
                     url: '',
                     description: '',
-                  })
-                }
-                className="mt-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-              >
-                + Add Subject Card
-              </button>
+                  })}>Add Subject Card</AdminButton>
             </div>
           </div>
         </div>
@@ -1735,13 +1626,7 @@ export default function HomeworkAdmin() {
                 <div key={index} className="mb-4 p-4 border border-gray-200 rounded-md">
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-medium">Card {index + 1}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeArrayItem('academicPartners.cards', index)}
-                      className="text-red-600 hover:text-red-800 text-sm"
-                    >
-                      Remove
-                    </button>
+                    <AdminButton type="button" variant="remove" onClick={() => removeArrayItem('academicPartners.cards', index)}>Remove</AdminButton>
                   </div>
                   <div className="grid grid-cols-1 gap-3">
                     <input
@@ -1761,13 +1646,7 @@ export default function HomeworkAdmin() {
                   </div>
                 </div>
               ))}
-              <button
-                type="button"
-                onClick={() => addArrayItem('academicPartners.cards', { id: Date.now(), title: '', description: '' })}
-                className="mt-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-              >
-                + Add Card
-              </button>
+              <AdminButton type="button" variant="add" onClick={() => addArrayItem('academicPartners.cards', { id: Date.now(), title: '', description: '' })}>Add Card</AdminButton>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-4">Performances / Stats (number, title, subtitle)</label>
@@ -1782,15 +1661,9 @@ export default function HomeworkAdmin() {
                   >
                     <div className="flex justify-between items-center mb-2">
                       <span className="font-medium">Stat {index + 1}</span>
-                      <button
-                        type="button"
-                        onClick={() =>
+                      <AdminButton type="button" variant="remove" onClick={() =>
                           removeArrayItem("academicPartners.performances", index)
-                        }
-                        className="text-red-600 hover:text-red-800 text-sm"
-                      >
-                        Remove
-                      </button>
+                        }>Remove</AdminButton>
                     </div>
                     <div className="grid grid-cols-1 gap-3">
                       <input
@@ -1839,19 +1712,12 @@ export default function HomeworkAdmin() {
                   </div>
                 ),
               )}
-              <button
-                type="button"
-                onClick={() =>
+              <AdminButton type="button" variant="add" onClick={() =>
                   addArrayItem("academicPartners.performances", {
                     number: "",
                     title: "",
                     subtitle: "",
-                  })
-                }
-                className="mt-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-              >
-                + Add Performance
-              </button>
+                  })}>Add Performance</AdminButton>
             </div>
           </div>
         </div>
@@ -1886,13 +1752,7 @@ export default function HomeworkAdmin() {
                 <div key={index} className="mb-4 p-4 border border-gray-200 rounded-md">
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-medium">Review {index + 1}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeArrayItem('customerReviews.reviews', index)}
-                      className="text-red-600 hover:text-red-800 text-sm"
-                    >
-                      Remove
-                    </button>
+                    <AdminButton type="button" variant="remove" onClick={() => removeArrayItem('customerReviews.reviews', index)}>Remove</AdminButton>
                   </div>
                   <div className="grid grid-cols-1 gap-3">
                     <input
@@ -1919,13 +1779,7 @@ export default function HomeworkAdmin() {
                   </div>
                 </div>
               ))}
-              <button
-                type="button"
-                onClick={() => addArrayItem('customerReviews.reviews', { title: '', description: '', image: '/images/fivestar.svg' })}
-                className="mt-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-              >
-                + Add Review Card
-              </button>
+              <AdminButton type="button" variant="add" onClick={() => addArrayItem('customerReviews.reviews', { title: '', description: '', image: '/images/fivestar.svg' })}>Add Review Card</AdminButton>
             </div>
           </div>
         </div>
@@ -1983,13 +1837,7 @@ export default function HomeworkAdmin() {
                 <div key={index} className="mb-4 p-4 border border-gray-200 rounded-md">
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-medium">FAQ {index + 1}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeArrayItem('faq.faqs', index)}
-                      className="text-red-600 hover:text-red-800 text-sm"
-                    >
-                      Remove
-                    </button>
+                    <AdminButton type="button" variant="remove" onClick={() => removeArrayItem('faq.faqs', index)}>Remove</AdminButton>
                   </div>
                   <div className="grid grid-cols-1 gap-3">
                     <input
@@ -2009,13 +1857,7 @@ export default function HomeworkAdmin() {
                   </div>
                 </div>
               ))}
-              <button
-                type="button"
-                onClick={() => addArrayItem('faq.faqs', { id: Date.now(), question: '', answer: '' })}
-                className="mt-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-              >
-                + Add FAQ
-              </button>
+              <AdminButton type="button" variant="add" onClick={() => addArrayItem('faq.faqs', { id: Date.now(), question: '', answer: '' })}>Add FAQ</AdminButton>
             </div>
           </div>
         </div>
@@ -2023,43 +1865,18 @@ export default function HomeworkAdmin() {
         {/* Save Button */}
         <div className="flex justify-end gap-4">
           {selectedPage && selectedPage !== 'homework_page' && (
-            <button
-              type="button"
-              onClick={handlePageDelete}
-              disabled={pageLoading}
-              className="inline-flex items-center px-6 py-3 border border-red-300 text-base font-medium rounded-md shadow-sm text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Delete
-            </button>
+            <AdminButton type="button" variant="dangerLg" onClick={handlePageDelete} disabled={pageLoading}>Delete</AdminButton>
           )}
-          <button
-            type="submit"
-            disabled={pageLoading}
-            className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-[#283c88] hover:bg-[#283c88] focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {pageLoading ? (
-              <>
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Saving...
-              </>
-            ) : (
-              'Save Changes'
-            )}
-          </button>
+          <AdminButton type="submit" variant="primaryLg" disabled={pageLoading} loading={pageLoading}>{pageLoading ? "Saving..." : "Save Changes"}</AdminButton>
         </div>
       </form>
     );
   };
 
   return (
+    <AdminDuplicateProvider sourcePageId={selectedPage}>
     <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Manage Homework Content</h1>
-        <p className="mt-2 text-sm text-gray-600">Select a page to edit its content</p>
-      </div>
+      <AdminPageHeader title="Manage Homework Content" subtitle="Select a page to edit its content" />
 
       {/* Page Selector */}
       <div className="mb-8">
@@ -2085,8 +1902,8 @@ export default function HomeworkAdmin() {
       )}
 
       {!pageLoading && selectedPage && (
-        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
-          <p className="text-sm text-blue-800">
+        <div className="mb-4 p-4 bg-[#eef0f8] border border-[#c5cce8] rounded-md">
+          <p className="text-sm text-[#283c88]">
             <strong>Editing:</strong> {availablePages.find(p => p.id === selectedPage)?.title || selectedPage}
           </p>
         </div>
@@ -2094,6 +1911,7 @@ export default function HomeworkAdmin() {
 
       {pageData && !pageLoading && renderPageForm()}
     </div>
+    </AdminDuplicateProvider>
   );
 }
 

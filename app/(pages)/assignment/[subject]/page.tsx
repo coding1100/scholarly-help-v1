@@ -29,7 +29,9 @@ interface PageProps {
   params: { subject: string };
 }
 
-import clientPromise from "@/app/lib/mongodb";
+import { getMongoDb } from "@/app/lib/mongodb";
+import { findAssignmentSubjectDocument } from "@/app/lib/assignmentDuplicate";
+import { migratePagesDuplicateToAssignments } from "@/app/lib/assignmentDuplicate";
 import DeliveredOn from "../../take-my-class/DeliveredOn";
 import SubSubjectsSection from "@/app/components/LandingPage/SubSubjects";
 import OnlinePlatform from "@/app/components/OnlinePlatform/OnlinePlatform";
@@ -39,32 +41,13 @@ import ProductSchema from "@/app/components/ProductSchema";
 
 async function fetchPageData(slug: string) {
   try {
-    const client = await clientPromise;
-    const db = client.db("scholarly_help");
-
-    // Handle different slug formats
-    let slugVariations = [slug];
-
-    // If slug is like "assignment_english", also try "english"
-    if (slug.startsWith("assignment_")) {
-      slugVariations.push(slug.replace("assignment_", ""));
-    } else {
-      // If slug is like "english", also try "assignment_english"
-      slugVariations.push(`assignment_${slug}`);
-    }
-
-    // Build query to match any variation
-    const orConditions = [];
-    for (const variation of slugVariations) {
-      orConditions.push({ slug: variation });
-      orConditions.push({ id: variation });
-    }
-    const query = { $or: orConditions };
-
-    const content = await db.collection("assignments").findOne(query);
-    // Do not close shared client
-
-    return content as any;
+    const db = await getMongoDb();
+    if (!db) return null;
+    await migratePagesDuplicateToAssignments(db, slug);
+    return (await findAssignmentSubjectDocument(db, slug)) as Record<
+      string,
+      unknown
+    > | null;
   } catch (error) {
     console.error("Error fetching page data:", error);
     return null;
@@ -74,11 +57,16 @@ async function fetchPageData(slug: string) {
 const Page: React.FC<PageProps> = async ({ params }) => {
   const { subject } = params;
 
-  if (!isValidAssignmentSubject(subject)) {
+  const pageData = await fetchPageData(subject);
+
+  const isDuplicate = !!pageData?.isDynamicLandingDuplicate;
+  if (!isValidAssignmentSubject(subject) && !isDuplicate) {
     notFound();
   }
 
-  const pageData = await fetchPageData(subject);
+  if (isDuplicate && !pageData?.published) {
+    notFound();
+  }
 
   // If no pageData found, still render the page with default structure
   // This allows the page to work even if data doesn't exist in MongoDB yet
@@ -175,12 +163,14 @@ const Page: React.FC<PageProps> = async ({ params }) => {
   const baseUrl = rawBaseUrl.endsWith("/")
     ? rawBaseUrl.slice(0, -1)
     : rawBaseUrl;
-  const productTitle = pageData.meta?.title || `${subjectTitle} Assignment Help`;
+  const meta = pageData.meta as
+    | { title?: string; description?: string; canonicalUrl?: string }
+    | undefined;
+  const productTitle = meta?.title || `${subjectTitle} Assignment Help`;
   const metaDescription =
-    pageData.meta?.description ||
+    meta?.description ||
     `Get expert help with your ${subject.replace(/-/g, " ")} assignment.`;
-  const pageUrl =
-    pageData.meta?.canonicalUrl || `${baseUrl}/assignment/${subject}`;
+  const pageUrl = meta?.canonicalUrl || `${baseUrl}/assignment/${subject}`;
 
   return (
     <AssignmentDataProvider data={pageData}>
@@ -229,27 +219,18 @@ export async function generateMetadata({
   }
 
   try {
-    const client = await clientPromise;
-    const db = client.db("scholarly_help");
+    const db = await getMongoDb();
+    if (db) {
+      await migratePagesDuplicateToAssignments(db, params.subject);
+      const pageData = (await findAssignmentSubjectDocument(
+        db,
+        params.subject,
+      )) as {
+        meta?: { title?: string; description?: string; canonicalUrl?: string };
+        status?: string;
+      } | null;
 
-    let slugVariations: string[] = [params.subject];
-    if (params.subject.startsWith("assignment_")) {
-      slugVariations.push(params.subject.replace("assignment_", ""));
-    } else {
-      slugVariations.push(`assignment_${params.subject}`);
-    }
-
-    const orConditions = [];
-    for (const variation of slugVariations) {
-      orConditions.push({ slug: variation });
-      orConditions.push({ id: variation });
-    }
-    const query = { $or: orConditions, status: { $ne: "draft" } };
-
-    const pageData: any = await db.collection("assignments").findOne(query);
-    // Do not close shared client
-
-    if (pageData) {
+    if (pageData && pageData.status !== "draft") {
       const rawBaseUrl =
         process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
       const baseUrl = rawBaseUrl.endsWith("/")
@@ -277,6 +258,7 @@ export async function generateMetadata({
         description: metaDescription,
         alternates: { canonical: canonicalUrl },
       };
+    }
     }
   } catch (error) {
     console.error("Error fetching metadata:", error);
