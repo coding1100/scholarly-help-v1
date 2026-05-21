@@ -67,7 +67,7 @@ export default function HeroSection() {
 
               <div className="mt-4 space-y-2">
                 <QuickLink
-                  title="Main Tool"
+                  title="Academic Research Assistant"
                   description="Draft, rewrite, and improve in one editor."
                   href="/tools/main-tool"
                 />
