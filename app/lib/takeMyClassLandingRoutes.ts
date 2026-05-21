@@ -31,6 +31,7 @@ export function normalizePathname(pathname: string | null | undefined): string {
 /** take-my-class landing variants (shared section UX). */
 export function isTakeMyClassLandingPage(pathname: string | null | undefined): boolean {
   const path = normalizePathname(pathname);
+  if (path.startsWith("/landing/")) return true;
   return (LANDING_PAGE_PATHS as readonly string[]).includes(path);
 }
 
@@ -87,5 +88,6 @@ export function isTakeMyClassHeaderRoute(pathname: string | null | undefined): b
 
 /** Legacy substring check used for hero button visibility, DeliveredOn, etc. */
 export function pathnameIncludesTakeMyClass(pathname: string | null | undefined): boolean {
-  return (pathname || "").includes("/take-my-class");
+  const p = pathname || "";
+  return p.includes("/take-my-class") || p.startsWith("/landing/");
 }
