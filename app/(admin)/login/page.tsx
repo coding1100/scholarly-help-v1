@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import AdminBrand from '@/app/components/Admin/AdminBrand';
+import AdminButton from '@/app/components/Admin/AdminButton';
 
 export default function AdminLogin() {
   const [username, setUsername] = useState('');
@@ -16,16 +18,13 @@ export default function AdminLogin() {
     setError('');
 
     try {
-      console.log('Attempting login for:', username);
       const res = await fetch('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
 
-      console.log('Response status:', res.status);
       const data = await res.json();
-      console.log('Response data:', data);
 
       if (data.success && data.token) {
         localStorage.setItem('adminToken', data.token);
@@ -33,70 +32,73 @@ export default function AdminLogin() {
       } else {
         setError(data.error || 'Invalid credentials');
       }
-    } catch (error) {
-      console.error('Login error:', error);
-      setError('Login failed: ' + String(error));
+    } catch (err) {
+      setError('Login failed: ' + String(err));
     }
     setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Admin Login
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Enter your credentials to access the admin dashboard
-          </p>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleLogin}>
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-              <span className="block sm:inline">{error}</span>
+    <div className="admin-login-shell flex items-center justify-center p-4" data-admin-panel>
+      <div className="w-full max-w-md">
+        <div className="admin-login-card">
+          <div className="mb-8 flex flex-col items-center text-center">
+            <AdminBrand href="/" showAdminLabel={false} />
+            <h2 className="mt-6 text-2xl font-bold text-[#1a2456]">Admin Login</h2>
+            <p className="mt-2 text-sm text-[#4b5563]">
+              Sign in to manage ScholarlyHelp content
+            </p>
+          </div>
+          <form className="space-y-5" onSubmit={handleLogin}>
+            {error ? (
+              <div
+                className="rounded-lg border border-[#f5c2c2] bg-[#fef2f2] px-4 py-3 text-sm text-[#da0e0e]"
+                role="alert"
+              >
+                {error}
+              </div>
+            ) : null}
+            <div>
+              <label htmlFor="username" className="mb-1.5 block text-sm font-medium text-[#353535]">
+                Username
+              </label>
+              <input
+                id="username"
+                name="username"
+                type="text"
+                required
+                className="block w-full rounded-lg border border-[#d1d8e8] px-3 py-2.5 text-[#353535] placeholder-[#9ca3af] focus:border-[#565add] focus:outline-none focus:ring-2 focus:ring-[#565add]/20 sm:text-sm"
+                placeholder="Enter username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+              />
             </div>
-          )}
-          <div>
-            <label htmlFor="username" className="sr-only">
-              Username
-            </label>
-            <input
-              id="username"
-              name="username"
-              type="text"
-              required
-              className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-              placeholder="Enter username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
-          </div>
-          <div>
-            <label htmlFor="password" className="sr-only">
-              Password
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-              placeholder="Enter password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-          <div>
-            <button
+            <div>
+              <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-[#353535]">
+                Password
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                className="block w-full rounded-lg border border-[#d1d8e8] px-3 py-2.5 text-[#353535] placeholder-[#9ca3af] focus:border-[#565add] focus:outline-none focus:ring-2 focus:ring-[#565add]/20 sm:text-sm"
+                placeholder="Enter password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            <AdminButton
               type="submit"
+              variant="primary"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-[#2e61c3] hover:bg-[#2e61c3] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              loading={loading}
+              className="w-full bg-[#283c88] hover:bg-[#1f2f6a]"
             >
-              {loading ? 'Signing in...' : 'Sign in'}
-            </button>
-          </div>
-        </form>
+              {loading ? "Signing in..." : "Sign in"}
+            </AdminButton>
+          </form>
+        </div>
       </div>
     </div>
   );

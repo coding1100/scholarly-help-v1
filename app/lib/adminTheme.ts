@@ -1,0 +1,20 @@
+/** ScholarlyHelp admin dashboard — hex palette */
+export const ADMIN_THEME = {
+  sidebarFrom: "#1a2456",
+  sidebarTo: "#283c88",
+  sidebarBorder: "rgba(255,255,255,0.08)",
+  navText: "#c5cce8",
+  navTextHover: "#ffffff",
+  navMuted: "#8b96b8",
+  navActiveBg: "rgba(86,90,221,0.28)",
+  navActiveBorder: "#9f92ec",
+  surface: "#f0f3fa",
+  surfaceAlt: "#e8ecf6",
+  card: "#ffffff",
+  cardBorder: "#e2e8f4",
+  heading: "#1a2456",
+  body: "#4b5563",
+  primary: "#283c88",
+  brand: "#565add",
+  accent: "#9f92ec",
+} as const;
