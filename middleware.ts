@@ -1,38 +1,75 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import {
+  getSinglePathSegment,
+  isReservedTopLevelSegment,
+} from "@/app/lib/staticPublicRoutes";
 
-export function middleware(request: NextRequest) {
-  // Check if the request is for a sub-tool page (not the main /tools page)
+async function maybeRewriteDynamicLanding(
+  request: NextRequest,
+): Promise<NextResponse | null> {
+  const segment = getSinglePathSegment(request.nextUrl.pathname);
+  if (!segment || isReservedTopLevelSegment(segment)) {
+    return null;
+  }
+
+  try {
+    const existsUrl = new URL("/api/public/dynamic-landing-exists", request.url);
+    existsUrl.searchParams.set("slug", segment);
+    const res = await fetch(existsUrl.toString(), {
+      headers: { "x-middleware-check": "1" },
+    });
+    if (!res.ok) return null;
+
+    const data = (await res.json()) as { exists?: boolean };
+    if (!data.exists) return null;
+
+    const rewriteUrl = new URL(
+      `/landing/${encodeURIComponent(segment)}/`,
+      request.url,
+    );
+    rewriteUrl.search = request.nextUrl.search;
+    return NextResponse.rewrite(rewriteUrl);
+  } catch (error) {
+    console.error("dynamic landing middleware", error);
+    return null;
+  }
+}
+
+export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  // Allow /tools page without authentication, but require auth for sub-tools like /tools/paraphraser-tool
-  // Only check paths that have a sub-path after /tools/
   if (
     pathname.startsWith("/tools/") &&
     pathname !== "/tools" &&
     pathname !== "/tools/"
   ) {
-    // Check for token in cookies (we'll set this after successful login)
     const token = request.cookies.get("access_token")?.value;
 
-    // If no token, redirect to sign-in
     if (!token) {
       const signInUrl = new URL("/sign-in", request.url);
-      // Preserve marketing params (utm_*, fbclid, etc.) while adding returnUrl.
       request.nextUrl.searchParams.forEach((value, key) => {
         signInUrl.searchParams.set(key, value);
       });
-      // Preserve the full original path (including query string) so post-auth redirect
-      // keeps attribution params (fbclid/utm_*) on tools pages.
       const returnUrl = `${request.nextUrl.pathname}${request.nextUrl.search}`;
       signInUrl.searchParams.set("returnUrl", returnUrl);
       return NextResponse.redirect(signInUrl);
     }
   }
 
+  const landingRewrite = await maybeRewriteDynamicLanding(request);
+  if (landingRewrite) return landingRewrite;
+
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: "/tools/:path*",
+  matcher: [
+    "/tools/:path*",
+    /*
+     * Single-segment public paths (e.g. /take-my-proctored-exam-for-me-copy/)
+     * that may be admin duplicates. Excludes api, _next, and static files.
+     */
+    "/((?!api|_next|admin|favicon.ico|robots.txt|sitemap.xml|.*\\..*).*)",
+  ],
 };

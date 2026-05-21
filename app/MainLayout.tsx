@@ -50,9 +50,14 @@ const MainLayout: FC<MainLayoutProps> = ({ children }) => {
     "/take-my-exam/",
   ];
 
-  const shouldHideHeaderFooter = hideHeaderFooterRoutes.includes(
-    pathname || "",
-  );
+  const normalizedPath = (pathname || "").replace(/\/+$/, "") || "/";
+  const isLandingStylePath =
+    normalizedPath.startsWith("/landing") ||
+    normalizedPath === "/take-my-class" ||
+    normalizedPath.startsWith("/take-my-class-");
+
+  const shouldHideHeaderFooter =
+    hideHeaderFooterRoutes.includes(pathname || "") || isLandingStylePath;
 
   // Routes where the header should be deferred until interaction to optimize LCP
   const deferHeaderRoutes = [
@@ -78,7 +83,8 @@ const MainLayout: FC<MainLayoutProps> = ({ children }) => {
     "/take-my-exam/",
   ];
 
-  const shouldDeferHeader = deferHeaderRoutes.includes(pathname || "");
+  const shouldDeferHeader =
+    deferHeaderRoutes.includes(pathname || "") || isLandingStylePath;
   const [headerVisible, setHeaderVisible] = useState(!shouldDeferHeader);
 
   // Defer cookie consent until after interaction so LCP is not affected

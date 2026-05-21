@@ -1,8 +1,21 @@
 "use client";
 
+import { useAdminConfirm } from "@/app/components/Admin/AdminConfirmProvider";
+import { useAdminSuccess } from "@/app/components/Admin/AdminSuccessProvider";
+import { useAdminPageApiUrl } from "@/app/components/Admin/AdminDuplicateEditorContext";
+import {
+  AdminDuplicateDeleteButton,
+  AdminDuplicateMetaPanel,
+} from "@/app/components/Admin/AdminDuplicateLandingControls";
 import { useState, useEffect } from "react";
+import AdminPageHeader from "@/app/components/Admin/AdminPageHeader";
+import AdminButton from "@/app/components/Admin/AdminButton";
 
 export default function AOrBGradeGuaranteeAdmin() {
+  const { confirmDelete } = useAdminConfirm();
+  const { showSuccess } = useAdminSuccess();
+  const pageApiUrl = useAdminPageApiUrl("/api/admin/a-or-b-grade-guarantee");
+
   const [pageData, setPageData] = useState<any>(null);
   const [pageLoading, setPageLoading] = useState(false);
 
@@ -11,7 +24,7 @@ export default function AOrBGradeGuaranteeAdmin() {
     const loadPage = async () => {
       setPageLoading(true);
       try {
-        const res = await fetch(`/api/admin/a-or-b-grade-guarantee`);
+        const res = await fetch(pageApiUrl);
         if (!res.ok) {
           console.error('Failed to fetch page:', res.status, res.statusText);
           throw new Error(`HTTP error! status: ${res.status}`);
@@ -60,7 +73,7 @@ export default function AOrBGradeGuaranteeAdmin() {
       }
     };
     loadPage();
-  }, []);
+  }, [pageApiUrl]);
 
   const updatePageData = (path: string, value: any) => {
     const keys = path.split('.');
@@ -112,7 +125,15 @@ export default function AOrBGradeGuaranteeAdmin() {
     });
   };
 
-  const removeArrayItem = (path: string, index: number) => {
+  const removeArrayItem = async (path: string, index: number) => {
+    if (
+      !(await confirmDelete({
+        variant: "remove",
+        message: "Are you sure you want to remove this item?",
+      }))
+    )
+      return;
+
     const keys = path.split('.');
     setPageData((prev: any) => {
       const newData = JSON.parse(JSON.stringify(prev)); // Deep clone
@@ -129,14 +150,14 @@ export default function AOrBGradeGuaranteeAdmin() {
     if (!pageData) return;
     setPageLoading(true);
     try {
-      const response = await fetch('/api/admin/a-or-b-grade-guarantee', {
+      const response = await fetch(pageApiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(pageData),
       });
       const result = await response.json();
       if (result.success) {
-        alert('Page saved successfully!');
+        showSuccess();
       } else {
         alert(`Error: ${result.error || 'Failed to save'}`);
       }
@@ -184,6 +205,7 @@ export default function AOrBGradeGuaranteeAdmin() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
+            <AdminDuplicateMetaPanel pageData={pageData} updatePageData={updatePageData} />
           </div>
         </div>
 
@@ -341,13 +363,7 @@ export default function AOrBGradeGuaranteeAdmin() {
                 <div key={index} className="mb-4 p-4 border border-gray-200 rounded-md">
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-medium">Step {index + 1}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeArrayItem('guarantee.steps', index)}
-                      className="text-red-600 hover:text-red-800 text-sm"
-                    >
-                      Remove
-                    </button>
+                    <AdminButton type="button" variant="remove" onClick={() => removeArrayItem('guarantee.steps', index)}>Remove</AdminButton>
                   </div>
                   <div className="grid grid-cols-1 gap-3">
                     <div>
@@ -371,13 +387,7 @@ export default function AOrBGradeGuaranteeAdmin() {
                   </div>
                 </div>
               ))}
-              <button
-                type="button"
-                onClick={() => addArrayItem('guarantee.steps', { title: '', description: '' })}
-                className="mt-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-              >
-                + Add Step
-              </button>
+              <AdminButton type="button" variant="add" onClick={() => addArrayItem('guarantee.steps', { title: '', description: '' })}>Add Step</AdminButton>
             </div>
           </div>
         </div>
@@ -419,13 +429,7 @@ export default function AOrBGradeGuaranteeAdmin() {
                 <div key={index} className="mb-4 p-4 border border-gray-200 rounded-md">
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-medium">Item {index + 1}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeArrayItem('guaranteeCoversContent.items', index)}
-                      className="text-red-600 hover:text-red-800 text-sm"
-                    >
-                      Remove
-                    </button>
+                    <AdminButton type="button" variant="remove" onClick={() => removeArrayItem('guaranteeCoversContent.items', index)}>Remove</AdminButton>
                   </div>
                   <div className="grid grid-cols-1 gap-3">
                     <div>
@@ -481,13 +485,7 @@ export default function AOrBGradeGuaranteeAdmin() {
                 <div key={index} className="mb-4 p-4 border border-gray-200 rounded-md">
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-medium">Step {index + 1}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeArrayItem('howWorksContent.steps', index)}
-                      className="text-red-600 hover:text-red-800 text-sm"
-                    >
-                      Remove
-                    </button>
+                    <AdminButton type="button" variant="remove" onClick={() => removeArrayItem('howWorksContent.steps', index)}>Remove</AdminButton>
                   </div>
                   <div className="grid grid-cols-1 gap-3">
                     <div>
@@ -586,13 +584,7 @@ export default function AOrBGradeGuaranteeAdmin() {
                 <div key={index} className="mb-4 p-4 border border-gray-200 rounded-md">
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-medium">Card {index + 1}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeArrayItem('academicPartners.defaultCard', index)}
-                      className="text-red-600 hover:text-red-800 text-sm"
-                    >
-                      Remove
-                    </button>
+                    <AdminButton type="button" variant="remove" onClick={() => removeArrayItem('academicPartners.defaultCard', index)}>Remove</AdminButton>
                   </div>
                   <div className="grid grid-cols-1 gap-3">
                     <div>
@@ -638,13 +630,7 @@ export default function AOrBGradeGuaranteeAdmin() {
               <div key={index} className="mb-4 p-4 border border-gray-200 rounded-md">
                 <div className="flex justify-between items-center mb-2">
                   <span className="font-medium">FAQ {index + 1}</span>
-                  <button
-                    type="button"
-                    onClick={() => removeArrayItem('faq', index)}
-                    className="text-red-600 hover:text-red-800 text-sm"
-                  >
-                    Remove
-                  </button>
+                  <AdminButton type="button" variant="remove" onClick={() => removeArrayItem('faq', index)}>Remove</AdminButton>
                 </div>
                 <div className="grid grid-cols-1 gap-3">
                   <div>
@@ -668,25 +654,14 @@ export default function AOrBGradeGuaranteeAdmin() {
                 </div>
               </div>
             ))}
-            <button
-              type="button"
-              onClick={() => addArrayItem('faq', { question: '', answer: '' })}
-              className="mt-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-            >
-              + Add FAQ
-            </button>
+            <AdminButton type="button" variant="add" onClick={() => addArrayItem('faq', { question: '', answer: '' })}>Add FAQ</AdminButton>
           </div>
         </div>
 
         {/* Save Button */}
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            disabled={pageLoading}
-            className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-          >
-            {pageLoading ? 'Saving...' : 'Save Page'}
-          </button>
+        <div className="flex flex-wrap justify-end gap-4">
+          <AdminDuplicateDeleteButton disabled={pageLoading} />
+          <AdminButton type="submit" variant="primaryLg" disabled={pageLoading} loading={pageLoading}>{pageLoading ? "Saving..." : "Save Page"}</AdminButton>
         </div>
       </form>
     );
@@ -702,10 +677,10 @@ export default function AOrBGradeGuaranteeAdmin() {
 
   return (
     <div className="p-8">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Edit A or B Grade Guarantee Page</h1>
-        <p className="mt-2 text-sm text-gray-600">Update the content for the A or B Grade Guarantee page</p>
-      </div>
+      <AdminPageHeader
+        title="Edit A or B Grade Guarantee Page"
+        subtitle="Update the content for the A or B Grade Guarantee page"
+      />
       {renderPageForm()}
     </div>
   );
