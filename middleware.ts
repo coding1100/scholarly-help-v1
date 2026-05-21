@@ -5,35 +5,21 @@ import {
   isReservedTopLevelSegment,
 } from "@/app/lib/staticPublicRoutes";
 
-async function maybeRewriteDynamicLanding(
+/** Rewrite unknown single-segment paths to /landing/{slug}/ (published check runs in the page). */
+function maybeRewriteDynamicLanding(
   request: NextRequest,
-): Promise<NextResponse | null> {
+): NextResponse | null {
   const segment = getSinglePathSegment(request.nextUrl.pathname);
   if (!segment || isReservedTopLevelSegment(segment)) {
     return null;
   }
 
-  try {
-    const existsUrl = new URL("/api/public/dynamic-landing-exists", request.url);
-    existsUrl.searchParams.set("slug", segment);
-    const res = await fetch(existsUrl.toString(), {
-      headers: { "x-middleware-check": "1" },
-    });
-    if (!res.ok) return null;
-
-    const data = (await res.json()) as { exists?: boolean };
-    if (!data.exists) return null;
-
-    const rewriteUrl = new URL(
-      `/landing/${encodeURIComponent(segment)}/`,
-      request.url,
-    );
-    rewriteUrl.search = request.nextUrl.search;
-    return NextResponse.rewrite(rewriteUrl);
-  } catch (error) {
-    console.error("dynamic landing middleware", error);
-    return null;
-  }
+  const rewriteUrl = new URL(
+    `/landing/${encodeURIComponent(segment)}/`,
+    request.url,
+  );
+  rewriteUrl.search = request.nextUrl.search;
+  return NextResponse.rewrite(rewriteUrl);
 }
 
 export async function middleware(request: NextRequest) {
@@ -57,7 +43,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  const landingRewrite = await maybeRewriteDynamicLanding(request);
+  const landingRewrite = maybeRewriteDynamicLanding(request);
   if (landingRewrite) return landingRewrite;
 
   return NextResponse.next();
