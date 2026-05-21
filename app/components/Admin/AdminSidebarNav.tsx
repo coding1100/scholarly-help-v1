@@ -26,6 +26,9 @@ const pagesNavigation = [
   { name: "Take My Class 3", href: "/admin/take-my-class-3" },
   { name: "Take My Class (Professor)", href: "/admin/take-my-class-professor-does-not-care" },
   { name: "Take My Class (Still Doing)", href: "/admin/take-my-class-still-doing" },
+  { name: "Take My Class (Protect GPA)", href: "/admin/take-my-class-protect-gpa" },
+  { name: "Take My Class (Always Working Harder)", href: "/admin/take-my-class-always-working-harder" },
+  { name: "Take My Class (Saving Your Future)", href: "/admin/take-my-class-saving-your-future" },
   { name: "Take My Exam", href: "/admin/take-my-exam" },
   { name: "Take My Proctored Exam", href: "/admin/take-my-proctored-exam-for-me" },
 ];

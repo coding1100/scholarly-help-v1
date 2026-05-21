@@ -23,31 +23,33 @@ function adminTakeMyClassApiPath(pageId: string, isDynamicDuplicate: boolean) {
 }
 
 function resolveTakeMyClassAdminPage(pathname: string | null) {
-<<<<<<< HEAD
   const dupSlug = parseDuplicateAdminSlug(pathname);
   if (dupSlug) {
     return {
       pageId: dupSlug,
       pageLabel: "Duplicate page",
       isDynamicDuplicate: true,
-=======
+    };
+  }
   if (pathname?.includes("take-my-class-saving-your-future")) {
     return {
       pageId: "take-my-class-saving-your-future",
       pageLabel: "Take My Class (Saving Your Future)",
+      isDynamicDuplicate: false,
     };
   }
   if (pathname?.includes("take-my-class-always-working-harder")) {
     return {
       pageId: "take-my-class-always-working-harder",
       pageLabel: "Take My Class (Always Working Harder)",
+      isDynamicDuplicate: false,
     };
   }
   if (pathname?.includes("take-my-class-protect-gpa")) {
     return {
       pageId: "take-my-class-protect-gpa",
       pageLabel: "Take My Class (Protect GPA)",
->>>>>>> eeca5a5a4f9a6f2571819dbc68ddd008c40aae70
+      isDynamicDuplicate: false,
     };
   }
   if (pathname?.includes("take-my-class-still-doing")) {
