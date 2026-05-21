@@ -9,7 +9,10 @@ import {
   buildSourceIdCandidates,
   findSourceDocument,
 } from "@/app/lib/duplicatePageStore";
-import { dynamicLandingPublicPath } from "@/app/lib/dynamicLandingPage";
+import {
+  applyDuplicateLandingCanonical,
+  dynamicLandingPublicPath,
+} from "@/app/lib/dynamicLandingPage";
 import { STATIC_ADMIN_SLUGS } from "@/app/lib/adminDuplicatePageRegistry";
 
 export const dynamic = "force-dynamic";
@@ -117,7 +120,7 @@ export async function POST(request: NextRequest) {
     const landingUseHeroForm2 =
       route.adminPath.includes("professor") || route.adminPath.includes("still-doing");
 
-    const newDoc = {
+    const newDoc = applyDuplicateLandingCanonical(slug, {
       ...rest,
       id: slug,
       pageType: slug,
@@ -134,7 +137,7 @@ export async function POST(request: NextRequest) {
       published: false,
       landingUseHeroForm2,
       createdAt: new Date().toISOString(),
-    };
+    });
 
     await db.collection("pages").insertOne(newDoc);
 
