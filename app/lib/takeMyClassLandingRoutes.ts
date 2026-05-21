@@ -2,6 +2,11 @@
 
 export const TAKE_MY_CLASS_PROFESSOR_PATH = "/take-my-class-professor-does-not-care";
 export const TAKE_MY_CLASS_STILL_DOING_PATH = "/take-my-class-still-doing";
+export const TAKE_MY_CLASS_PROTECT_GPA_PATH = "/take-my-class-protect-gpa";
+export const TAKE_MY_CLASS_ALWAYS_WORKING_HARDER_PATH =
+  "/take-my-class-always-working-harder";
+export const TAKE_MY_CLASS_SAVING_YOUR_FUTURE_PATH =
+  "/take-my-class-saving-your-future";
 export const TAKE_MY_CLASS_PATH = "/take-my-class";
 export const TAKE_MY_CLASS_3_PATH = "/take-my-class-3";
 
@@ -10,11 +15,17 @@ const LANDING_PAGE_PATHS = [
   TAKE_MY_CLASS_3_PATH,
   TAKE_MY_CLASS_PROFESSOR_PATH,
   TAKE_MY_CLASS_STILL_DOING_PATH,
+  TAKE_MY_CLASS_PROTECT_GPA_PATH,
+  TAKE_MY_CLASS_ALWAYS_WORKING_HARDER_PATH,
+  TAKE_MY_CLASS_SAVING_YOUR_FUTURE_PATH,
 ] as const;
 
 const EMAIL_ONLY_HERO_FORM_PATHS = [
   TAKE_MY_CLASS_PROFESSOR_PATH,
   TAKE_MY_CLASS_STILL_DOING_PATH,
+  TAKE_MY_CLASS_PROTECT_GPA_PATH,
+  TAKE_MY_CLASS_ALWAYS_WORKING_HARDER_PATH,
+  TAKE_MY_CLASS_SAVING_YOUR_FUTURE_PATH,
 ] as const;
 
 const HEADER_ROUTE_PATHS = [
@@ -22,6 +33,9 @@ const HEADER_ROUTE_PATHS = [
   "/take-my-class-2",
   TAKE_MY_CLASS_PROFESSOR_PATH,
   TAKE_MY_CLASS_STILL_DOING_PATH,
+  TAKE_MY_CLASS_PROTECT_GPA_PATH,
+  TAKE_MY_CLASS_ALWAYS_WORKING_HARDER_PATH,
+  TAKE_MY_CLASS_SAVING_YOUR_FUTURE_PATH,
 ] as const;
 
 export function normalizePathname(pathname: string | null | undefined): string {
@@ -46,7 +60,13 @@ export function isTakeMyClassLandingPathname(pathname: string | null | undefined
     path === "/take-my-class-professor-does-not-care/" ||
     path === "/take-my-class-professor-does-not-care" ||
     path === "/take-my-class-still-doing/" ||
-    path === "/take-my-class-still-doing"
+    path === "/take-my-class-still-doing" ||
+    path === "/take-my-class-protect-gpa/" ||
+    path === "/take-my-class-protect-gpa" ||
+    path === "/take-my-class-always-working-harder/" ||
+    path === "/take-my-class-always-working-harder" ||
+    path === "/take-my-class-saving-your-future/" ||
+    path === "/take-my-class-saving-your-future"
   );
 }
 
@@ -69,7 +89,28 @@ export function isTakeMyClassStillDoingLandingPage(
   return normalizePathname(pathname) === TAKE_MY_CLASS_STILL_DOING_PATH;
 }
 
-/** HeroForm2 email-only layout (professor + still-doing). */
+/** Protect-GPA variant only. */
+export function isTakeMyClassProtectGpaLandingPage(
+  pathname: string | null | undefined,
+): boolean {
+  return normalizePathname(pathname) === TAKE_MY_CLASS_PROTECT_GPA_PATH;
+}
+
+/** Always-working-harder variant only. */
+export function isTakeMyClassAlwaysWorkingHarderLandingPage(
+  pathname: string | null | undefined,
+): boolean {
+  return normalizePathname(pathname) === TAKE_MY_CLASS_ALWAYS_WORKING_HARDER_PATH;
+}
+
+/** Saving-your-future variant only. */
+export function isTakeMyClassSavingYourFutureLandingPage(
+  pathname: string | null | undefined,
+): boolean {
+  return normalizePathname(pathname) === TAKE_MY_CLASS_SAVING_YOUR_FUTURE_PATH;
+}
+
+/** HeroForm2 email-only layout (professor + still-doing + protect-gpa + always-working-harder + saving-your-future). */
 export function isTakeMyClassEmailOnlyHeroFormPage(
   pathname: string | null | undefined,
 ): boolean {
@@ -78,7 +119,7 @@ export function isTakeMyClassEmailOnlyHeroFormPage(
 }
 
 /**
- * Header "special route" take-my-class group: original, variant 2, professor, still-doing.
+ * Header "special route" take-my-class group: original, variant 2, professor, still-doing, protect-gpa, always-working-harder, saving-your-future.
  * Excludes take-my-class-3 (handled separately).
  */
 export function isTakeMyClassHeaderRoute(pathname: string | null | undefined): boolean {

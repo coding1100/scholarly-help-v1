@@ -28,9 +28,9 @@ const tools: ToolCardData[] = [
     badge: "New",
   },
   {
-    name: "Main Tool",
+    name: "Academic Research Assistant",
     description: "Draft, rewrite, and improve with one focused editor.",
-    href: "/tools/main-tool",
+    href: "/tools/academic-research-assistant",
     icon: FiEdit3,
     badge: "Popular",
   },
