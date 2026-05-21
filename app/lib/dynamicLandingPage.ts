@@ -1,17 +1,22 @@
 import { getPageData } from "@/app/lib/mongodb";
+import {
+  applyDuplicateLandingCanonical,
+  dynamicLandingCanonicalUrl,
+  dynamicLandingPublicPath,
+  normalizePublicSlug,
+} from "@/app/lib/dynamicLandingUrls";
 
 export type DuplicateLandingLayout =
   | "take-my-class"
   | "take-my-exam"
   | "take-my-proctored-exam";
 
-export function normalizePublicSlug(raw: string): string {
-  return decodeURIComponent(raw || "").replace(/^\/+|\/+$/g, "");
-}
-
-export function dynamicLandingPublicPath(slug: string): string {
-  return `/${encodeURIComponent(normalizePublicSlug(slug))}/`;
-}
+export {
+  applyDuplicateLandingCanonical,
+  dynamicLandingCanonicalUrl,
+  dynamicLandingPublicPath,
+  normalizePublicSlug,
+};
 
 /** Fetch a published admin duplicate for the public site */
 export async function fetchPublishedDynamicLanding(slug: string) {
@@ -49,17 +54,4 @@ export function resolveDuplicateLandingLayout(
     return "take-my-exam";
   }
   return "take-my-class";
-}
-
-export function dynamicLandingCanonicalUrl(
-  slug: string,
-  pageData?: { meta?: { canonicalUrl?: string } } | null,
-): string {
-  const rawBaseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
-  const baseUrl = rawBaseUrl.endsWith("/") ? rawBaseUrl.slice(0, -1) : rawBaseUrl;
-  return (
-    pageData?.meta?.canonicalUrl ||
-    `${baseUrl}${dynamicLandingPublicPath(slug)}`
-  );
 }

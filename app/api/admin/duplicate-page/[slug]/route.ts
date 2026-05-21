@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMongoDb } from "@/app/lib/mongodb";
+import { applyDuplicateLandingCanonical } from "@/app/lib/dynamicLandingPage";
 import { findDuplicateDocument } from "@/app/lib/duplicatePageStore";
 
 export const dynamic = "force-dynamic";
@@ -100,7 +101,7 @@ export async function POST(
       ],
     };
 
-    const dataToSave = {
+    const dataToSave = applyDuplicateLandingCanonical(slug, {
       ...cleanedData,
       id: slug,
       pageType: slug,
@@ -108,7 +109,7 @@ export async function POST(
       isDynamicLandingDuplicate: true,
       navPlacement: "none",
       adminParentNav: "pages",
-    };
+    });
 
     const result = await db.collection("pages").replaceOne(query as never, dataToSave as never, {
       upsert: false,
