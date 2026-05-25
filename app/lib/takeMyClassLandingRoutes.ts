@@ -127,6 +127,30 @@ export function isTakeMyClassHeaderRoute(pathname: string | null | undefined): b
   return (HEADER_ROUTE_PATHS as readonly string[]).includes(path);
 }
 
+/** Pages that render HeroForm2 (distinct default CTA casing). */
+export function usesHeroForm2Layout(
+  pathname: string | null | undefined,
+): boolean {
+  const path = normalizePathname(pathname);
+  if (path === TAKE_MY_CLASS_PATH || path === TAKE_MY_CLASS_3_PATH) return true;
+  return isTakeMyClassEmailOnlyHeroFormPage(pathname);
+}
+
+/** Hero form submit / sticky CTA label for the current landing path. */
+export function getLandingHeroFormCtaText(
+  pathname: string | null | undefined,
+  getQuoteCtaText?: string | null,
+): string {
+  if (isTakeMyClassEmailOnlyHeroFormPage(pathname)) {
+    return "Get My Academic Plan Now";
+  }
+  const custom = getQuoteCtaText?.trim();
+  if (custom) return custom;
+  return usesHeroForm2Layout(pathname)
+    ? "SECURE MY 'A' OR 'B' GRADES"
+    : "Secure My 'A' or 'B' Grades";
+}
+
 /** Legacy substring check used for hero button visibility, DeliveredOn, etc. */
 export function pathnameIncludesTakeMyClass(pathname: string | null | undefined): boolean {
   const p = pathname || "";

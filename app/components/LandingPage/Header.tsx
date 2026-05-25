@@ -345,7 +345,7 @@ export default function Header() {
     <header className="bg-white z-[9999] relative">
       {/* Header Top Bar */}
       <div
-        className={`max-w-7xl mx-auto max-[1320px]:px-8 flex items-center pt-2 min-h-[64px] ${isTakeMyClass3 ? "md:justify-between justify-center" : "justify-between"}`}
+        className={`max-w-7xl mx-auto max-[1320px]:px-3 flex items-center pt-2 min-h-[64px] ${isTakeMyClass3 ? "md:justify-between justify-center" : "justify-between"}`}
       >
         {/* Menu Button - Hidden for special routes */}
         {!isSpecialRoute3 && (
@@ -415,7 +415,13 @@ export default function Header() {
 
         {isSpecialRoute && (
           <div className="">
-            <a
+            <button
+           
+            className="rounded-md sm:px-3 px-2 cursor-pointer bg-[#ff641a] text-white border border-transparent transition duration-300 sm:text-xs text-[10px] font-medium flex items-center justify-center hover:bg-white hover:text-[#ff641a] hover:border-[#ff641a] h-[40px] w-full"
+          >
+            Get My Academic Plan Now
+          </button>
+            {/* <a
               href={`sms:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER || "17167081869"}`}
               className="flex items-center sm:text-primary-400 sm:text-[#565add] transition sm:bg-white bg-[#9F92EC] sm:rounded-none rounded-full sm:px-0 px-4 sm:py-0 py-1"
             >
@@ -430,16 +436,16 @@ export default function Header() {
               </span>
               <span className="sm:block hidden">+1 646 480 6092</span>
               <span className="sm:hidden block text-white">Text Us</span>
-            </a>
+            </a> */}
           </div>
         )}
-        {isTakeMyClass3 && (
+        {/* {isTakeMyClass3 && (
           <div>
             <button className="rounded-md px-3 py-2 cursor-pointer bg-[#ff641a] text-white border border-transparent transition duration-300 text-[15px] font-medium md:flex hidden items-center justify-center hover:bg-white hover:text-[#ff641a] hover:border-[#ff641a] w-full">
               Secure My "A" or "B" Grades
             </button>
           </div>
-        )}
+        )} */}
 
         {/* Desktop Navigation - Hidden for special routes */}
         {!isSpecialRoute && (
@@ -527,7 +533,13 @@ export default function Header() {
             )}
             {!isTakeMyClass3 && (
               <div>
-                <a
+                 <button
+           
+           className="rounded-md sm:px-3 px-2 cursor-pointer bg-[#ff641a] text-white border border-transparent transition duration-300 sm:text-xs text-[10px] font-medium flex items-center justify-center hover:bg-white hover:text-[#ff641a] hover:border-[#ff641a] h-[40px] w-full"
+         >
+           Secure My "A" or "B" Grades
+         </button>
+                {/* <a
                   href={`tel:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER || "17167081869"}`}
                   className="flex items-center sm:text-primary-400 sm:text-[#565add] transition sm:bg-white bg-[#9F92EC] sm:rounded-none rounded-full sm:px-0 px-4 sm:py-0 py-1"
                 >
@@ -542,7 +554,7 @@ export default function Header() {
                   </span>
                   <span className="sm:block hidden">+1 646 480 6092</span>
                   <span className="sm:hidden block text-white">Text Us</span>
-                </a>
+                </a> */}
               </div>
             )}
           </>
