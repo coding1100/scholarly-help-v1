@@ -49,7 +49,8 @@ const WhatsApp = () => {
   return (
     <>
       {/* Whatsapp module */}
-      {currentPage !== "/take-my-class-3/" && (
+      {currentPage !== "/take-my-class-3/" && currentPage !== "/take-my-class/" && (
+ 
         <div>
           <button
             id="whatsapp-chat"
