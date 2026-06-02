@@ -30,6 +30,56 @@ type HumanizerResponse = {
   tokens_used: number;
 };
 
+type AiDetectionResponse = {
+  success: boolean;
+  aiPercent: number;
+  humanPercent: number;
+  reason?: string;
+};
+
+function AiGauge({ percent }: { percent: number }) {
+  const size = 180;
+  const stroke = 14;
+  const radius = (size - stroke) / 2;
+  const c = 2 * Math.PI * radius;
+  const clamped = Math.max(0, Math.min(100, percent));
+  const dash = (clamped / 100) * c;
+  const gap = c - dash;
+
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="block">
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          strokeWidth={stroke}
+          className="text-gray-200 dark:text-gray-700"
+          stroke="currentColor"
+          fill="none"
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          className="text-emerald-500"
+          stroke="currentColor"
+          fill="none"
+          strokeDasharray={`${dash} ${gap}`}
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+        />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="text-4xl font-semibold text-gray-800 dark:text-gray-100">
+          {clamped}%
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const TONE_META: Record<HumanizerTone, { label: string; description: string }> =
   {
     natural: {
@@ -53,6 +103,12 @@ const HumanizerTool: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<HumanizerResponse | null>(null);
   const [selectedVariantId, setSelectedVariantId] = useState<VariantId>("best");
+  const [activePanel, setActivePanel] = useState<"humanized" | "ai_detection">(
+    "humanized",
+  );
+  const [aiDetection, setAiDetection] = useState<AiDetectionResponse | null>(
+    null,
+  );
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -76,6 +132,8 @@ const HumanizerTool: React.FC = () => {
     setText("");
     setResult(null);
     setSelectedVariantId("best");
+    setAiDetection(null);
+    setActivePanel("humanized");
   };
 
   const handleCopy = async (value: string) => {
@@ -143,6 +201,8 @@ const HumanizerTool: React.FC = () => {
     setLoading(true);
     setResult(null);
     setSelectedVariantId("best");
+    setAiDetection(null);
+    setActivePanel("humanized");
     trackToolGenerate({ toolName: "Humanizer Tool" });
 
     try {
@@ -185,6 +245,43 @@ const HumanizerTool: React.FC = () => {
     }
   };
 
+  const handleCheckAi = async () => {
+    if (!text.trim()) {
+      toast.error("Please enter some text.");
+      return;
+    }
+    if (wordCount > 1500) {
+      toast.error("Please keep input at or under 1500 words.");
+      return;
+    }
+
+    setLoading(true);
+    setAiDetection(null);
+    setActivePanel("ai_detection");
+
+    try {
+      const response = await axios.post<AiDetectionResponse>("/api/ai-detect", {
+        text,
+      });
+      setAiDetection(response.data);
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to check AI.";
+      toast.error(Array.isArray(message) ? message.join(", ") : String(message));
+      setAiDetection({
+        success: false,
+        aiPercent: 0,
+        humanPercent: 0,
+        reason: String(message),
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleUseThisVersion = () => {
     if (!selectedVariantText) return;
     setText(selectedVariantText);
@@ -192,6 +289,20 @@ const HumanizerTool: React.FC = () => {
   };
 
   const toneDescription = TONE_META[tone]?.description || "";
+  const canCheckAi = text.trim().length > 0 && wordCount <= 1500 && !loading;
+
+  const aiPercent = Math.max(
+    0,
+    Math.min(100, Math.round(aiDetection?.aiPercent ?? 0)),
+  );
+  const humanPercent = Math.max(
+    0,
+    Math.min(100, Math.round(aiDetection?.humanPercent ?? 0)),
+  );
+  const aiHeadline =
+    aiDetection && aiDetection.success
+      ? `${aiPercent}% of this text appears to be AI-generated`
+      : "AI detection result will appear here...";
 
   return (
     <div className="container relative overflow-y-auto h-[90vh] mx-auto max-w-[840px] px-4 md:px-8 md:pt-8 2xl:max-w-6xl">
@@ -258,8 +369,11 @@ const HumanizerTool: React.FC = () => {
             onClear={handleClear}
             onSubmit={handleHumanize}
             submitButtonText="Humanize"
+            secondaryButtonText="Check AI"
+            onSecondarySubmit={handleCheckAi}
             isSubmitting={loading}
             isDisabled={!canSubmit}
+            isSecondaryDisabled={!canCheckAi}
           />
         </div>
 
@@ -273,9 +387,9 @@ const HumanizerTool: React.FC = () => {
                     key={id}
                     type="button"
                     onClick={() => setSelectedVariantId(id)}
-                    disabled={!result}
+                    disabled={!result || activePanel !== "humanized"}
                     className={`px-3 py-1.5 rounded-md text-sm border transition-colors duration-300 ${
-                      !result
+                      !result || activePanel !== "humanized"
                         ? "border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed"
                         : selectedVariantId === id
                           ? "border-[#2b7fff] text-[#2b7fff] dark:border-[#51a2ff] dark:text-[#51a2ff]"
@@ -296,9 +410,9 @@ const HumanizerTool: React.FC = () => {
               <button
                 type="button"
                 onClick={() => handleCopy(selectedVariantText)}
-                disabled={!selectedVariantText}
+                disabled={!selectedVariantText || activePanel !== "humanized"}
                 className={`px-3 py-2 border rounded-md flex items-center gap-2 transition-colors duration-300 ${
-                  !selectedVariantText
+                  !selectedVariantText || activePanel !== "humanized"
                     ? "bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed"
                     : "border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-100 bg-white dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
                 }`}
@@ -309,9 +423,9 @@ const HumanizerTool: React.FC = () => {
               <button
                 type="button"
                 onClick={handleUseThisVersion}
-                disabled={!selectedVariantText}
+                disabled={!selectedVariantText || activePanel !== "humanized"}
                 className={`px-3 py-2 rounded-md text-white transition-colors duration-300 ${
-                  !selectedVariantText
+                  !selectedVariantText || activePanel !== "humanized"
                     ? "bg-primary-400/60 cursor-not-allowed"
                     : "bg-primary-400 hover:bg-primary-300"
                 }`}
@@ -322,9 +436,52 @@ const HumanizerTool: React.FC = () => {
           </div>
 
           <ResultDisplay
-            title="Humanized Text"
-            resultText={selectedVariantText}
+            title={activePanel === "ai_detection" ? "AI Detection" : "Humanized Text"}
+            resultText={activePanel === "humanized" ? selectedVariantText : ""}
             loading={loading}
+            customBody={
+              activePanel === "ai_detection" ? (
+                <div className="h-full w-full flex flex-col items-center justify-center">
+                  <div className="text-center text-gray-800 dark:text-gray-100">
+                    <div className="text-lg font-semibold">{aiHeadline}</div>
+                  </div>
+
+                  <div className="mt-6 mb-6">
+                    <AiGauge percent={aiPercent} />
+                  </div>
+
+                  <div className="w-full max-w-md space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-block h-3 w-3 rounded-full bg-indigo-500" />
+                        <span className="text-gray-700 dark:text-gray-200">
+                          Resembles AI text
+                        </span>
+                      </div>
+                      <span className="text-gray-700 dark:text-gray-200">
+                        {aiPercent}%
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-block h-3 w-3 rounded-full bg-emerald-500" />
+                        <span className="text-gray-700 dark:text-gray-200">
+                          No AI text patterns found
+                        </span>
+                      </div>
+                      <span className="text-gray-700 dark:text-gray-200">
+                        {Math.max(0, 100 - aiPercent)}%
+                      </span>
+                    </div>
+                    {aiDetection?.reason && !aiDetection.success && (
+                      <div className="pt-2 text-xs text-gray-500 dark:text-gray-400">
+                        {aiDetection.reason}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : undefined
+            }
           />
 
           {result && (
