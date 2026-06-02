@@ -6,6 +6,7 @@ interface ResultDisplayProps {
   title?: string;
   onCopy?: (textToCopy: string) => void;
   loading?: boolean;
+  customBody?: React.ReactNode;
 }
 
 const ResultDisplay: React.FC<ResultDisplayProps> = ({
@@ -13,6 +14,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
   title = "Result",
   onCopy,
   loading = false,
+  customBody,
 }) => {
   const [copyFeedback, setCopyFeedback] = useState<string>("");
 
@@ -62,12 +64,16 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
 
       {/* Result Area */}
       <div className="p-4 h-96">
-        <textarea
-          readOnly
-          className="w-full h-full text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-800 focus:outline-none resize-none transition-colors duration-300"
-          value={loading ? "In process..." : resultText}
-          placeholder="Result will appear here..."
-        ></textarea>
+        {customBody ? (
+          <div className="w-full h-full">{customBody}</div>
+        ) : (
+          <textarea
+            readOnly
+            className="w-full h-full text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-800 focus:outline-none resize-none transition-colors duration-300"
+            value={loading ? "In process..." : resultText}
+            placeholder="Result will appear here..."
+          ></textarea>
+        )}
       </div>
     </div>
   );
