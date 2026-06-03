@@ -342,7 +342,7 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="bg-white z-[9999] relative">
+    <header className="bg-white z-[9999] sticky top-0 shadow-sm">
       {/* Header Top Bar */}
       <div
         className={`max-w-7xl mx-auto max-[1320px]:px-3 flex items-center pt-2 min-h-[64px] ${isTakeMyClass3 ? "md:justify-between justify-center" : "justify-between"}`}
@@ -533,13 +533,13 @@ export default function Header() {
             )}
             {!isTakeMyClass3 && (
               <div>
-                 <button
+                 {/* <button
            
            className="rounded-md sm:px-3 px-2 cursor-pointer bg-[#ff641a] text-white border border-transparent transition duration-300 sm:text-xs text-[10px] font-medium flex items-center justify-center hover:bg-white hover:text-[#ff641a] hover:border-[#ff641a] h-[40px] w-full"
          >
            Secure My "A" or "B" Grades
-         </button>
-                {/* <a
+         </button> */}
+                <a
                   href={`tel:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER || "17167081869"}`}
                   className="flex items-center sm:text-primary-400 sm:text-[#565add] transition sm:bg-white bg-[#9F92EC] sm:rounded-none rounded-full sm:px-0 px-4 sm:py-0 py-1"
                 >
@@ -554,7 +554,7 @@ export default function Header() {
                   </span>
                   <span className="sm:block hidden">+1 646 480 6092</span>
                   <span className="sm:hidden block text-white">Text Us</span>
-                </a> */}
+                </a>
               </div>
             )}
           </>
