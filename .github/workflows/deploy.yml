@@ -43,6 +43,10 @@ jobs:
           DIRECTUS_ADMIN_EMAIL: ${{ secrets.DIRECTUS_ADMIN_EMAIL }}
           DIRECTUS_ADMIN_PASSWORD: ${{ secrets.DIRECTUS_ADMIN_PASSWORD }}
 
+          # Gemini API Key
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL_ID: ${{ secrets.GEMINI_MODEL_ID }}
+          
       - name: Create deployment package
         run: |
           mkdir -p deploy
