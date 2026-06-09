@@ -8,6 +8,7 @@ import LogoNormal from "@/app/assets/Images/logo.png";
 import { BiChevronsRight } from "react-icons/bi";
 import MTSidebar from "./MTSidebar";
 import ToolHeader from "./ToolHeader";
+import TrackingParamKeeper from "@/app/components/TrackingParamKeeper";
 
 interface ToolsLayoutProps {
   children: ReactNode;
@@ -27,6 +28,7 @@ const ToolsLayout: React.FC<ToolsLayoutProps> = ({
 
   return (
     <div className="h-screen w-full flex flex-col relative bg-white dark:bg-gray-900 transition-colors duration-300">
+      <TrackingParamKeeper />
       {/* Mobile menu button */}
       <button
         className="lg:hidden fixed top-10 left-2 z-50 p-0.5 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"

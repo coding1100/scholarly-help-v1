@@ -5,6 +5,7 @@ import Image from "next/image";
 import InfoSection from "./InfoSection";
 import Header from "../LandingPage/Header";
 import Footer from "../Footer/Footer";
+import TrackingParamKeeper from "@/app/components/TrackingParamKeeper";
 
 interface AuthLayoutProps {
   children: ReactNode;
@@ -13,6 +14,7 @@ interface AuthLayoutProps {
 const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
   return (
     <div>
+      <TrackingParamKeeper />
       <Header />
       <main className="min-h-screen w-full bg-[#D1D1F7] flex items-center justify-center overflow-hidden py-16">
         <div className="max-w-7xl mx-auto relative">

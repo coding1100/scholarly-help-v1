@@ -1,11 +1,11 @@
 "use client";
-import React, { FC, useState } from "react";
+import React, { useContext, useState } from "react";
 import Switch from "react-switch";
-import { Toaster, toast } from "react-hot-toast"; // Toaster added for demonstration, can be global
+import { toast } from "react-hot-toast";
 import { MdOutlineClose } from "react-icons/md";
 import { IoMdInformationCircle, IoMdCheckmarkCircle } from "react-icons/io";
-import { FaRegFileLines } from "react-icons/fa6";
 import { GiStarsStack } from "react-icons/gi";
+import { EditorPreferencesContext } from "./MainTool/MainToolLayout";
 
 // The component is now just for content, it doesn't handle modal state
 interface SettingModalContentProps {
@@ -15,8 +15,14 @@ interface SettingModalContentProps {
 const DocumentSettingsModalContent: React.FC<SettingModalContentProps> = ({
   onBack,
 }) => {
-  const [autoComplete, setAutoComplete] = useState(false);
-  const [showButtons, setShowButtons] = useState(false);
+  const {
+    autoComplete,
+    setAutoComplete,
+    showAutocompleteButtons,
+    setShowAutocompleteButtons,
+    citationStyle,
+    setCitationStyle,
+  } = useContext(EditorPreferencesContext);
   const [autoCiteNew, setAutoCiteNew] = useState(true);
   const [autoCiteLibrary, setAutoCiteLibrary] = useState(true);
   const [citationFilter, setCitationFilter] = useState(false);
@@ -44,7 +50,7 @@ const DocumentSettingsModalContent: React.FC<SettingModalContentProps> = ({
               </button>
             </div>
             <p className="text-gray-500 text-xs pl-4 mt-2">
-              Jennni will give you suggestions as you write.
+              Jenni-style suggestions will appear as you write.
             </p>
           </div>
         ),
@@ -274,8 +280,8 @@ const DocumentSettingsModalContent: React.FC<SettingModalContentProps> = ({
               </p>
             </div>
             <Switch
-              onChange={setShowButtons}
-              checked={showButtons}
+              onChange={setShowAutocompleteButtons}
+              checked={showAutocompleteButtons}
               onColor="#6366f1"
               uncheckedIcon={false}
               checkedIcon={false}
@@ -297,12 +303,20 @@ const DocumentSettingsModalContent: React.FC<SettingModalContentProps> = ({
         <div className="flex-1 space-y-6">
           <div className="flex items-center justify-between w-full mb-4">
             <p className="text-sm font-medium text-gray-900">Citation Style</p>
-            <select className="w-4 md:w-80 border border-gray-300 rounded-md p-2 text-sm text-gray-800">
-              <option value="apa">
+            <select
+              value={citationStyle}
+              onChange={(event) => setCitationStyle(event.target.value)}
+              className="w-4 md:w-80 border border-gray-300 rounded-md p-2 text-sm text-gray-800"
+            >
+              <option value="APA 7th edition">
                 APA · American Psychological Association
               </option>
-              <option value="mla">MLA · Modern Language Association</option>
-              <option value="chicago">Chicago · Chicago Manual of Style</option>
+              <option value="MLA 9th edition">
+                MLA · Modern Language Association
+              </option>
+              <option value="Chicago 17th edition">
+                Chicago · Chicago Manual of Style
+              </option>
             </select>
           </div>
           <div className="flex items-start justify-between">

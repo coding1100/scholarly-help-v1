@@ -70,6 +70,23 @@ export function computeAllSemesterTotals(
   return semesters.map((s) => ({ semesterId: s.id, totals: computeSemesterTotals(s, gradeScale) }));
 }
 
+/** True if user entered at least one valid previous-semester row or one valid course row (grade + credits). */
+export function hasAnyCalculableCgpaInput(state: CalculatorState): boolean {
+  for (const r of state.previousSemesters || []) {
+    const creditsRaw = parseNumberLoose(r.credits);
+    const gpaRaw = parseNumberLoose(r.gpa);
+    if (creditsRaw === null || gpaRaw === null) continue;
+    const credits = clampMin(creditsRaw, 0);
+    if (credits > 0) return true;
+  }
+  for (const s of state.semesters) {
+    if (computeSemesterTotals(s, state.gradeScale).validCourseCount > 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export function computeCumulativeTotals(state: CalculatorState): CumulativeTotals {
   const includePrevious = !!state.preferences.includePreviousInCgpa;
   let previousCredits = 0;

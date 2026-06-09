@@ -1,11 +1,20 @@
 "use client";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import { HiMiniPlus } from "react-icons/hi2";
+import {
+  getAcademicErrorMessage,
+  listDocuments,
+  type DocumentRecord,
+} from "./academicResearchApi";
+import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 
 export interface DocumentItem {
   id: string | number;
+  _id?: string | number;
   title: string;
-  updatedAt: string | number | Date; // ISO, timestamp, or Date
+  updatedAt?: string | number | Date; // ISO, timestamp, or Date
+  updated_at?: string | number | Date;
 }
 
 interface DocumentsSidebarProps {
@@ -32,34 +41,6 @@ const formatRelative = (dateLike: string | number | Date) => {
   });
 };
 
-const fallbackDocs: DocumentItem[] = [
-  {
-    id: 1,
-    title: "Untitled",
-    updatedAt: new Date(Date.now() - 60 * 60 * 1000),
-  },
-  {
-    id: 2,
-    title: "Desire or Want",
-    updatedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),
-  },
-  {
-    id: 3,
-    title: "Machine Learning Overview",
-    updatedAt: new Date(Date.now() - 17 * 60 * 60 * 1000),
-  },
-  {
-    id: 4,
-    title: "Teacher’s Influence and Impact",
-    updatedAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000),
-  },
-  {
-    id: 5,
-    title: "Data Structures and Algorithms",
-    updatedAt: new Date(Date.now() - 36 * 24 * 60 * 60 * 1000),
-  },
-];
-
 const DocumentsSidebar: React.FC<DocumentsSidebarProps> = ({
   documents,
   onNew,
@@ -67,15 +48,36 @@ const DocumentsSidebar: React.FC<DocumentsSidebarProps> = ({
   className,
 }) => {
   const [query, setQuery] = useState("");
-  const docs = documents && documents.length > 0 ? documents : fallbackDocs;
+  const [fetchedDocs, setFetchedDocs] = useState<DocumentRecord[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (documents) return;
+
+    const timeout = setTimeout(() => {
+      setLoading(true);
+      listDocuments(query.trim() || undefined)
+        .then(setFetchedDocs)
+        .catch((error) => {
+          toast.error(
+            getAcademicErrorMessage(error, "Could not load documents."),
+          );
+        })
+        .finally(() => setLoading(false));
+    }, 250);
+
+    return () => clearTimeout(timeout);
+  }, [documents, query]);
+
+  const docs = documents || fetchedDocs;
 
   const filteredDocs = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const list = q
+    const list = documents && q
       ? docs.filter((d) => d.title.toLowerCase().includes(q))
       : docs;
-    return list.slice(0, 4); // show only 3–4, cap at 4
-  }, [docs, query]);
+    return list.slice(0, 20);
+  }, [docs, documents, query]);
 
   return (
     <aside
@@ -103,18 +105,27 @@ const DocumentsSidebar: React.FC<DocumentsSidebarProps> = ({
         />
       </div>
 
-      <div className="flex-1 overflow-auto">
+      <div className="relative flex-1 overflow-auto">
+        <ToolsApiLoader show={loading} contained />
+        {!loading && filteredDocs.length === 0 && (
+          <div className="px-4 py-3 text-sm text-gray-500">
+            No documents found.
+          </div>
+        )}
         {filteredDocs.map((doc) => (
           <button
-            key={doc.id}
-            onClick={() => onSelect && onSelect(doc.id)}
+            key={doc.id || doc._id}
+            onClick={() => {
+              const documentId = doc.id || doc._id;
+              if (documentId) onSelect?.(documentId);
+            }}
             className="w-full text-left px-4 py-3 hover:bg-gray-50 focus:bg-gray-50 transition-colors"
           >
             <div className="text-sm font-medium text-gray-900 truncate">
               {doc.title}
             </div>
             <div className="text-xs text-gray-500 mt-0.5">
-              {formatRelative(doc.updatedAt)}
+              {formatRelative(doc.updatedAt || doc.updated_at || new Date())}
             </div>
           </button>
         ))}

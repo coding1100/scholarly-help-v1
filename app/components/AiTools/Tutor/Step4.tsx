@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 
 interface Topic {
   id: string;
@@ -94,8 +95,8 @@ export default function Step4({
                   ))}
                 </div>
               ) : (
-                <div className="flex justify-center items-center mb-8 py-8">
-                  <p className="text-gray-600">Loading topics...</p>
+                <div className="relative flex justify-center items-center mb-8 py-8 min-h-[120px]">
+                  <ToolsApiLoader show={topics.length === 0} contained respectToolsSidebar={false} />
                 </div>
               )}
 

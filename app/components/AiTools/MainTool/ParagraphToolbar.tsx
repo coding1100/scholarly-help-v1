@@ -6,6 +6,9 @@ import BlockMenu from "./BlockMenu";
 type ParagraphToolbarProps = {
   className?: string;
   onSetBlock?: (value: string) => void;
+  onCite?: () => void;
+  onHumanize?: () => void;
+  onOpenChat?: () => void;
   onToggleBold?: () => void;
   onToggleItalic?: () => void;
   onToggleUnderline?: () => void;
@@ -20,6 +23,9 @@ type ParagraphToolbarProps = {
 const ParagraphToolbar: React.FC<ParagraphToolbarProps> = ({
   className = "",
   onSetBlock,
+  onCite,
+  onHumanize,
+  onOpenChat,
   onToggleBold,
   onToggleItalic,
   onToggleUnderline,
@@ -28,12 +34,19 @@ const ParagraphToolbar: React.FC<ParagraphToolbarProps> = ({
   onLink,
 }) => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const [isActionMenuOpen, setIsActionMenuOpen] = React.useState(false);
   const [selectedBlock, setSelectedBlock] = React.useState<string>("text");
   const [menuPos, setMenuPos] = React.useState<{ top: number; left: number }>({
     top: 0,
     left: 0,
   });
   const textBtnRef = React.useRef<HTMLButtonElement | null>(null);
+  const actionBtnRef = React.useRef<HTMLButtonElement | null>(null);
+  const [actionPos, setActionPos] = React.useState<{
+    top: number;
+    left: number;
+  }>({ top: 0, left: 0 });
+  const actionMenuRef = React.useRef<HTMLDivElement | null>(null);
 
   const labelForSelected = (value: string) => {
     switch (value) {
@@ -69,6 +82,39 @@ const ParagraphToolbar: React.FC<ParagraphToolbarProps> = ({
     setIsMenuOpen(true);
   };
 
+  const openActionMenu = () => {
+    const btn = actionBtnRef.current;
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    setActionPos({
+      // Use viewport coords so the menu stays anchored even inside positioned containers.
+      top: rect.bottom + 6,
+      left: rect.left,
+    });
+    setIsActionMenuOpen((prev) => !prev);
+  };
+
+  React.useEffect(() => {
+    if (!isActionMenuOpen) return;
+    const onDocMouseDown = (event: MouseEvent) => {
+      const t = event.target;
+      if (!(t instanceof Node)) return;
+      const btn = actionBtnRef.current;
+      const menu = actionMenuRef.current;
+      if (btn?.contains(t) || menu?.contains(t)) return;
+      setIsActionMenuOpen(false);
+    };
+    const onDocKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsActionMenuOpen(false);
+    };
+    document.addEventListener("mousedown", onDocMouseDown);
+    document.addEventListener("keydown", onDocKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onDocMouseDown);
+      document.removeEventListener("keydown", onDocKeyDown);
+    };
+  }, [isActionMenuOpen]);
+
   const handleSelect = (value: string) => {
     setSelectedBlock(value);
     setIsMenuOpen(false);
@@ -77,17 +123,27 @@ const ParagraphToolbar: React.FC<ParagraphToolbarProps> = ({
 
   return (
     <div className={`inline-block ${className}`}>
-      <div className="inline-flex items-center gap-2 rounded-md border border-gray-200 bg-white p-1 shadow-sm">
+      <div
+        data-tour="ara-selection-toolbar"
+        className="inline-flex items-center gap-2 rounded-md border border-gray-200 bg-white p-1 shadow-sm"
+      >
         {/* Left group: Cite, Chat, AI Edit */}
         {/* <button
-          aria-label="Cite"
-          className="px-2 py-1 rounded hover:bg-gray-100 text-gray-700"
+          type="button"
+          aria-label="Cite selected text"
+          title="CT — Cite the selected text (adds an in-text citation)"
+          className="px-2 py-1 rounded hover:bg-gray-100 text-gray-700 font-semibold"
+          onClick={onCite}
         >
-          @ Cite
+          CT
         </button> */}
         <button
-          aria-label="Chat"
+          ref={actionBtnRef}
+          type="button"
+          aria-label="Selection actions"
+          title="Tools for the selected text"
           className="px-2 py-1 rounded hover:bg-gray-100 text-gray-700 flex items-center gap-1"
+          onClick={openActionMenu}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -98,6 +154,18 @@ const ParagraphToolbar: React.FC<ParagraphToolbarProps> = ({
             <path d="M2 5.75A2.75 2.75 0 0 1 4.75 3h14.5A2.75 2.75 0 0 1 22 5.75v7.5A2.75 2.75 0 0 1 19.25 16H8.6l-3.6 3.6A.75.75 0 0 1 4 18.75V16H4.75A2.75 2.75 0 0 1 2 13.25v-7.5Z" />
           </svg>
           Chat
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            className="h-4 w-4 text-gray-500"
+          >
+            <path
+              fillRule="evenodd"
+              d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08Z"
+              clipRule="evenodd"
+            />
+          </svg>
         </button>
         {/* <button
           aria-label="AI Edit"
@@ -216,6 +284,50 @@ const ParagraphToolbar: React.FC<ParagraphToolbarProps> = ({
           onSelect={handleSelect}
           onClose={() => setIsMenuOpen(false)}
         />
+      )}
+      {isActionMenuOpen && (
+        <div
+          ref={actionMenuRef}
+          className=" z-[9999] w-44 rounded-md border border-gray-200 bg-white shadow-lg py-1"
+          style={{ top: actionPos.top, left: actionPos.left }}
+        >
+          <button
+            type="button"
+            className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+            title="Add an in-text citation for the selection"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => {
+              setIsActionMenuOpen(false);
+              onCite?.();
+            }}
+          >
+            Citation
+          </button>
+          <button
+            type="button"
+            className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+            title="Rewrite the selection to sound more human"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => {
+              setIsActionMenuOpen(false);
+              onHumanize?.();
+            }}
+          >
+            Humanizer
+          </button>
+          <button
+            type="button"
+            className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+            title="Chat with AI about the selection"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => {
+              setIsActionMenuOpen(false);
+              onOpenChat?.();
+            }}
+          >
+            Chat
+          </button>
+        </div>
       )}
     </div>
   );

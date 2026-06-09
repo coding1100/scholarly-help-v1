@@ -3,10 +3,11 @@
 import {
   ParsedQuestion,
   parseQuizFromResponse,
-  sendChatMessage,
+  sendMicroLearningMessage,
 } from "@/app/utilities/api";
 import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
+import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 
 interface Step10Props {
   conversationId: string;
@@ -41,9 +42,22 @@ export default function Step10({
       setIsLoading(true);
       setError(null);
       try {
-        const message =
-          'Generate a quick 2-3 question micro-quiz about the lesson to test understanding. Use the generate_quiz tool with topic="the lesson", num_questions=2, difficulty="medium".';
-        const response = await sendChatMessage(message, conversationId);
+        const message = `Create a quick 2-3 question multiple-choice micro-quiz to test understanding of the previous lesson.
+
+Formatting rules (follow exactly):
+- Each question must be formatted like:
+  **Question 1:**
+  <question text>
+  A) <option>
+  B) <option>
+  C) <option>
+  D) <option>
+  **Answer:** <A-D>
+- Repeat for Question 2, Question 3 (if included)
+
+Difficulty: medium`;
+
+        const response = await sendMicroLearningMessage(message, conversationId);
         const parsedQuestions = parseQuizFromResponse(response.message);
 
         if (parsedQuestions.length === 0) {
@@ -124,21 +138,8 @@ export default function Step10({
 
   if (isLoading) {
     return (
-      <div className="h-[calc(100vh-8vh)] overflow-y-auto flex mt-10 justify-center p-4 bg-linear-to-br from-gray-100 to-gray-200">
-        <div className="flex flex-col items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-[#6C757D] rounded-full animate-bounce"></div>
-            <div
-              className="w-3 h-3 bg-[#6C757D] rounded-full animate-bounce"
-              style={{ animationDelay: "0.1s" }}
-            ></div>
-            <div
-              className="w-3 h-3 bg-[#6C757D] rounded-full animate-bounce"
-              style={{ animationDelay: "0.2s" }}
-            ></div>
-          </div>
-          <p className="text-[#F0F0F0] text-lg">Generating quiz...</p>
-        </div>
+      <div className="relative h-[calc(100vh-8vh)] overflow-y-auto flex mt-10 justify-center p-4 bg-linear-to-br from-gray-100 to-gray-200">
+        <ToolsApiLoader show />
       </div>
     );
   }

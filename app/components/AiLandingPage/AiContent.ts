@@ -16,6 +16,10 @@ import icon5 from "@/app/assets/Icons/icon-5.png";
 import icon6 from "@/app/assets/Icons/icon-6.png";
 import icon7 from "@/app/assets/Icons/icon-7.png";
 import icon8 from "@/app/assets/Icons/icon-8.png";
+import CgpaFull from "@/app/assets/Images/aitoollanding/cgpafullimg.png";
+import PreSemester from "@/app/assets/Images/aitoollanding/presemester.png";
+import NewSemester from "@/app/assets/Images/aitoollanding/newsemester.png";
+import AcademicResearchImg from "@/app/assets/Images/aitoollanding/AcademicResearchImg.png";
 
 export const MainAiLanding = {
   heroContent: {
@@ -274,6 +278,145 @@ export const MainAiLanding = {
         "They're designed specifically for students, offering clarity, simplicity, privacy, and accurate academic output every time.",
     },
   ],
+};
+
+export const AiAcademicResearchContent = {
+  heroContent: {
+    mainHeading: "Meet Your Intelligent Academic Research Assistant",
+    description: `Scholarly AI academic research helps students, researchers, and academic writers move from a blank page to a well-supported draft with more confidence. Use it to explore sources, organize research notes, write with clearer structure, and prepare citations without losing sight of your own argument. It is built for serious academic work where every idea needs context, clarity, and a source you can check.`,
+    buttonText: "Start Free Researching",
+    buttonUrl: "/sign-in?returnUrl=/tools/academic-research-assistant",
+  },
+  imgSection: {
+    img: AcademicResearchImg,
+  },
+  trustSection: {
+    heading: "Trusted by Students, Scholars, and Researchers",
+    description:
+      "Academic writers use Scholarly AI academic research to simplify source discovery, improve research writing, and keep citations organized from the first note to the final draft.",
+    sliderImgs: [slide1, slide2, slide3, slide4, slide5],
+  },
+  featuresSection: {
+    subTitle: "CORE FEATURES",
+    heading: "Built for Research That Stays Clear and Cited",
+    description:
+      "Scholarly AI academic research brings source discovery, writing support, and citation guidance into one focused academic workspace.",
+    features: [
+      {
+        heading: "Research with Source Awareness",
+        description:
+          "Find useful academic material, review key ideas, and keep your writing connected to the sources behind it. Scholarly AI academic research helps you work with evidence instead of relying on unsupported claims.",
+        linkText: "Get Started",
+        url: "/sign-in?returnUrl=/tools/academic-research-assistant",
+        img: effortless,
+      },
+      {
+        heading: "Write Alongside Academic AI",
+        description:
+          "Turn notes, outlines, and source insights into clearer paragraphs while keeping control of your argument. Scholarly AI academic research supports literature reviews, essays, reports, and research drafts with an academic tone.",
+        linkText: "Start Writing",
+        url: "/sign-in?returnUrl=/tools/academic-research-assistant",
+        img: interactive,
+      },
+      {
+        heading: "Cite, Review, and Refine",
+        description:
+          "Prepare cleaner references, check whether your claims need stronger support, and polish your draft before submission. Scholarly AI academic research helps you revise with more structure and less guesswork.",
+        linkText: "Explore the Tool",
+        url: "/sign-in?returnUrl=/tools/academic-research-assistant",
+        img: learning,
+      },
+    ],
+  },
+  missionSection: {
+    subTitle: "OUR PURPOSE",
+    heading: "Helping Researchers Build Stronger Academic Work",
+    description:
+      "Scholarly AI academic research is designed to support responsible research writing. It helps you understand sources, shape stronger arguments, and cite information with care while keeping your own analysis at the center of the work.",
+    buttonText: "Get Started for Free",
+    buttonUrl: "/sign-in?returnUrl=/tools/academic-research-assistant",
+  },
+  guideSection: {
+    subTitle: "HOW IT WORKS",
+    heading: "From Research Question to Cited Draft",
+    description:
+      "Use Scholarly AI academic research to collect ideas, write with evidence, and prepare a more polished academic draft.",
+    steps: [
+      {
+        icon: "IoCheckmarkCircle",
+        title: "Start with Your Topic",
+        description:
+          "Enter your research question, assignment prompt, or working topic so Scholarly AI academic research can understand the direction of your project.",
+      },
+      {
+        icon: "PiNotePencilDuotone",
+        title: "Add or Explore Sources",
+        description:
+          "Bring in your notes, articles, or source material, then use the assistant to identify useful points, compare findings, and organize the evidence behind your writing.",
+      },
+      {
+        icon: "GrMagic",
+        title: "Draft with Guidance",
+        description:
+          "Build paragraphs, outlines, literature review sections, or research summaries with AI support that keeps your academic purpose and source context in view.",
+      },
+      {
+        icon: "PiLightbulbDuotone",
+        title: "Review and Cite",
+        description:
+          "Refine wording, strengthen weak claims, and prepare citations or references so your final work is clearer, better supported, and easier to submit with confidence.",
+      },
+    ],
+  },
+  FaqSestion: {
+    subTitle: "HELP CENTER",
+    heading: "Frequently Asked Questions",
+    faqs: [
+      {
+        question: "What is Scholarly AI academic research?",
+        answer:
+          "Scholarly AI academic research is an AI-powered academic research assistant that helps you explore sources, organize ideas, draft research content, and prepare citations for essays, papers, and literature reviews.",
+      },
+      {
+        question: "How is it different from a general AI chatbot?",
+        answer:
+          "It is focused on academic workflows. Instead of only generating quick answers, Scholarly AI academic research helps you work through sources, structure arguments, improve clarity, and keep research writing tied to evidence.",
+      },
+      {
+        question: "Can Scholarly AI academic research help with citations?",
+        answer:
+          "Yes. The tool can help you prepare citation-ready information, organize references, and review where claims may need stronger source support before you finalize your paper.",
+      },
+      {
+        question: "Can I use it for literature reviews?",
+        answer:
+          "Absolutely. Scholarly AI academic research can help summarize source themes, compare findings, build outlines, and turn research notes into clearer literature review sections.",
+      },
+      {
+        question: "Does it replace my own research or writing?",
+        answer:
+          "No. It is designed to support your research process, not replace your thinking. You remain responsible for selecting sources, checking claims, and shaping the final argument.",
+      },
+      {
+        question:
+          "Is Scholarly AI academic research useful for students and researchers?",
+        answer:
+          "Yes. Students, graduate writers, and researchers can use it to plan papers, understand sources, improve academic tone, and manage research-heavy writing tasks more efficiently.",
+      },
+      {
+        question: "Can I revise AI-assisted content before submitting?",
+        answer:
+          "Yes. You should always review, edit, and verify the output. Scholarly AI academic research is most helpful when you use it as a drafting and research support tool alongside your own judgment.",
+      },
+    ],
+  },
+  elevateSection: {
+    heading: "Make Research Writing Clearer, Faster, and Better Supported",
+    description:
+      "Start using Scholarly AI academic research to explore sources, shape stronger arguments, and write academic drafts with more confidence from the first idea to the final citation.",
+    buttonText: "Start Free Researching",
+    buttonUrl: "/sign-in?returnUrl=/tools/academic-research-assistant",
+  },
 };
 
 export const AiSummarizerContent = {
@@ -1270,7 +1413,7 @@ export const ResearchQuestionContent = {
       {
         heading: "Feasible and Measurable Outcomes",
         description:
-          "Good research requires data that can actually be collected and analyzed. The tool focuses on creating open-ended, specific questions rather than simple \"yes or no\" answers. Students can also use the quantitative research question generator or qualitative research question generator for targeted methodology-based questions.",
+          'Good research requires data that can actually be collected and analyzed. The tool focuses on creating open-ended, specific questions rather than simple "yes or no" answers. Students can also use the quantitative research question generator or qualitative research question generator for targeted methodology-based questions.',
         linkText: "Get Started",
         url: "/sign-in?returnUrl=/tools/research-question",
         img: learning,
@@ -1362,5 +1505,144 @@ export const ResearchQuestionContent = {
       "Don't let the initial planning stage slow your progress. Join thousands of students who use Scholarly AI to clarify their research goals. Generate a powerful question with the AI research question generator free, free online research question generator or extended essay research question generator and build your paper on a foundation of clarity and precision.",
     buttonText: "Try It Now",
     buttonUrl: "/sign-in?returnUrl=/tools/research-question",
+  },
+};
+
+export const CgpaCalculatorContent = {
+  heroContent: {
+    mainHeading: "CGPA CALCULATOR",
+    description: "Fast - Accurate - Free",
+    // "<style>.cgpa-hero-desc-list{list-style:disc inside;margin-bottom:0;padding-left:0}@media (max-width:767px){.cgpa-hero-desc-list{text-align:left;width:100%}}@media (min-width:768px){.cgpa-hero-desc-list{display:flex;flex-wrap:wrap;gap:24px}}</style><ul class='cgpa-hero-desc-list'><li>Calculate Your Semester GPA</li><li>Add Your Academic Details</li><li>100% Free Tool</li></ul>",
+
+    buttonText: "Calculate Your CGPA",
+    buttonUrl: "/sign-in?returnUrl=/tools/cgpa-calculator",
+  },
+  imgSection: {
+    img: CgpaFull,
+  },
+  trustSection: {
+    heading: "Track Your Academic Progress with Confidence",
+    description:
+      "Students use our CGPA calculator to plan semesters, review course performance, and check grade outcomes before making academic decisions. It keeps GPA calculations simple, transparent, and easy to update whenever your grades change.",
+    sliderImgs: [slide1, slide2, slide3, slide4, slide5],
+  },
+  featuresSection: {
+    subTitle: "CALCULATOR FEATURES",
+    heading: "Everything You Need to Calculate GPA and CGPA",
+    description:
+      "Our calculator is built for real student workflows, from quick semester checks to multi-semester academic planning. Enter your grades once and let the tool handle the credit-weighted math.",
+    features: [
+      {
+        heading: "Semester GPA Calculation",
+        description:
+          "Add courses, credit hours, and letter grades for each semester. The calculator converts grades into quality points and calculates your semester GPA using the standard credit-weighted formula.",
+        linkText: "Start Calculating",
+        url: "/sign-in?returnUrl=/tools/cgpa-calculator",
+        img: NewSemester,
+      },
+      {
+        heading: "Multi-Semester CGPA Tracking",
+        description:
+          "Create multiple semesters to see how your overall academic performance changes over time. This makes it easier to monitor progress, plan improvements, and understand the impact of each course on your cumulative GPA.",
+        linkText: "Track Your CGPA",
+        url: "/sign-in?returnUrl=/tools/cgpa-calculator",
+        img: PreSemester,
+      },
+      {
+        heading: "Flexible Grade and Credit Inputs",
+        description:
+          "Use common letter grades, credit values, and course rows that match your class schedule. Incomplete rows are ignored, so you can test different grade scenarios without breaking the calculation.",
+        linkText: "Try It Free",
+        url: "/sign-in?returnUrl=/tools/cgpa-calculator",
+        img: learning,
+      },
+    ],
+  },
+  missionSection: {
+    subTitle: "OUR PURPOSE",
+    heading: "Making Grade Planning Clear for Every Student",
+    description:
+      "At Scholarly Help, we believe students should be able to understand their academic standing without confusing spreadsheets or manual calculations. Our CGPA calculator turns grades, credits, and semesters into clear results so you can plan your next academic step with confidence.",
+    buttonText: "Open Full Calculator",
+    buttonUrl: "/sign-in?returnUrl=/tools/cgpa-calculator",
+  },
+  guideSection: {
+    subTitle: "HOW IT WORKS",
+    heading: "How to Use the CGPA Calculator",
+    description: "Calculate your GPA and CGPA in a few simple steps.",
+    steps: [
+      {
+        icon: "IoCheckmarkCircle",
+        title: "Add Your Semester",
+        description:
+          "Start with the default semester or add more semesters if you want to calculate cumulative performance across multiple terms.",
+      },
+      {
+        icon: "PiNotePencilDuotone",
+        title: "Enter Courses and Credits",
+        description:
+          "Type each course name, select the grade you earned, and add the credit hours for that class. Only courses with valid grades and positive credits are counted.",
+      },
+      {
+        icon: "GrMagic",
+        title: "Calculate GPA",
+        description:
+          "The calculator multiplies grade points by credit hours, totals the quality points, and divides by total credits to show your GPA result.",
+      },
+      {
+        icon: "PiLightbulbDuotone",
+        title: "Review and Plan Ahead",
+        description:
+          "Use your results to understand your current academic standing, compare semester performance, and plan the grades needed for your target CGPA.",
+      },
+    ],
+  },
+  FaqSestion: {
+    subTitle: "HELP CENTER",
+    heading: "Frequently Asked Questions",
+    faqs: [
+      {
+        question: "What is a CGPA calculator?",
+        answer:
+          "A CGPA calculator is a tool that uses your course grades and credit hours to calculate your cumulative grade point average across one or more semesters.",
+      },
+      {
+        question: "How does the calculator work?",
+        answer:
+          "It converts each letter grade into grade points, multiplies those points by the course credits, adds the quality points together, and divides by the total credits.",
+      },
+      {
+        question: "Can I calculate GPA for one semester?",
+        answer:
+          "Yes. You can enter courses for a single semester to calculate semester GPA, or add more semesters to review cumulative performance.",
+      },
+      {
+        question: "Can I add multiple semesters?",
+        answer:
+          "Yes. The full CGPA calculator lets you add semesters and courses so you can track academic performance over time.",
+      },
+      {
+        question: "What grade scale does it use?",
+        answer:
+          "The calculator uses a common 4.0 letter-grade scale by default, with grades such as A, A-, B+, B, C, D, and F.",
+      },
+      {
+        question: "Are incomplete rows included in the result?",
+        answer:
+          "No. Rows without a valid grade or positive credit value are ignored, which helps you test scenarios and leave unused course rows blank.",
+      },
+      {
+        question: "Is this CGPA calculator free to use?",
+        answer:
+          "Yes. You can use Scholarly Help's CGPA calculator to quickly estimate GPA and CGPA for academic planning.",
+      },
+    ],
+  },
+  elevateSection: {
+    heading: "Know Your CGPA Before Your Next Academic Move",
+    description:
+      "Use the Scholarly Help CGPA calculator to check semester results, estimate cumulative performance, and make smarter grade goals. Add your courses, calculate your GPA, and plan your progress with clarity.",
+    buttonText: "Calculate CGPA Now",
+    buttonUrl: "/sign-in?returnUrl=/tools/cgpa-calculator",
   },
 };

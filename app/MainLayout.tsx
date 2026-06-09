@@ -4,14 +4,8 @@ import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 
 import AuthProvider from "./context/auth/AuthProvider";
-
-const AppNav = dynamic(() => import("./components/LandingPage/Header"), {
-  ssr: false,
-});
-
-const Footer = dynamic(() => import("./components/Footer/Footer"), {
-  ssr: false,
-});
+import AppNav from "./components/LandingPage/Header";
+import Footer from "./components/Footer/Footer";
 
 const ExitPopUp = dynamic(() => import("./components/PopUpModal/ExitPopup"), {
   ssr: false,
@@ -40,13 +34,30 @@ const MainLayout: FC<MainLayoutProps> = ({ children }) => {
     "/take-my-class-1/",
     "/take-my-class-2",
     "/take-my-class-2/",
+    "/take-my-class-3",
+    "/take-my-class-3/",
+    "/take-my-class-professor-does-not-care",
+    "/take-my-class-professor-does-not-care/",
+    "/take-my-class-still-doing",
+    "/take-my-class-still-doing/",
+    "/take-my-class-protect-gpa",
+    "/take-my-class-protect-gpa/",
+    "/take-my-class-always-working-harder",
+    "/take-my-class-always-working-harder/",
+    "/take-my-class-saving-your-future",
+    "/take-my-class-saving-your-future/",
     "/take-my-exam",
     "/take-my-exam/",
   ];
 
-  const shouldHideHeaderFooter = hideHeaderFooterRoutes.includes(
-    pathname || "",
-  );
+  const normalizedPath = (pathname || "").replace(/\/+$/, "") || "/";
+  const isLandingStylePath =
+    normalizedPath.startsWith("/landing") ||
+    normalizedPath === "/take-my-class" ||
+    normalizedPath.startsWith("/take-my-class-");
+
+  const shouldHideHeaderFooter =
+    hideHeaderFooterRoutes.includes(pathname || "") || isLandingStylePath;
 
   // Routes where the header should be deferred until interaction to optimize LCP
   const deferHeaderRoutes = [
@@ -56,11 +67,24 @@ const MainLayout: FC<MainLayoutProps> = ({ children }) => {
     "/take-my-class-1/",
     "/take-my-class-2",
     "/take-my-class-2/",
+    "/take-my-class-3",
+    "/take-my-class-3/",
+    "/take-my-class-professor-does-not-care",
+    "/take-my-class-professor-does-not-care/",
+    "/take-my-class-still-doing",
+    "/take-my-class-still-doing/",
+    "/take-my-class-protect-gpa",
+    "/take-my-class-protect-gpa/",
+    "/take-my-class-always-working-harder",
+    "/take-my-class-always-working-harder/",
+    "/take-my-class-saving-your-future",
+    "/take-my-class-saving-your-future/",
     "/take-my-exam",
     "/take-my-exam/",
   ];
 
-  const shouldDeferHeader = deferHeaderRoutes.includes(pathname || "");
+  const shouldDeferHeader =
+    deferHeaderRoutes.includes(pathname || "") || isLandingStylePath;
   const [headerVisible, setHeaderVisible] = useState(!shouldDeferHeader);
 
   // Defer cookie consent until after interaction so LCP is not affected

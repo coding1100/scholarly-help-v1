@@ -3,9 +3,14 @@ import { FC, useEffect, useRef, useState } from "react";
 type PopUpModalProps = {
   open: boolean;
   handleClose: () => void;
+  onUnpublish?: () => void;
 };
 
-const PublishedDocument: FC<PopUpModalProps> = ({ open, handleClose }) => {
+const PublishedDocument: FC<PopUpModalProps> = ({
+  open,
+  handleClose,
+  onUnpublish,
+}) => {
   const [copied, setCopied] = useState<boolean>(false);
   const cardRef = useRef<HTMLDivElement | null>(null);
 
@@ -59,7 +64,7 @@ const PublishedDocument: FC<PopUpModalProps> = ({ open, handleClose }) => {
         <div className="mt-6 flex items-center justify-between">
           <button
             type="button"
-            onClick={handleClose}
+            onClick={onUnpublish || handleClose}
             className="text-sm font-medium text-gray-700 hover:text-gray-900"
           >
             Unpublish
@@ -67,7 +72,7 @@ const PublishedDocument: FC<PopUpModalProps> = ({ open, handleClose }) => {
           <button
             type="button"
             onClick={handleCopy}
-            className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+            className="inline-flex items-center gap-2 rounded-md bg-[#155dfc] px-4 py-2 text-sm font-semibold text-white hover:bg-[#3473fc]"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

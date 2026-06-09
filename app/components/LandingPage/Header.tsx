@@ -8,6 +8,10 @@ import Image from "next/image";
 import LogoSmall from "@/app/assets/Images/logoSmall.png";
 import LogoNormal from "@/app/assets/Images/logo.svg";
 import Phone from "@/app/assets/Icons/phone.webp";
+import {
+  isTakeMyClass3LandingPage,
+  isTakeMyClassHeaderRoute,
+} from "@/app/lib/takeMyClassLandingRoutes";
 
 const Star: React.FC<{ className?: string }> = ({ className }) => (
   <svg
@@ -27,14 +31,13 @@ export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const prefetchedRoutesRef = useRef<Set<string>>(new Set());
-  const isTakeMyClass =
-    pathname === "/take-my-class/" ||
-    pathname === "/take-my-class" ||
-    pathname === "/take-my-class-2/" ||
-    pathname === "/take-my-class-2";
+  const isTakeMyClass3 = isTakeMyClass3LandingPage(pathname);
+  const isTakeMyClass = isTakeMyClassHeaderRoute(pathname);
   const isTakeMyExam =
     pathname === "/take-my-exam/" || pathname === "/take-my-exam";
   const isSpecialRoute = isTakeMyClass || isTakeMyExam;
+  const isSpecialRoute3 = isSpecialRoute || isTakeMyClass3;
+
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeMenu, setActiveMenu] = useState<number | null>(null);
   const [mobileActiveIndex, setMobileActiveIndex] = useState<number | null>(
@@ -339,10 +342,36 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="bg-white z-[9999] relative">
+    <header className="bg-white z-[9999] sticky top-0 shadow-sm">
       {/* Header Top Bar */}
-      <div className="max-w-7xl mx-auto max-[1320px]:px-8 flex items-center justify-between pt-2 min-h-[64px]">
+      <div
+        className={`max-w-7xl mx-auto max-[1320px]:px-3 flex items-center pt-2 min-h-[64px] ${isTakeMyClass3 ? "md:justify-between justify-center" : "justify-between"}`}
+      >
         {/* Menu Button - Hidden for special routes */}
+        {!isSpecialRoute3 && (
+          <button
+            onClick={() => {
+              setMobileOpen((prev) => {
+                const next = !prev;
+                if (next) {
+                  navItems.forEach((item) => prefetchNavItem(item));
+                }
+                return next;
+              });
+            }}
+            className="min-[1200px]:hidden text-gray-700 relative z-[10000] p-1 bg-[#EEEEEE] rounded-md"
+            aria-label={
+              mobileOpen ? "Close navigation menu" : "Open navigation menu"
+            }
+            aria-expanded={mobileOpen}
+          >
+            {mobileOpen ? (
+              <X size={20} color="#3e42b3" />
+            ) : (
+              <Menu size={20} color="#3e42b3" />
+            )}
+          </button>
+        )}
         {/* Logo */}
         <Link href="/">
           {/* <Image
@@ -363,33 +392,9 @@ export default function Header() {
             fetchPriority="high"
           />
         </Link>
-        {!isSpecialRoute && (
-          <button
-            onClick={() => {
-              setMobileOpen((prev) => {
-                const next = !prev;
-                if (next) {
-                  navItems.forEach((item) => prefetchNavItem(item));
-                }
-                return next;
-              });
-            }}
-            className="min-[1200px]:hidden text-gray-700 relative z-[10000] p-2"
-            aria-label={
-              mobileOpen ? "Close navigation menu" : "Open navigation menu"
-            }
-            aria-expanded={mobileOpen}
-          >
-            {mobileOpen ? (
-              <X size={28} color="#3e42b3" />
-            ) : (
-              <Menu size={28} color="#3e42b3" />
-            )}
-          </button>
-        )}
 
         {/* Rating Stars - Only for /take-my-class/ */}
-        {isTakeMyClass && (
+        {(isTakeMyClass || isTakeMyClass3) && (
           <div className="max-[768px]:hidden md:flex flex-col items-center">
             <div className="flex items-center">
               {[...Array(5)].map((_, i) => (
@@ -407,9 +412,16 @@ export default function Header() {
         )}
 
         {/* Phone Number - Shown for special routes (take-my-class, take-my-exam): always show number on mobile */}
+
         {isSpecialRoute && (
           <div className="">
-            <a
+           {/* <button
+           
+           className="rounded-md sm:px-3 px-2 cursor-pointer bg-[#ff641a] text-white border border-transparent transition duration-300 sm:text-xs text-[10px] font-medium flex items-center justify-center hover:bg-white hover:text-[#ff641a] hover:border-[#ff641a] h-[40px] w-full"
+         >
+           Get My Academic Plan Now
+         </button> */}
+             <a
               href={`sms:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER || "17167081869"}`}
               className="flex items-center sm:text-primary-400 sm:text-[#565add] transition sm:bg-white bg-[#9F92EC] sm:rounded-none rounded-full sm:px-0 px-4 sm:py-0 py-1"
             >
@@ -422,116 +434,133 @@ export default function Header() {
                   fetchPriority="high"
                 />
               </span>
-              <span className="sm:block hidden">+1 646 480 6092 </span>
+              <span className="sm:block hidden">+1 646 480 6092</span>
               <span className="sm:hidden block text-white">Text Us</span>
-            </a>
+            </a> 
           </div>
         )}
+        {/* {isTakeMyClass3 && (
+          <div>
+            <button className="rounded-md px-3 py-2 cursor-pointer bg-[#ff641a] text-white border border-transparent transition duration-300 text-[15px] font-medium md:flex hidden items-center justify-center hover:bg-white hover:text-[#ff641a] hover:border-[#ff641a] w-full">
+              Secure My "A" or "B" Grades
+            </button>
+          </div>
+        )} */}
 
         {/* Desktop Navigation - Hidden for special routes */}
         {!isSpecialRoute && (
           <>
-            <nav className="hidden min-[1200px]:flex items-center font-medium text-gray-700 ">
-              {navItems.map((item, index) => (
-                <div
-                  key={index}
-                  className="gap-2"
-                  onMouseEnter={() => {
-                    setActiveMenu(index);
-                    prefetchNavItem(item);
-                  }}
-                  onMouseLeave={() => setActiveMenu(null)}
-                >
-                  <Link
-                    href={item.href || "#"}
-                    className="flex items-center hover:bg-[#F9FBFF] transition py-[20px] px-[10px] ml-[10px]"
+            {!isTakeMyClass3 && (
+              <nav className="hidden min-[1200px]:flex items-center font-medium text-gray-700 ">
+                {navItems.map((item, index) => (
+                  <div
+                    key={index}
+                    className="gap-2"
+                    onMouseEnter={() => {
+                      setActiveMenu(index);
+                      prefetchNavItem(item);
+                    }}
+                    onMouseLeave={() => setActiveMenu(null)}
                   >
-                    {item.title}
-                    {item.submenu && (
-                      <ChevronDown
-                        size={16}
-                        className={`transition ${
-                          activeMenu === index ? "rotate-180" : ""
-                        }`}
-                      />
-                    )}
-                  </Link>
+                    <Link
+                      href={item.href || "#"}
+                      className="flex items-center hover:bg-[#F9FBFF] transition py-[20px] px-[10px] ml-[10px]"
+                    >
+                      {item.title}
+                      {item.submenu && (
+                        <ChevronDown
+                          size={16}
+                          className={`transition ${
+                            activeMenu === index ? "rotate-180" : ""
+                          }`}
+                        />
+                      )}
+                    </Link>
 
-                  {/* Full Width Mega Menu */}
-                  {item.submenu && activeMenu === index && (
-                    <div className="absolute left-0 right-0 top-full bg-[#F9FBFF] flex gap-y-8 px-10 py-10 max-h-[400px] overflow-auto">
-                      {/* Invisible hover buffer to prevent flicker */}
-                      <div className="absolute top-[-12px] left-0 w-full h-12 bg-transparent"></div>
-                      <div className="flex mx-auto">
-                        <div className=" flex mx-auto gap-8 max-[1500px]:grid-cols-2">
-                          {item.submenu.map((sub, idx) => (
-                            <div
-                              key={idx}
-                              className="flex flex-col justify-between shadow-[0px_0px_31.8px_0px_#00000012] p-[25px] rounded-[5px] w-[350px]"
-                            >
-                              <div className="text-gray-900 mb-2 font-semibold">
-                                {sub.title}
-                              </div>
-                              {sub.links.map((link, linkIdx) => (
-                                <Link
-                                  key={linkIdx}
-                                  href={link.href}
-                                  className="block text-gray-700 hover:text-[#155dfc] transition mb-1"
-                                >
-                                  {link.name}
-                                </Link>
-                              ))}
-                              {sub.button &&
-                                sub.button.map((btn, btnIdx) => (
+                    {/* Full Width Mega Menu */}
+                    {item.submenu && activeMenu === index && (
+                      <div className="absolute left-0 right-0 top-full bg-[#F9FBFF] flex gap-y-8 px-10 py-10 max-h-[400px] overflow-auto">
+                        {/* Invisible hover buffer to prevent flicker */}
+                        <div className="absolute top-[-12px] left-0 w-full h-12 bg-transparent"></div>
+                        <div className="flex mx-auto">
+                          <div className=" flex mx-auto gap-8 max-[1500px]:grid-cols-2">
+                            {item.submenu.map((sub, idx) => (
+                              <div
+                                key={idx}
+                                className="flex flex-col justify-between shadow-[0px_0px_31.8px_0px_#00000012] p-[25px] rounded-[5px] w-[350px]"
+                              >
+                                <div className="text-gray-900 mb-2 font-semibold">
+                                  {sub.title}
+                                </div>
+                                {sub.links.map((link, linkIdx) => (
                                   <Link
-                                    key={`button-${btnIdx}`}
-                                    href={btn.href}
-                                    className="rounded-md flex cursor-pointer bg-[#ff641a] text-white border border-transparent transition duration-300 text-[15px] font-medium flex items-center justify-center hover:bg-white hover:text-[#ff641a] hover:border-[#ff641a] min-h-[54px]"
+                                    key={linkIdx}
+                                    href={link.href}
+                                    className="block text-gray-700 hover:text-[#155dfc] transition mb-1"
                                   >
-                                    {btn.name}
+                                    {link.name}
                                   </Link>
                                 ))}
-                            </div>
-                          ))}
-                        </div>
-                        <div className="ml-8">
-                          <Image
-                            src={megaMenuImage}
-                            alt="SiteJabber"
-                            width={325}
-                            height={250}
-                            fetchPriority="high"
-                            className="h-[100%] max-w-[280px]"
-                          />
+                                {sub.button &&
+                                  sub.button.map((btn, btnIdx) => (
+                                    <Link
+                                      key={`button-${btnIdx}`}
+                                      href={btn.href}
+                                      className="rounded-md flex cursor-pointer bg-[#ff641a] text-white border border-transparent transition duration-300 text-[15px] font-medium flex items-center justify-center hover:bg-white hover:text-[#ff641a] hover:border-[#ff641a] min-h-[54px]"
+                                    >
+                                      {btn.name}
+                                    </Link>
+                                  ))}
+                              </div>
+                            ))}
+                          </div>
+                          <div className="ml-8">
+                            <Image
+                              src={megaMenuImage}
+                              alt="SiteJabber"
+                              width={325}
+                              height={250}
+                              fetchPriority="high"
+                              className="h-[100%] max-w-[280px]"
+                            />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </nav>
-            <div className="">
-              <a
-                href={`tel:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER || "17167081869"}`}
-                className="flex items-center sm:text-primary-400 sm:text-[#565add] transition sm:bg-white bg-[#9F92EC] sm:rounded-none rounded-full sm:px-0 px-4 sm:py-0 py-1"
-              >
-                <span className="w-6 mr-1 text-primary-400 sm:block hidden">
-                  <Image
-                    src={Phone}
-                    alt="Phone"
-                    width={22}
-                    height={22}
-                    fetchPriority="high"
-                  />
-                </span>
-                <span className="sm:block hidden">+1 646 480 6092 </span>
-                <span className="sm:hidden block text-white">Text Us</span>
-              </a>
-            </div>
+                    )}
+                  </div>
+                ))}
+              </nav>
+            )}
+            {!isTakeMyClass3 && (
+              <div>
+                 {/* <button
+           
+           className="rounded-md sm:px-3 px-2 cursor-pointer bg-[#ff641a] text-white border border-transparent transition duration-300 sm:text-xs text-[10px] font-medium flex items-center justify-center hover:bg-white hover:text-[#ff641a] hover:border-[#ff641a] h-[40px] w-full"
+         >
+           Secure My "A" or "B" Grades
+         </button> */}
+                <a
+                  href={`tel:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER || "17167081869"}`}
+                  className="flex items-center sm:text-primary-400 sm:text-[#565add] transition sm:bg-white bg-[#9F92EC] sm:rounded-none rounded-full sm:px-0 px-4 sm:py-0 py-1"
+                >
+                  <span className="w-6 mr-1 text-primary-400 sm:block hidden">
+                    <Image
+                      src={Phone}
+                      alt="Phone"
+                      width={22}
+                      height={22}
+                      fetchPriority="high"
+                    />
+                  </span>
+                  <span className="sm:block hidden">+1 646 480 6092</span>
+                  <span className="sm:hidden block text-white">Text Us</span>
+                </a>
+              </div>
+            )}
           </>
         )}
       </div>
-      {isTakeMyClass && (
+      {(isTakeMyClass || isTakeMyClass3) && (
         <div className=" md:hidden flex-col items-center flex py-2">
           <div className="flex">
             {[...Array(5)].map((_, i) => (
@@ -545,7 +574,7 @@ export default function Header() {
         </div>
       )}
       {/* Mobile Navigation - full-width dropdown under header with smooth transition and outside click close */}
-      {!isSpecialRoute && (
+      {(!isSpecialRoute || !isTakeMyClass3) && (
         <div
           className={`min-[1200px]:hidden fixed inset-0 z-40 transition-opacity duration-300 ease-in-out ${
             mobileOpen

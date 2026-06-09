@@ -7,6 +7,12 @@ export const hideLinks = [
 export const hideFooterLinks = [
   "/take-my-exam/",
   "/take-my-class/",
+  "/take-my-class-3/",
+  "/take-my-class-professor-does-not-care/",
+  "/take-my-class-still-doing/",
+  "/take-my-class-protect-gpa/",
+  "/take-my-class-always-working-harder/",
+  "/take-my-class-saving-your-future/",
   "/do-my-exam/",
   "/take-my-proctored-exam-for-me/",
   "/help-me-with-my-exam/",
@@ -38,7 +44,15 @@ export const wholeFromFreeQuote = [
   "",
 ];
 
-export const emailFormFreeQuote = ["/take-my-class/"];
+export const emailFormFreeQuote = [
+  "/take-my-class/",
+  "/take-my-class-3/",
+  "/take-my-class-professor-does-not-care/",
+  "/take-my-class-still-doing/",
+  "/take-my-class-protect-gpa/",
+  "/take-my-class-always-working-harder/",
+  "/take-my-class-saving-your-future/",
+];
 export const formFreeQuote = [
   "",
   // "/take-my-class/",
@@ -71,7 +85,16 @@ export const sms = [
   // "/pay-someone-to-take-my-online-exam/",
 ];
 
-export const smsHide = ["/take-my-class/", "/take-my-proctored-exam-for-me/"];
+export const smsHide = [
+  "/take-my-class/",
+  "/take-my-class-3/",
+  "/take-my-class-professor-does-not-care/",
+  "/take-my-class-still-doing/",
+  "/take-my-class-protect-gpa/",
+  "/take-my-class-always-working-harder/",
+  "/take-my-class-saving-your-future/",
+  "/take-my-proctored-exam-for-me/",
+];
 
 export const phoneEmail = ["/pay-for-someone-to-write-my-paper/"];
 

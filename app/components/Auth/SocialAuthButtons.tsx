@@ -5,20 +5,27 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { FaFacebookF } from "react-icons/fa";
 import { useRouter } from "next/navigation";
+import { buildHrefWithSameQuery } from "@/app/utils/url";
 
 declare global {
   interface Window {
     google?: any;
+    dataLayer?: Array<Record<string, any>>;
   }
 }
 
 type SocialAuthButtonsProps = {
   returnUrl?: string | null;
+  authAction: "sign_in" | "sign_up";
 };
 
-const SocialAuthButtons = ({ returnUrl }: SocialAuthButtonsProps) => {
+const SocialAuthButtons = ({
+  returnUrl,
+  authAction,
+}: SocialAuthButtonsProps) => {
   const route = useRouter();
   const googleButtonRef = useRef<HTMLDivElement | null>(null);
+  const googleIframeObserverRef = useRef<MutationObserver | null>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [facebookLoading, setFacebookLoading] = useState(false);
 
@@ -28,6 +35,25 @@ const SocialAuthButtons = ({ returnUrl }: SocialAuthButtonsProps) => {
     if (typeof message === "string") return message;
     return fallback;
   };
+
+  const pushGoogleAuthEvent = useCallback(
+    (eventName: "signup_google_click" | "signup_success") => {
+      try {
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({
+          event: eventName,
+          ...(eventName === "signup_success"
+            ? { signup_method: "google" }
+            : {}),
+          auth_action: authAction,
+          auth_provider: "google",
+        });
+      } catch {
+        // Do not block auth if GTM is unavailable.
+      }
+    },
+    [authAction],
+  );
 
   const persistSessionAndRedirect = useCallback(
     (data: any) => {
@@ -40,10 +66,25 @@ const SocialAuthButtons = ({ returnUrl }: SocialAuthButtonsProps) => {
           .toLowerCase() || "";
       if (resolvedEmail) localStorage.setItem("user_email", resolvedEmail);
       localStorage.setItem("package_type", data.user.package_type);
+      // Always overwrite to avoid stale email from a previous login.
+      const resolvedEmail = String(
+        data?.user?.email || data?.user?.user_email || "",
+      )
+        .trim()
+        .toLowerCase();
+      if (resolvedEmail) localStorage.setItem("user_email", resolvedEmail);
       document.cookie = `access_token=${data.access_token}; path=/; max-age=86400`;
 
       setTimeout(() => {
-        const redirectUrl = returnUrl || "/tools/dashboard/";
+        const redirectPath = returnUrl || "/tools/dashboard/";
+        const currentQs =
+          typeof window !== "undefined" ? window.location.search.slice(1) : "";
+        const redirectUrl = returnUrl
+          ? redirectPath
+          : buildHrefWithSameQuery(
+              redirectPath,
+              new URLSearchParams(currentQs),
+            );
         route.replace(redirectUrl);
       }, 100);
     },
@@ -64,6 +105,7 @@ const SocialAuthButtons = ({ returnUrl }: SocialAuthButtonsProps) => {
           { idToken: response.credential },
         );
 
+        pushGoogleAuthEvent("signup_success");
         toast.success("Signed in with Google successfully!");
         persistSessionAndRedirect(res.data);
       } catch (err: any) {
@@ -74,7 +116,7 @@ const SocialAuthButtons = ({ returnUrl }: SocialAuthButtonsProps) => {
         setGoogleLoading(false);
       }
     },
-    [persistSessionAndRedirect],
+    [persistSessionAndRedirect, pushGoogleAuthEvent],
   );
 
   useEffect(() => {
@@ -85,6 +127,45 @@ const SocialAuthButtons = ({ returnUrl }: SocialAuthButtonsProps) => {
     if (!clientId) return;
 
     let cancelled = false;
+    const trackGoogleClick = () => {
+      pushGoogleAuthEvent("signup_google_click");
+    };
+
+    const ensureGoogleIframeId = () => {
+      const container = googleButtonRef.current;
+      if (!container) return false;
+
+      const iframe = container.querySelector("iframe");
+      if (!iframe) return false;
+
+      if (iframe.id !== "google-click") iframe.id = "google-click";
+      iframe.classList.add("googleclick");
+      return true;
+    };
+
+    const observeGoogleIframe = () => {
+      const container = googleButtonRef.current;
+      if (!container) return;
+
+      // If it's already there (sometimes it renders synchronously), set and stop.
+      if (ensureGoogleIframeId()) {
+        googleIframeObserverRef.current?.disconnect();
+        googleIframeObserverRef.current = null;
+        return;
+      }
+
+      googleIframeObserverRef.current?.disconnect();
+      const observer = new MutationObserver(() => {
+        if (ensureGoogleIframeId()) {
+          observer.disconnect();
+          if (googleIframeObserverRef.current === observer) {
+            googleIframeObserverRef.current = null;
+          }
+        }
+      });
+      observer.observe(container, { childList: true, subtree: true });
+      googleIframeObserverRef.current = observer;
+    };
 
     const initializeGoogleButton = () => {
       if (
@@ -94,6 +175,9 @@ const SocialAuthButtons = ({ returnUrl }: SocialAuthButtonsProps) => {
       ) {
         return;
       }
+
+      googleIframeObserverRef.current?.disconnect();
+      googleIframeObserverRef.current = null;
 
       window.google.accounts.id.initialize({
         client_id: clientId,
@@ -113,13 +197,20 @@ const SocialAuthButtons = ({ returnUrl }: SocialAuthButtonsProps) => {
         shape: "pill",
         logo_alignment: "left",
         width: buttonWidth,
+        // Google Identity Services supported hook: reliable click tracking
+        // even though the button is rendered in an iframe.
+        click_listener: trackGoogleClick,
       });
+
+      observeGoogleIframe();
     };
 
     if (window.google?.accounts?.id) {
       initializeGoogleButton();
       return () => {
         cancelled = true;
+        googleIframeObserverRef.current?.disconnect();
+        googleIframeObserverRef.current = null;
       };
     }
 
@@ -133,6 +224,8 @@ const SocialAuthButtons = ({ returnUrl }: SocialAuthButtonsProps) => {
       return () => {
         cancelled = true;
         existingScript.removeEventListener("load", initializeGoogleButton);
+        googleIframeObserverRef.current?.disconnect();
+        googleIframeObserverRef.current = null;
       };
     }
 
@@ -149,8 +242,10 @@ const SocialAuthButtons = ({ returnUrl }: SocialAuthButtonsProps) => {
 
     return () => {
       cancelled = true;
+      googleIframeObserverRef.current?.disconnect();
+      googleIframeObserverRef.current = null;
     };
-  }, [handleGoogleCallback]);
+  }, [handleGoogleCallback, pushGoogleAuthEvent]);
 
   const handleFacebookSignIn = async () => {
     try {
@@ -188,7 +283,9 @@ const SocialAuthButtons = ({ returnUrl }: SocialAuthButtonsProps) => {
 
       <div
         ref={googleButtonRef}
-        className={`min-h-[44px] flex items-center justify-center ${
+        data-google-signin
+        data-auth-action={authAction}
+        className={`google-btn min-h-[44px] flex items-center justify-center ${
           googleLoading ? "opacity-70" : ""
         }`}
       />

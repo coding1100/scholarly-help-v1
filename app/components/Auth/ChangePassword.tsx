@@ -8,7 +8,7 @@ import { FiEye, FiEyeOff } from "react-icons/fi";
 import { ColorRing } from "react-loader-spinner";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import { appendQueryString } from "@/app/utils/url";
+import { buildHrefWithSameQuery } from "@/app/utils/url";
 
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
 
@@ -20,6 +20,8 @@ const ChangePassword = () => {
         )
       : null;
   const router = useRouter();
+  const qs =
+    typeof window !== "undefined" ? window.location.search.slice(1) : "";
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -58,7 +60,9 @@ const ChangePassword = () => {
     setSuccess(null);
     if (!token) {
       toast.error("Access denied, Please reset password again");
-      router.push("/forgot-password/");
+      router.push(
+        buildHrefWithSameQuery("/forgot-password/", new URLSearchParams(qs)),
+      );
       return;
     }
     if (!validatePassword(newPassword)) {
@@ -86,9 +90,7 @@ const ChangePassword = () => {
       toast.success(res?.data?.message || "Password changed successfully.");
 
       setSuccess("Password changed successfully.");
-      const qs =
-        typeof window !== "undefined" ? window.location.search : "";
-      router.push(appendQueryString("/sign-in", qs));
+      router.push(buildHrefWithSameQuery("/sign-in", new URLSearchParams(qs)));
       setNewPassword("");
       setConfirmPassword("");
     } catch (err: any) {

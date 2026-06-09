@@ -49,49 +49,53 @@ const WhatsApp = () => {
   return (
     <>
       {/* Whatsapp module */}
-      <div>
-        <button
-          id="whatsapp-chat"
-          className="fixed flex justify-between z-[98] left-0 bg-transparent border-none md:flex hidden"
-          onClick={apiCall}
-        >
-          <a
-            className="fixed flex font-normal justify-between z-[98] bottom-[60px] left-0 text-[15px] py-[10px] px-[20px] no-underline bg-[#128C7E] ml-[5px] rounded-[50px] items-center min-w-[44px] min-h-[44px]"
-            href="https://wa.me/17167081869?text=Hi%20There!%20We are here for you!"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Chat with us on WhatsApp"
+      {currentPage !== "/take-my-class-3/" && currentPage !== "/take-my-class/" && (
+ 
+        <div>
+          <button
+            id="whatsapp-chat"
+            className="fixed flex justify-between z-[98] left-0 bg-transparent border-none md:flex hidden"
+            onClick={apiCall}
           >
-            <Image
-              src={whatsappIconFooter}
-              alt="whatsapp"
-              className="w-[35px]"
-            />
-            <span className="pl-[10px] ml-[15px] font-bold text-white relative -left-[14px]">
-              Free Quote On Whatsapp
-            </span>
-          </a>
-        </button>
-        <button
-          id="whatsapp-chat-2"
-          className="fixed flex justify-between z-[98] left-0 bg-transparent border-none md:hidden flex z-[99999]"
-          onClick={apiCall}
-        >
-          <a
-            className="fixed flex font-normal justify-between z-[98] bottom-[20px] left-0 text-[15px] py-0 px-[5px] no-underline ml-[5px] rounded-[50px] items-center min-w-[44px] min-h-[44px]"
-            href="https://wa.me/17167081869?text=Hi%20There!%20We are here for you!"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Chat with us on WhatsApp"
+            <a
+              className="fixed flex font-normal justify-between z-[98] bottom-[60px] left-0 text-[15px] py-[10px] px-[20px] no-underline bg-[#128C7E] ml-[5px] rounded-[50px] items-center min-w-[44px] min-h-[44px]"
+              href="https://wa.me/17167081869?text=Hi%20There!%20We are here for you!"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Chat with us on WhatsApp"
+            >
+              <Image
+                src={whatsappIconFooter}
+                alt="whatsapp"
+                className="w-[35px]"
+              />
+              <span className="pl-[10px] ml-[15px] font-bold text-white relative -left-[14px]">
+                Free Quote On Whatsapp
+              </span>
+            </a>
+          </button>
+
+          <button
+            id="whatsapp-chat-2"
+            className="fixed flex justify-between z-[98] left-0 bg-transparent border-none md:hidden flex z-[99999]"
+            onClick={apiCall}
           >
-            <Image
-              src={whatsappIcon2}
-              alt="whatsapp"
-              className="w-[45px] max-[768px]:w-[37px]"
-            />
-          </a>
-        </button>
-      </div>
+            <a
+              className="fixed flex font-normal justify-between z-[98] bottom-[20px] left-0 text-[15px] py-0 px-[5px] no-underline ml-[5px] rounded-[50px] items-center min-w-[44px] min-h-[44px]"
+              href="https://wa.me/17167081869?text=Hi%20There!%20We are here for you!"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Chat with us on WhatsApp"
+            >
+              <Image
+                src={whatsappIcon2}
+                alt="whatsapp"
+                className="w-[45px] max-[768px]:w-[37px]"
+              />
+            </a>
+          </button>
+        </div>
+      )}
     </>
   );
 };

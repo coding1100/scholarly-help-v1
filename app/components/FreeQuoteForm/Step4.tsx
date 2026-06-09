@@ -15,6 +15,7 @@ import {
   phoneEmail,
   wholeFromFreeQuote,
 } from "../HideLinks/HideLinks";
+import { isTakeMyClassLandingPathname } from "@/app/lib/takeMyClassLandingRoutes";
 
 export type ApiPayload = {
   url: string;
@@ -345,7 +346,7 @@ const Step4: FC<Step4Props> = ({ text }) => {
   } else {
     return (
       <div className={`${EmailPhone && "w-full"}`}>
-        {currentPage !== "/take-my-class/" && (
+        {!isTakeMyClassLandingPathname(currentPage) && (
           <p className="font-bold">Get a Text Back in 5 Minutes!</p>
         )}
         <div className="bg-white pb-5 pt-2 px-5 rounded-md mt-3 relative">

@@ -60,6 +60,10 @@ async function getDb(): Promise<Db | null> {
     }
 }
 
+export async function getMongoDb(): Promise<Db | null> {
+    return getDb();
+}
+
 // Cached home data fetcher - dramatically improves TTFB
 export const getHomeData = unstable_cache(
     async () => {

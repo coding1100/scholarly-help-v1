@@ -13,10 +13,22 @@ export default function SemesterCard(props: {
   gradeScale: GradeScale;
   onChange: (next: Semester) => void;
   onRemoveSemester: () => void;
+  onCalculateGpa?: () => void;
+  /** Shown under the semester action row when opening the email popup is blocked (e.g. no grades entered). */
+  calculateGpaBlockedMessage?: string | null;
   disableRemove?: boolean;
+  showResults?: boolean;
 }) {
-  const { semester, gradeScale, onChange, onRemoveSemester, disableRemove } =
-    props;
+  const {
+    semester,
+    gradeScale,
+    onChange,
+    onRemoveSemester,
+    onCalculateGpa,
+    calculateGpaBlockedMessage,
+    disableRemove,
+    showResults = true,
+  } = props;
 
   const totals = useMemo(
     () => computeSemesterTotals(semester, gradeScale),
@@ -87,49 +99,74 @@ export default function SemesterCard(props: {
           ))}
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-2">
-          <Button
-            type="button"
-            variant="primary"
-            onClick={() =>
-              onChange({
-                ...semester,
-                courses: [...semester.courses, createEmptyCourse()],
-              })
-            }
-          >
-            Add course
-          </Button>
-          {/* <Button
-            type="button"
-            variant="secondary"
-            onClick={() =>
-              onChange({
-                ...semester,
-                courses: semester.courses.length ? semester.courses : [createEmptyCourse()],
-              })
-            }
-          >
-            Ensure 1 row
-          </Button> */}
+        <div className="flex flex-col gap-1">
+          <div className="flex justify-between gap-2">
+            <Button
+              type="button"
+              variant="primary"
+              onClick={() =>
+                onChange({
+                  ...semester,
+                  courses: [...semester.courses, createEmptyCourse()],
+                })
+              }
+              aria-label="Add course"
+            >
+              <span className="hidden md:inline">Add course</span>
+              <span className="md:hidden" aria-hidden="true">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M12 5v14M5 12h14"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+            </Button>
+            {onCalculateGpa ? (
+              <Button
+                type="button"
+                variant="primary"
+                onClick={onCalculateGpa}
+                className=""
+              >
+                Calculate GPA
+              </Button>
+            ) : null}
+          </div>
+          {calculateGpaBlockedMessage ? (
+            <p className="text-right text-sm text-[#f60606]" role="alert">
+              {calculateGpaBlockedMessage}
+            </p>
+          ) : null}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Stat
-            label="Total credits"
-            value={roundTo(totals.totalCredits, 2).toFixed(2)}
-          />
-          <Stat
-            label="Quality points"
-            value={roundTo(totals.totalQualityPoints, 4).toFixed(4)}
-            subValue="(unrounded internally)"
-          />
-          <Stat
-            label="Semester GPA"
-            value={formatGpaMaybe(totals.gpa)}
-            subValue="GPA = quality points ÷ credits"
-          />
-        </div>
+        {showResults ? (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <Stat
+              label="Total credits"
+              value={roundTo(totals.totalCredits, 2).toFixed(2)}
+            />
+            <Stat
+              label="Quality points"
+              value={roundTo(totals.totalQualityPoints, 4).toFixed(4)}
+              subValue="(unrounded internally)"
+            />
+            <Stat
+              label="Semester GPA"
+              value={formatGpaMaybe(totals.gpa)}
+              subValue="GPA = quality points ÷ credits"
+            />
+          </div>
+        ) : null}
       </CardBody>
     </Card>
   );

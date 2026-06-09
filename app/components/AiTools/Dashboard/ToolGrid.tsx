@@ -1,6 +1,7 @@
 import {
   FiBookOpen,
   FiBarChart,
+  FiBookmark,
   FiEdit3,
   FiFileText,
   FiHash,
@@ -9,6 +10,7 @@ import {
   FiLayers,
   FiMessageSquare,
   FiPenTool,
+  FiSmile,
   FiSearch,
   FiTarget,
   FiTriangle,
@@ -18,9 +20,17 @@ import ToolCard, { type ToolCardData } from "./ToolCard";
 
 const tools: ToolCardData[] = [
   {
-    name: "Main Tool",
+    name: "Study Workspace",
+    description:
+      "Upload content and generate notes, summaries, flashcards, quizzes, and tutor help.",
+    href: "/tools/study-workspace",
+    icon: FiBookmark,
+    badge: "New",
+  },
+  {
+    name: "Academic Research Assistant",
     description: "Draft, rewrite, and improve with one focused editor.",
-    href: "/tools/main-tool",
+    href: "/tools/academic-research-assistant",
     icon: FiEdit3,
     badge: "Popular",
   },
@@ -35,6 +45,12 @@ const tools: ToolCardData[] = [
     description: "Turn long readings into crisp, study-ready notes.",
     href: "/tools/summarizer-tool",
     icon: FiFileText,
+  },
+  {
+    name: "Humanizer Tool",
+    description: "Make AI text sound more natural and human.",
+    href: "/tools/humanizer-tool",
+    icon: FiSmile,
   },
   {
     name: "Thesis Generator",
@@ -81,7 +97,7 @@ const tools: ToolCardData[] = [
   {
     name: "Micro Learning",
     description: "Learn in short, guided steps you can finish.",
-    href: "/tools/mirco-learning",
+    href: "/tools/micro-learning",
     icon: FiZap,
     badge: "Focus",
   },

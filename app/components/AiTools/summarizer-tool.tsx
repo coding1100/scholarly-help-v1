@@ -6,6 +6,7 @@ import ResultDisplay from "./ResultDisplay";
 import ActionButtons from "./ActionButtons";
 import axios from "axios";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
+import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 type SummarizeData = {
   format: string;
   length: string;
@@ -119,18 +120,11 @@ const SummarizerTool: React.FC = () => {
   };
 
   return (
-    <div className="container overflow-y-auto h-[90vh] mx-auto max-w-[840px] px-4 md:px-8 md:pt-8 2xl:max-w-6xl">
+    <div className="container relative overflow-y-auto h-[90vh] mx-auto max-w-[840px] px-4 md:px-8 md:pt-8 2xl:max-w-6xl">
       {/* <h1 className="text-2xl md:text-5xl text-center mb-4 font-serif">
         AI Summarizer Generator
       </h1> */}
-      {isLoading && (
-        <div className="flex justify-center items-center py-4">
-          <div className="w-8 h-8 border-4 border-[#2b7fff] border-t-transparent rounded-full animate-spin"></div>
-          <span className="ml-3 text-[#155dfc] dark:text-[#51a2ff] font-medium">
-            Processing...
-          </span>
-        </div>
-      )}
+      <ToolsApiLoader show={isLoading} />
       <div
         className="grid grid-cols-1 md:grid-cols-2"
         style={{ alignItems: "stretch" }}

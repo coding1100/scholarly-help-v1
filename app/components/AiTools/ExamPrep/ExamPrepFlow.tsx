@@ -1,5 +1,6 @@
 "use client";
 
+import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import { useState } from "react";
 import Step1 from "./Step1";
 import Step2 from "./Step2";
@@ -64,7 +65,8 @@ export default function ExamPrepFlow() {
     };
 
     return (
-        <>
+        <div className="relative">
+            <ToolsApiLoader show={isLoadingExam} />
             {currentStep === 1 && (
                 <Step1 onContinue={handleStep1Continue} />
             )}
@@ -104,6 +106,6 @@ export default function ExamPrepFlow() {
                     }}
                 />
             )}
-        </>
+        </div>
     );
 }

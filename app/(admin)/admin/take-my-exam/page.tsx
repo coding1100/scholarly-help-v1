@@ -1,9 +1,22 @@
 "use client";
 
+import { useAdminConfirm } from "@/app/components/Admin/AdminConfirmProvider";
+import { useAdminSuccess } from "@/app/components/Admin/AdminSuccessProvider";
+import { useAdminPageApiUrl } from "@/app/components/Admin/AdminDuplicateEditorContext";
+import {
+  AdminDuplicateDeleteButton,
+  AdminDuplicateMetaPanel,
+} from "@/app/components/Admin/AdminDuplicateLandingControls";
 import { useState, useEffect } from "react";
+import AdminPageHeader from "@/app/components/Admin/AdminPageHeader";
 import { usePathname } from "next/navigation";
+import AdminButton from "@/app/components/Admin/AdminButton";
+
 
 export default function TakeMyExamAdmin() {
+  const { confirmDelete } = useAdminConfirm();
+  const { showSuccess } = useAdminSuccess();
+
   const pathname = usePathname();
   const normalizedAdminPath = (pathname || "").replace(/\/+$/, "") || "/";
   const adminSlug =
@@ -14,6 +27,7 @@ export default function TakeMyExamAdmin() {
     adminSlug === "take-my-proctored-exam-for-me"
       ? "Take My Proctored Exam For Me"
       : "Take My Exam";
+  const pageApiUrl = useAdminPageApiUrl(`/api/admin/${adminSlug}`);
 
   const [pageData, setPageData] = useState<any>(null);
   const [pageLoading, setPageLoading] = useState(false);
@@ -23,7 +37,7 @@ export default function TakeMyExamAdmin() {
     const loadTakeMyExamPage = async () => {
       setPageLoading(true);
       try {
-        const res = await fetch(`/api/admin/${adminSlug}`);
+        const res = await fetch(pageApiUrl);
         if (!res.ok) {
           console.error(
             `Failed to fetch ${adminSlug} page:`,
@@ -238,7 +252,7 @@ export default function TakeMyExamAdmin() {
       }
     };
     loadTakeMyExamPage();
-  }, [adminSlug]);
+  }, [pageApiUrl]);
 
   const updatePageData = (path: string, value: any) => {
     const keys = path.split(".");
@@ -295,7 +309,15 @@ export default function TakeMyExamAdmin() {
     });
   };
 
-  const removeArrayItem = (path: string, index: number) => {
+  const removeArrayItem = async (path: string, index: number) => {
+    if (
+      !(await confirmDelete({
+        variant: "remove",
+        message: "Are you sure you want to remove this item?",
+      }))
+    )
+      return;
+
     const keys = path.split(".");
     setPageData((prev: any) => {
       const newData = { ...prev };
@@ -312,14 +334,14 @@ export default function TakeMyExamAdmin() {
     if (!pageData) return;
     setPageLoading(true);
     try {
-      const response = await fetch(`/api/admin/${adminSlug}`, {
+      const response = await fetch(pageApiUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(pageData),
       });
       const result = await response.json();
       if (result.success) {
-        alert("Take My Exam page saved successfully!");
+        showSuccess();
       } else {
         alert(`Error: ${result.error || "Failed to save"}`);
       }
@@ -358,7 +380,7 @@ export default function TakeMyExamAdmin() {
                 type="text"
                 value={pageData.meta?.title || ""}
                 onChange={(e) => updatePageData("meta.title", e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
               />
             </div>
             <div>
@@ -371,7 +393,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("meta.description", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
               />
             </div>
             <div>
@@ -384,9 +406,10 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("meta.canonicalUrl", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
               />
             </div>
+            <AdminDuplicateMetaPanel pageData={pageData} updatePageData={updatePageData} />
           </div>
         </div>
 
@@ -406,7 +429,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("heroSection.mainHeading", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
                 placeholder="Use &lt;br/&gt; for line breaks"
               />
             </div>
@@ -420,7 +443,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("heroSection.subHeading", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
               />
             </div>
             <div>
@@ -433,7 +456,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("heroSection.description", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
               />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -447,7 +470,7 @@ export default function TakeMyExamAdmin() {
                   onChange={(e) =>
                     updatePageData("heroSection.btn1", e.target.value)
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
                   placeholder="Default: Take My Full Class"
                 />
               </div>
@@ -461,7 +484,7 @@ export default function TakeMyExamAdmin() {
                   onChange={(e) =>
                     updatePageData("heroSection.btn2", e.target.value)
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
                   placeholder="Default: Pass My Exam"
                 />
               </div>
@@ -475,7 +498,7 @@ export default function TakeMyExamAdmin() {
                   onChange={(e) =>
                     updatePageData("heroSection.btn1Url", e.target.value)
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
                   placeholder="e.g., /contact-us or https://..."
                 />
               </div>
@@ -489,7 +512,7 @@ export default function TakeMyExamAdmin() {
                   onChange={(e) =>
                     updatePageData("heroSection.btn2Url", e.target.value)
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
                   placeholder="e.g., /contact-us or https://..."
                 />
               </div>
@@ -513,7 +536,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("whySlider.mainHeading", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
               />
             </div>
             <div>
@@ -526,7 +549,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("whySlider.description", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
               />
             </div>
             <div>
@@ -539,7 +562,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("whySlider.ctaButton.text", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
               />
             </div>
             <div>
@@ -554,15 +577,9 @@ export default function TakeMyExamAdmin() {
                   >
                     <div className="flex justify-between items-center mb-2">
                       <span className="font-medium">Item {index + 1}</span>
-                      <button
-                        type="button"
-                        onClick={() =>
+                      <AdminButton type="button" variant="removeLink" onClick={() =>
                           removeArrayItem("whySlider.sliderItems", index)
-                        }
-                        className="text-red-600 hover:text-red-800 text-sm"
-                      >
-                        Remove
-                      </button>
+                        }>Remove</AdminButton>
                     </div>
                     <div className="grid grid-cols-1 gap-3">
                       <input
@@ -597,15 +614,9 @@ export default function TakeMyExamAdmin() {
                   </div>
                 ),
               )}
-              <button
-                type="button"
-                onClick={() =>
+              <AdminButton type="button" variant="add" onClick={() =>
                   addArrayItem("whySlider.sliderItems", { text: "", alt: "" })
-                }
-                className="mt-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-              >
-                + Add Slider Item
-              </button>
+                }>Add Slider Item</AdminButton>
             </div>
           </div>
         </div>
@@ -626,7 +637,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("cardCarousel.mainHeading", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
               />
             </div>
             <div>
@@ -639,7 +650,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("cardCarousel.description", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
               />
             </div>
             <div>
@@ -652,7 +663,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("cardCarousel.ctaButton.text", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
               />
             </div>
             <div>
@@ -667,15 +678,9 @@ export default function TakeMyExamAdmin() {
                   >
                     <div className="flex justify-between items-center mb-2">
                       <span className="font-medium">Card {index + 1}</span>
-                      <button
-                        type="button"
-                        onClick={() =>
+                      <AdminButton type="button" variant="removeLink" onClick={() =>
                           removeArrayItem("cardCarousel.cards", index)
-                        }
-                        className="text-red-600 hover:text-red-800 text-sm"
-                      >
-                        Remove
-                      </button>
+                        }>Remove</AdminButton>
                     </div>
                     <div className="grid grid-cols-1 gap-3">
                       <input
@@ -710,19 +715,13 @@ export default function TakeMyExamAdmin() {
                   </div>
                 ),
               )}
-              <button
-                type="button"
-                onClick={() =>
+              <AdminButton type="button" variant="add" onClick={() =>
                   addArrayItem("cardCarousel.cards", {
                     id: Date.now(),
                     title: "",
                     description: "",
                   })
-                }
-                className="mt-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-              >
-                + Add Carousel Card
-              </button>
+                }>Add Carousel Card</AdminButton>
             </div>
           </div>
         </div>
@@ -743,7 +742,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("description.mainHeading", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
               />
             </div>
             <div>
@@ -756,7 +755,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("description.description", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
                 placeholder="Use &lt;br/&gt; for line breaks"
               />
             </div>
@@ -770,7 +769,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("description.ctaButton.text", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
               />
             </div>
             <div>
@@ -789,7 +788,7 @@ export default function TakeMyExamAdmin() {
                       .filter(Boolean),
                   )
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
                 placeholder="Badge 1, Badge 2, Badge 3"
               />
             </div>
@@ -805,15 +804,9 @@ export default function TakeMyExamAdmin() {
                   >
                     <div className="flex justify-between items-center mb-2">
                       <span className="font-medium">Service {index + 1}</span>
-                      <button
-                        type="button"
-                        onClick={() =>
+                      <AdminButton type="button" variant="removeLink" onClick={() =>
                           removeArrayItem("description.services", index)
-                        }
-                        className="text-red-600 hover:text-red-800 text-sm"
-                      >
-                        Remove
-                      </button>
+                        }>Remove</AdminButton>
                     </div>
                     <div className="grid grid-cols-1 gap-3">
                       <input
@@ -848,18 +841,12 @@ export default function TakeMyExamAdmin() {
                   </div>
                 ),
               )}
-              <button
-                type="button"
-                onClick={() =>
+              <AdminButton type="button" variant="add" onClick={() =>
                   addArrayItem("description.services", {
                     title: "",
                     description: "",
                   })
-                }
-                className="mt-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-              >
-                + Add Service
-              </button>
+                }>Add Service</AdminButton>
             </div>
           </div>
         </div>
@@ -880,7 +867,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("guaranteedBlock.mainHeading", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
               />
             </div>
             <div>
@@ -893,7 +880,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("guaranteedBlock.description", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
               />
             </div>
             <div>
@@ -909,7 +896,7 @@ export default function TakeMyExamAdmin() {
                     e.target.value,
                   )
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
               />
             </div>
           </div>
@@ -931,7 +918,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("processSection.mainHeading", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
               />
             </div>
             <div>
@@ -944,7 +931,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("processSection.description", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
               />
             </div>
             <div>
@@ -961,15 +948,9 @@ export default function TakeMyExamAdmin() {
                       <span className="font-medium">
                         Step {step.stepNumber || index + 1}
                       </span>
-                      <button
-                        type="button"
-                        onClick={() =>
+                      <AdminButton type="button" variant="removeLink" onClick={() =>
                           removeArrayItem("processSection.steps", index)
-                        }
-                        className="text-red-600 hover:text-red-800 text-sm"
-                      >
-                        Remove
-                      </button>
+                        }>Remove</AdminButton>
                     </div>
                     <div className="grid grid-cols-1 gap-3">
                       <input
@@ -1018,20 +999,14 @@ export default function TakeMyExamAdmin() {
                   </div>
                 ),
               )}
-              <button
-                type="button"
-                onClick={() =>
+              <AdminButton type="button" variant="add" onClick={() =>
                   addArrayItem("processSection.steps", {
                     stepNumber:
                       (pageData.processSection?.steps?.length || 0) + 1,
                     title: "",
                     description: "",
                   })
-                }
-                className="mt-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-              >
-                + Add Step
-              </button>
+                }>Add Step</AdminButton>
             </div>
           </div>
         </div>
@@ -1052,7 +1027,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("success.mainHeading", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
               />
             </div>
             <div>
@@ -1065,7 +1040,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("success.description", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
               />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1079,7 +1054,7 @@ export default function TakeMyExamAdmin() {
                   onChange={(e) =>
                     updatePageData("success.course", e.target.value)
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
                   placeholder="e.g. Chemistry 101"
                 />
               </div>
@@ -1093,7 +1068,7 @@ export default function TakeMyExamAdmin() {
                   onChange={(e) =>
                     updatePageData("success.beforeAfter", e.target.value)
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
                   placeholder="e.g. B → A+ or A+ Grades"
                 />
               </div>
@@ -1107,7 +1082,7 @@ export default function TakeMyExamAdmin() {
                   onChange={(e) =>
                     updatePageData("success.total", e.target.value)
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
                   placeholder="e.g. 96.66%"
                 />
               </div>
@@ -1122,7 +1097,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("success.ctaButton.text", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
               />
             </div>
             <div>
@@ -1137,13 +1112,7 @@ export default function TakeMyExamAdmin() {
                   >
                     <div className="flex justify-between items-center mb-2">
                       <span className="font-medium">Slide {index + 1}</span>
-                      <button
-                        type="button"
-                        onClick={() => removeArrayItem("success.slides", index)}
-                        className="text-red-600 hover:text-red-800 text-sm"
-                      >
-                        Remove
-                      </button>
+                      <AdminButton type="button" variant="removeLink" onClick={() => removeArrayItem("success.slides", index)}>Remove</AdminButton>
                     </div>
                     <div className="grid grid-cols-1 gap-3">
                       <input
@@ -1164,15 +1133,9 @@ export default function TakeMyExamAdmin() {
                   </div>
                 ),
               )}
-              <button
-                type="button"
-                onClick={() =>
+              <AdminButton type="button" variant="add" onClick={() =>
                   addArrayItem("success.slides", { id: Date.now(), image: "" })
-                }
-                className="mt-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-              >
-                + Add Slide
-              </button>
+                }>Add Slide</AdminButton>
             </div>
           </div>
         </div>
@@ -1193,7 +1156,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("subjects.mainHeading", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
               />
             </div>
             <div>
@@ -1206,7 +1169,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("subjects.description", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
               />
             </div>
             <div>
@@ -1219,7 +1182,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("subjects.ctaText", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
                 placeholder="Default: Secure My 'A' or 'B' Grades"
               />
             </div>
@@ -1235,15 +1198,9 @@ export default function TakeMyExamAdmin() {
                   >
                     <div className="flex justify-between items-center mb-2">
                       <span className="font-medium">Subject {index + 1}</span>
-                      <button
-                        type="button"
-                        onClick={() =>
+                      <AdminButton type="button" variant="removeLink" onClick={() =>
                           removeArrayItem("subjects.subjectsContent", index)
-                        }
-                        className="text-red-600 hover:text-red-800 text-sm"
-                      >
-                        Remove
-                      </button>
+                        }>Remove</AdminButton>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div>
@@ -1326,20 +1283,14 @@ export default function TakeMyExamAdmin() {
                   </div>
                 ),
               )}
-              <button
-                type="button"
-                onClick={() =>
+              <AdminButton type="button" variant="add" onClick={() =>
                   addArrayItem("subjects.subjectsContent", {
                     title: "",
                     icon: "",
                     url: "",
                     description: "",
                   })
-                }
-                className="mt-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-              >
-                + Add Subject Card
-              </button>
+                }>Add Subject Card</AdminButton>
             </div>
           </div>
         </div>
@@ -1360,7 +1311,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("onlinePlatform.mainHeading", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
               />
             </div>
             <div>
@@ -1373,7 +1324,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("onlinePlatform.subHeading", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
               />
             </div>
             <div>
@@ -1396,15 +1347,9 @@ export default function TakeMyExamAdmin() {
                   >
                     <div className="flex justify-between items-center mb-2">
                       <span className="font-medium">Platform {index + 1}</span>
-                      <button
-                        type="button"
-                        onClick={() =>
+                      <AdminButton type="button" variant="removeLink" onClick={() =>
                           removeArrayItem("onlinePlatform.platforms", index)
-                        }
-                        className="text-red-600 hover:text-red-800 text-sm"
-                      >
-                        Remove
-                      </button>
+                        }>Remove</AdminButton>
                     </div>
                     <div className="grid grid-cols-1 gap-3">
                       <input
@@ -1467,20 +1412,14 @@ export default function TakeMyExamAdmin() {
                   </div>
                 ),
               )}
-              <button
-                type="button"
-                onClick={() =>
+              <AdminButton type="button" variant="add" onClick={() =>
                   addArrayItem("onlinePlatform.platforms", {
                     key: "",
                     name: "",
                     description: "",
                     logoUrl: "",
                   })
-                }
-                className="mt-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-              >
-                + Add Platform Card
-              </button>
+                }>Add Platform Card</AdminButton>
             </div>
           </div>
         </div>
@@ -1577,7 +1516,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("priceSection.mainHeadingLine1", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
                 placeholder="The Best Price"
               />
             </div>
@@ -1591,7 +1530,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("priceSection.mainHeadingLine2", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
                 placeholder="Offer You've Seen"
               />
             </div>
@@ -1605,7 +1544,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("priceSection.description1", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
                 placeholder="At The Online Class Help, our experts have mastery over multiple online exam platforms..."
               />
             </div>
@@ -1619,7 +1558,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("priceSection.description2", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
                 placeholder="Our qualified chemistry expert offers the top services..."
               />
             </div>
@@ -1633,7 +1572,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("priceSection.cardHeading", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
                 placeholder="The Best Price Offer You've Seen"
               />
             </div>
@@ -1647,7 +1586,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("priceSection.buttonText", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
                 placeholder="Order Now"
               />
             </div>
@@ -1679,27 +1618,15 @@ export default function TakeMyExamAdmin() {
                       className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm"
                       placeholder="e.g. Built by Students, for Students"
                     />
-                    <button
-                      type="button"
-                      onClick={() =>
+                    <AdminButton type="button" variant="removeLink" onClick={() =>
                         removeArrayItem("priceSection.benefits", index)
-                      }
-                      className="text-red-600 hover:text-red-800 text-sm whitespace-nowrap"
-                    >
-                      Remove
-                    </button>
+                      }>Remove</AdminButton>
                   </div>
                 ),
               )}
-              <button
-                type="button"
-                onClick={() =>
+              <AdminButton type="button" variant="add" onClick={() =>
                   addArrayItem("priceSection.benefits", { text: "" })
-                }
-                className="mt-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-              >
-                + Add Benefit
-              </button>
+                }>Add Benefit</AdminButton>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-4">
@@ -1716,15 +1643,9 @@ export default function TakeMyExamAdmin() {
                   >
                     <div className="flex justify-between items-center mb-2">
                       <span className="font-medium">Item {index + 1}</span>
-                      <button
-                        type="button"
-                        onClick={() =>
+                      <AdminButton type="button" variant="removeLink" onClick={() =>
                           removeArrayItem("priceSection.priceItems", index)
-                        }
-                        className="text-red-600 hover:text-red-800 text-sm"
-                      >
-                        Remove
-                      </button>
+                        }>Remove</AdminButton>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <input
@@ -1773,19 +1694,13 @@ export default function TakeMyExamAdmin() {
                   </div>
                 ),
               )}
-              <button
-                type="button"
-                onClick={() =>
+              <AdminButton type="button" variant="add" onClick={() =>
                   addArrayItem("priceSection.priceItems", {
                     service: "",
                     price: "",
                     unit: "",
                   })
-                }
-                className="mt-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-              >
-                + Add Price Item
-              </button>
+                }>Add Price Item</AdminButton>
             </div>
           </div>
         </div>
@@ -1806,7 +1721,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("academicPartners.mainHeading", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
               />
             </div>
             <div>
@@ -1819,7 +1734,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("academicPartners.description", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
               />
             </div>
             <div>
@@ -1835,7 +1750,7 @@ export default function TakeMyExamAdmin() {
                     e.target.value,
                   )
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
               />
             </div>
             <div>
@@ -1850,15 +1765,9 @@ export default function TakeMyExamAdmin() {
                   >
                     <div className="flex justify-between items-center mb-2">
                       <span className="font-medium">Card {index + 1}</span>
-                      <button
-                        type="button"
-                        onClick={() =>
+                      <AdminButton type="button" variant="removeLink" onClick={() =>
                           removeArrayItem("academicPartners.cards", index)
-                        }
-                        className="text-red-600 hover:text-red-800 text-sm"
-                      >
-                        Remove
-                      </button>
+                        }>Remove</AdminButton>
                     </div>
                     <div className="grid grid-cols-1 gap-3">
                       <input
@@ -1893,19 +1802,13 @@ export default function TakeMyExamAdmin() {
                   </div>
                 ),
               )}
-              <button
-                type="button"
-                onClick={() =>
+              <AdminButton type="button" variant="add" onClick={() =>
                   addArrayItem("academicPartners.cards", {
                     id: Date.now(),
                     title: "",
                     description: "",
                   })
-                }
-                className="mt-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-              >
-                + Add Card
-              </button>
+                }>Add Card</AdminButton>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-4">
@@ -1922,18 +1825,12 @@ export default function TakeMyExamAdmin() {
                   >
                     <div className="flex justify-between items-center mb-2">
                       <span className="font-medium">Stat {index + 1}</span>
-                      <button
-                        type="button"
-                        onClick={() =>
+                      <AdminButton type="button" variant="removeLink" onClick={() =>
                           removeArrayItem(
                             "academicPartners.performances",
                             index,
                           )
-                        }
-                        className="text-red-600 hover:text-red-800 text-sm"
-                      >
-                        Remove
-                      </button>
+                        }>Remove</AdminButton>
                     </div>
                     <div className="grid grid-cols-1 gap-3">
                       <input
@@ -1982,19 +1879,13 @@ export default function TakeMyExamAdmin() {
                   </div>
                 ),
               )}
-              <button
-                type="button"
-                onClick={() =>
+              <AdminButton type="button" variant="add" onClick={() =>
                   addArrayItem("academicPartners.performances", {
                     number: "",
                     title: "",
                     subtitle: "",
                   })
-                }
-                className="mt-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-              >
-                + Add Performance
-              </button>
+                }>Add Performance</AdminButton>
             </div>
           </div>
         </div>
@@ -2015,7 +1906,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("customerReviews.mainHeading", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
                 placeholder="How Students Rate Us!"
               />
             </div>
@@ -2032,7 +1923,7 @@ export default function TakeMyExamAdmin() {
                     e.target.value,
                   )
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
                 placeholder="Rated 4.6/5 Based on 1000+ Reviews"
               />
             </div>
@@ -2056,15 +1947,9 @@ export default function TakeMyExamAdmin() {
                   >
                     <div className="flex justify-between items-center mb-2">
                       <span className="font-medium">Review {index + 1}</span>
-                      <button
-                        type="button"
-                        onClick={() =>
+                      <AdminButton type="button" variant="removeLink" onClick={() =>
                           removeArrayItem("customerReviews.reviews", index)
-                        }
-                        className="text-red-600 hover:text-red-800 text-sm"
-                      >
-                        Remove
-                      </button>
+                        }>Remove</AdminButton>
                     </div>
                     <div className="grid grid-cols-1 gap-3">
                       <input
@@ -2113,19 +1998,13 @@ export default function TakeMyExamAdmin() {
                   </div>
                 ),
               )}
-              <button
-                type="button"
-                onClick={() =>
+              <AdminButton type="button" variant="add" onClick={() =>
                   addArrayItem("customerReviews.reviews", {
                     title: "",
                     description: "",
                     image: "/images/fivestar.svg",
                   })
-                }
-                className="mt-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-              >
-                + Add Review Card
-              </button>
+                }>Add Review Card</AdminButton>
             </div>
           </div>
         </div>
@@ -2146,7 +2025,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("getQuote.mainHeading", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
               />
             </div>
             <div>
@@ -2159,7 +2038,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("getQuote.description", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
               />
             </div>
             <div>
@@ -2172,7 +2051,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("getQuote.ctaButton.text", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
               />
             </div>
           </div>
@@ -2194,7 +2073,7 @@ export default function TakeMyExamAdmin() {
                 onChange={(e) =>
                   updatePageData("faq.mainHeading", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#283c88] focus:border-[#283c88]"
               />
             </div>
             <div>
@@ -2208,13 +2087,7 @@ export default function TakeMyExamAdmin() {
                 >
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-medium">FAQ {index + 1}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeArrayItem("faq.faqs", index)}
-                      className="text-red-600 hover:text-red-800 text-sm"
-                    >
-                      Remove
-                    </button>
+                    <AdminButton type="button" variant="removeLink" onClick={() => removeArrayItem("faq.faqs", index)}>Remove</AdminButton>
                   </div>
                   <div className="grid grid-cols-1 gap-3">
                     <input
@@ -2248,58 +2121,21 @@ export default function TakeMyExamAdmin() {
                   </div>
                 </div>
               ))}
-              <button
-                type="button"
-                onClick={() =>
+              <AdminButton type="button" variant="add" onClick={() =>
                   addArrayItem("faq.faqs", {
                     id: Date.now(),
                     question: "",
                     answer: "",
                   })
-                }
-                className="mt-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-              >
-                + Add FAQ
-              </button>
+                }>Add FAQ</AdminButton>
             </div>
           </div>
         </div>
 
         {/* Save Button */}
-        <div className="flex justify-end gap-4">
-          <button
-            type="submit"
-            disabled={pageLoading}
-            className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-[#283c88] hover:bg-[#283c88] focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {pageLoading ? (
-              <>
-                <svg
-                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-                Saving...
-              </>
-            ) : (
-              "Save Changes"
-            )}
-          </button>
+        <div className="flex flex-wrap justify-end gap-4">
+          <AdminDuplicateDeleteButton disabled={pageLoading} />
+          <AdminButton type="submit" variant="primaryLg" disabled={pageLoading} loading={pageLoading}>{pageLoading ? "Saving..." : "Save Changes"}</AdminButton>
         </div>
       </form>
     );
@@ -2307,14 +2143,7 @@ export default function TakeMyExamAdmin() {
 
   return (
     <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">
-          Manage {pageLabel} Page Content
-        </h1>
-        <p className="mt-2 text-sm text-gray-600">
-          Edit the {pageLabel} page content
-        </p>
-      </div>
+      <AdminPageHeader title={`Manage ${pageLabel} Page Content`} subtitle={`Edit the ${pageLabel} page content`} />
 
       {pageLoading && (
         <div className="flex items-center justify-center py-8">
@@ -2323,8 +2152,8 @@ export default function TakeMyExamAdmin() {
       )}
 
       {!pageLoading && (
-        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
-          <p className="text-sm text-blue-800">
+        <div className="mb-4 p-4 bg-[#eef0f8] border border-[#c5cce8] rounded-md">
+          <p className="text-sm text-[#283c88]">
             <strong>Editing:</strong> {pageLabel} Page
           </p>
         </div>

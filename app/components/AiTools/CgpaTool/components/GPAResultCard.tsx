@@ -7,18 +7,33 @@ import { formatGpaMaybe, roundTo } from "../utils/numbers";
 import { createId } from "../utils/id";
 import { Button, Card, CardBody, CardHeader, Input, Label, Stat } from "./ui";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
+import { usePathname } from "next/navigation";
 
 export default function GPAResultCard(props: {
   state: CalculatorState;
   onChange: (next: CalculatorState) => void;
   onReset: () => void;
+  locked?: boolean;
+  /** When `locked`, replaces the default hint under Final CGPA. */
+  lockedBlurb?: string;
+  /** Rendered after the “add previous semester” (+) button (e.g. Calculate CGPA on landing). */
+  previousSemestersEndSlot?: React.ReactNode;
 }) {
-  const { state, onChange, onReset } = props;
+  const {
+    state,
+    onChange,
+    onReset,
+    locked = false,
+    lockedBlurb,
+    previousSemestersEndSlot,
+  } = props;
 
   const totals = useMemo(() => computeCumulativeTotals(state), [state]);
   const prevDisplayRef = useRef<string | null>(null);
+  const currentRoute = usePathname();
 
   useEffect(() => {
+    if (locked) return;
     const nextDisplay = formatGpaMaybe(totals.cgpa);
     const prevDisplay = prevDisplayRef.current;
     prevDisplayRef.current = nextDisplay;
@@ -39,10 +54,10 @@ export default function GPAResultCard(props: {
             <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
               Cumulative summary
             </div>
-            <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+            {/* <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
               Quality points = grade points × credits. GPA = total quality
               points ÷ total credits.
-            </div>
+            </div> */}
           </div>
           <Button type="button" variant="ghost" onClick={onReset}>
             Reset
@@ -52,102 +67,67 @@ export default function GPAResultCard(props: {
 
       <CardBody className="space-y-4">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-          <div className="text-xs text-slate-500 dark:text-slate-400 md:max-w-[55%]">
+          {/* <div className="text-xs text-slate-500 dark:text-slate-400 md:max-w-[55%]">
             Use these options to compute CGPA exactly how you want.
-          </div>
+          </div> */}
+          {currentRoute !== "/cgpa-calculator/" && (
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  onChange({
+                    ...state,
+                    preferences: {
+                      ...state.preferences,
+                      includePreviousInCgpa: true,
+                      currentSemesterOnly: false,
+                    },
+                  })
+                }
+                aria-pressed={state.preferences.includePreviousInCgpa}
+                className={[
+                  "h-10 rounded-xl px-3 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-violet-500/30",
+                  state.preferences.includePreviousInCgpa
+                    ? "bg-[#565add] text-white"
+                    : "border border-slate-200 bg-white text-slate-900 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:hover:bg-slate-900/40",
+                ].join(" ")}
+                title="Include previous CGPA"
+              >
+                Include previous CGPA
+              </button>
 
-          <div className="flex items-center justify-end gap-2">
-            <button
-              type="button"
-              onClick={() =>
-                onChange({
-                  ...state,
-                  preferences: {
-                    ...state.preferences,
-                    includePreviousInCgpa: true,
-                    currentSemesterOnly: false,
-                  },
-                })
-              }
-              aria-pressed={state.preferences.includePreviousInCgpa}
-              className={[
-                "h-10 rounded-xl px-3 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-violet-500/30",
-                state.preferences.includePreviousInCgpa
-                  ? "bg-[#565add] text-white"
-                  : "border border-slate-200 bg-white text-slate-900 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:hover:bg-slate-900/40",
-              ].join(" ")}
-              title="Include previous CGPA"
-            >
-              Include previous CGPA
-            </button>
-
-            <button
-              type="button"
-              onClick={() =>
-                onChange({
-                  ...state,
-                  preferences: {
-                    ...state.preferences,
-                    currentSemesterOnly: true,
-                    includePreviousInCgpa: false,
-                  },
-                })
-              }
-              aria-pressed={state.preferences.currentSemesterOnly}
-              className={[
-                "h-10 rounded-xl px-3 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-violet-500/30",
-                state.preferences.currentSemesterOnly
-                  ? "bg-[#565add] text-white"
-                  : "border border-slate-200 bg-white text-slate-900 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:hover:bg-slate-900/40",
-              ].join(" ")}
-              title="Current semester only"
-            >
-              Current semester only
-            </button>
-          </div>
+              <button
+                type="button"
+                onClick={() =>
+                  onChange({
+                    ...state,
+                    preferences: {
+                      ...state.preferences,
+                      currentSemesterOnly: true,
+                      includePreviousInCgpa: false,
+                    },
+                  })
+                }
+                aria-pressed={state.preferences.currentSemesterOnly}
+                className={[
+                  "h-10 rounded-xl px-3 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-violet-500/30",
+                  state.preferences.currentSemesterOnly
+                    ? "bg-[#565add] text-white"
+                    : "border border-slate-200 bg-white text-slate-900 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:hover:bg-slate-900/40",
+                ].join(" ")}
+                title="Current semester only"
+              >
+                Current semester only
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="rounded-2xl border border-slate-200 p-3 dark:border-slate-800">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                Previous semesters (optional)
-              </div>
-              <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                Enter total credits and GPA per previous semester (or term).
-                Rows with invalid data are ignored.
-              </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+            <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+              Previous semesters (optional)
             </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                const next = [
-                  ...(state.previousSemesters || []),
-                  { id: createId("prev"), credits: "", gpa: "" },
-                ];
-                onChange({ ...state, previousSemesters: next });
-              }}
-              className="inline-flex h-10 w-10 items-center justify-center bg-[#565add] text-white rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/30 shrink-0"
-              aria-label="Add previous semester GPA"
-              title="Add"
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M12 5v14M5 12h14"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </button>
           </div>
 
           <div className="mt-3 space-y-2">
@@ -234,20 +214,53 @@ export default function GPAResultCard(props: {
               </div>
             ))}
           </div>
-
-          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Stat
-              label="Total credits added"
-              value={roundTo(totals.previousCredits, 2).toFixed(2)}
-            />
-            <Stat
-              label="Previous CGPA"
-              value={formatGpaMaybe(totals.previousGpa)}
-            />
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                const next = [
+                  ...(state.previousSemesters || []),
+                  { id: createId("prev"), credits: "", gpa: "" },
+                ];
+                onChange({ ...state, previousSemesters: next });
+              }}
+              className="inline-flex h-10 w-10 items-center justify-center bg-[#565add] text-white rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/30 shrink-0"
+              aria-label="Add previous semester GPA"
+              title="Add"
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M12 5v14M5 12h14"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+            {previousSemestersEndSlot}
           </div>
+          {!locked ? (
+            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Stat
+                label="Total credits added"
+                value={roundTo(totals.previousCredits, 2).toFixed(2)}
+              />
+              <Stat
+                label="Previous CGPA"
+                value={formatGpaMaybe(totals.previousGpa)}
+              />
+            </div>
+          ) : null}
         </div>
 
-        {state.preferences.includePreviousInCgpa ? (
+        {state.preferences.includePreviousInCgpa && !locked ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Stat
               label="Current credits"
@@ -277,18 +290,22 @@ export default function GPAResultCard(props: {
             />
           </div>
         ) : null}
-
-        <div className="rounded-2xl border border-violet-200 bg-violet-50 p-4 dark:border-violet-900/40 dark:bg-violet-950/30">
-          <div className="text-xs font-medium text-violet-700 dark:text-violet-200">
-            Final CGPA
+        {currentRoute !== "/cgpa-calculator/" && (
+          <div className="rounded-2xl border border-violet-200 bg-violet-50 p-4 dark:border-violet-900/40 dark:bg-violet-950/30">
+            <div className="text-xs font-medium text-violet-700 dark:text-violet-200">
+              Final CGPA
+            </div>
+            <div className="mt-1 text-3xl font-semibold text-slate-900 dark:text-slate-100">
+              {locked ? "—" : formatGpaMaybe(totals.cgpa)}
+            </div>
+            <div className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+              {locked
+                ? lockedBlurb ||
+                  "Click “Calculate CGPA” to reveal your results."
+                : "Rounded to 2 decimals for display."}
+            </div>
           </div>
-          <div className="mt-1 text-3xl font-semibold text-slate-900 dark:text-slate-100">
-            {formatGpaMaybe(totals.cgpa)}
-          </div>
-          <div className="mt-1 text-xs text-slate-600 dark:text-slate-300">
-            Rounded to 2 decimals for display.
-          </div>
-        </div>
+        )}
       </CardBody>
     </Card>
   );

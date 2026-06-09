@@ -6,6 +6,7 @@ import Image from "next/image";
 import Button from "../Button/Button";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { isTakeMyClassLandingPage } from "@/app/lib/takeMyClassLandingRoutes";
 
 type Content = {
   title?: string;
@@ -19,6 +20,7 @@ interface ProcessProps {
 const Process: FC<ProcessProps> = ({ content }) => {
   const [activeProcessIndex, setActiveProcessIndex] = useState(0);
   const currentPage = usePathname();
+  const isTakeMyClassPage = isTakeMyClassLandingPage(currentPage);
   useEffect(() => {
     let interval = setInterval(() => {
       setActiveProcessIndex((prev) =>
@@ -63,7 +65,7 @@ const Process: FC<ProcessProps> = ({ content }) => {
                       <p>{item.description}</p>
                     </div>
                     <div className="mt-8 md:block flex justify-center ">
-                      {currentPage === "/take-my-class/" ? (
+                      {isTakeMyClassPage ? (
                         <Link href="#PhoneEmailMsgForm">
                           <Button className="md:w-64 w-48 bg-secondary-500 hover:text-secondary-500 hover:border-secondary-500">
                             Place an Order Now
