@@ -192,24 +192,53 @@ export const generateParagraph = (payload: {
     headers: { "Content-Type": "application/json" },
   });
 
-export type HumanizerTone = "natural" | "simple" | "polished";
+export type HumanizerTone =
+  | "natural"
+  | "simple"
+  | "polished"
+  | "academic"
+  | "custom";
+
+export type RewriteIntensity = "normal" | "moderate" | "full";
+
+export type HumanizerDiffSegment = {
+  type: "equal" | "insert" | "delete";
+  value: string;
+};
 
 export type HumanizerResponse = {
   original_text?: string;
+  tone_mode?: HumanizerTone;
   selected_tone?: HumanizerTone;
+  rewrite_intensity?: RewriteIntensity;
+  rewritten_text?: string;
+  /** Backward-compatible alias for `rewritten_text`. */
   humanized_text: string;
-  variants?: Array<{
-    id: string;
-    label?: string;
-    description?: string;
-    text: string;
-  }>;
+  diff?: HumanizerDiffSegment[] | null;
+  citations_preserved?: boolean;
+  citation_count?: number;
+  llm_used?: string;
+  tokens_used?: number;
 };
 
-export const humanizeText = (payload: { text: string; tone?: HumanizerTone }) =>
+export const humanizeText = (payload: {
+  text: string;
+  tone?: HumanizerTone;
+  rewrite_intensity?: RewriteIntensity;
+  custom_tone_instruction?: string;
+}) =>
   request<HumanizerResponse>("/tools/humanizer", {
     method: "POST",
-    data: { text: payload.text, tone: payload.tone || "natural" },
+    data: {
+      text: payload.text,
+      tone_mode: payload.tone || "natural",
+      rewrite_intensity: payload.rewrite_intensity || "moderate",
+      ...(payload.custom_tone_instruction
+        ? { custom_tone_instruction: payload.custom_tone_instruction }
+        : {}),
+      preserve_citations: true,
+      return_diff: false,
+    },
     headers: { "Content-Type": "application/json" },
   });
 

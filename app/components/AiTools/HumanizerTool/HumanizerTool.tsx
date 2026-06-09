@@ -11,21 +11,23 @@ import { countWords } from "@/app/utils/text";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 
-type HumanizerTone = "natural" | "simple" | "polished";
-type VariantId = "best" | "alternate_1" | "alternate_2";
+type HumanizerTone = "natural" | "simple" | "polished" | "academic" | "custom";
+type RewriteIntensity = "normal" | "moderate" | "full";
 
-type HumanizerVariant = {
-  id: VariantId;
-  label: "Best" | "Alternate 1" | "Alternate 2";
-  text: string;
+type DiffSegment = {
+  type: "equal" | "insert" | "delete";
+  value: string;
 };
 
 type HumanizerResponse = {
   status: "success";
   original_text: string;
-  selected_tone: HumanizerTone;
-  humanized_text: string;
-  variants: HumanizerVariant[];
+  rewritten_text: string;
+  tone_mode: HumanizerTone;
+  rewrite_intensity: RewriteIntensity;
+  diff: DiffSegment[] | null;
+  citations_preserved: boolean;
+  citation_count: number;
   llm_used: string;
   tokens_used: number;
 };
@@ -36,6 +38,17 @@ type AiDetectionResponse = {
   humanPercent: number;
   reason?: string;
 };
+
+const INTENSITY_META: Record<
+  RewriteIntensity,
+  { label: string; description: string }
+> = {
+  normal: { label: "Normal", description: "Light touch, closest to original" },
+  moderate: { label: "Moderate", description: "Balanced rewrite (recommended)" },
+  full: { label: "Full", description: "Aggressive rewrite for undetectability" },
+};
+
+const INTENSITY_ORDER: RewriteIntensity[] = ["normal", "moderate", "full"];
 
 function AiGauge({ percent }: { percent: number }) {
   const size = 180;
@@ -94,15 +107,27 @@ const TONE_META: Record<HumanizerTone, { label: string; description: string }> =
       label: "Polished",
       description: "Smoother but still human and plain",
     },
+    academic: {
+      label: "Academic",
+      description: "Neutral, plain, scholarly register",
+    },
+    custom: {
+      label: "Custom",
+      description: "Describe the tone you want below",
+    },
   };
 
 const HumanizerTool: React.FC = () => {
   const [token, setToken] = useState<string | null>(null);
   const [text, setText] = useState("");
   const [tone, setTone] = useState<HumanizerTone>("natural");
+  const [customTone, setCustomTone] = useState("");
+  const [intensity, setIntensity] = useState<RewriteIntensity>("moderate");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<HumanizerResponse | null>(null);
-  const [selectedVariantId, setSelectedVariantId] = useState<VariantId>("best");
+  const [resultView, setResultView] = useState<"humanized" | "changes">(
+    "humanized",
+  );
   const [activePanel, setActivePanel] = useState<"humanized" | "ai_detection">(
     "humanized",
   );
@@ -117,21 +142,16 @@ const HumanizerTool: React.FC = () => {
   }, []);
 
   const wordCount = useMemo(() => countWords(text), [text]);
-  const canSubmit = text.trim().length > 0 && wordCount <= 1500 && !loading;
+  const customToneValid = tone !== "custom" || customTone.trim().length > 0;
+  const canSubmit =
+    text.trim().length > 0 && wordCount <= 1500 && customToneValid && !loading;
 
-  const selectedVariantText = useMemo(() => {
-    if (!result) return "";
-    if (selectedVariantId === "best") return result.humanized_text || "";
-    const match = (result.variants || []).find(
-      (v) => v.id === selectedVariantId,
-    );
-    return match?.text || result.humanized_text || "";
-  }, [result, selectedVariantId]);
+  const rewrittenText = result?.rewritten_text || "";
 
   const handleClear = () => {
     setText("");
     setResult(null);
-    setSelectedVariantId("best");
+    setResultView("humanized");
     setAiDetection(null);
     setActivePanel("humanized");
   };
@@ -149,7 +169,7 @@ const HumanizerTool: React.FC = () => {
   const handleUploadDocument = async (file: File) => {
     setLoading(true);
     setResult(null);
-    setSelectedVariantId("best");
+    setResultView("humanized");
     try {
       if (!token) throw new Error("Access token not found");
 
@@ -200,7 +220,7 @@ const HumanizerTool: React.FC = () => {
 
     setLoading(true);
     setResult(null);
-    setSelectedVariantId("best");
+    setResultView("humanized");
     setAiDetection(null);
     setActivePanel("humanized");
     trackToolGenerate({ toolName: "Humanizer Tool" });
@@ -210,7 +230,16 @@ const HumanizerTool: React.FC = () => {
 
       const response = await axios.post<HumanizerResponse>(
         `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/humanizer`,
-        { text, tone },
+        {
+          text,
+          tone_mode: tone,
+          rewrite_intensity: intensity,
+          ...(tone === "custom"
+            ? { custom_tone_instruction: customTone.trim() }
+            : {}),
+          preserve_citations: true,
+          return_diff: true,
+        },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -283,8 +312,8 @@ const HumanizerTool: React.FC = () => {
   };
 
   const handleUseThisVersion = () => {
-    if (!selectedVariantText) return;
-    setText(selectedVariantText);
+    if (!rewrittenText) return;
+    setText(rewrittenText);
     toast.success("Loaded into editor.");
   };
 
@@ -343,6 +372,8 @@ const HumanizerTool: React.FC = () => {
                   <option value="natural">Natural</option>
                   <option value="simple">Simple</option>
                   <option value="polished">Polished</option>
+                  <option value="academic">Academic</option>
+                  <option value="custom">Custom</option>
                 </select>
                 <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-gray-500 dark:text-gray-300">
                   <FaChevronDown className="w-3 h-3" />
@@ -355,6 +386,51 @@ const HumanizerTool: React.FC = () => {
                 {TONE_META[tone]?.label}:
               </span>{" "}
               {toneDescription}
+            </div>
+
+            {tone === "custom" && (
+              <div>
+                <label className="block text-sm font-semibold mb-1 text-gray-800 dark:text-gray-100">
+                  Custom tone (3-4 lines):
+                </label>
+                <textarea
+                  value={customTone}
+                  onChange={(e) => setCustomTone(e.target.value.slice(0, 400))}
+                  rows={3}
+                  maxLength={400}
+                  placeholder="e.g. Confident first-person voice, short sentences, a little dry humor."
+                  className="w-full rounded-md border border-gray-200 text-black dark:border-gray-600 p-2 focus:outline-none focus:ring-2 focus:ring-black dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300"
+                />
+                <div className="text-[11px] text-gray-400 text-right">
+                  {customTone.trim().length}/400
+                </div>
+              </div>
+            )}
+
+            {/* Rewrite intensity */}
+            <div>
+              <label className="block text-sm font-semibold mb-1 text-gray-800 dark:text-gray-100">
+                Rewrite intensity:
+              </label>
+              <div className="flex gap-2">
+                {INTENSITY_ORDER.map((level) => (
+                  <button
+                    key={level}
+                    type="button"
+                    onClick={() => setIntensity(level)}
+                    className={`flex-1 px-2 py-1.5 rounded-md text-sm border transition-colors duration-300 ${
+                      intensity === level
+                        ? "border-[#2b7fff] text-[#2b7fff] dark:border-[#51a2ff] dark:text-[#51a2ff]"
+                        : "border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    }`}
+                  >
+                    {INTENSITY_META[level].label}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                {INTENSITY_META[intensity].description}
+              </div>
             </div>
 
             {wordCount > 1500 && (
@@ -381,38 +457,32 @@ const HumanizerTool: React.FC = () => {
         <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 h-auto flex flex-col justify-between transition-colors duration-300">
           <div className="border-b border-gray-200 dark:border-gray-700 p-3 flex items-center justify-between">
             <div className="flex gap-2">
-              {(["best", "alternate_1", "alternate_2"] as VariantId[]).map(
-                (id) => (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => setSelectedVariantId(id)}
-                    disabled={!result || activePanel !== "humanized"}
-                    className={`px-3 py-1.5 rounded-md text-sm border transition-colors duration-300 ${
-                      !result || activePanel !== "humanized"
-                        ? "border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed"
-                        : selectedVariantId === id
-                          ? "border-[#2b7fff] text-[#2b7fff] dark:border-[#51a2ff] dark:text-[#51a2ff]"
-                          : "border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                    }`}
-                  >
-                    {id === "best"
-                      ? "Best"
-                      : id === "alternate_1"
-                        ? "Alternate 1"
-                        : "Alternate 2"}
-                  </button>
-                ),
-              )}
+              {(["humanized", "changes"] as const).map((view) => (
+                <button
+                  key={view}
+                  type="button"
+                  onClick={() => setResultView(view)}
+                  disabled={!result || activePanel !== "humanized"}
+                  className={`px-3 py-1.5 rounded-md text-sm border transition-colors duration-300 ${
+                    !result || activePanel !== "humanized"
+                      ? "border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed"
+                      : resultView === view
+                        ? "border-[#2b7fff] text-[#2b7fff] dark:border-[#51a2ff] dark:text-[#51a2ff]"
+                        : "border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  }`}
+                >
+                  {view === "humanized" ? "Humanized" : "Changes"}
+                </button>
+              ))}
             </div>
 
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => handleCopy(selectedVariantText)}
-                disabled={!selectedVariantText || activePanel !== "humanized"}
+                onClick={() => handleCopy(rewrittenText)}
+                disabled={!rewrittenText || activePanel !== "humanized"}
                 className={`px-3 py-2 border rounded-md flex items-center gap-2 transition-colors duration-300 ${
-                  !selectedVariantText || activePanel !== "humanized"
+                  !rewrittenText || activePanel !== "humanized"
                     ? "bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed"
                     : "border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-100 bg-white dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
                 }`}
@@ -423,9 +493,9 @@ const HumanizerTool: React.FC = () => {
               <button
                 type="button"
                 onClick={handleUseThisVersion}
-                disabled={!selectedVariantText || activePanel !== "humanized"}
+                disabled={!rewrittenText || activePanel !== "humanized"}
                 className={`px-3 py-2 rounded-md text-white transition-colors duration-300 ${
-                  !selectedVariantText || activePanel !== "humanized"
+                  !rewrittenText || activePanel !== "humanized"
                     ? "bg-primary-400/60 cursor-not-allowed"
                     : "bg-primary-400 hover:bg-primary-300"
                 }`}
@@ -436,11 +506,53 @@ const HumanizerTool: React.FC = () => {
           </div>
 
           <ResultDisplay
-            title={activePanel === "ai_detection" ? "AI Detection" : "Humanized Text"}
-            resultText={activePanel === "humanized" ? selectedVariantText : ""}
+            title={
+              activePanel === "ai_detection"
+                ? "AI Detection"
+                : resultView === "changes"
+                  ? "Changes"
+                  : "Humanized Text"
+            }
+            resultText={
+              activePanel === "humanized" && resultView === "humanized"
+                ? rewrittenText
+                : ""
+            }
             loading={loading}
             customBody={
-              activePanel === "ai_detection" ? (
+              activePanel === "humanized" && resultView === "changes" ? (
+                result?.diff && result.diff.length > 0 ? (
+                  <div className="h-full w-full overflow-y-auto whitespace-pre-wrap leading-relaxed text-gray-800 dark:text-gray-100 p-1">
+                    {result.diff.map((seg, i) => {
+                      if (seg.type === "insert") {
+                        return (
+                          <span
+                            key={i}
+                            className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 rounded-sm"
+                          >
+                            {seg.value}
+                          </span>
+                        );
+                      }
+                      if (seg.type === "delete") {
+                        return (
+                          <span
+                            key={i}
+                            className="bg-red-100 text-red-700 line-through dark:bg-red-900/40 dark:text-red-300 rounded-sm"
+                          >
+                            {seg.value}
+                          </span>
+                        );
+                      }
+                      return <span key={i}>{seg.value}</span>;
+                    })}
+                  </div>
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center text-sm text-gray-500 dark:text-gray-400">
+                    No change tracking available for this result.
+                  </div>
+                )
+              ) : activePanel === "ai_detection" ? (
                 <div className="h-full w-full flex flex-col items-center justify-center">
                   <div className="text-center text-gray-800 dark:text-gray-100">
                     <div className="text-lg font-semibold">{aiHeadline}</div>
@@ -486,6 +598,11 @@ const HumanizerTool: React.FC = () => {
 
           {result && (
             <div className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700">
+              {result.citations_preserved && result.citation_count > 0 && (
+                <div className="mb-1 text-emerald-600 dark:text-emerald-400">
+                  Citations preserved ({result.citation_count})
+                </div>
+              )}
               LLM: <span className="font-semibold">{result.llm_used}</span> ·
               Tokens used:{" "}
               <span className="font-semibold">{result.tokens_used}</span>
