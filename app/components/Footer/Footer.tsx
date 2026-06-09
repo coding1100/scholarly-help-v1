@@ -310,242 +310,250 @@ const Footer: FC<FooterProps> = ({}) => {
                 </p>
               </div>
             </div>
-            {currentPage !== "/do-my-class-2/" && (
-              <div className="md:flex justify-between gap-6 w-[40%]">
-                <div>
-                  <div className="mt-2 mb-3">
-                    <p className="font-semibold text-lg">Explore</p>
+            <div
+              className={
+                currentPage !== "/do-my-class-2/"
+                  ? "grid grid-cols-2 md:grid-cols-4 md:gap-x-6 gap-x-3 gap-y-4 w-full md:flex-1"
+                  : ""
+              }
+            >
+              {currentPage !== "/do-my-class-2/" && (
+                <>
+                  <div>
+                    <div className="mt-2 mb-3">
+                      <p className="font-semibold text-lg">Explore</p>
+                    </div>
+                    <div className="font-light">
+                      <div>
+                        <Link
+                          className="hover:font-normal hover:underline "
+                          href="/"
+                        >
+                          <p>Home</p>
+                        </Link>
+                      </div>
+                      <div>
+                        <Link
+                          className="hover:font-normal hover:underline "
+                          href="/about-us"
+                        >
+                          <p>About Us</p>
+                        </Link>
+                      </div>
+                      <div>
+                        <Link
+                          className="hover:font-normal hover:underline "
+                          href="/contact-us"
+                        >
+                          <p>Contact Us</p>
+                        </Link>
+                      </div>
+                      <div>
+                        <Link
+                          className="hover:font-normal hover:underline "
+                          href="/samples/"
+                        >
+                          <p>Samples</p>
+                        </Link>
+                      </div>
+                      <div>
+                        <Link
+                          className="hover:font-normal hover:underline "
+                          href="https://scholarlyhelp.com/blog/"
+                        >
+                          <p>Blog</p>
+                        </Link>
+                      </div>
+                    </div>
                   </div>
-                  <div className="font-light">
-                    <div>
-                      <Link
-                        className="hover:font-normal hover:underline "
-                        href="/"
-                      >
-                        <p>Home</p>
-                      </Link>
-                    </div>
-                    <div>
-                      <Link
-                        className="hover:font-normal hover:underline "
-                        href="/about-us"
-                      >
-                        <p>About Us</p>
-                      </Link>
-                    </div>
-                    <div>
-                      <Link
-                        className="hover:font-normal hover:underline "
-                        href="/contact-us"
-                      >
-                        <p>Contact Us</p>
-                      </Link>
-                    </div>
-                    <div>
-                      <Link
-                        className="hover:font-normal hover:underline "
-                        href="/samples/"
-                      >
-                        <p>Samples</p>
-                      </Link>
-                    </div>
-                    <div>
-                      <Link
-                        className="hover:font-normal hover:underline "
-                        href="https://scholarlyhelp.com/blog/"
-                      >
-                        <p>Blog</p>
-                      </Link>
-                    </div>
-                  </div>
-                </div>
 
-                <div>
-                  <div className="mt-2 mb-3">
-                    <p className="font-semibold text-lg">Our Services</p>
+                  <div>
+                    <div className="mt-2 mb-3">
+                      <p className="font-semibold text-lg">Our Services</p>
+                    </div>
+                    <div className="font-light">
+                      <div>
+                        <Link
+                          className="hover:font-normal hover:underline "
+                          href="/online-class"
+                        >
+                          <p>Online Class</p>
+                        </Link>
+                      </div>
+                      <div>
+                        <Link
+                          className="hover:font-normal hover:underline "
+                          href="/exams"
+                        >
+                          <p>Exam</p>
+                        </Link>
+                      </div>
+                      <div>
+                        <Link
+                          className="hover:font-normal hover:underline "
+                          href="/homework"
+                        >
+                          <p>Homework</p>
+                        </Link>
+                      </div>
+                      <div>
+                        <Link
+                          className="hover:font-normal hover:underline "
+                          href="/assignment"
+                        >
+                          <p>Assignment</p>
+                        </Link>
+                      </div>
+                      <div>
+                        <Link
+                          className="hover:font-normal hover:underline "
+                          href="/essay-writing"
+                        >
+                          <p>Essay Writing</p>
+                        </Link>
+                      </div>
+                    </div>
                   </div>
-                  <div className="font-light">
-                    <div>
-                      <Link
-                        className="hover:font-normal hover:underline "
-                        href="/online-class"
-                      >
-                        <p>Online Class</p>
-                      </Link>
-                    </div>
-                    <div>
-                      <Link
-                        className="hover:font-normal hover:underline "
-                        href="/exams"
-                      >
-                        <p>Exam</p>
-                      </Link>
-                    </div>
-                    <div>
-                      <Link
-                        className="hover:font-normal hover:underline "
-                        href="/homework"
-                      >
-                        <p>Homework</p>
-                      </Link>
-                    </div>
-                    <div>
-                      <Link
-                        className="hover:font-normal hover:underline "
-                        href="/assignment"
-                      >
-                        <p>Assignment</p>
-                      </Link>
-                    </div>
-                    <div>
-                      <Link
-                        className="hover:font-normal hover:underline "
-                        href="/essay-writing"
-                      >
-                        <p>Essay Writing</p>
-                      </Link>
-                    </div>
-                  </div>
-                </div>
 
-                <div>
-                  <div className="mt-2 mb-3">
-                    <p className="font-semibold text-lg">Legal Info</p>
-                  </div>
-                  <div className="font-light">
-                    <div>
-                      <Link
-                        className="hover:font-normal hover:underline "
-                        href="/terms-and-conditions"
-                      >
-                        <p>Terms & Conditions</p>
-                      </Link>
+                  <div>
+                    <div className="mt-2 mb-3">
+                      <p className="font-semibold text-lg">Legal Info</p>
                     </div>
-                    <div>
-                      <Link
-                        className="hover:font-normal hover:underline "
-                        href="/privacy"
-                      >
-                        <p>Privacy Policy</p>
-                      </Link>
-                    </div>
-                    {/* <div>
+                    <div className="font-light">
+                      <div>
+                        <Link
+                          className="hover:font-normal hover:underline "
+                          href="/terms-and-conditions"
+                        >
+                          <p>Terms & Conditions</p>
+                        </Link>
+                      </div>
+                      <div>
+                        <Link
+                          className="hover:font-normal hover:underline "
+                          href="/privacy"
+                        >
+                          <p>Privacy Policy</p>
+                        </Link>
+                      </div>
+                      {/* <div>
                 <Link className="hover:font-normal hover:underline " href="#">
                   <p>Disclaimer</p>
                 </Link>
               </div> */}
+                    </div>
                   </div>
+                </>
+              )}
+              <div>
+                <div className="mt-2 mb-3">
+                  <p className="font-semibold text-lg">Contact Info</p>
                 </div>
-              </div>
-            )}
-            <div>
-              <div className="mt-2 mb-3">
-                <p className="font-semibold text-lg">Contact Info</p>
-              </div>
-              <div className="">
-                <div>
-                  <a
-                    href={`tel:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER}`}
-                    className="flex"
-                  >
-                    <span className="w-6 mr-1">
-                      <Phone color="#2b1c51" />
-                    </span>
-                    +1 646 480 6092
-                  </a>
-                </div>
-                <div className="flex my-2">
-                  <div className="w-5 mr-1">
+                <div className="">
+                  <div>
                     <a
-                      target="_blank"
-                      href="https://www.facebook.com/Scholarly.help"
-                      rel="noopener noreferrer"
-                      aria-label="Follow us on Facebook"
-                      className="inline-flex items-center justify-center w-5 h-5"
+                      href={`tel:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER}`}
+                      className="flex"
                     >
-                      <Facebook color="#2b1c51" />
+                      <span className="w-6 mr-1">
+                        <Phone color="#2b1c51" />
+                      </span>
+                      +1 646 480 6092
                     </a>
                   </div>
-                  <div className="w-5 mr-1">
-                    <a
-                      target="_blank"
-                      href="https://www.instagram.com/scholarlyhelp/"
-                      rel="noopener noreferrer"
-                      aria-label="Follow us on Instagram"
-                      className="inline-flex items-center justify-center w-5 h-5"
-                    >
-                      <Image src={Instagram} alt="instagram" />
-                    </a>
+                  <div className="flex my-2">
+                    <div className="w-5 mr-1">
+                      <a
+                        target="_blank"
+                        href="https://www.facebook.com/Scholarly.help"
+                        rel="noopener noreferrer"
+                        aria-label="Follow us on Facebook"
+                        className="inline-flex items-center justify-center w-5 h-5"
+                      >
+                        <Facebook color="#2b1c51" />
+                      </a>
+                    </div>
+                    <div className="w-5 mr-1">
+                      <a
+                        target="_blank"
+                        href="https://www.instagram.com/scholarlyhelp/"
+                        rel="noopener noreferrer"
+                        aria-label="Follow us on Instagram"
+                        className="inline-flex items-center justify-center w-5 h-5"
+                      >
+                        <Image src={Instagram} alt="instagram" />
+                      </a>
+                    </div>
+                    <div className="w-5 mr-1">
+                      <a
+                        target="_blank"
+                        href="https://www.linkedin.com/company/scholarlyhelp/"
+                        rel="noopener noreferrer"
+                        aria-label="Follow us on LinkedIn"
+                        className="inline-flex items-center justify-center w-5 h-5"
+                      >
+                        <Image src={Linkedin} alt="Linkedin" />
+                      </a>
+                    </div>
+                    <div className="w-5 mr-1">
+                      <a
+                        target="_blank"
+                        href="https://www.tiktok.com/@scholarlyhelp.com"
+                        rel="noopener noreferrer"
+                        aria-label="Follow us on TikTok"
+                        className="inline-flex items-center justify-center w-5 h-5"
+                      >
+                        <Image src={Tiktok} alt="Tiktok" />
+                      </a>
+                    </div>
+                    <div className="w-5 h-5 text-[21px] text-[#000] mr-1">
+                      <a
+                        target="_blank"
+                        href="https://www.snapchat.com/add/helpscholarly"
+                        rel="noopener noreferrer"
+                        aria-label="Follow us on Snapchat"
+                        className="inline-flex items-center justify-center w-5 h-5"
+                      >
+                        <FaSnapchat />
+                      </a>
+                    </div>
+                    <div className="w-5 h-5 text-[21px] text-[#000]">
+                      <a
+                        target="_blank"
+                        href="https://www.youtube.com/@ScholarlyHelp/"
+                        rel="noopener noreferrer"
+                        aria-label="Visit our YouTube channel"
+                        className="inline-flex items-center justify-center w-5 h-5"
+                      >
+                        <SiYoutubemusic />
+                      </a>
+                    </div>
+                    {/* <div className="w-5 h-5 mr-1 rounded-full bg-primary-500"></div> */}
                   </div>
-                  <div className="w-5 mr-1">
-                    <a
-                      target="_blank"
-                      href="https://www.linkedin.com/company/scholarlyhelp/"
-                      rel="noopener noreferrer"
-                      aria-label="Follow us on LinkedIn"
-                      className="inline-flex items-center justify-center w-5 h-5"
-                    >
-                      <Image src={Linkedin} alt="Linkedin" />
-                    </a>
-                  </div>
-                  <div className="w-5 mr-1">
-                    <a
-                      target="_blank"
-                      href="https://www.tiktok.com/@scholarlyhelp.com"
-                      rel="noopener noreferrer"
-                      aria-label="Follow us on TikTok"
-                      className="inline-flex items-center justify-center w-5 h-5"
-                    >
-                      <Image src={Tiktok} alt="Tiktok" />
-                    </a>
-                  </div>
-                  <div className="w-5 h-5 text-[21px] text-[#000] mr-1">
-                    <a
-                      target="_blank"
-                      href="https://www.snapchat.com/add/helpscholarly"
-                      rel="noopener noreferrer"
-                      aria-label="Follow us on Snapchat"
-                      className="inline-flex items-center justify-center w-5 h-5"
-                    >
-                      <FaSnapchat />
-                    </a>
-                  </div>
-                  <div className="w-5 h-5 text-[21px] text-[#000]">
-                    <a
-                      target="_blank"
-                      href="https://www.youtube.com/@ScholarlyHelp/"
-                      rel="noopener noreferrer"
-                      aria-label="Visit our YouTube channel"
-                      className="inline-flex items-center justify-center w-5 h-5"
-                    >
-                      <SiYoutubemusic />
-                    </a>
-                  </div>
-                  {/* <div className="w-5 h-5 mr-1 rounded-full bg-primary-500"></div> */}
-                </div>
 
-                <div className="flex my-2">
-                  <div className="w-5 mr-1">
-                    <Image
-                      width={30}
-                      height={30}
-                      src={MasterCard}
-                      alt="MasterCard"
-                    />
-                  </div>
-                  <div className="w-5 mr-1">
-                    <Image width={30} height={30} src={Visa} alt="Visa" />
-                  </div>
-                  <div className="w-5 mr-1">
-                    <Image
-                      width={30}
-                      height={30}
-                      src={AmericanExpress}
-                      alt="AmericanExpress"
-                    />
-                  </div>
-                  <div className="w-5 mr-1">
-                    <Image width={30} height={30} src={Paypal} alt="Paypal" />
+                  <div className="flex my-2">
+                    <div className="w-5 mr-1">
+                      <Image
+                        width={30}
+                        height={30}
+                        src={MasterCard}
+                        alt="MasterCard"
+                      />
+                    </div>
+                    <div className="w-5 mr-1">
+                      <Image width={30} height={30} src={Visa} alt="Visa" />
+                    </div>
+                    <div className="w-5 mr-1">
+                      <Image
+                        width={30}
+                        height={30}
+                        src={AmericanExpress}
+                        alt="AmericanExpress"
+                      />
+                    </div>
+                    <div className="w-5 mr-1">
+                      <Image width={30} height={30} src={Paypal} alt="Paypal" />
+                    </div>
                   </div>
                 </div>
               </div>

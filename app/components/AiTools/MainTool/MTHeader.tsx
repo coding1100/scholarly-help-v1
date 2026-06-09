@@ -3,7 +3,7 @@ import { CgMenu } from "react-icons/cg";
 import { FaBolt } from "react-icons/fa";
 import { HiMiniClock } from "react-icons/hi2";
 import { RiSettings5Fill } from "react-icons/ri";
-import { TitleContext } from "./MainToolLayout";
+import { EditorPreferencesContext, TitleContext } from "./MainToolLayout";
 import PricingPopup from "../PricingPopup";
 import DownloadFileType from "./PopupModal/DownloadFileType";
 import PublishDocumentModal from "./PopupModal/PublishDocumentModal";
@@ -11,14 +11,21 @@ interface MTHeaderProps {
   sidebarOpen: boolean;
   onToggleSidebar: () => void;
   onToggleSettings?: () => void;
+  onOpenReview?: () => void;
+  documentId?: string | null;
 }
 
 const MTHeader = ({
   sidebarOpen,
   onToggleSidebar,
   onToggleSettings,
+  onOpenReview,
+  documentId,
 }: MTHeaderProps) => {
   const { title } = useContext(TitleContext);
+  const { autoComplete, setAutoComplete } = useContext(
+    EditorPreferencesContext,
+  );
   const [showPricing, setShowPricing] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const exportRef = useRef<HTMLDivElement | null>(null);
@@ -51,7 +58,10 @@ const MTHeader = ({
   }, [showExport]);
   return (
     <div>
-      <header className="sticky top-0 bg-white z-50  py-2 px-6 text-black ">
+      <header
+        data-tour="ara-header"
+        className="sticky top-0 bg-white z-50  py-2 px-6 text-black "
+      >
         <div className=" flex items-center justify-between">
           {/* Header left section */}
           <div className="flex items-center space-x-3">
@@ -68,7 +78,25 @@ const MTHeader = ({
             </span>
           </div>
           {/*Header right section  */}
-          <div className="flex items-center space-x-6">
+          <div className="flex items-center space-x-3">
+            <button
+              type="button"
+              onClick={() => setAutoComplete((prev) => !prev)}
+              className={`rounded-lg px-3 py-2 text-sm transition duration-200 ${
+                autoComplete
+                  ? "bg-primary-100 text-primary-400"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              Autocomplete {autoComplete ? "On" : "Off"}
+            </button>
+            {/* <button
+              type="button"
+              className="rounded-lg p-2 text-sm transition duration-200 hover:bg-gray-200"
+              onClick={onOpenReview}
+            >
+              Review
+            </button> */}
             <button
               className="flex items-center space-x-2 bg-[#155dfc] hover:bg-[#1447e6] text-white text-sm  p-2 rounded-lg "
               onClick={() => setShowPricing(true)}
@@ -86,7 +114,7 @@ const MTHeader = ({
               </button>
               {showExport && (
                 <div className="absolute right-0 mt-2 z-50">
-                  <DownloadFileType />
+                  <DownloadFileType documentId={documentId} />
                 </div>
               )}
             </div>
@@ -96,19 +124,20 @@ const MTHeader = ({
                 className=" text-sm transition duration-200 hover:bg-gray-200 rounded-lg p-2"
                 onClick={() => setShowPublish((prev) => !prev)}
               >
-                Publish
+                Share
               </button>
               {showPublish && (
                 <PublishDocumentModal
                   open={showPublish}
                   onClose={() => setShowPublish(false)}
                   variant="popover"
+                  documentId={documentId}
                 />
               )}
             </div>
-            <button className="hover:bg-gray-200 rounded-lg p-2">
+            {/* <button className="hover:bg-gray-200 rounded-lg p-2">
               <HiMiniClock className="h-6 w-6 cursor-pointer " />
-            </button>
+            </button> */}
             <button
               className="hover:bg-gray-200 rounded-lg p-2"
               onClick={() => onToggleSettings && onToggleSettings()}

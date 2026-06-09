@@ -6,12 +6,12 @@ import { FaArrowRight } from "react-icons/fa";
 import Image from "next/image";
 import Logo from "@/app/assets/Images/logo.png";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { CgRename } from "react-icons/cg";
 import axios from "axios";
 import { ColorRing } from "react-loader-spinner";
 import SocialAuthButtons from "./SocialAuthButtons";
-import { appendQueryString } from "@/app/utils/url";
+import { buildHrefWithSameQuery } from "@/app/utils/url";
 
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
 
@@ -26,7 +26,8 @@ const SignUpCard: FC<SignUpCardProps> = ({
 }) => {
   const route = useRouter();
   const currentPage = usePathname();
-  const searchParams = useSearchParams();
+  const qs =
+    typeof window !== "undefined" ? window.location.search.slice(1) : "";
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -69,11 +70,19 @@ const SignUpCard: FC<SignUpCardProps> = ({
         /ERR_NAME_NOT_RESOLVED/i.test(msg));
 
     if (isLikelyDnsOrOffline) {
-      return "We can’t reach the server right now (network/DNS issue). Please check your connection and try again.";
+      return "We can't connect, check your internet connection and try again.";
     }
 
     return null;
   };
+
+  // --- Add derived state for button enablement ---
+  const isFormValid =
+    name.trim().length >= 3 &&
+    email.trim().length > 0 &&
+    password.length >= 8 &&
+    !getPasswordValidationMsg(password) &&
+    !getNameValidationMsg(name);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,7 +128,7 @@ const SignUpCard: FC<SignUpCardProps> = ({
       setName("");
       setEmail("");
       setPassword("");
-      route.push(appendQueryString("/otp", searchParams?.toString() || ""));
+      route.push(buildHrefWithSameQuery("/otp", new URLSearchParams(qs)));
     } catch (err: any) {
       const networkMsg = getAuthNetworkErrorMessage(err);
       const message =
@@ -215,10 +224,10 @@ const SignUpCard: FC<SignUpCardProps> = ({
         </div>
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !isFormValid}
           className={`lg:w-[90%] bg-[#ff641a] text-white font-semibold min-h-[39px] px-4 py-2 rounded-lg hover:bg-[#ff641a]/80 transition duration-300 flex items-center justify-center gap-2 ${
             submitError ? "flex-col text-center gap-1" : ""
-          }`}
+          } ${!isFormValid || loading ? "opacity-50 cursor-not-allowed" : ""}`}
           aria-live="polite"
         >
           {loading ? (
@@ -240,12 +249,15 @@ const SignUpCard: FC<SignUpCardProps> = ({
           )}
           {!submitError && <FaArrowRight />}
         </button>
-        <SocialAuthButtons />
+        <SocialAuthButtons authAction="sign_up" />
       </form>
       <p className="text-center text-sm  mt-8 relative">
         If you have an account?
         {switchAuthForm === "" ? (
-          <Link href="/sign-in/" className="hover:underline pl-1">
+          <Link
+            href={buildHrefWithSameQuery("/sign-in/", new URLSearchParams(qs))}
+            className="hover:underline pl-1"
+          >
             Sign in Here
           </Link>
         ) : (

@@ -21,6 +21,7 @@ import { examsSubjects } from "../../exams/content";
 import DeliveredOn from "../../take-my-class/DeliveredOn";
 import SubSubjectsSection from "@/app/components/LandingPage/SubSubjects";
 import OnlinePlatform from "@/app/components/OnlinePlatform/OnlinePlatform";
+import ProductSchema from "@/app/components/ProductSchema";
 
 // Force dynamic rendering to prevent caching
 export const dynamic = "force-dynamic";
@@ -113,9 +114,24 @@ const Page: React.FC<PageProps> = async ({ params }) => {
       getQuote: { mainHeading: "", description: "", ctaButton: { text: "" } },
       faq: { mainHeading: "", faqs: [] },
     };
+    const subjectTitle =
+      subject.charAt(0).toUpperCase() + subject.slice(1).replace(/-/g, " ");
+    const rawBaseUrl =
+      process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
+    const baseUrl = rawBaseUrl.endsWith("/")
+      ? rawBaseUrl.slice(0, -1)
+      : rawBaseUrl;
 
     return (
       <ExamDataProvider data={defaultPageData}>
+        <ProductSchema
+          productTitle={`${subjectTitle} Exam Help - Professional Assistance`}
+          metaDescription={`Get expert help with your ${subject.replace(
+            /-/g,
+            " ",
+          )} exam.`}
+          pageUrl={`${baseUrl}/exam/${subject}`}
+        />
         <MainLayout>
           <HeroSection />
           <DeliveredOn />
@@ -143,9 +159,26 @@ const Page: React.FC<PageProps> = async ({ params }) => {
   ) {
     notFound();
   }
+  const subjectTitle =
+    subject.charAt(0).toUpperCase() + subject.slice(1).replace(/-/g, " ");
+  const rawBaseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
+  const baseUrl = rawBaseUrl.endsWith("/")
+    ? rawBaseUrl.slice(0, -1)
+    : rawBaseUrl;
+  const productTitle = pageData.meta?.title || `${subjectTitle} Exam Help`;
+  const metaDescription =
+    pageData.meta?.description ||
+    `Get expert help with your ${subject.replace(/-/g, " ")} exam.`;
+  const pageUrl = pageData.meta?.canonicalUrl || `${baseUrl}/exam/${subject}`;
 
   return (
     <ExamDataProvider data={pageData}>
+      <ProductSchema
+        productTitle={productTitle}
+        metaDescription={metaDescription}
+        pageUrl={pageUrl}
+      />
       <MainLayout>
         <HeroSection />
         <DeliveredOn />

@@ -6,6 +6,7 @@ import Subjects from "@/app/components/LandingPage/Subjects";
 import { AssignmentDataProvider } from "./AssignmentDataProvider";
 import { assignmentSubject } from "./content";
 import { getPageData } from "@/app/lib/mongodb";
+import ProductSchema from "@/app/components/ProductSchema";
 
 // Force dynamic rendering to prevent caching
 export const dynamic = "force-dynamic";
@@ -25,9 +26,24 @@ async function fetchAssignmentData() {
 
 const Page = async () => {
   const pageData = await fetchAssignmentData();
+  const rawBaseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
+  const baseUrl = rawBaseUrl.endsWith("/")
+    ? rawBaseUrl.slice(0, -1)
+    : rawBaseUrl;
+  const productTitle = pageData?.meta?.title || MetaData.assignment.title;
+  const metaDescription =
+    pageData?.meta?.description || MetaData.assignment.description;
+  const pageUrl =
+    pageData?.meta?.canonicalUrl || `${baseUrl}/${MetaData.assignment.url}`;
 
   return (
     <AssignmentDataProvider data={pageData}>
+      <ProductSchema
+        productTitle={productTitle}
+        metaDescription={metaDescription}
+        pageUrl={pageUrl}
+      />
       <MainLayout>
         <HeroSection />
         <BelowFoldLanding>

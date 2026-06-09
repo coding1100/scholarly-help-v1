@@ -6,6 +6,7 @@ import Subjects from "@/app/components/LandingPage/Subjects";
 import { EssayWritingDataProvider } from "./EssayWritingDataProvider";
 import { essayWritingSubjects } from "./content";
 import { getPageData } from "@/app/lib/mongodb";
+import ProductSchema from "@/app/components/ProductSchema";
 
 // Force dynamic rendering to prevent caching
 export const dynamic = "force-dynamic";
@@ -34,9 +35,24 @@ async function fetchEssayWritingData() {
 
 const Page = async () => {
   const pageData = await fetchEssayWritingData();
+  const rawBaseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
+  const baseUrl = rawBaseUrl.endsWith("/")
+    ? rawBaseUrl.slice(0, -1)
+    : rawBaseUrl;
+  const productTitle = pageData?.meta?.title || MetaData.essayWriting.title;
+  const metaDescription =
+    pageData?.meta?.description || MetaData.essayWriting.description;
+  const pageUrl =
+    pageData?.meta?.canonicalUrl || `${baseUrl}/${MetaData.essayWriting.url}`;
 
   return (
     <EssayWritingDataProvider data={pageData}>
+      <ProductSchema
+        productTitle={productTitle}
+        metaDescription={metaDescription}
+        pageUrl={pageUrl}
+      />
       <MainLayout>
         <HeroSection />
         <BelowFoldLanding>

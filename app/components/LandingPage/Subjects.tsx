@@ -131,13 +131,13 @@ export default function SubjectsSection({
             "Beyond the subjects listed below, we excel at handling diverse topics effectively. Our expertise knows no bounds, ensuring we're ready for any challenge that comes our way."}
         </p>
         {showDetailedSubjectCards ? (
-          <div className="grid grid-cols-2 gap-8">
+          <div className="grid md:grid-cols-2 grid-cols-1 md:gap-8 gap-4">
             {subjects.slice(0, 4).map((subject: SubjectType, index: number) => (
               <div
                 key={index}
                 className="col-span-1 bg-[#FFFFFFad] px-8 py-[34px] flex items-start justify-start gap-7 rounded-lg"
               >
-                <div className="min-w-[65px] h-[65px] relative">
+                <div className="hidden md:relative md:block min-w-[65px] w-[65px] h-[65px]">
                   <Image
                     src={subject.src}
                     alt={subject.label}
@@ -146,10 +146,22 @@ export default function SubjectsSection({
                     sizes="65px"
                   />
                 </div>
+
                 <div className="space-y-3">
-                  <p className="text-2xl text-start font-semibold text-black">
-                    {subject.label}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <div className="md:hidden relative min-w-[48px] w-[48px] h-[48px] sm:min-w-[56px] sm:w-[56px] sm:h-[56px] md:min-w-[65px] md:w-[65px] md:h-[65px] flex-shrink-0">
+                      <Image
+                        src={subject.src}
+                        alt={subject.label}
+                        fill
+                        className="object-contain"
+                        sizes="(max-width: 640px) 48px, (max-width: 768px) 56px, 65px"
+                      />
+                    </div>
+                    <p className="text-xl md:text-2xl text-start font-semibold text-black">
+                      {subject.label}
+                    </p>
+                  </div>
                   {(() => {
                     const description =
                       subject.description ||
@@ -157,7 +169,7 @@ export default function SubjectsSection({
                         ? "Chemistry for Nursing & Allied Health is a specialized course designed to provide targeted chemistry support for students pursuing careers in nursing and allied health fields. The course focuses on essential chemical principles and real-world applications relevant to healthcare, helping students build a strong foundation for understanding topics."
                         : "");
                     return description ? (
-                      <p className="text-[17px] text-start text-[#263238]">
+                      <p className="text-base md:text-[17px] text-start text-[#263238]">
                         {description}
                       </p>
                     ) : null;

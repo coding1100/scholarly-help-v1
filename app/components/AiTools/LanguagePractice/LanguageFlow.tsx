@@ -14,6 +14,7 @@ import {
   useLanguagePractice,
   LanguagePracticeProvider,
 } from "@/app/context/LanguagePracticeContext";
+import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 
 type StepMeta = {
   step: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
@@ -49,7 +50,7 @@ const STEPS: StepMeta[] = [
 ];
 
 function Shell() {
-  const { step, setStep, language, level, goals, onboardingComplete } =
+  const { step, setStep, language, level, goals, onboardingComplete, isAiBusy } =
     useLanguagePractice();
 
   const canAccess = (s: number) => {
@@ -74,7 +75,8 @@ function Shell() {
   }, [language, level, goals.length, onboardingComplete]);
 
   return (
-    <div className="h-[calc(100vh-8vh)] overflow-y-auto flex justify-center p-4 bg-linear-to-br from-gray-100 to-gray-200">
+    <div className="relative h-[calc(100vh-8vh)] overflow-y-auto flex justify-center p-4 bg-linear-to-br from-gray-100 to-gray-200">
+      <ToolsApiLoader show={isAiBusy} />
       <div className="mx-auto w-full max-w-6xl px-4 py-6">
         <header className="mb-6 flex flex-col gap-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
           <div className="flex flex-col gap-1">

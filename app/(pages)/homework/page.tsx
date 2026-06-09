@@ -6,6 +6,7 @@ import Subjects from "@/app/components/LandingPage/Subjects";
 import { HomeworkDataProvider } from "./HomeworkDataProvider";
 import { homeworkSubject } from "./content";
 import { getPageData } from "@/app/lib/mongodb";
+import ProductSchema from "@/app/components/ProductSchema";
 
 // Force dynamic rendering to prevent caching
 export const dynamic = "force-dynamic";
@@ -26,9 +27,24 @@ async function fetchHomeworkData() {
 
 const Page = async () => {
   const pageData = await fetchHomeworkData();
+  const rawBaseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
+  const baseUrl = rawBaseUrl.endsWith("/")
+    ? rawBaseUrl.slice(0, -1)
+    : rawBaseUrl;
+  const productTitle = pageData?.meta?.title || MetaData.homeWork.title;
+  const metaDescription =
+    pageData?.meta?.description || MetaData.homeWork.description;
+  const pageUrl =
+    pageData?.meta?.canonicalUrl || `${baseUrl}/${MetaData.homeWork.url}`;
 
   return (
     <HomeworkDataProvider data={pageData}>
+      <ProductSchema
+        productTitle={productTitle}
+        metaDescription={metaDescription}
+        pageUrl={pageUrl}
+      />
       <MainLayout>
         <HeroSection />
         <BelowFoldLanding>

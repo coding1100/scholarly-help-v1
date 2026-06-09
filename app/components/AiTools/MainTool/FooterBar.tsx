@@ -248,7 +248,7 @@ const FooterBar = () => {
     setHoveredCell(null);
   };
   return (
-    <div className="flex justify-between items-center px-2 py-1 border-t border-gray-300 bg-white w-full mt-8 text-black">
+    <div className="flex flex-shrink-0 justify-between items-center px-2 py-1 border-t border-gray-300 bg-white w-full text-black">
       {/* Center buttons */}
       <div className="flex items-center gap-2 mx-auto">
         {/* <button className="text-gray-700 text-lg hover:text-[#155dfc]">
@@ -319,7 +319,7 @@ const FooterBar = () => {
                     onClick={() => handleBlockTypeChange(option.value)}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm text-left transition-colors ${
                       isSelected
-                        ? "bg-purple-600 text-white hover:bg-purple-700"
+                        ? "bg-[#155dfc] text-white hover:bg-[#1447e6]"
                         : "text-gray-700 hover:bg-gray-100"
                     }`}
                   >

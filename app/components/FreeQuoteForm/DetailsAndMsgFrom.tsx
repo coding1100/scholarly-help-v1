@@ -5,6 +5,7 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { FC, useEffect, useState } from "react";
 import { ColorRing } from "react-loader-spinner";
+import { isTakeMyClassLandingPage } from "@/app/lib/takeMyClassLandingRoutes";
 
 type PhoneEmailPayload = {
   FBCLID: string;
@@ -25,6 +26,7 @@ const DetailsAndMsgForm: FC<DetailsAndMsgFormProps> = ({}) => {
   const [wholeUrl, setWholeUrl] = useState<string>("");
 
   const currentPage = usePathname();
+  const isTakeMyClassPage = isTakeMyClassLandingPage(currentPage);
   // const wholeUrl = window.location.href;
   const router = useRouter();
 
@@ -46,7 +48,7 @@ const DetailsAndMsgForm: FC<DetailsAndMsgFormProps> = ({}) => {
     setWithEmailLoading(true);
     const regex = /^(.+@.+|\d{10}|\+\d{1,2}\(\d{3}\)\d{3}-\d{4})$/;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (currentPage === "/take-my-class/") {
+    if (isTakeMyClassPage) {
       if (!emailRegex.test(contactDetails)) {
         setPhoneErr("❌ Please enter a valid email.");
         setWithEmailLoading(false);
@@ -113,7 +115,7 @@ const DetailsAndMsgForm: FC<DetailsAndMsgFormProps> = ({}) => {
                 <input
                   type="text"
                   placeholder={
-                    currentPage === "/take-my-class/"
+                    isTakeMyClassPage
                       ? "Email"
                       : "Phone / Email"
                   }

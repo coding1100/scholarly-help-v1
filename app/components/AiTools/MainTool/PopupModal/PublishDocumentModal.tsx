@@ -1,15 +1,21 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
 import { HiOutlineXMark } from "react-icons/hi2";
 import { HiOutlineChartBar, HiOutlineUserGroup } from "react-icons/hi";
 import { HiOutlineSquare2Stack } from "react-icons/hi2";
 import PublishedDocument from "./PublishedDocument";
+import {
+  getAcademicErrorMessage,
+  toggleDocumentPublish,
+} from "../academicResearchApi";
 
 type PublishDocumentModalProps = {
   open: boolean;
   onClose: () => void;
   onPublish?: () => void;
   variant?: "modal" | "popover";
+  documentId?: string | null;
 };
 
 const FeatureRow: React.FC<{
@@ -33,6 +39,7 @@ const PublishDocumentModal: React.FC<PublishDocumentModalProps> = ({
   onClose,
   onPublish,
   variant = "modal",
+  documentId,
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [showPublished, setShowPublished] = useState<boolean>(false);
@@ -60,11 +67,38 @@ const PublishDocumentModal: React.FC<PublishDocumentModalProps> = ({
 
   if (!open) return null;
 
-  const handlePublishClick = () => {
-    // First show the published confirmation modal
-    setShowPublished(true);
-    // If needed later, side-effects can be triggered after user confirms
-    // or via a parent callback; avoid calling here to prevent unmounting.
+  const handlePublishClick = async () => {
+    if (!documentId) {
+      toast.error("Save this document before publishing.");
+      return;
+    }
+
+    try {
+      await toggleDocumentPublish(documentId);
+      onPublish?.();
+      setShowPublished(true);
+    } catch (error) {
+      toast.error(
+        getAcademicErrorMessage(error, "Could not publish document."),
+      );
+    }
+  };
+
+  const handleUnpublishClick = async () => {
+    if (!documentId) {
+      onClose();
+      return;
+    }
+
+    try {
+      await toggleDocumentPublish(documentId);
+      setShowPublished(false);
+      onClose();
+    } catch (error) {
+      toast.error(
+        getAcademicErrorMessage(error, "Could not unpublish document."),
+      );
+    }
   };
 
   const Panel = (
@@ -111,8 +145,8 @@ const PublishDocumentModal: React.FC<PublishDocumentModalProps> = ({
         <div className="mt-6">
           <button
             type="button"
-            onClick={handlePublishClick}
-            className="w-full rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            onClick={() => void handlePublishClick()}
+            className="w-full rounded-md bg-[#ff641a] py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#f76f30] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
           >
             Publish Document
           </button>
@@ -131,6 +165,7 @@ const PublishDocumentModal: React.FC<PublishDocumentModalProps> = ({
             setShowPublished(false);
             onClose();
           }}
+          onUnpublish={() => void handleUnpublishClick()}
         />
       </div>
     );
@@ -161,6 +196,7 @@ const PublishDocumentModal: React.FC<PublishDocumentModalProps> = ({
           setShowPublished(false);
           onClose();
         }}
+        onUnpublish={() => void handleUnpublishClick()}
       />
     </div>
   );

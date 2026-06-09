@@ -7,6 +7,7 @@ import DeliveredOn from "@/app/(pages)/take-my-class/DeliveredOn";
 import { onlineClassSubjects } from "@/app/(pages)/online-class/content";
 import SubSubjectsSection from "./SubSubjects";
 import FinalCTA from "../FinalCTA/FinalCTA";
+import { pathnameIncludesTakeMyClass } from "@/app/lib/takeMyClassLandingRoutes";
 
 // Lightweight skeleton for below-the-fold sections
 const LoadingSkeleton = ({ height = "400px" }: { height?: string }) => (
@@ -157,7 +158,7 @@ export default function BelowFoldLanding({ children }: BelowFoldLandingProps) {
 
   return (
     <>
-      {currentPath.includes("take-my-class") ||
+      {pathnameIncludesTakeMyClass(currentPath) ||
       isOnlineClassPage ||
       isAssignmentPage ||
       isExamPage ||

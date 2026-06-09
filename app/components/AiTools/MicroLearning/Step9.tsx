@@ -1,8 +1,9 @@
 "use client";
 
-import { sendChatMessage } from "@/app/utilities/api";
+import { sendMicroLearningMessage } from "@/app/utilities/api";
 import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
+import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 
 interface Step9Props {
   duration: number;
@@ -28,8 +29,15 @@ export default function Step9({
     setIsLoading(true);
     setError(null);
     try {
-      const message = `Generate a ${duration}-minute micro-lesson about ${topic}. Use the generate_micro_lesson tool with topic="${topic}", time_minutes=${duration}.`;
-      const response = await sendChatMessage(message, conversationId);
+      const message = `I want to learn ${topic} in ${duration} minutes.
+
+Please provide:
+1) A focused micro-lesson sized for ${duration} minutes
+2) Clear examples (and short visual/structured aids if useful)
+3) 2-3 quick practice questions at the end (with answers)
+4) Brief feedback/explanations for the answers`;
+
+      const response = await sendMicroLearningMessage(message, conversationId);
       setLessonContent(response.message);
       setConversationId(response.conversation_id);
     } catch (err) {
@@ -49,7 +57,8 @@ export default function Step9({
   }, [duration, topic]);
 
   return (
-    <div className="h-[calc(100vh-8vh)] w-full overflow-y-auto overflow-x-hidden break-words flex justify-center py-4 mb-6 bg-linear-to-br from-gray-100 to-gray-200">
+    <div className="relative h-[calc(100vh-8vh)] w-full overflow-y-auto overflow-x-hidden break-words flex justify-center py-4 mb-6 bg-linear-to-br from-gray-100 to-gray-200">
+      <ToolsApiLoader show={isLoading} />
       <div className="w-full max-w-4xl mx-auto px-4 md:px-8">
         {/* Header Bar */}
         <div className="bg-[#F0F0F0] rounded-2xl p-4 mb-6 flex items-center justify-between shadow-lg">
@@ -84,24 +93,7 @@ export default function Step9({
 
         {/* Main Content Card */}
         <div className="w-full bg-[#F0F0F0] rounded-3xl p-4 md:p-8 shadow-2xl overflow-x-hidden">
-          {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-20">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-3 h-3 bg-[#6C757D] rounded-full animate-bounce"></div>
-                <div
-                  className="w-3 h-3 bg-[#6C757D] rounded-full animate-bounce"
-                  style={{ animationDelay: "0.1s" }}
-                ></div>
-                <div
-                  className="w-3 h-3 bg-[#6C757D] rounded-full animate-bounce"
-                  style={{ animationDelay: "0.2s" }}
-                ></div>
-              </div>
-              <p className="text-[#666666] text-lg">
-                Generating your lesson...
-              </p>
-            </div>
-          ) : error ? (
+          {error ? (
             <div className="flex flex-col items-center justify-center py-20">
               <div className="text-[#fb2c36] text-4xl mb-4">⚠️</div>
               <h3 className="text-2xl font-bold text-[#333333] mb-2">

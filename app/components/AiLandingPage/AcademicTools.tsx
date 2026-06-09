@@ -52,17 +52,19 @@ const AcademicTools: FC<AcademicToolsProps> = ({ content }) => {
         <h2 className="sm:text-[28px] text-[24px] md:text-[36px] lg:text-[42px] xl:text-[50px] lg:font-bold font-semibold text-black mb-3 sm:mb-7 xl:leading-[60px] lg:leading-[52px] leading-[42px]">
           {content.heading1}
         </h2>
-        <p className="text-[14px] sm:text-[15px] md:text-[16px] font-normal text-[#263238] max-w-4xl mx-auto px-4 sm:px-0">
-          {content.description1}
-        </p>
+        <p
+          className="text-[14px] sm:text-[15px] md:text-[16px] font-normal text-[#263238] max-w-4xl mx-auto px-4 sm:px-0"
+          dangerouslySetInnerHTML={{ __html: content.description1 }}
+        />
       </div>
       <div className="text-center mb-8 sm:mb-10 md:mb-12 max-w-[895px] mx-auto">
         <h2 className="text-[22px] sm:text-[28px] md:text-[30px] lg:text-[40px] font-bold text-black mb-3 sm:mb-7 leading-[60px]">
           {content.heading2}
         </h2>
-        <p className="text-[14px] sm:text-[15px] md:text-[16px] font-normal text-[#263238] max-w-4xl mx-auto px-4 sm:px-0">
-          {content.description2}
-        </p>
+        <p
+          className="text-[14px] sm:text-[15px] md:text-[16px] font-normal text-[#263238] max-w-4xl mx-auto px-4 sm:px-0"
+          dangerouslySetInnerHTML={{ __html: content.description2 }}
+        />
       </div>
       <div className="grid md:grid-cols-2 lg:gap-14 gap-10  max-w-7xl mx-auto">
         {content.tools.map((tool, index) => (
@@ -75,9 +77,11 @@ const AcademicTools: FC<AcademicToolsProps> = ({ content }) => {
             <p className="lg:text-[40px] md:text-[30px] text-[24px] lg:font-bold font-semibold lg:leading-[48px] md:leading-[38px] leading-[32px] text-black mb-3">
               {tool.title}
             </p>
-            <p className="text-[17px] text-[#263238] mb-8">
-              {tool.description}
-            </p>
+            <p
+              className="text-[17px] text-[#263238] mb-8"
+              dangerouslySetInnerHTML={{ __html: tool.description }}
+            />
+
             {tool.list.map((item, i) => (
               <div key={i} className="flex items-start gap-4 mb-5">
                 <Image src={RoundCheckIcon} alt="icon" width={26} height={24} />

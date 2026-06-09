@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { FC, useEffect, useState } from "react";
 import { ColorRing } from "react-loader-spinner";
 import PhoneNumberInput from "../PhoneInput/PhoneInput";
+import { isTakeMyClassLandingPage } from "@/app/lib/takeMyClassLandingRoutes";
 
 type PayLoad = {
   email: string;
@@ -30,6 +31,7 @@ const PhoneEmailMsgFrom: FC<PhoneEmailMsgFromProps> = ({}) => {
   const router = useRouter();
   // const wholeUrl = window.location.href;
   const currentPage = usePathname();
+  const isTakeMyClassPage = isTakeMyClassLandingPage(currentPage);
   useEffect(() => {
     // Ensure this code runs only on the client
     if (typeof window !== "undefined") {
@@ -51,7 +53,7 @@ const PhoneEmailMsgFrom: FC<PhoneEmailMsgFromProps> = ({}) => {
     setLoading(true);
     const emailRegex = /^[\w.-]+@[a-zA-Z\d.-]+\.[a-zA-Z]{2,}$/;
     const phoneRegex = /^\+1[2-9]\d{2}[2-9](?!11)\d{6}$/;
-    if (currentPage !== "/take-my-class/") {
+    if (!isTakeMyClassPage) {
       if (!phoneNumber) {
         setPhoneErr("Phone Number is required");
         setLoading(false);
@@ -93,7 +95,7 @@ const PhoneEmailMsgFrom: FC<PhoneEmailMsgFromProps> = ({}) => {
       <div className="bg-white py-5 px-5 rounded-md mt-3">
         <form className="flex flex-col gap-2" onSubmit={handleFormSubmit}>
           <div className="flex flex-col items-start">
-            {currentPage !== "/take-my-class/" && (
+            {!isTakeMyClassPage && (
               <div className="flex justify-between w-full p-1 items-center rounded-md border-2 border-[#c1c1c1]">
                 <PhoneNumberInput
                   value={phoneNumber}

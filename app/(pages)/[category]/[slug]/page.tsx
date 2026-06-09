@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { getPageData } from '@/app/lib/mongodb';
+import ProductSchema from '@/app/components/ProductSchema';
 
 // Force dynamic rendering to prevent caching
 export const dynamic = 'force-dynamic';
@@ -68,8 +69,21 @@ export default async function DynamicPage({ params }: PageProps) {
     notFound();
   }
 
+  const rawBaseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
+  const baseUrl = rawBaseUrl.endsWith("/")
+    ? rawBaseUrl.slice(0, -1)
+    : rawBaseUrl;
+  const pageTitle = pageData.meta?.title || pageData.meta_title || pageData.title || 'Page';
+  const metaDescription = pageData.meta?.description || pageData.meta_description || '';
+  const pageUrl = pageData.meta?.canonicalUrl || `${baseUrl}/${params.category}/${params.slug}`;
+
   return (
     <div>
+      <ProductSchema
+        productTitle={pageTitle}
+        metaDescription={metaDescription}
+        pageUrl={pageUrl}
+      />
       <h1>{pageData.title || pageData.heroSection?.mainHeading || 'Page'}</h1>
       {pageData.content && (
         <div dangerouslySetInnerHTML={{ __html: pageData.content }} />

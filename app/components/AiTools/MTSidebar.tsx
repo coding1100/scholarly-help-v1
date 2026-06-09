@@ -3,11 +3,18 @@ import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { HiOutlineChevronUpDown } from "react-icons/hi2";
+import {
+  HiOutlineBookOpen,
+  HiOutlineChatBubbleLeftRight,
+  HiOutlineDocumentText,
+  HiOutlineQuestionMarkCircle,
+  HiOutlineSparkles,
+} from "react-icons/hi2";
 import { BiChevronsLeft } from "react-icons/bi";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import axiosInstance from "@/app/axios";
 import toast from "react-hot-toast";
-import { FiTool } from "react-icons/fi";
+import { FiTool, FiPlus } from "react-icons/fi";
 import AccountPopover from "./AccountPopover";
 import UsageAndPricing from "./UsageAndPricing";
 import PromptModal from "./PromptModal";
@@ -15,46 +22,57 @@ import axios from "axios";
 import { appendQueryString } from "@/app/utils/url";
 import { upsertFbclidToolContext } from "@/app/utils/fbclidTracking";
 import { __TOOLS_SHEET_EVENT_NAME__ } from "@/app/utils/toolsSheetClient";
+import type { AssistantPanel } from "./MainTool/AcademicAssistantPanel";
 
 interface SidebarProps {
   onToggle?: () => void;
   setFlag: (value: boolean) => void;
   flag: boolean;
-  documentsOpen?: boolean;
-  onToggleDocuments?: () => void;
+  activePanel?: AssistantPanel | null;
+  onPanelToggle?: (panel: AssistantPanel) => void;
+  onNewDocument?: () => void;
+  onStartTour?: () => void;
 }
 
 const MTSidebar = ({
   onToggle,
   setFlag,
   flag,
-  documentsOpen,
-  onToggleDocuments,
+  activePanel,
+  onPanelToggle,
+  onNewDocument,
+  onStartTour,
 }: SidebarProps) => {
   const currentRoute = usePathname();
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const currentQs =
+    typeof window !== "undefined" ? window.location.search.slice(1) : "";
+  const searchParams =
+    typeof window !== "undefined" ? new URLSearchParams(currentQs) : null;
   // Normalize route by removing trailing slash for consistent comparison
   const normalizedRoute = currentRoute?.endsWith("/")
     ? currentRoute.slice(0, -1)
     : currentRoute;
   const tools = [
-    { name: "Dashboard", href: "/tools/dashboard" },
-    { name: "Main Tool", href: "/tools/main-tool" },
-    { name: "Paraphraser Tool", href: "/tools/paraphraser-tool" },
-    { name: "Summarizer Tool", href: "/tools/summarizer-tool" },
-    { name: "Humanizer Tool", href: "/tools/humanizer-tool" },
-    { name: "Thesis Generator Tool", href: "/tools/thesis-generator-tool" },
-    { name: "Essay Outline Tool", href: "/tools/essay-outline-tool" },
-    { name: "Essay Title Generator", href: "/tools/essay-title" },
-    { name: "Research Question Generator", href: "/tools/research-question" },
-    { name: "Pythagoras Equation Solver", href: "/tools/pythagoras-solver" },
-    { name: "Citation Tool", href: "/tools/citation-tool" },
-    { name: "Tutor Tool", href: "/tools/tutor" },
-    { name: "Micro Learning", href: "/tools/mirco-learning" },
-    { name: "Exam Prep", href: "/tools/exam-prep" },
-    { name: "Language Practice", href: "/tools/language-practice" },
-    { name: "CGPA Calculator", href: "/tools/cgpa-calculator" },
+    { name: "Explore Tools", href: "/tools/dashboard" },
+    {
+      name: "Academic Research Assistant",
+      href: "/tools/academic-research-assistant",
+    },
+    // { name: "Paraphraser Tool", href: "/tools/paraphraser-tool" },
+    // { name: "Summarizer Tool", href: "/tools/summarizer-tool" },
+    // { name: "Humanizer Tool", href: "/tools/humanizer-tool" },
+    // { name: "Thesis Generator Tool", href: "/tools/thesis-generator-tool" },
+    // { name: "Essay Outline Tool", href: "/tools/essay-outline-tool" },
+    // { name: "Essay Title Generator", href: "/tools/essay-title" },
+    // { name: "Research Question Generator", href: "/tools/research-question" },
+    // { name: "Pythagoras Equation Solver", href: "/tools/pythagoras-solver" },
+    // { name: "Citation Tool", href: "/tools/citation-tool" },
+    // { name: "Tutor Tool", href: "/tools/tutor" },
+    // { name: "Micro Learning", href: "/tools/micro-learning" },
+    // { name: "Exam Prep", href: "/tools/exam-prep" },
+    // { name: "Language Practice", href: "/tools/language-practice" },
+    // { name: "CGPA Calculator", href: "/tools/cgpa-calculator" },
 
     // { name: "Syllabus Importer", href: "/tools/syllabus-importer" },
   ];
@@ -68,6 +86,32 @@ const MTSidebar = ({
   const [showPopover, setShowPopover] = useState(false);
   const [isPromptModalOpen, setPromptModalOpen] = useState(false);
   // Documents panel is controlled by parent layout
+  const isAssistantRoute =
+    normalizedRoute === "/tools/academic-research-assistant";
+  const isStudyWorkspaceRoute = normalizedRoute === "/tools/main-tool";
+  const showHowToUse = (isAssistantRoute || isStudyWorkspaceRoute) && !!onStartTour;
+  const assistantActions = [
+    {
+      name: "Documents",
+      panel: "documents" as AssistantPanel,
+      icon: <HiOutlineDocumentText className="h-4 w-4" />,
+    },
+    {
+      name: "Library",
+      panel: "library" as AssistantPanel,
+      icon: <HiOutlineBookOpen className="h-4 w-4" />,
+    },
+    {
+      name: "AI Chat",
+      panel: "chat" as AssistantPanel,
+      icon: <HiOutlineChatBubbleLeftRight className="h-4 w-4" />,
+    },
+    // {
+    //   name: "Review",
+    //   panel: "review" as AssistantPanel,
+    //   icon: <HiOutlineSparkles className="h-4 w-4" />,
+    // },
+  ];
 
   const handleLogout = () => {
     console.log("🔄 Starting logout - clearing localStorage...");
@@ -139,7 +183,9 @@ const MTSidebar = ({
   }, [normalizedRoute, searchParams]);
 
   const toolsSheetPostingRef = useRef(false);
-  const toolsSheetDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toolsSheetDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const toolsSheetNeedFlushRef = useRef(false);
 
   useEffect(() => {
@@ -186,7 +232,9 @@ const MTSidebar = ({
       try {
         const prevRaw = window.localStorage.getItem(toolsKey);
         const prev = prevRaw ? (JSON.parse(prevRaw) as unknown) : [];
-        nextTools = Array.isArray(prev) ? prev.filter((t) => typeof t === "string") : [];
+        nextTools = Array.isArray(prev)
+          ? prev.filter((t) => typeof t === "string")
+          : [];
       } catch {
         nextTools = [];
       }
@@ -199,7 +247,8 @@ const MTSidebar = ({
 
       const payload = {
         timestamp: new Date().toISOString(),
-        email: state.user_email || localStorage.getItem("user_email") || undefined,
+        email:
+          state.user_email || localStorage.getItem("user_email") || undefined,
         userId: state.user_id || localStorage.getItem("user_id") || undefined,
         fbc: fbclid,
         toolUsed: nextTools,
@@ -247,7 +296,9 @@ const MTSidebar = ({
       const fbclid = (urlFbclid || state.fbclid || "").trim();
       if (!fbclid) return;
 
-      const detail = (evt as CustomEvent).detail as { toolName?: string } | undefined;
+      const detail = (evt as CustomEvent).detail as
+        | { toolName?: string }
+        | undefined;
       const toolFromEvent = detail?.toolName;
 
       const toolsKey = `sh_toolssheet_tools_${fbclid}`;
@@ -255,7 +306,9 @@ const MTSidebar = ({
       try {
         const prevRaw = window.localStorage.getItem(toolsKey);
         const prev = prevRaw ? (JSON.parse(prevRaw) as unknown) : [];
-        toolsList = Array.isArray(prev) ? prev.filter((t) => typeof t === "string") : [];
+        toolsList = Array.isArray(prev)
+          ? prev.filter((t) => typeof t === "string")
+          : [];
       } catch {
         toolsList = [];
       }
@@ -326,9 +379,8 @@ const MTSidebar = ({
           .toLowerCase();
         if (resolvedEmail) {
           try {
-            if (!localStorage.getItem("user_email")) {
-              localStorage.setItem("user_email", resolvedEmail);
-            }
+            // Always update; user can sign in/out between sessions.
+            localStorage.setItem("user_email", resolvedEmail);
           } catch {
             // ignore
           }
@@ -365,9 +417,10 @@ const MTSidebar = ({
         if (currentRoute.includes("tools") || currentRoute === "/pricing/") {
           const currentQs = searchParams?.toString();
           const signInBase = currentQs ? `/sign-in?${currentQs}` : "/sign-in";
+          const returnTo = `${currentRoute}${currentQs ? `?${currentQs}` : ""}`;
           const signInHref = appendQueryString(
             signInBase,
-            `returnUrl=${encodeURIComponent(currentRoute)}`,
+            `returnUrl=${encodeURIComponent(returnTo)}`,
           );
           router.push(signInHref);
         } else {
@@ -377,7 +430,7 @@ const MTSidebar = ({
     };
 
     verifyToken();
-  }, [accessToken, normalizedRoute, router, searchParams]);
+  }, [accessToken, normalizedRoute, router, currentQs]);
   useEffect(() => {
     if (!userToggled) {
       if (currentRoute.startsWith("/tools/")) {
@@ -395,8 +448,9 @@ const MTSidebar = ({
 
   return (
     <aside
+      data-tour="ara-sidebar"
       className={
-        "relative flex h-screen w-60 flex-col border-r dark:border-gray-700 bg-gray-100 dark:bg-gray-800 p-4 font-sans text-black dark:text-gray-200 transition-colors duration-300"
+        "relative flex h-full w-60 flex-col overflow-hidden border-r dark:border-gray-700 bg-gray-100 dark:bg-gray-800 p-4 font-sans text-black dark:text-gray-200 transition-colors duration-300"
       }
     >
       {/* 1. User Profile Section */}
@@ -442,31 +496,7 @@ const MTSidebar = ({
         )}
       </div>
 
-      {/* 2. New Button */}
-
-      {/* {currentRoute === "/tools/main-tool/" ? (
-        <button
-          className="flex  cursor-pointer items-center gap-3 px-3 py-1 text-sm transition-colors bg-white hover:bg-white "
-          onClick={() => setPromptModalOpen(true)}
-        >
-          <HiMiniPlusCircle className="h-5 w-5" />
-          <span className="text-sm font-semibold">New</span>
-        </button>
-      ) : (
-        <Link
-          href="/tools/main-tool/"
-          className="px-3 py-1 text-sm font-semibold transition-colors bg-white hover:bg-white"
-        >
-          Main Tool
-        </Link>
-      )}
-      <button
-        className="flex cursor-pointer items-center gap-3 px-3 py-1 text-sm transition-colors bg-white hover:bg-white "
-        onClick={onToggleDocuments}
-      >
-        <span className="text-sm font-semibold">Documents</span>
-      </button> */}
-      <div className="flex-shrink-0 mb-2">
+      <div className="mb-2 min-h-0 flex-1 overflow-y-auto pr-1 scrollbar-hide">
         {/* <button
           className="flex w-full items-center gap-3 px-3 py-1 text-sm transition-colors bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-md"
           onClick={() => setShowTools((prev) => !prev)}
@@ -475,28 +505,96 @@ const MTSidebar = ({
           <span className="text-sm font-semibold">Tools</span>
         </button> */}
         {/* {showTools && ( */}
-        <div className="mt-2 flex flex-col gap-1 pl-8">
-          {tools.map((tool, index) => (
-            <Link
-              key={index}
-              href={appendQueryString(
-                tool.href,
-                searchParams?.toString() || "",
-              )}
-              className={` py-1 px-2 text-sm rounded-md transition-colors ${
-                normalizedRoute === tool.href
-                  ? "font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30"
-                  : " hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
-              }`}
+        <div className="mt-2 flex flex-col gap-1 pl-4">
+          {tools.map((tool, index) => {
+            const isAcademicAssistant =
+              tool.href === "/tools/academic-research-assistant";
+            const isActive = normalizedRoute === tool.href;
+
+            return (
+              <div key={index} className="w-full">
+                <Link
+                  href={appendQueryString(
+                    tool.href,
+                    searchParams?.toString() || "",
+                  )}
+                  className={`block w-full rounded-md px-2 py-1 text-left text-sm leading-5 transition-colors ${
+                    isActive
+                      ? "font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30"
+                      : " hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                  }`}
+                >
+                  {tool.name}
+                </Link>
+                {isAcademicAssistant && isAssistantRoute && (
+                  <div
+                    data-tour="ara-assistant-panels"
+                    className="mt-1 mb-2 ml-2 space-y-1 border-l border-gray-200 pl-3"
+                  >
+                    <button
+                      type="button"
+                      className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700"
+                      onClick={() =>
+                        onNewDocument
+                          ? onNewDocument()
+                          : setPromptModalOpen(true)
+                      }
+                    >
+                      <FiPlus className="h-4 w-4" />
+                      <span>New</span>
+                    </button>
+                    {assistantActions.map((item) => (
+                      <button
+                        key={item.name}
+                        type="button"
+                        onClick={() => onPanelToggle?.(item.panel)}
+                        className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors ${
+                          activePanel === item.panel
+                            ? "bg-primary-100 font-semibold text-primary-400"
+                            : "text-gray-700 hover:bg-gray-200"
+                        }`}
+                      >
+                        {item.icon}
+                        <span>{item.name}</span>
+                      </button>
+                    ))}
+                    {/* <button
+                      type="button"
+                      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-200"
+                      onClick={() => toast("Tutorials are coming soon.")}
+                    >
+                      <HiOutlineQuestionMarkCircle className="h-4 w-4" />
+                      <span>Tutorials</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-200"
+                      onClick={() =>
+                        toast(
+                          "Shortcut: Shift + ArrowRight accepts AI suggestions.",
+                        )
+                      }
+                    >
+                      <FiTool className="h-4 w-4" />
+                      <span>Shortcuts</span>
+                    </button> */}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          {showHowToUse && (
+            <button
+              type="button"
+              className="mt-3 flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700"
+              onClick={onStartTour}
             >
-              {tool.name}
-            </Link>
-          ))}
+              <HiOutlineQuestionMarkCircle className="h-4 w-4" />
+              <span>How to Use</span>
+            </button>
+          )}
         </div>
       </div>
-
-      {/* Spacer to push bottom content down */}
-      <div className="flex-1"></div>
 
       <div className="flex-shrink-0 mt-auto">
         <UsageAndPricing setFlag={setFlag} flag={flag} />
@@ -508,8 +606,12 @@ const MTSidebar = ({
           toast.loading("Generating document...", { duration: 1500 });
           setTimeout(() => {
             toast.success("Document ready!", { duration: 1000 });
-            // router.push("/writely-ai?start=1");
-            router.push("/tools/main-tool?start=1");
+            router.push(
+              appendQueryString(
+                "/tools/academic-research-assistant?start=1",
+                searchParams?.toString() || "",
+              ),
+            );
           }, 2000);
         }}
       />

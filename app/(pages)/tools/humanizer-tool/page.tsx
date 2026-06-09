@@ -1,24 +1,36 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import ToolsLayout from "@/app/components/AiTools/ToolsLayout";
 import HumanizerTool from "@/app/components/AiTools/HumanizerTool/HumanizerTool";
+import { appendQueryString } from "@/app/utils/url";
+import { ToolsSuspenseFallback } from "@/app/components/AiTools/ToolsApiLoader";
 
 export default function HumanizerPage() {
   const [flag, setFlag] = useState<boolean>(false);
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     const isAuthenticated = localStorage.getItem("access_token");
     if (!isAuthenticated) {
-      router.replace("/sign-in?returnUrl=/tools/humanizer-tool");
+      const currentQs =
+        typeof window !== "undefined" ? window.location.search.slice(1) : "";
+      const signInBase = currentQs ? `/sign-in?${currentQs}` : "/sign-in";
+      const returnTo = `${pathname || "/tools/humanizer-tool"}${currentQs ? `?${currentQs}` : ""}`;
+      router.replace(
+        appendQueryString(
+          signInBase,
+          `returnUrl=${encodeURIComponent(returnTo)}`,
+        ),
+      );
     }
-  }, [router]);
+  }, [pathname, router]);
 
   return (
     <Suspense
-      fallback={<div className="animate-pulse bg-gray-200 dark:bg-gray-800 h-72" />}
+      fallback={<ToolsSuspenseFallback />}
     >
       <ToolsLayout setFlag={setFlag} flag={flag}>
         <HumanizerTool />

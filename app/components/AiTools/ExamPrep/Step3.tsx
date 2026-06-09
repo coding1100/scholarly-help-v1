@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { HiClock, HiDocumentText } from "react-icons/hi2";
 import ReactMarkdown from "react-markdown";
+import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 
 interface Step3Props {
   examType: string;
@@ -341,9 +342,8 @@ export default function Step3({
                   Your exam time has ended. Your answers will be submitted
                   automatically.
                 </p>
-                <div className="flex items-center justify-center gap-2 text-[#51a2ff]">
-                  <div className="w-2 h-2 bg-[#51a2ff] rounded-full animate-pulse"></div>
-                  <span className="text-sm">Submitting...</span>
+                <div className="relative flex min-h-[80px] items-center justify-center">
+                  <ToolsApiLoader show contained respectToolsSidebar={false} />
                 </div>
               </div>
             </div>

@@ -5,7 +5,7 @@ import PopModal from "./PopModal";
 import DocumentSettingsModalContent from "./DocumentSettingsModal";
 import { TbSettings } from "react-icons/tb";
 import { LiaFileAltSolid } from "react-icons/lia";
-import axios from "axios";
+import { generateEssayOutline } from "./MainTool/academicResearchApi";
 
 interface PromptModalProps {
   isOpen: boolean;
@@ -24,8 +24,6 @@ const PromptModal: React.FC<PromptModalProps> = ({
   const [selectedOutline, setSelectedOutline] = useState("standard");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [input, setInput] = useState("");
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
   const wordCount = input.trim().split(/\s+/).filter(Boolean).length;
   const progress = Math.min(wordCount * 10, 100);
 
@@ -100,24 +98,16 @@ const PromptModal: React.FC<PromptModalProps> = ({
     setIsLoading(true);
 
     try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/essay-outline`,
-        {
-          topic: input,
-          essay_type: headingType,
-          essay_level: "post graduate",
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        },
-      );
+      const response = await generateEssayOutline({
+        topic: input,
+        essay_type: headingType,
+        essay_level: "post graduate",
+      });
 
       // Extract the section titles (strings) based on your image structure
-      const sectionTitles = response.data.data.outline.map(
-        (item: any) => item.section,
+      const sectionTitles = (response.outline || []).map(
+        (item: any) =>
+          typeof item === "string" ? item : item.section || item.title,
       );
 
       if (!sectionTitles || sectionTitles.length === 0) {

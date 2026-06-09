@@ -7,6 +7,18 @@ import Link from "next/link";
 import Image from "next/image";
 import { styleParentheticalText } from "./heroHeadingUtils";
 import { FaCircleCheck } from "react-icons/fa6";
+import {
+  isTakeMyClassLandingPage,
+  normalizePathname,
+  pathnameIncludesTakeMyClass,
+  TAKE_MY_CLASS_3_PATH,
+  TAKE_MY_CLASS_PATH,
+  TAKE_MY_CLASS_PROFESSOR_PATH,
+  TAKE_MY_CLASS_STILL_DOING_PATH,
+  TAKE_MY_CLASS_PROTECT_GPA_PATH,
+  TAKE_MY_CLASS_ALWAYS_WORKING_HARDER_PATH,
+  TAKE_MY_CLASS_SAVING_YOUR_FUTURE_PATH,
+} from "@/app/lib/takeMyClassLandingRoutes";
 
 const CHECK_BG = "#9F92EC";
 const PRIMARY_BG = "#9F92EC";
@@ -48,7 +60,8 @@ interface HeroLeadProps {
 }
 const HeroLead: FC<HeroLeadProps> = ({ heroContent, hideHeading }) => {
   const pathname = usePathname();
-  const normalizedPath = (pathname || "").replace(/\/+$/, "") || "/";
+  const normalizedPath = normalizePathname(pathname);
+  const isTakeMyClassPage = isTakeMyClassLandingPage(pathname);
 
   // Routes where badges section should be hidden
   const hiddenRoutes = new Set(
@@ -60,8 +73,20 @@ const HeroLead: FC<HeroLeadProps> = ({ heroContent, hideHeading }) => {
       "/guarantee-anonymity",
       "/plagiarism-free-process",
       "/us-based-phd-experts",
-      "/take-my-class",
-      "/take-my-class/",
+      TAKE_MY_CLASS_PATH,
+      `${TAKE_MY_CLASS_PATH}/`,
+      TAKE_MY_CLASS_3_PATH,
+      `${TAKE_MY_CLASS_3_PATH}/`,
+      TAKE_MY_CLASS_PROFESSOR_PATH,
+      `${TAKE_MY_CLASS_PROFESSOR_PATH}/`,
+      TAKE_MY_CLASS_STILL_DOING_PATH,
+      `${TAKE_MY_CLASS_STILL_DOING_PATH}/`,
+      TAKE_MY_CLASS_PROTECT_GPA_PATH,
+      `${TAKE_MY_CLASS_PROTECT_GPA_PATH}/`,
+      TAKE_MY_CLASS_ALWAYS_WORKING_HARDER_PATH,
+      `${TAKE_MY_CLASS_ALWAYS_WORKING_HARDER_PATH}/`,
+      TAKE_MY_CLASS_SAVING_YOUR_FUTURE_PATH,
+      `${TAKE_MY_CLASS_SAVING_YOUR_FUTURE_PATH}/`,
       "/take-my-exam",
       "/take-my-exam/",
     ].map((route) => route.replace(/\/+$/, "") || "/"),
@@ -94,8 +119,20 @@ const HeroLead: FC<HeroLeadProps> = ({ heroContent, hideHeading }) => {
   // Routes where buttons should be hidden
   const buttonHiddenRoutes = new Set(
     [
-      "/take-my-class",
-      "/take-my-class/",
+      TAKE_MY_CLASS_PATH,
+      `${TAKE_MY_CLASS_PATH}/`,
+      TAKE_MY_CLASS_3_PATH,
+      `${TAKE_MY_CLASS_3_PATH}/`,
+      TAKE_MY_CLASS_PROFESSOR_PATH,
+      `${TAKE_MY_CLASS_PROFESSOR_PATH}/`,
+      TAKE_MY_CLASS_STILL_DOING_PATH,
+      `${TAKE_MY_CLASS_STILL_DOING_PATH}/`,
+      TAKE_MY_CLASS_PROTECT_GPA_PATH,
+      `${TAKE_MY_CLASS_PROTECT_GPA_PATH}/`,
+      TAKE_MY_CLASS_ALWAYS_WORKING_HARDER_PATH,
+      `${TAKE_MY_CLASS_ALWAYS_WORKING_HARDER_PATH}/`,
+      TAKE_MY_CLASS_SAVING_YOUR_FUTURE_PATH,
+      `${TAKE_MY_CLASS_SAVING_YOUR_FUTURE_PATH}/`,
       "/take-my-class-2",
       "/take-my-class-2/",
       "/take-my-exam",
@@ -146,30 +183,27 @@ const HeroLead: FC<HeroLeadProps> = ({ heroContent, hideHeading }) => {
     <div className="max-w-2xl">
       {!hideHeading && (
         <h1 className="font-semibold text-[30px] md:text-[48px] leading-[1.1] text-black">
-          {pathname === "/take-my-class/" ? (
+          {heroContent?.mainHeading ? (
+            <span
+              className={isTakeMyClassPage ? "md:pt-5 block" : undefined}
+              dangerouslySetInnerHTML={{
+                __html: getStyledMainHeading(heroContent.mainHeading),
+              }}
+            />
+          ) : isTakeMyClassPage ? (
             <div className="md:pt-5">
               We Take Your Online Class |{" "}
               <span className="text-[#F56200]">Guaranteed A or B</span>
             </div>
           ) : (
             <>
-              {heroContent?.mainHeading ? (
-                <span
-                  dangerouslySetInnerHTML={{
-                    __html: getStyledMainHeading(heroContent.mainHeading),
-                  }}
-                />
-              ) : (
-                <>
-                  Stop Sacrificing
-                  <br />
-                  Your Time, We&apos;ll
-                  <br />
-                  Handle Your
-                  <br />
-                  Classes
-                </>
-              )}
+              Stop Sacrificing
+              <br />
+              Your Time, We&apos;ll
+              <br />
+              Handle Your
+              <br />
+              Classes
             </>
           )}
         </h1>
@@ -231,7 +265,7 @@ const HeroLead: FC<HeroLeadProps> = ({ heroContent, hideHeading }) => {
       )}
 
       {/* Done */}
-      {(pathname === "/take-my-class/" || shouldHideBadges) && (
+      {(isTakeMyClassPage || shouldHideBadges) && (
         <div className="sm:mt-6 mt-2">
           <div className="flex justify-between items-center sm:gap-5 gap-2">
             <div className="p-3 flex items-start gap-3 sm:bg-white sm:border sm:border-[#E2E1F3] rounded-lg">
@@ -275,7 +309,7 @@ const HeroLead: FC<HeroLeadProps> = ({ heroContent, hideHeading }) => {
             </button>
           )}
 
-          {!pathname?.includes("/take-my-class") && (
+          {!pathnameIncludesTakeMyClass(pathname) && (
             <>
               {heroContent?.btn2Url ? (
                 <Link

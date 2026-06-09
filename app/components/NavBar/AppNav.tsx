@@ -10,6 +10,7 @@ import useBreakpoint from "@/app/(pages)/hooks/useMediabreakpoint";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { hideLinks, supportMail, withChatNow } from "../HideLinks/HideLinks";
+import { isTakeMyClassLandingPage } from "@/app/lib/takeMyClassLandingRoutes";
 import LogoSmall from "@/app/assets/Images/logoSmall.png";
 import LogoNormal from "@/app/assets/Images/logo.png";
 import Image from "next/image";
@@ -22,6 +23,7 @@ const AppNav: FC<AppNavProps> = ({}) => {
   const [servicesMenu, setOpenServicesMenu] = useState(false);
 
   const currentPage = usePathname();
+  const isTakeMyClassPage = isTakeMyClassLandingPage(currentPage);
   const hideLink = hideLinks.includes(currentPage);
   const withChat = withChatNow.includes(currentPage);
   const showSupportMail = supportMail.includes(currentPage);
@@ -103,7 +105,7 @@ const AppNav: FC<AppNavProps> = ({}) => {
               +1 646 480 6092 
             </a>
           </div> */}
-            {currentPage !== "/take-my-class/" && (
+            {!isTakeMyClassPage && (
               <div className="mr-4">
                 <a
                   href={`tel:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER}`}
@@ -389,7 +391,7 @@ const AppNav: FC<AppNavProps> = ({}) => {
                 />
               </Link>
             </div>
-            {currentPage !== "/take-my-class/" && (
+            {!isTakeMyClassPage && (
               <div className="md:text-lg text-sm text-primary-400 mr-2">
                 <a
                   href={`tel:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER}`}

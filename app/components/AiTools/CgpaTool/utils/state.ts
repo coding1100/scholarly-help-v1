@@ -11,7 +11,7 @@ export function createEmptyCourse(): Course {
   };
 }
 
-export function createSemester(index: number, courseRows = 4): Semester {
+export function createSemester(index: number, courseRows = 2): Semester {
   return {
     id: createId("sem"),
     title: `Semester ${index}`,
@@ -26,7 +26,7 @@ export function createPreviousSemesterRow(): PreviousSemesterGpa {
 export function createInitialState(): CalculatorState {
   return {
     gradeScale: DEFAULT_GRADE_SCALE,
-    semesters: [createSemester(1, 4)],
+    semesters: [createSemester(1)],
     previousSemesters: [createPreviousSemesterRow()],
     preferences: {
       includePreviousInCgpa: true,

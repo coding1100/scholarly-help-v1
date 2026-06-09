@@ -64,12 +64,15 @@ export async function POST(request: NextRequest) {
       const form = await request.formData();
       const data = Object.fromEntries(form.entries());
       body = {
-        timestamp: typeof data.timestamp === "string" ? data.timestamp : undefined,
+        timestamp:
+          typeof data.timestamp === "string" ? data.timestamp : undefined,
         email: typeof data.email === "string" ? data.email : undefined,
-        phoneNumber: typeof data.phoneNumber === "string" ? data.phoneNumber : undefined,
+        phoneNumber:
+          typeof data.phoneNumber === "string" ? data.phoneNumber : undefined,
         fbc: typeof data.fbc === "string" ? data.fbc : undefined,
         userId: typeof data.userId === "string" ? data.userId : undefined,
-        qualified: typeof data.qualified === "string" ? data.qualified : undefined,
+        qualified:
+          typeof data.qualified === "string" ? data.qualified : undefined,
         toolUsed:
           typeof data.toolUsed === "string"
             ? data.toolUsed
@@ -91,7 +94,9 @@ export async function POST(request: NextRequest) {
     }
 
     const clientEmail = requiredEnv("GOOGLE_CLIENT_TOOL_EMAIL");
-    const privateKey = normalizePrivateKey(requiredEnv("GOOGLE_PRIVATE_TOOL_KEY"));
+    const privateKey = normalizePrivateKey(
+      requiredEnv("GOOGLE_PRIVATE_TOOL_KEY"),
+    );
     const spreadsheetId = requiredEnv("GOOGLE_SHEET_TOOL_ID");
 
     const auth = new google.auth.JWT({
@@ -155,7 +160,12 @@ export async function POST(request: NextRequest) {
           requestBody: { values: [row] },
         });
         return NextResponse.json(
-          { success: true, message: "Row updated", mode: "update", row: rowNumber1Based },
+          {
+            success: true,
+            message: "Row updated",
+            mode: "update",
+            row: rowNumber1Based,
+          },
           { headers: corsHeaders },
         );
       }
@@ -184,4 +194,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

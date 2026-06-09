@@ -5,6 +5,7 @@ import { MetaData } from "@/app/metadata/metadata";
 import { TakeMyClassDataProvider } from "../TakeMyClassDataProvider";
 import type { Metadata } from "next";
 import { getPageData } from "@/app/lib/mongodb";
+import ProductSchema from "@/app/components/ProductSchema";
 
 export const revalidate = 0;
 
@@ -24,9 +25,24 @@ import DelayedBelowFold from "@/app/components/LandingPage/DelayedBelowFold";
 
 const Page = async () => {
   const pageData = await fetchTakeMyClassData();
+  const rawBaseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
+  const baseUrl = rawBaseUrl.endsWith("/")
+    ? rawBaseUrl.slice(0, -1)
+    : rawBaseUrl;
+  const productTitle = pageData?.meta?.title || MetaData.takeMyClass.title;
+  const metaDescription =
+    pageData?.meta?.description || MetaData.takeMyClass.description;
+  const pageUrl =
+    pageData?.meta?.canonicalUrl || `${baseUrl}/${MetaData.takeMyClass.url}`;
 
   return (
     <TakeMyClassDataProvider data={pageData}>
+      <ProductSchema
+        productTitle={productTitle}
+        metaDescription={metaDescription}
+        pageUrl={pageUrl}
+      />
       <MainLayout>
         <HeroSection useHeroForm2 />
         <DelayedBelowFold>

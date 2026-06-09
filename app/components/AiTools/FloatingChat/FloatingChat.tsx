@@ -100,7 +100,7 @@ export default function FloatingChat() {
             {messages.length === 0 ? (
               <div className="flex justify-center items-center h-full">
                 <p className="text-gray-600 text-sm text-center">
-                  Complete step 1 and I’ll start guiding you here.
+                  Ask a follow-up after your Tutor result.
                 </p>
               </div>
             ) : (

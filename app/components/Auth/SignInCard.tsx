@@ -10,7 +10,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
 import { ColorRing } from "react-loader-spinner";
 import SocialAuthButtons from "./SocialAuthButtons";
-import { mergeSearchParams } from "@/app/utils/url";
+import { buildHrefWithSameQuery } from "@/app/utils/url";
 
 interface SignInCardProps {
   switchAuthForm?: string;
@@ -24,11 +24,7 @@ const SignInCard: FC<SignInCardProps> = ({
   const route = useRouter();
   const searchParams = useSearchParams();
   const returnUrl = searchParams.get("returnUrl");
-  const preservedParams = useCallback(() => {
-    const sp = new URLSearchParams(searchParams?.toString() || "");
-    sp.delete("returnUrl");
-    return sp;
-  }, [searchParams]);
+  const qs = searchParams?.toString() || "";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -52,7 +48,7 @@ const SignInCard: FC<SignInCardProps> = ({
         /ERR_NAME_NOT_RESOLVED/i.test(msg));
 
     if (isLikelyDnsOrOffline) {
-      return "We can’t reach the server right now (network/DNS issue). Please check your connection and try again.";
+      return "We can't connect, check your internet connection and try again.";
     }
 
     return null;
@@ -63,22 +59,26 @@ const SignInCard: FC<SignInCardProps> = ({
       localStorage.setItem("access_token", data.access_token);
       localStorage.setItem("user_id", data.user.user_id);
       localStorage.setItem("user_name", data.user.name);
-      // Some backends include user email; fallback to the entered email.
-      const resolvedEmail =
-        String(data?.user?.email || data?.user?.user_email || email || "")
-          .trim()
-          .toLowerCase() || "";
-      if (resolvedEmail) localStorage.setItem("user_email", resolvedEmail);
       localStorage.setItem("package_type", data.user.package_type);
+      // Always overwrite to avoid stale email from a previous login.
+      const resolvedEmail = String(
+        data?.user?.email || data?.user?.user_email || email,
+      )
+        .trim()
+        .toLowerCase();
+      if (resolvedEmail) localStorage.setItem("user_email", resolvedEmail);
       document.cookie = `access_token=${data.access_token}; path=/; max-age=86400`;
 
       setTimeout(() => {
-        const target = returnUrl || "/tools/dashboard/";
-        const finalTarget = mergeSearchParams(target, preservedParams());
-        route.replace(finalTarget);
+        const redirectPath = returnUrl || "/tools/dashboard/";
+        const qs = searchParams?.toString() || "";
+        const redirectUrl = returnUrl
+          ? redirectPath
+          : buildHrefWithSameQuery(redirectPath, new URLSearchParams(qs));
+        route.replace(redirectUrl);
       }, 100);
     },
-    [returnUrl, route, preservedParams, email],
+    [returnUrl, route, searchParams, email],
   );
 
   const currentPage = usePathname();
@@ -94,11 +94,11 @@ const SignInCard: FC<SignInCardProps> = ({
         console.log("Redirecting to:", returnUrl);
         // Small delay to ensure cookie is set before redirect
         setTimeout(() => {
-          route.replace(mergeSearchParams(returnUrl, preservedParams()));
+          route.replace(returnUrl);
         }, 100);
       }
     }
-  }, [returnUrl, route, preservedParams]);
+  }, [returnUrl, route]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -185,7 +185,13 @@ const SignInCard: FC<SignInCardProps> = ({
             {submitError}
           </span>
         )}
-        <Link href="/forgot-password/" className="text-sm hover:underline ">
+        <Link
+          href={buildHrefWithSameQuery(
+            "/forgot-password/",
+            new URLSearchParams(qs),
+          )}
+          className="text-sm hover:underline "
+        >
           Forgot Password?
         </Link>
 
@@ -210,17 +216,15 @@ const SignInCard: FC<SignInCardProps> = ({
           {!submitError && <FaArrowRight />}
         </button>
 
-        <SocialAuthButtons
-          returnUrl={mergeSearchParams(
-            returnUrl || "/tools/dashboard/",
-            preservedParams(),
-          )}
-        />
+        <SocialAuthButtons returnUrl={returnUrl} authAction="sign_in" />
       </form>
       <p className="text-center text-sm  mt-8 relative">
         Do not have an account?
         {switchAuthForm === "" ? (
-          <Link href="/sign-up/" className="hover:underline pl-1">
+          <Link
+            href={buildHrefWithSameQuery("/sign-up/", new URLSearchParams(qs))}
+            className="hover:underline pl-1"
+          >
             Sign up Here
           </Link>
         ) : (

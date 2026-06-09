@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { LuZap } from "react-icons/lu";
 import PricingPopup from "./PricingPopup";
 import { appendQueryString } from "@/app/utils/url";
@@ -22,7 +22,8 @@ interface UsageAndPricingProps {
 const UsageAndPricing: React.FC<UsageAndPricingProps> = ({ setFlag, flag }) => {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const currentQs =
+    typeof window !== "undefined" ? window.location.search.slice(1) : "";
 
   const [showPricing, setShowPricing] = useState(false);
   const [totalTokens, setTotalTokens] = useState<number>(
@@ -41,7 +42,6 @@ const UsageAndPricing: React.FC<UsageAndPricingProps> = ({ setFlag, flag }) => {
     totalTokens > 0 ? Math.min((usedTokens / totalTokens) * 100, 100) : 0;
 
   const redirectToSignIn = useCallback(() => {
-    const currentQs = searchParams?.toString();
     const signInBase = currentQs ? `/sign-in?${currentQs}` : "/sign-in";
     router.push(
       appendQueryString(
@@ -49,7 +49,7 @@ const UsageAndPricing: React.FC<UsageAndPricingProps> = ({ setFlag, flag }) => {
         `returnUrl=${encodeURIComponent(pathname || "/tools/dashboard")}`,
       ),
     );
-  }, [appendQueryString, pathname, router, searchParams]);
+  }, [currentQs, pathname, router]);
 
   useEffect(() => {
     initTokenUsageAutoRefresh(__TOOLS_SHEET_EVENT_NAME__);
