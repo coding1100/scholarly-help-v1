@@ -133,7 +133,7 @@ const ThankYou: FC<ThankYouProps> = ({}) => {
             overwhelm.
           </p> */}
           <p className="lg:text-xl ">
-            Our academic team is online right now. Start a chat to skip <br />{" "}
+            Our academic team is online right now. Send us <b>message on WhatsApp</b> to skip <br />{" "}
             the queue and get your price instantly.
           </p>
         </div>
@@ -200,7 +200,7 @@ const ThankYou: FC<ThankYouProps> = ({}) => {
               Need Urgent Help?
             </p>
             <div className="flex flex-col gap-6 mb-8">
-              <a
+              {/* <a
                 href=""
                 onClick={(e) => {
                   e.preventDefault();
@@ -212,7 +212,7 @@ const ThankYou: FC<ThankYouProps> = ({}) => {
                 <Button className="bg-primary-500 w-full text-xl">
                   Live Chat Now
                 </Button>
-              </a>
+              </a> */}
 
               <div onClick={apiCall}>
                 <a
@@ -236,7 +236,7 @@ const ThankYou: FC<ThankYouProps> = ({}) => {
                   <Phone color="#2B1C50" />
                 </div>
 
-                <p className="text-xl font-semibold">++1 646 480 6092 </p>
+                <p className="text-xl font-semibold">+1 646 480 6092 </p>
               </a>
             </div>
           </div>

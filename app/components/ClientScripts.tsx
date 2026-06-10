@@ -20,17 +20,10 @@ declare global {
 export default function ClientScripts() {
   const currentPage = usePathname();
   const isHomePage = currentPage === "/";
-  const isThankYouPage =
-    currentPage === "/thank-you" ||
-    currentPage === "/thank-you/" ||
-    currentPage === "/thank-you-2" ||
-    currentPage === "/thank-you-2/" ||
-    currentPage === "/thank-you-3" ||
-    currentPage === "/thank-you-3/";
   const isAboutPage =
     currentPage === "/about-us" || currentPage === "/about-us/";
 
-  const ShowLiveChat = isHomePage || isThankYouPage;
+  const ShowLiveChat = isHomePage;
 
   // Memoize functions to prevent unnecessary re-renders
   const hideLiveChatWidget = useCallback(() => {
@@ -75,7 +68,7 @@ export default function ClientScripts() {
     if (!ShowLiveChat) {
       hideLiveChatWidget();
     }
-  }, [currentPage, isHomePage, isThankYouPage, hideLiveChatWidget]);
+  }, [currentPage, ShowLiveChat, hideLiveChatWidget]);
 
   return (
     <>
