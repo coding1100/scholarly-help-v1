@@ -133,7 +133,7 @@ const ThankYou: FC<ThankYouProps> = ({}) => {
             overwhelm.
           </p> */}
           <p className="lg:text-xl ">
-            Our academic team is online right now. Send us <b>message on WhatsApp</b> to skip <br />{" "}
+            Our academic team is online right now. Send us message on <b>WhatsApp</b> to skip <br />{" "}
             the queue and get your price instantly.
           </p>
         </div>
