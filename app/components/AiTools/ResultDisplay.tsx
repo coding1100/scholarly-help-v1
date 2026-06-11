@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { FaRegCopy } from "react-icons/fa";
+import toast from "react-hot-toast";
 
 interface ResultDisplayProps {
   resultText: string;
@@ -21,14 +22,16 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
   const handleCopyToClipboard = async () => {
     if (onCopy) {
       onCopy(resultText);
-
       setCopyFeedback("Copied!");
     } else {
       try {
         await navigator.clipboard.writeText(resultText);
+        toast.success("Copied to clipboard!");
+        setCopyFeedback("Copied!");
         setTimeout(() => setCopyFeedback(""), 1500);
       } catch (err) {
         console.error("Failed to copy text: ", err);
+        toast.error("Failed to copy.");
         setCopyFeedback("Failed to copy!");
         setTimeout(() => setCopyFeedback(""), 1500);
       }

@@ -3,6 +3,7 @@
 import { sendMicroLearningMessage } from "@/app/utilities/api";
 import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
+import toast from "react-hot-toast";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 
 interface Step9Props {
@@ -46,6 +47,7 @@ Please provide:
           ? err.message
           : "Failed to load lesson. Please try again.";
       setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

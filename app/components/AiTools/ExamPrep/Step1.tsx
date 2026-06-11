@@ -6,6 +6,7 @@ import { HiChevronDown } from "react-icons/hi";
 import { sendChatMessage, ChatResponse } from "@/app/utilities/api";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
+import toast from "react-hot-toast";
 
 interface Step1Props {
   onContinue?: (data: {
@@ -86,16 +87,18 @@ export default function Step1({ onContinue }: Step1Props) {
 
     // Validate required fields
     if (!examType || !subject || !examDate || !knowledgeLevel) {
-      setError("Please fill in all required fields.");
+      const msg = "Please fill in all required fields.";
+      setError(msg);
+      toast.error(msg);
       return;
     }
 
     // Validate exam date is not in the past
     const today = new Date().toISOString().split("T")[0];
     if (examDate < today) {
-      setError(
-        "Exam date cannot be in the past. Please select today or a future date.",
-      );
+      const msg = "Exam date cannot be in the past. Please select today or a future date.";
+      setError(msg);
+      toast.error(msg);
       return;
     }
 
@@ -128,6 +131,7 @@ export default function Step1({ onContinue }: Step1Props) {
           ? err.message
           : "Failed to create study schedule. Please try again.";
       setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
