@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useMemo, useState } from "react";
 import { sendChatMessage } from "../utilities/api";
+import toast from "react-hot-toast";
 
 export type CEFRLevel = "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
 
@@ -219,7 +220,17 @@ export function LanguagePracticeProvider({
         hint,
       });
 
-      const res = await sendChatMessage(message, conversationId);
+      let res: Awaited<ReturnType<typeof sendChatMessage>>;
+      try {
+        res = await sendChatMessage(message, conversationId);
+      } catch (err: any) {
+        const msg =
+          err?.response?.data?.message ||
+          err?.message ||
+          "Something went wrong. Please try again.";
+        toast.error(msg);
+        throw err;
+      }
       setConversationId(res.conversation_id);
 
       const parsed = safeJsonExtract(res.message);
