@@ -86,8 +86,8 @@ export const MainAiLanding = {
         btnUrl: "/tools/summarizer-tool",
       },
       {
-        title: "AI Thesis Generator",
-        description: `Craft a compelling, academically sound thesis statement with guided suggestions. Our <a href="/ai-thesis-generator" class="text-[#323dd6] hover:underline">AI Thesis Generator</a> helps you:`,
+        title: "AI Thesis Statement Generator",
+        description: `Craft a compelling, academically sound thesis statement with guided suggestions. Our <a href="/ai-thesis-generator" class="text-[#323dd6] hover:underline">AI Thesis Statement Generator</a> helps you:`,
         list: [
           "Build a focused research direction",
           "Create strong, argument-driven statements",

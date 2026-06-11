@@ -42,7 +42,7 @@ const ThesisGenerator = () => {
       return;
     }
 
-    trackToolGenerate({ toolName: "Thesis Generator Tool" });
+    trackToolGenerate({ toolName: "AI Thesis Statement Generator" });
     setSubmitting(true);
     setResultText("Generating thesis...");
 
