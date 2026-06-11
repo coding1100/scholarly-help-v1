@@ -34,7 +34,7 @@ type HumanizerResponse = {
 
 type AiDetectionMeta = {
   matchedTells?: string[];
-  signals?: { name: string; fired: boolean; weight: number }[];
+  signals?: { id: string; label: string; direction: "ai" | "human" }[];
   details?: Record<string, unknown>;
 };
 
@@ -607,16 +607,46 @@ const HumanizerTool: React.FC = () => {
                     <div className="flex-1 flex flex-col p-4 gap-3 overflow-y-auto">
                       {(() => {
                         const tells = aiDetection?.meta?.matchedTells ?? [];
+                        const aiSignals = (aiDetection?.meta?.signals ?? []).filter(
+                          (s) => s.direction === "ai",
+                        );
+                        const SIGNAL_EXPLANATIONS: Record<string, string> = {
+                          burstiness: "Uniform sentence lengths — AI tends to write in even, predictable rhythms",
+                          transitions: "Formal transition words detected (e.g. moreover, furthermore)",
+                          content_tells: "AI-tell vocabulary detected",
+                          ttr: "Low vocabulary diversity — same words repeated across sentences",
+                          avg_len: "Sentences cluster in a uniform mid-length range",
+                          long_words: "High density of long, formal words",
+                          contractions: "Few or no contractions — AI avoids natural shortening",
+                          first_person: "No first-person voice — AI often writes in a detached third-person style",
+                        };
                         return (
                           <>
+                            {/* Vocabulary highlights legend */}
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="inline-block h-3 w-3 rounded-sm bg-amber-300 dark:bg-amber-400/50 flex-shrink-0" />
                               <span className="text-sm text-gray-600 dark:text-gray-300">
                                 {tells.length > 0
-                                  ? `${tells.length} AI pattern${tells.length !== 1 ? "s" : ""} detected`
-                                  : "No AI vocabulary patterns detected"}
+                                  ? `${tells.length} AI vocabulary pattern${tells.length !== 1 ? "s" : ""} highlighted`
+                                  : "No AI vocabulary patterns found in this text"}
                               </span>
                             </div>
+
+                            {/* Structural signals */}
+                            {aiSignals.length > 0 && (
+                              <div className="rounded-md border border-orange-200 dark:border-orange-800/50 bg-orange-50 dark:bg-orange-900/20 p-3 space-y-1.5">
+                                <p className="text-xs font-semibold text-orange-700 dark:text-orange-400 uppercase tracking-wide">
+                                  Structural AI signals detected
+                                </p>
+                                {aiSignals.map((s) => (
+                                  <div key={s.id} className="flex items-start gap-2 text-sm text-orange-800 dark:text-orange-300">
+                                    <span className="mt-1 flex-shrink-0 h-1.5 w-1.5 rounded-full bg-orange-500" />
+                                    {SIGNAL_EXPLANATIONS[s.id] ?? s.label}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
                             <HighlightedText text={text} matchedTells={tells} />
                           </>
                         );
