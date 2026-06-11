@@ -78,7 +78,7 @@ const ThesisGenerator = () => {
   };
 
   return (
-    <div className="container relative overflow-y-auto h-[90vh] w-[89%] mx-auto p-4 md:px-8">
+    <div className="container relative overflow-y-auto h-[calc(100vh-8vh)] w-[89%] mx-auto p-4 md:px-8">
       <ToolsApiLoader show={isSubmitting} />
       {/* <h1 className="text-3xl md:text-5xl text-center mb-4 font-serif">
         Thesis Generator
