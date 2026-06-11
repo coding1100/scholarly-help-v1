@@ -63,13 +63,13 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
       </div>
 
       {/* Result Area */}
-      <div className="p-4 h-96">
+      <div className="p-4 min-h-48">
         {customBody ? (
           <div className="w-full h-full">{customBody}</div>
         ) : (
           <textarea
             readOnly
-            className="w-full h-full text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-800 focus:outline-none resize-none transition-colors duration-300"
+            className="w-full min-h-48 text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-800 focus:outline-none resize-none transition-colors duration-300"
             value={loading ? "In process..." : resultText}
             placeholder="Result will appear here..."
           ></textarea>

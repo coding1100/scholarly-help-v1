@@ -120,7 +120,7 @@ const SummarizerTool: React.FC = () => {
   };
 
   return (
-    <div className="container relative overflow-y-auto h-[90vh] mx-auto max-w-[840px] px-4 md:px-8 md:pt-8 2xl:max-w-6xl">
+    <div className="container relative overflow-y-auto h-[calc(100vh-8vh)] mx-auto max-w-[840px] px-4 md:px-8 md:pt-8 2xl:max-w-6xl">
       {/* <h1 className="text-2xl md:text-5xl text-center mb-4 font-serif">
         AI Summarizer Generator
       </h1> */}
