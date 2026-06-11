@@ -23,7 +23,7 @@ const ThesisGeneratorForm: React.FC<ThesisGeneratorFormProps> = ({
   return (
     <div className="border-b border-gray-200 dark:border-gray-700 flex flex-col bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
       <h2 className="bg-white dark:bg-gray-800 text-lg font-semibold text-gray-800 dark:text-gray-100 py-4 px-4 mb-4 border-b border-gray-200 dark:border-gray-700 transition-colors duration-300">
-        Thesis Generator
+        AI Thesis Statement Generator
       </h2>
 
       <div className="px-2 md:px-8 pb-4 flex-grow">
