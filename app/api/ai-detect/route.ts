@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateGeminiText } from "@/app/lib/server/ai/gemini";
+import { scoreHeuristic } from "@/app/lib/server/ai/heuristic-detector";
 
 export const dynamic = "force-dynamic";
 
@@ -120,80 +121,8 @@ function toWords(text: string) {
   return text.toLowerCase().match(/[a-z0-9']+/g) || [];
 }
 
-function splitIntoSentences(text: string) {
-  const s = text
-    .split(/(?<=[.!?])\s+|\n+/)
-    .map((x) => x.trim())
-    .filter(Boolean);
-  return s.length > 0 ? s : [text.trim()].filter(Boolean);
-}
-
-function stdDev(values: number[]) {
-  if (!values.length) return 0;
-  const mean = values.reduce((a, b) => a + b, 0) / values.length;
-  const variance =
-    values.reduce((acc, n) => acc + (n - mean) * (n - mean), 0) / values.length;
-  return Math.sqrt(variance);
-}
-
-function heuristicAiScore(text: string) {
-  const words = toWords(text);
-  const totalWords = words.length || 1;
-  const uniqueWords = new Set(words).size;
-  const ttr = uniqueWords / totalWords;
-
-  const sentences = splitIntoSentences(text);
-  const sentenceWordCounts = sentences.map((s) => toWords(s).length || 1);
-  const avgSentenceWords =
-    sentenceWordCounts.reduce((a, b) => a + b, 0) / sentenceWordCounts.length;
-  const sentenceStdDev = stdDev(sentenceWordCounts);
-
-  const longWordRatio = words.filter((w) => w.length >= 8).length / totalWords;
-  const contractions = (text.match(/\b\w+'\w+\b/g) || []).length;
-  const firstPerson = (
-    text.match(/\b(i|me|my|mine|we|our|ours|us)\b/gi) || []
-  ).length;
-  const transitionCount = (
-    text.match(
-      /\b(moreover|furthermore|additionally|therefore|notably|consequently|in conclusion|overall)\b/gi,
-    ) || []
-  ).length;
-
-  let score = 50;
-
-  if (avgSentenceWords >= 16 && avgSentenceWords <= 34) score += 8;
-  if (sentenceStdDev <= 5.5) score += 12;
-  else if (sentenceStdDev >= 11) score -= 6;
-
-  if (ttr < 0.44) score += 10;
-  else if (ttr > 0.65) score -= 10;
-
-  if (longWordRatio > 0.24) score += 8;
-  if (transitionCount >= 2) score += Math.min(8, transitionCount * 2);
-
-  if (contractions / totalWords > 0.012) score -= 8;
-  if (firstPerson / totalWords > 0.01) score -= 10;
-
-  // Very short text is inherently unreliable for AI detection.
-  let confidence = 70;
-  if (totalWords < 50) confidence = 30;
-  else if (totalWords < 120) confidence = 45;
-  else if (totalWords < 220) confidence = 60;
-  else confidence = 78;
-
-  return {
-    aiPercent: clampPercent(score),
-    confidence: clampConfidence(confidence),
-    details: {
-      totalWords,
-      avgSentenceWords,
-      sentenceStdDev,
-      ttr,
-      longWordRatio,
-      transitionCount,
-    },
-  };
-}
+// Sentence stylometry, AI-tell counting, and the evidence-anchored scorer all live in
+// the pure, testable heuristic-detector module so this route stays thin.
 
 function chunkTextForDetection(text: string, maxWordsPerChunk = 220) {
   const words = text.split(/\s+/).filter(Boolean);
@@ -257,7 +186,7 @@ export async function POST(req: NextRequest) {
     // We also cap characters defensively to avoid huge prompts.
     const cappedText = text.slice(0, 18000);
     const chunks = chunkTextForDetection(cappedText);
-    const heuristic = heuristicAiScore(cappedText);
+    const heuristic = scoreHeuristic(cappedText);
 
     const llmScores: ParsedDetectorOutput[] = [];
     for (const chunk of chunks) {
@@ -289,8 +218,17 @@ export async function POST(req: NextRequest) {
       reason = llmScores.find((x) => x.reason)?.reason || "";
     }
 
-    const llmWeight = llmScores.length > 0 ? Math.max(0.55, llmConfidence / 100) : 0;
-    const heuristicWeight = 1 - llmWeight;
+    // Confidence-weighted blend. The previous code floored the LLM weight at 0.55,
+    // so a noisy single-shot Gemini guess always overrode the deterministic signals
+    // and produced the inconsistent scores QA saw. Now each source is weighted by its
+    // own confidence, with the LLM capped so it can inform but not dominate the
+    // explainable heuristic. When the LLM is unavailable, the heuristic stands alone.
+    const heuristicConfidence = heuristic.confidence / 100;
+    const rawLlmWeight =
+      llmScores.length > 0 ? Math.min(0.5, llmConfidence / 100) : 0;
+    const totalConfidence = rawLlmWeight + heuristicConfidence || 1;
+    const llmWeight = rawLlmWeight / totalConfidence;
+    const heuristicWeight = heuristicConfidence / totalConfidence;
     const blended = llmAi * llmWeight + heuristic.aiPercent * heuristicWeight;
 
     // Reduce overconfidence on short inputs.
@@ -316,6 +254,10 @@ export async function POST(req: NextRequest) {
       meta: {
         modelSamples: llmScores.length,
         heuristicConfidence: heuristic.confidence,
+        // Surface which signals fired so QA/users can see why the score landed where
+        // it did, and so a humanized passage's remaining tells are visible.
+        signals: heuristic.firedSignals,
+        details: heuristic.details,
       },
     });
   } catch (error) {
