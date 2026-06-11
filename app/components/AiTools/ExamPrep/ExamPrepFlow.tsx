@@ -2,6 +2,7 @@
 
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import { useState } from "react";
+import toast from "react-hot-toast";
 import Step1 from "./Step1";
 import Step2 from "./Step2";
 import Step3 from "./Step3";
@@ -56,9 +57,12 @@ export default function ExamPrepFlow() {
             const response = await sendChatMessage(message, conversationId);
             setExamResponse(response);
             setCurrentStep(3);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to generate practice exam:", error);
-            // TODO: Show error message to user
+            toast.error(
+                error?.response?.data?.message ||
+                "Failed to generate practice exam. Please try again.",
+            );
         } finally {
             setIsLoadingExam(false);
         }
