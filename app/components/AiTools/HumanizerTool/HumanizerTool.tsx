@@ -32,11 +32,18 @@ type HumanizerResponse = {
   tokens_used: number;
 };
 
+type AiDetectionMeta = {
+  matchedTells?: string[];
+  signals?: { name: string; fired: boolean; weight: number }[];
+  details?: Record<string, unknown>;
+};
+
 type AiDetectionResponse = {
   success: boolean;
   aiPercent: number;
   humanPercent: number;
   reason?: string;
+  meta?: AiDetectionMeta;
 };
 
 const INTENSITY_META: Record<
@@ -93,6 +100,60 @@ function AiGauge({ percent }: { percent: number }) {
   );
 }
 
+function HighlightedText({
+  text,
+  matchedTells,
+}: {
+  text: string;
+  matchedTells: string[];
+}) {
+  if (!matchedTells.length) {
+    return (
+      <p className="whitespace-pre-wrap leading-relaxed text-gray-800 dark:text-gray-100 text-sm">
+        {text}
+      </p>
+    );
+  }
+
+  // Sort longest first so multi-word phrases match before their individual words
+  const sorted = [...matchedTells].sort((a, b) => b.length - a.length);
+  const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = sorted.map(escape).join("|");
+  const regex = new RegExp(`(${pattern})`, "gi");
+
+  const parts: { text: string; highlight: boolean }[] = [];
+  let last = 0;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > last) {
+      parts.push({ text: text.slice(last, match.index), highlight: false });
+    }
+    parts.push({ text: match[0], highlight: true });
+    last = match.index + match[0].length;
+  }
+  if (last < text.length) {
+    parts.push({ text: text.slice(last), highlight: false });
+  }
+
+  return (
+    <p className="whitespace-pre-wrap leading-relaxed text-gray-800 dark:text-gray-100 text-sm">
+      {parts.map((part, i) =>
+        part.highlight ? (
+          <mark
+            key={i}
+            className="bg-amber-200 text-amber-900 dark:bg-amber-400/30 dark:text-amber-200 rounded-sm px-0.5"
+            title="AI pattern detected"
+          >
+            {part.text}
+          </mark>
+        ) : (
+          <span key={i}>{part.text}</span>
+        ),
+      )}
+    </p>
+  );
+}
+
 const TONE_META: Record<HumanizerTone, { label: string; description: string }> =
   {
     natural: {
@@ -134,6 +195,9 @@ const HumanizerTool: React.FC = () => {
   const [aiDetection, setAiDetection] = useState<AiDetectionResponse | null>(
     null,
   );
+  const [aiDetectView, setAiDetectView] = useState<"score" | "highlights">(
+    "score",
+  );
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -154,6 +218,7 @@ const HumanizerTool: React.FC = () => {
     setResultView("humanized");
     setAiDetection(null);
     setActivePanel("humanized");
+    setAiDetectView("score");
   };
 
   const handleCopy = async (value: string) => {
@@ -287,6 +352,7 @@ const HumanizerTool: React.FC = () => {
     setLoading(true);
     setAiDetection(null);
     setActivePanel("ai_detection");
+    setAiDetectView("score");
 
     try {
       const response = await axios.post<AiDetectionResponse>("/api/ai-detect", {
@@ -553,44 +619,89 @@ const HumanizerTool: React.FC = () => {
                   </div>
                 )
               ) : activePanel === "ai_detection" ? (
-                <div className="h-full w-full flex flex-col items-center justify-center">
-                  <div className="text-center text-gray-800 dark:text-gray-100">
-                    <div className="text-lg font-semibold">{aiHeadline}</div>
-                  </div>
-
-                  <div className="mt-6 mb-6">
-                    <AiGauge percent={aiPercent} />
-                  </div>
-
-                  <div className="w-full max-w-md space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-2">
-                        <span className="inline-block h-3 w-3 rounded-full bg-indigo-500" />
-                        <span className="text-gray-700 dark:text-gray-200">
-                          Resembles AI text
-                        </span>
-                      </div>
-                      <span className="text-gray-700 dark:text-gray-200">
-                        {aiPercent}%
-                      </span>
+                <div className="h-full w-full flex flex-col">
+                  {/* View toggle */}
+                  {aiDetection?.success && (
+                    <div className="flex gap-2 p-3 border-b border-gray-200 dark:border-gray-700">
+                      {(["score", "highlights"] as const).map((v) => (
+                        <button
+                          key={v}
+                          type="button"
+                          onClick={() => setAiDetectView(v)}
+                          className={`px-3 py-1.5 rounded-md text-sm border transition-colors duration-300 ${
+                            aiDetectView === v
+                              ? "border-[#2b7fff] text-[#2b7fff] dark:border-[#51a2ff] dark:text-[#51a2ff]"
+                              : "border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          }`}
+                        >
+                          {v === "score" ? "Score" : "Highlights"}
+                        </button>
+                      ))}
                     </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-2">
-                        <span className="inline-block h-3 w-3 rounded-full bg-emerald-500" />
-                        <span className="text-gray-700 dark:text-gray-200">
-                          No AI text patterns found
-                        </span>
+                  )}
+
+                  {/* Score view */}
+                  {aiDetectView === "score" && (
+                    <div className="flex-1 flex flex-col items-center justify-center">
+                      <div className="text-center text-gray-800 dark:text-gray-100">
+                        <div className="text-lg font-semibold">{aiHeadline}</div>
                       </div>
-                      <span className="text-gray-700 dark:text-gray-200">
-                        {Math.max(0, 100 - aiPercent)}%
-                      </span>
+                      <div className="mt-6 mb-6">
+                        <AiGauge percent={aiPercent} />
+                      </div>
+                      <div className="w-full max-w-md space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-2">
+                            <span className="inline-block h-3 w-3 rounded-full bg-indigo-500" />
+                            <span className="text-gray-700 dark:text-gray-200">
+                              Resembles AI text
+                            </span>
+                          </div>
+                          <span className="text-gray-700 dark:text-gray-200">
+                            {aiPercent}%
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-2">
+                            <span className="inline-block h-3 w-3 rounded-full bg-emerald-500" />
+                            <span className="text-gray-700 dark:text-gray-200">
+                              No AI text patterns found
+                            </span>
+                          </div>
+                          <span className="text-gray-700 dark:text-gray-200">
+                            {Math.max(0, 100 - aiPercent)}%
+                          </span>
+                        </div>
+                        {aiDetection?.reason && !aiDetection.success && (
+                          <div className="pt-2 text-xs text-gray-500 dark:text-gray-400">
+                            {aiDetection.reason}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    {aiDetection?.reason && !aiDetection.success && (
-                      <div className="pt-2 text-xs text-gray-500 dark:text-gray-400">
-                        {aiDetection.reason}
-                      </div>
-                    )}
-                  </div>
+                  )}
+
+                  {/* Highlights view */}
+                  {aiDetectView === "highlights" && (
+                    <div className="flex-1 flex flex-col p-4 gap-3 overflow-y-auto">
+                      {(() => {
+                        const tells = aiDetection?.meta?.matchedTells ?? [];
+                        return (
+                          <>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="inline-block h-3 w-3 rounded-sm bg-amber-300 dark:bg-amber-400/50 flex-shrink-0" />
+                              <span className="text-sm text-gray-600 dark:text-gray-300">
+                                {tells.length > 0
+                                  ? `${tells.length} AI pattern${tells.length !== 1 ? "s" : ""} detected`
+                                  : "No AI vocabulary patterns detected"}
+                              </span>
+                            </div>
+                            <HighlightedText text={text} matchedTells={tells} />
+                          </>
+                        );
+                      })()}
+                    </div>
+                  )}
                 </div>
               ) : undefined
             }
