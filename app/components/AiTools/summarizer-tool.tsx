@@ -5,6 +5,7 @@ import TextSummarizerInput from "./TextSummarizerInput";
 import ResultDisplay from "./ResultDisplay";
 import ActionButtons from "./ActionButtons";
 import axios from "axios";
+import toast from "react-hot-toast";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 type SummarizeData = {
@@ -65,10 +66,10 @@ const SummarizerTool: React.FC = () => {
 
       const result = response.data;
       setCurrentInputText(result);
+      toast.success("Document extracted successfully!");
     } catch (error: any) {
-      setSummarizedResult(
-        error?.data?.message || "Failed to extract text from PDF.",
-      );
+      const msg = error?.response?.data?.message || error?.data?.message || "Failed to extract text from PDF.";
+      toast.error(msg);
     } finally {
       setIsLoading(false);
     }
@@ -76,7 +77,7 @@ const SummarizerTool: React.FC = () => {
 
   const handleSummarize = async () => {
     if (!currentInputText.trim()) {
-      alert("Please enter some text to summarize.");
+      toast.error("Please enter some text to summarize.");
       return;
     }
 
@@ -104,11 +105,12 @@ const SummarizerTool: React.FC = () => {
       const result = response;
       console.log("Response Summ", result.data);
       setSummarizedResult(result.data.summary);
+      toast.success("Summary generated successfully!");
     } catch (error: any) {
       console.error("Summarization failed:", error);
-      setSummarizedResult(
-        error?.response?.data?.message || "Failed to summarize the text.",
-      );
+      const msg = error?.response?.data?.message || "Failed to summarize the text.";
+      setSummarizedResult(msg);
+      toast.error(msg);
     } finally {
       setIsLoading(false);
     }

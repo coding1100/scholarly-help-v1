@@ -6,6 +6,7 @@ import TextSummarizerInput from "./TextSummarizerInput";
 import ResultDisplay from "./ResultDisplay";
 import ActionButtons from "./ActionButtons";
 import axios from "axios";
+import toast from "react-hot-toast";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 
@@ -88,9 +89,12 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag }) => {
       console.log("response: ", response.data);
 
       setResultText(response.data.paraphrased_text);
+      toast.success("Text paraphrased successfully!");
       setFlag(true);
     } catch (error: any) {
-      setResultText(error?.response?.data?.message || "Something went wrong.");
+      const msg = error?.response?.data?.message || "Something went wrong. Please try again.";
+      setResultText(msg);
+      toast.error(msg);
     } finally {
       setSubmitting(false);
     }
@@ -119,10 +123,11 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag }) => {
         const result = response.data;
         console.log("result: ", result);
         setInputText(result);
+        toast.success("Document extracted successfully!");
       } catch (err: any) {
-        setResultText(
-          err?.response?.data?.message || "Failed to extract text from PDF.",
-        );
+        const msg = err?.response?.data?.message || "Failed to extract text from PDF.";
+        setResultText(msg);
+        toast.error(msg);
       } finally {
         setSubmitting(false);
       }
@@ -132,7 +137,7 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag }) => {
   }, [file, token]);
   const handleParaphrase = async () => {
     if (wordLimitExceeded) {
-      setResultText("Text exceeds 200-word limit. Please shorten your input.");
+      toast.error("Text exceeds 200-word limit. Please shorten your input.");
       return;
     }
     trackToolGenerate({ toolName: "Paraphraser Tool" });
@@ -194,7 +199,12 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag }) => {
           <ResultDisplay
             resultText={resultText}
             title="Result"
-            onCopy={(txt) => navigator.clipboard.writeText(txt)}
+            onCopy={(txt) =>
+              navigator.clipboard
+                .writeText(txt)
+                .then(() => toast.success("Copied to clipboard!"))
+                .catch(() => toast.error("Failed to copy."))
+            }
             loading={isSubmitting}
           />
         </div>

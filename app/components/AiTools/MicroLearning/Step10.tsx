@@ -7,6 +7,7 @@ import {
 } from "@/app/utilities/api";
 import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
+import toast from "react-hot-toast";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 
 interface Step10Props {
@@ -73,6 +74,7 @@ Difficulty: medium`;
             ? err.message
             : "Failed to load quiz. Please try again.";
         setError(errorMessage);
+        toast.error(errorMessage);
       } finally {
         setIsLoading(false);
       }

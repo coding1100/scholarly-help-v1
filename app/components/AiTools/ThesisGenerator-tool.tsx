@@ -38,7 +38,7 @@ const ThesisGenerator = () => {
 
   const handleGenerate = async () => {
     if (!formData.topic.trim()) {
-      alert("Topic is required");
+      toast.error("Topic is required.");
       return;
     }
 
@@ -65,6 +65,7 @@ const ThesisGenerator = () => {
       console.log("Response", response);
 
       setResultText(response.data?.final_thesis);
+      toast.success("Thesis generated successfully!");
     } catch (error: any) {
       // console.error("API Error:", error);
       toast.error(
