@@ -603,9 +603,6 @@ const HumanizerTool: React.FC = () => {
                   Citations preserved ({result.citation_count})
                 </div>
               )}
-              LLM: <span className="font-semibold">{result.llm_used}</span> ·
-              Tokens used:{" "}
-              <span className="font-semibold">{result.tokens_used}</span>
             </div>
           )}
         </div>
