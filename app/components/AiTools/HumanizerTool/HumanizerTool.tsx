@@ -100,56 +100,94 @@ function AiGauge({ percent }: { percent: number }) {
   );
 }
 
-function HighlightedText({
-  text,
-  matchedTells,
-}: {
-  text: string;
-  matchedTells: string[];
-}) {
-  if (!matchedTells.length) {
-    return (
-      <p className="whitespace-pre-wrap leading-relaxed text-gray-800 dark:text-gray-100 text-sm">
-        {text}
-      </p>
-    );
+// ---------------------------------------------------------------------------
+// Sentence-level AI scorer (client-side, no extra API call)
+// Mirrors the key signals from heuristic-detector.ts but applied per-sentence
+// relative to the full passage context so scores are calibrated.
+// ---------------------------------------------------------------------------
+const AI_TELLS = [
+  "moreover","furthermore","additionally","therefore","consequently","thus",
+  "hence","however","notably","overall","nonetheless","nevertheless",
+  "subsequently","accordingly","henceforth","in conclusion","in summary",
+  "as a result","in addition","on the other hand","it is important to note",
+  "it is worth noting","delve","tapestry","leverage","robust","seamless",
+  "cutting-edge","transformative","utilize","groundbreaking","unlock",
+  "testament","underscore","underscores","realm","vibrant","intricate",
+  "intricacies","pivotal","showcase","showcasing","interplay","landscape",
+  "foster","fostering","garner","enduring","navigate the","when it comes to",
+  "plays a crucial role","plays a vital role","a testament to","in the realm of",
+];
+
+function scoreSentenceAi(sentence: string): number {
+  const lower = sentence.toLowerCase();
+  const words = lower.match(/[a-z0-9']+/g) || [];
+  if (words.length < 4) return 0;
+
+  let score = 0;
+
+  // AI-tell vocabulary
+  for (const tell of AI_TELLS) {
+    if (lower.includes(tell)) score += 0.35;
   }
 
-  // Sort longest first so multi-word phrases match before their individual words
-  const sorted = [...matchedTells].sort((a, b) => b.length - a.length);
-  const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const pattern = sorted.map(escape).join("|");
-  const regex = new RegExp(`(${pattern})`, "gi");
+  // Long formal words
+  const longWordRatio = words.filter((w) => w.length >= 8).length / words.length;
+  if (longWordRatio > 0.28) score += 0.25;
 
-  const parts: { text: string; highlight: boolean }[] = [];
-  let last = 0;
+  // No contractions
+  const hasContraction = /\b\w+'\w+\b/.test(sentence);
+  if (!hasContraction) score += 0.15;
+
+  // No first person
+  const hasFirstPerson = /\b(i|me|my|we|our|us)\b/i.test(sentence);
+  if (!hasFirstPerson) score += 0.1;
+
+  // Mid-length cadence (10–28 words is typical AI range)
+  if (words.length >= 10 && words.length <= 28) score += 0.15;
+
+  return Math.min(score, 1);
+}
+
+function splitSentences(text: string): { sentence: string; gap: string }[] {
+  // Split on sentence boundaries, preserving the whitespace/newline between them
+  const parts: { sentence: string; gap: string }[] = [];
+  const re = /([^.!?\n]+[.!?]*)(\s*\n*\s*)/g;
   let match: RegExpExecArray | null;
-  while ((match = regex.exec(text)) !== null) {
-    if (match.index > last) {
-      parts.push({ text: text.slice(last, match.index), highlight: false });
-    }
-    parts.push({ text: match[0], highlight: true });
+  let last = 0;
+  while ((match = re.exec(text)) !== null) {
+    parts.push({ sentence: match[1], gap: match[2] });
     last = match.index + match[0].length;
   }
+  // Any trailing text without punctuation
   if (last < text.length) {
-    parts.push({ text: text.slice(last), highlight: false });
+    parts.push({ sentence: text.slice(last), gap: "" });
   }
+  return parts.filter((p) => p.sentence.trim());
+}
+
+function SentenceHighlightedText({ text }: { text: string }) {
+  const sentences = splitSentences(text);
+  // Threshold: highlight if score >= 0.4
+  const THRESHOLD = 0.4;
 
   return (
-    <p className="whitespace-pre-wrap leading-relaxed text-gray-800 dark:text-gray-100 text-sm">
-      {parts.map((part, i) =>
-        part.highlight ? (
-          <mark
-            key={i}
-            className="bg-amber-200 text-amber-900 dark:bg-amber-400/30 dark:text-amber-200 rounded-sm px-0.5"
-            title="AI pattern detected"
-          >
-            {part.text}
-          </mark>
+    <p className="leading-relaxed text-gray-800 dark:text-gray-100 text-sm whitespace-pre-wrap">
+      {sentences.map(({ sentence, gap }, i) => {
+        const score = scoreSentenceAi(sentence);
+        return score >= THRESHOLD ? (
+          <span key={i}>
+            <mark
+              className="bg-yellow-300 text-gray-900 dark:bg-yellow-400/70 dark:text-gray-900 rounded-sm"
+              title={`AI likelihood: ${Math.round(score * 100)}%`}
+            >
+              {sentence}
+            </mark>
+            {gap}
+          </span>
         ) : (
-          <span key={i}>{part.text}</span>
-        ),
-      )}
+          <span key={i}>{sentence}{gap}</span>
+        );
+      })}
     </p>
   );
 }
@@ -605,52 +643,12 @@ const HumanizerTool: React.FC = () => {
                   {/* Highlights view */}
                   {aiDetectView === "highlights" && (
                     <div className="flex-1 flex flex-col p-4 gap-3 overflow-y-auto">
-                      {(() => {
-                        const tells = aiDetection?.meta?.matchedTells ?? [];
-                        const aiSignals = (aiDetection?.meta?.signals ?? []).filter(
-                          (s) => s.direction === "ai",
-                        );
-                        const SIGNAL_EXPLANATIONS: Record<string, string> = {
-                          burstiness: "Uniform sentence lengths — AI tends to write in even, predictable rhythms",
-                          transitions: "Formal transition words detected (e.g. moreover, furthermore)",
-                          content_tells: "AI-tell vocabulary detected",
-                          ttr: "Low vocabulary diversity — same words repeated across sentences",
-                          avg_len: "Sentences cluster in a uniform mid-length range",
-                          long_words: "High density of long, formal words",
-                          contractions: "Few or no contractions — AI avoids natural shortening",
-                          first_person: "No first-person voice — AI often writes in a detached third-person style",
-                        };
-                        return (
-                          <>
-                            {/* Vocabulary highlights legend */}
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="inline-block h-3 w-3 rounded-sm bg-amber-300 dark:bg-amber-400/50 flex-shrink-0" />
-                              <span className="text-sm text-gray-600 dark:text-gray-300">
-                                {tells.length > 0
-                                  ? `${tells.length} AI vocabulary pattern${tells.length !== 1 ? "s" : ""} highlighted`
-                                  : "No AI vocabulary patterns found in this text"}
-                              </span>
-                            </div>
-
-                            {/* Structural signals */}
-                            {aiSignals.length > 0 && (
-                              <div className="rounded-md border border-orange-200 dark:border-orange-800/50 bg-orange-50 dark:bg-orange-900/20 p-3 space-y-1.5">
-                                <p className="text-xs font-semibold text-orange-700 dark:text-orange-400 uppercase tracking-wide">
-                                  Structural AI signals detected
-                                </p>
-                                {aiSignals.map((s) => (
-                                  <div key={s.id} className="flex items-start gap-2 text-sm text-orange-800 dark:text-orange-300">
-                                    <span className="mt-1 flex-shrink-0 h-1.5 w-1.5 rounded-full bg-orange-500" />
-                                    {SIGNAL_EXPLANATIONS[s.id] ?? s.label}
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-
-                            <HighlightedText text={text} matchedTells={tells} />
-                          </>
-                        );
-                      })()}
+                      {/* Legend */}
+                      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                        <span className="inline-block h-3 w-4 rounded-sm bg-yellow-300 dark:bg-yellow-400/70 flex-shrink-0" />
+                        Sentences likely written by AI are highlighted
+                      </div>
+                      <SentenceHighlightedText text={text} />
                     </div>
                   )}
                 </div>
