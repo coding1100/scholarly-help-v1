@@ -53,7 +53,7 @@ const tools: ToolCardData[] = [
     icon: FiSmile,
   },
   {
-    name: "Thesis Generator",
+    name: "AI Thesis Statement Generator",
     description: "Generate strong thesis statements from your topic.",
     href: "/tools/thesis-generator-tool",
     icon: FiTarget,

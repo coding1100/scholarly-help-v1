@@ -24,7 +24,7 @@ const ToolHeader: React.FC = () => {
           : normalizedPath === "/tools/summarizer-tool"
             ? "AI summarizer"
             : normalizedPath === "/tools/thesis-generator-tool"
-              ? "AI Thesis Generator"
+              ? "AI Thesis Statement Generator"
               : normalizedPath === "/tools/essay-outline-tool"
                 ? "AI Essay Outline"
                 : normalizedPath === "/tools/essay-title"
