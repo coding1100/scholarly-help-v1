@@ -74,7 +74,7 @@ const EssayOutlinetool = () => {
   };
 
   return (
-    <div className="container relative w-[89%] mx-auto h-[90vh] p-4 md:p-8">
+    <div className="container relative w-[89%] mx-auto h-[calc(100vh-8vh)] p-4 md:p-8">
       {/* <h1 className="text-2xl md:text-5xl text-center mb-4 font-serif">
         Essay Outliner Generator
       </h1> */}
@@ -100,7 +100,7 @@ const EssayOutlinetool = () => {
               <span>Copy</span>
             </button>
           </div>
-          <div className="max-h-[500px] overflow-auto p-4">
+          <div className="p-4">
             {!isSubmitting && (
               <>
                 {outlineData.length === 0 ? (
