@@ -334,7 +334,7 @@ const HumanizerTool: React.FC = () => {
       : "AI detection result will appear here...";
 
   return (
-    <div className="container relative overflow-y-auto h-[90vh] mx-auto max-w-[840px] px-4 md:px-8 md:pt-8 2xl:max-w-6xl">
+    <div className="container relative overflow-y-auto h-[calc(100vh-8vh)] mx-auto max-w-[840px] px-4 md:px-8 md:pt-8 2xl:max-w-6xl">
       <ToolsApiLoader show={loading} />
 
       <div
@@ -522,7 +522,7 @@ const HumanizerTool: React.FC = () => {
             customBody={
               activePanel === "humanized" && resultView === "changes" ? (
                 result?.diff && result.diff.length > 0 ? (
-                  <div className="h-full w-full overflow-y-auto whitespace-pre-wrap leading-relaxed text-gray-800 dark:text-gray-100 p-1">
+                  <div className="w-full whitespace-pre-wrap leading-relaxed text-gray-800 dark:text-gray-100 p-1">
                     {result.diff.map((seg, i) => {
                       if (seg.type === "insert") {
                         return (
