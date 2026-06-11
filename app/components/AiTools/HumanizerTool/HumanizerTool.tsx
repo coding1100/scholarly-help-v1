@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { FaChevronDown, FaRegCopy } from "react-icons/fa";
+import { FaRegCopy } from "react-icons/fa";
 import TextSummarizerInput from "@/app/components/AiTools/TextSummarizerInput";
 import ActionButtons from "@/app/components/AiTools/ActionButtons";
 import ResultDisplay from "@/app/components/AiTools/ResultDisplay";
@@ -154,35 +154,10 @@ function HighlightedText({
   );
 }
 
-const TONE_META: Record<HumanizerTone, { label: string; description: string }> =
-  {
-    natural: {
-      label: "Natural",
-      description: "Balanced, everyday writing",
-    },
-    simple: {
-      label: "Simple",
-      description: "Easiest wording and grammar",
-    },
-    polished: {
-      label: "Polished",
-      description: "Smoother but still human and plain",
-    },
-    academic: {
-      label: "Academic",
-      description: "Neutral, plain, scholarly register",
-    },
-    custom: {
-      label: "Custom",
-      description: "Describe the tone you want below",
-    },
-  };
-
 const HumanizerTool: React.FC = () => {
   const [token, setToken] = useState<string | null>(null);
   const [text, setText] = useState("");
-  const [tone, setTone] = useState<HumanizerTone>("natural");
-  const [customTone, setCustomTone] = useState("");
+  const tone: HumanizerTone = "natural";
   const [intensity, setIntensity] = useState<RewriteIntensity>("moderate");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<HumanizerResponse | null>(null);
@@ -206,9 +181,7 @@ const HumanizerTool: React.FC = () => {
   }, []);
 
   const wordCount = useMemo(() => countWords(text), [text]);
-  const customToneValid = tone !== "custom" || customTone.trim().length > 0;
-  const canSubmit =
-    text.trim().length > 0 && wordCount <= 1500 && customToneValid && !loading;
+  const canSubmit = text.trim().length > 0 && wordCount <= 1500 && !loading;
 
   const rewrittenText = result?.rewritten_text || "";
 
@@ -299,9 +272,6 @@ const HumanizerTool: React.FC = () => {
           text,
           tone_mode: tone,
           rewrite_intensity: intensity,
-          ...(tone === "custom"
-            ? { custom_tone_instruction: customTone.trim() }
-            : {}),
           preserve_citations: true,
           return_diff: true,
         },
@@ -383,7 +353,6 @@ const HumanizerTool: React.FC = () => {
     toast.success("Loaded into editor.");
   };
 
-  const toneDescription = TONE_META[tone]?.description || "";
   const canCheckAi = text.trim().length > 0 && wordCount <= 1500 && !loading;
 
   const aiPercent = Math.max(
@@ -424,54 +393,6 @@ const HumanizerTool: React.FC = () => {
               Makes text sound more natural, removes buzzwords, and keeps
               language simple.
             </p>
-
-            <div className="flex justify-between items-center">
-              <label className="block text-sm font-semibold mb-1 text-gray-800 dark:text-gray-100">
-                Tone:
-              </label>
-              <div className="relative w-[55%]">
-                <select
-                  value={tone}
-                  onChange={(e) => setTone(e.target.value as HumanizerTone)}
-                  className="w-full rounded-md border border-gray-200 text-black dark:border-gray-600 p-2 pr-7 hover:cursor-pointer focus:outline-none focus:ring-2 focus:ring-black dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300 appearance-none"
-                >
-                  <option value="natural">Natural</option>
-                  <option value="simple">Simple</option>
-                  <option value="polished">Polished</option>
-                  <option value="academic">Academic</option>
-                  <option value="custom">Custom</option>
-                </select>
-                <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-gray-500 dark:text-gray-300">
-                  <FaChevronDown className="w-3 h-3" />
-                </span>
-              </div>
-            </div>
-
-            <div className="text-xs text-gray-500 dark:text-gray-400">
-              <span className="font-semibold text-gray-700 dark:text-gray-200">
-                {TONE_META[tone]?.label}:
-              </span>{" "}
-              {toneDescription}
-            </div>
-
-            {tone === "custom" && (
-              <div>
-                <label className="block text-sm font-semibold mb-1 text-gray-800 dark:text-gray-100">
-                  Custom tone (3-4 lines):
-                </label>
-                <textarea
-                  value={customTone}
-                  onChange={(e) => setCustomTone(e.target.value.slice(0, 400))}
-                  rows={3}
-                  maxLength={400}
-                  placeholder="e.g. Confident first-person voice, short sentences, a little dry humor."
-                  className="w-full rounded-md border border-gray-200 text-black dark:border-gray-600 p-2 focus:outline-none focus:ring-2 focus:ring-black dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300"
-                />
-                <div className="text-[11px] text-gray-400 text-right">
-                  {customTone.trim().length}/400
-                </div>
-              </div>
-            )}
 
             {/* Rewrite intensity */}
             <div>
