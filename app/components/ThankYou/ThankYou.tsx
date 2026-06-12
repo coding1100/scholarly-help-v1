@@ -115,9 +115,9 @@ const ThankYou: FC<ThankYouProps> = ({}) => {
   };
   return (
     <div className={styles.thankYouRoot}>
-      <div className="container mx-auto h-[350px] text-center flex flex-col items-center justify-end">
+      <div className="container mx-auto sm:h-[350px] h-[297px] text-center flex flex-col items-center justify-end">
         <div>
-        <p className="lg:text-5xl md:text-3xl text-2xl font-semibold mb-4">
+        <p className="lg:text-5xl md:text-3xl text-2xl font-semibold mb-2">
             Thank You!
           </p>
           <p className="lg:text-5xl md:text-3xl text-2xl font-semibold mb-4">
@@ -127,7 +127,7 @@ const ThankYou: FC<ThankYouProps> = ({}) => {
             A Smart and Wise Decision, Indeed!
           </p> */}
         </div>
-        <div className="py-11">
+        <div className="sm:pt-11 pt-5 pb-11 ">
           {/* <p className="lg:text-xl ">
             At Scholarly Help, we specialize in easing the academic burdens of
             students like you.
@@ -149,7 +149,7 @@ const ThankYou: FC<ThankYouProps> = ({}) => {
         }}
       >
         <div className="container mx-auto flex flex-wrap sm:justify-between justify-center">
-          <div className="md:max-w-[300px] max-w-[260px] pt-9 lg:order-1">
+          <div className="md:max-w-[300px] max-w-[260px] pt-9 sm:order-1 order-2">
             <div className="mb-8 flex justify-center">
               <Image
                 src={DownArrow}
@@ -188,10 +188,10 @@ const ThankYou: FC<ThankYouProps> = ({}) => {
               </div>
             </div>
           </div>
-          <div className="sm:flex hidden justify-between items-end pb-14 order-2">
+          <div className="sm:flex hidden justify-between items-end pb-14 sm:order-2 order-4">
             <div className="border-x-[1px] border-[#DCDCDC] h-[330px]"></div>
           </div>
-          <div className="md:w-[300px] w-[300px] pt-[42px] lg:order-3 sm:order-5 order-3">
+          <div className="md:w-[300px] w-[300px] pt-[42px] sm:order-3 order-1">
             <div className="mb-9 flex justify-center">
               <Image
                 src={QuestionMark}
@@ -255,10 +255,10 @@ const ThankYou: FC<ThankYouProps> = ({}) => {
               </a>
             </div>
           </div>
-          <div className="lg:flex justify-between items-end pb-14 hidden order-4">
+          <div className="lg:flex justify-between items-end pb-14 hidden sm:order-4 order-5">
             <div className="border-x-[1px] border-[#DCDCDC] h-[330px]"></div>
           </div>
-          <div className="md:w-[300px] w-[300px] lg:order-5 sm:order-3 order-5">
+          <div className="md:w-[300px] w-[300px] sm:order-5 order-3">
             {/* <video ref={videoRef} width="640" height="900" autoPlay loop muted>
               <source src="/videos/thankYou.mp4" type="video/mp4" />
               Your browser does not support the video.
