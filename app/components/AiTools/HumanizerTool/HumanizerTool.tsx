@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { FaChevronDown, FaRegCopy } from "react-icons/fa";
+import { FaRegCopy } from "react-icons/fa";
 import TextSummarizerInput from "@/app/components/AiTools/TextSummarizerInput";
 import ActionButtons from "@/app/components/AiTools/ActionButtons";
 import ResultDisplay from "@/app/components/AiTools/ResultDisplay";
@@ -34,7 +34,7 @@ type HumanizerResponse = {
 
 type AiDetectionMeta = {
   matchedTells?: string[];
-  signals?: { name: string; fired: boolean; weight: number }[];
+  signals?: { id: string; label: string; direction: "ai" | "human" }[];
   details?: Record<string, unknown>;
 };
 
@@ -100,89 +100,102 @@ function AiGauge({ percent }: { percent: number }) {
   );
 }
 
-function HighlightedText({
-  text,
-  matchedTells,
-}: {
-  text: string;
-  matchedTells: string[];
-}) {
-  if (!matchedTells.length) {
-    return (
-      <p className="whitespace-pre-wrap leading-relaxed text-gray-800 dark:text-gray-100 text-sm">
-        {text}
-      </p>
-    );
+// ---------------------------------------------------------------------------
+// Sentence-level AI scorer (client-side, no extra API call)
+// Mirrors the key signals from heuristic-detector.ts but applied per-sentence
+// relative to the full passage context so scores are calibrated.
+// ---------------------------------------------------------------------------
+const AI_TELLS = [
+  "moreover","furthermore","additionally","therefore","consequently","thus",
+  "hence","however","notably","overall","nonetheless","nevertheless",
+  "subsequently","accordingly","henceforth","in conclusion","in summary",
+  "as a result","in addition","on the other hand","it is important to note",
+  "it is worth noting","delve","tapestry","leverage","robust","seamless",
+  "cutting-edge","transformative","utilize","groundbreaking","unlock",
+  "testament","underscore","underscores","realm","vibrant","intricate",
+  "intricacies","pivotal","showcase","showcasing","interplay","landscape",
+  "foster","fostering","garner","enduring","navigate the","when it comes to",
+  "plays a crucial role","plays a vital role","a testament to","in the realm of",
+];
+
+function scoreSentenceAi(sentence: string): number {
+  const lower = sentence.toLowerCase();
+  const words = lower.match(/[a-z0-9']+/g) || [];
+  if (words.length < 4) return 0;
+
+  let score = 0;
+
+  // AI-tell vocabulary
+  for (const tell of AI_TELLS) {
+    if (lower.includes(tell)) score += 0.35;
   }
 
-  // Sort longest first so multi-word phrases match before their individual words
-  const sorted = [...matchedTells].sort((a, b) => b.length - a.length);
-  const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const pattern = sorted.map(escape).join("|");
-  const regex = new RegExp(`(${pattern})`, "gi");
+  // Long formal words
+  const longWordRatio = words.filter((w) => w.length >= 8).length / words.length;
+  if (longWordRatio > 0.28) score += 0.25;
 
-  const parts: { text: string; highlight: boolean }[] = [];
-  let last = 0;
+  // No contractions
+  const hasContraction = /\b\w+'\w+\b/.test(sentence);
+  if (!hasContraction) score += 0.15;
+
+  // No first person
+  const hasFirstPerson = /\b(i|me|my|we|our|us)\b/i.test(sentence);
+  if (!hasFirstPerson) score += 0.1;
+
+  // Mid-length cadence (10–28 words is typical AI range)
+  if (words.length >= 10 && words.length <= 28) score += 0.15;
+
+  return Math.min(score, 1);
+}
+
+function splitSentences(text: string): { sentence: string; gap: string }[] {
+  // Split on sentence boundaries, preserving the whitespace/newline between them
+  const parts: { sentence: string; gap: string }[] = [];
+  const re = /([^.!?\n]+[.!?]*)(\s*\n*\s*)/g;
   let match: RegExpExecArray | null;
-  while ((match = regex.exec(text)) !== null) {
-    if (match.index > last) {
-      parts.push({ text: text.slice(last, match.index), highlight: false });
-    }
-    parts.push({ text: match[0], highlight: true });
+  let last = 0;
+  while ((match = re.exec(text)) !== null) {
+    parts.push({ sentence: match[1], gap: match[2] });
     last = match.index + match[0].length;
   }
+  // Any trailing text without punctuation
   if (last < text.length) {
-    parts.push({ text: text.slice(last), highlight: false });
+    parts.push({ sentence: text.slice(last), gap: "" });
   }
+  return parts.filter((p) => p.sentence.trim());
+}
+
+function SentenceHighlightedText({ text }: { text: string }) {
+  const sentences = splitSentences(text);
+  // Threshold: highlight if score >= 0.4
+  const THRESHOLD = 0.4;
 
   return (
-    <p className="whitespace-pre-wrap leading-relaxed text-gray-800 dark:text-gray-100 text-sm">
-      {parts.map((part, i) =>
-        part.highlight ? (
-          <mark
-            key={i}
-            className="bg-amber-200 text-amber-900 dark:bg-amber-400/30 dark:text-amber-200 rounded-sm px-0.5"
-            title="AI pattern detected"
-          >
-            {part.text}
-          </mark>
+    <p className="leading-relaxed text-gray-800 dark:text-gray-100 text-sm whitespace-pre-wrap">
+      {sentences.map(({ sentence, gap }, i) => {
+        const score = scoreSentenceAi(sentence);
+        return score >= THRESHOLD ? (
+          <span key={i}>
+            <mark
+              className="bg-yellow-300 text-gray-900 dark:bg-yellow-400/70 dark:text-gray-900 rounded-sm"
+              title={`AI likelihood: ${Math.round(score * 100)}%`}
+            >
+              {sentence}
+            </mark>
+            {gap}
+          </span>
         ) : (
-          <span key={i}>{part.text}</span>
-        ),
-      )}
+          <span key={i}>{sentence}{gap}</span>
+        );
+      })}
     </p>
   );
 }
 
-const TONE_META: Record<HumanizerTone, { label: string; description: string }> =
-  {
-    natural: {
-      label: "Natural",
-      description: "Balanced, everyday writing",
-    },
-    simple: {
-      label: "Simple",
-      description: "Easiest wording and grammar",
-    },
-    polished: {
-      label: "Polished",
-      description: "Smoother but still human and plain",
-    },
-    academic: {
-      label: "Academic",
-      description: "Neutral, plain, scholarly register",
-    },
-    custom: {
-      label: "Custom",
-      description: "Describe the tone you want below",
-    },
-  };
-
 const HumanizerTool: React.FC = () => {
   const [token, setToken] = useState<string | null>(null);
   const [text, setText] = useState("");
-  const [tone, setTone] = useState<HumanizerTone>("natural");
-  const [customTone, setCustomTone] = useState("");
+  const tone: HumanizerTone = "natural";
   const [intensity, setIntensity] = useState<RewriteIntensity>("moderate");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<HumanizerResponse | null>(null);
@@ -206,9 +219,7 @@ const HumanizerTool: React.FC = () => {
   }, []);
 
   const wordCount = useMemo(() => countWords(text), [text]);
-  const customToneValid = tone !== "custom" || customTone.trim().length > 0;
-  const canSubmit =
-    text.trim().length > 0 && wordCount <= 1500 && customToneValid && !loading;
+  const canSubmit = text.trim().length > 0 && wordCount <= 1500 && !loading;
 
   const rewrittenText = result?.rewritten_text || "";
 
@@ -299,9 +310,6 @@ const HumanizerTool: React.FC = () => {
           text,
           tone_mode: tone,
           rewrite_intensity: intensity,
-          ...(tone === "custom"
-            ? { custom_tone_instruction: customTone.trim() }
-            : {}),
           preserve_citations: true,
           return_diff: true,
         },
@@ -383,7 +391,6 @@ const HumanizerTool: React.FC = () => {
     toast.success("Loaded into editor.");
   };
 
-  const toneDescription = TONE_META[tone]?.description || "";
   const canCheckAi = text.trim().length > 0 && wordCount <= 1500 && !loading;
 
   const aiPercent = Math.max(
@@ -424,54 +431,6 @@ const HumanizerTool: React.FC = () => {
               Makes text sound more natural, removes buzzwords, and keeps
               language simple.
             </p>
-
-            <div className="flex justify-between items-center">
-              <label className="block text-sm font-semibold mb-1 text-gray-800 dark:text-gray-100">
-                Tone:
-              </label>
-              <div className="relative w-[55%]">
-                <select
-                  value={tone}
-                  onChange={(e) => setTone(e.target.value as HumanizerTone)}
-                  className="w-full rounded-md border border-gray-200 text-black dark:border-gray-600 p-2 pr-7 hover:cursor-pointer focus:outline-none focus:ring-2 focus:ring-black dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300 appearance-none"
-                >
-                  <option value="natural">Natural</option>
-                  <option value="simple">Simple</option>
-                  <option value="polished">Polished</option>
-                  <option value="academic">Academic</option>
-                  <option value="custom">Custom</option>
-                </select>
-                <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-gray-500 dark:text-gray-300">
-                  <FaChevronDown className="w-3 h-3" />
-                </span>
-              </div>
-            </div>
-
-            <div className="text-xs text-gray-500 dark:text-gray-400">
-              <span className="font-semibold text-gray-700 dark:text-gray-200">
-                {TONE_META[tone]?.label}:
-              </span>{" "}
-              {toneDescription}
-            </div>
-
-            {tone === "custom" && (
-              <div>
-                <label className="block text-sm font-semibold mb-1 text-gray-800 dark:text-gray-100">
-                  Custom tone (3-4 lines):
-                </label>
-                <textarea
-                  value={customTone}
-                  onChange={(e) => setCustomTone(e.target.value.slice(0, 400))}
-                  rows={3}
-                  maxLength={400}
-                  placeholder="e.g. Confident first-person voice, short sentences, a little dry humor."
-                  className="w-full rounded-md border border-gray-200 text-black dark:border-gray-600 p-2 focus:outline-none focus:ring-2 focus:ring-black dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300"
-                />
-                <div className="text-[11px] text-gray-400 text-right">
-                  {customTone.trim().length}/400
-                </div>
-              </div>
-            )}
 
             {/* Rewrite intensity */}
             <div>
@@ -684,22 +643,12 @@ const HumanizerTool: React.FC = () => {
                   {/* Highlights view */}
                   {aiDetectView === "highlights" && (
                     <div className="flex-1 flex flex-col p-4 gap-3 overflow-y-auto">
-                      {(() => {
-                        const tells = aiDetection?.meta?.matchedTells ?? [];
-                        return (
-                          <>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="inline-block h-3 w-3 rounded-sm bg-amber-300 dark:bg-amber-400/50 flex-shrink-0" />
-                              <span className="text-sm text-gray-600 dark:text-gray-300">
-                                {tells.length > 0
-                                  ? `${tells.length} AI pattern${tells.length !== 1 ? "s" : ""} detected`
-                                  : "No AI vocabulary patterns detected"}
-                              </span>
-                            </div>
-                            <HighlightedText text={text} matchedTells={tells} />
-                          </>
-                        );
-                      })()}
+                      {/* Legend */}
+                      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                        <span className="inline-block h-3 w-4 rounded-sm bg-yellow-300 dark:bg-yellow-400/70 flex-shrink-0" />
+                        Sentences likely written by AI are highlighted
+                      </div>
+                      <SentenceHighlightedText text={text} />
                     </div>
                   )}
                 </div>
