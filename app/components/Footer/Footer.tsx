@@ -209,7 +209,6 @@ const Footer: FC<FooterProps> = ({}) => {
                     <Image src={Tiktok} alt="Tiktok" />
                   </div>
                 </div>
-
                 <div className="flex my-2">
                   <div className="w-5 mr-1">
                     <Image
@@ -240,46 +239,48 @@ const Footer: FC<FooterProps> = ({}) => {
         </div>
         <CopyRight />
         {!hideSMS && (
-          <>
-            {/* SMS module */}
-            <div>
-              <button
-                id="sms-chat"
-                className="sms-chat z-[100] hidden"
-                style={{ display: "none" }}
+          <div>
+            {/* sms module - desktop */}
+            <button
+              id="sms-chat"
+              className="fixed flex justify-between z-[98] left-0 bg-transparent border-none hidden md:flex"
+              onClick={apiCall}
+            >
+              <a
+                href={`sms:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER}`}
+                className="fixed flex font-normal justify-between z-[98] bottom-[80px] left-0 text-[15px] py-[10px] px-[20px] no-underline bg-[#36454F] ml-[5px] rounded-[50px] items-center min-w-[44px] min-h-[44px]"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Send us an SMS"
               >
-                <a
-                  href={`sms:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER}`}
-                  className="blantershow-sms hidden"
-                  target="_blank"
-                >
-                  <Image
-                    src={chatBubble}
-                    alt="whatsapp"
-                    className="whatsapp-icon-footer"
-                  />
-                  <span className="sms-text">Send SMS</span>
-                </a>
-              </button>
-              <button
-                id="sms-chat2"
-                className="sms-chat z-[100]"
-                onClick={apiCall}
+                <Image src={chatBubble} alt="SMS" className="w-[35px]" />
+                <span className="pl-[10px] ml-[15px] font-bold text-white relative -left-[14px]">
+                  Send SMS
+                </span>
+              </a>
+            </button>
+
+            {/* sms module - mobile */}
+            <button
+              id="sms-chat2"
+              className="fixed flex justify-between z-[98] left-0 bg-transparent border-none md:hidden flex z-[99999]"
+              onClick={apiCall}
+            >
+              <a
+                href={`sms:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER}`}
+                className="fixed flex font-normal justify-between z-[98] bottom-[55px] left-0 text-[15px] py-0 px-[5px] no-underline ml-[5px] rounded-[50px] items-center min-w-[44px] min-h-[44px]"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Send us an SMS"
               >
-                <a
-                  href={`sms:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER}`}
-                  className="blantershow-sms2"
-                  target="_blank"
-                >
-                  <Image
-                    src={cellPhone}
-                    alt="whatsapp"
-                    className="sms-icon-footer"
-                  />
-                </a>
-              </button>
-            </div>
-          </>
+                <Image
+                  src={cellPhone}
+                  alt="SMS"
+                  className="w-[45px] max-[768px]:w-[37px]"
+                />
+              </a>
+            </button>
+          </div>
         )}
       </div>
     );
@@ -561,49 +562,45 @@ const Footer: FC<FooterProps> = ({}) => {
           </div>
         </div>
         <CopyRight />
-        {ShowSms ? (
-          <></>
-        ) : (
+        {!ShowSms && (
           <div>
-            {/* sms module */}
+            {/* sms module - desktop */}
             <button
               id="sms-chat"
-              className="sms-chat z-[100] hidden"
-              style={{ display: "none" }}
+              className="fixed flex justify-between z-[98] left-0 bg-transparent border-none hidden md:flex"
+              onClick={apiCall}
             >
               <a
                 href={`sms:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER}`}
-                className="blantershow-sms inline-flex items-center justify-center min-w-[44px] min-h-[44px] hidden"
+                className="fixed flex font-normal justify-between z-[98] bottom-[80px] left-0 text-[15px] py-[10px] px-[20px] no-underline bg-[#36454F] ml-[5px] rounded-[50px] items-center min-w-[44px] min-h-[44px]"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Send us an SMS"
               >
-                <Image
-                  src={chatBubble}
-                  alt="whatsapp"
-                  className="whatsapp-icon-footer"
-                />
-                <span className="sms-text">Send SMS</span>
+                <Image src={chatBubble} alt="SMS" className="w-[35px]" />
+                <span className="pl-[10px] ml-[15px] font-bold text-white relative -left-[14px]">
+                  Text Us
+                </span>
               </a>
             </button>
 
+            {/* sms module - mobile */}
             <button
               id="sms-chat2"
-              className="sms-chat z-[100]"
-              style={{ display: "none" }}
+              className="fixed flex justify-between z-[98] left-0 bg-transparent border-none md:hidden flex z-[99999]"
+              onClick={apiCall}
             >
               <a
                 href={`sms:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER}`}
-                className="blantershow-sms2 inline-flex items-center justify-center min-w-[44px] min-h-[44px]"
-                style={{ display: "none" }}
+                className="fixed flex font-normal justify-between z-[98] bottom-[55px] left-0 text-[15px] py-0 px-[5px] no-underline ml-[5px] rounded-[50px] items-center min-w-[44px] min-h-[44px]"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Send us an SMS"
               >
                 <Image
                   src={cellPhone}
-                  alt="whatsapp"
-                  className="sms-icon-footer"
+                  alt="SMS"
+                  className="w-[45px] max-[768px]:w-[37px]"
                 />
               </a>
             </button>

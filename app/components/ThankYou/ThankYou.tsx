@@ -117,8 +117,11 @@ const ThankYou: FC<ThankYouProps> = ({}) => {
     <div className={styles.thankYouRoot}>
       <div className="container mx-auto h-[350px] text-center flex flex-col items-center justify-end">
         <div>
+        <p className="lg:text-5xl md:text-3xl text-2xl font-semibold mb-4">
+            Thank You!
+          </p>
           <p className="lg:text-5xl md:text-3xl text-2xl font-semibold mb-4">
-            Thank You! ⚡ Get Your Quote In 60 Seconds.
+           Sending you a Quote
           </p>
           {/* <p className="lg:text-[33px] md:text-[23px] text-[19px]">
             A Smart and Wise Decision, Indeed!
@@ -133,7 +136,7 @@ const ThankYou: FC<ThankYouProps> = ({}) => {
             overwhelm.
           </p> */}
           <p className="lg:text-xl ">
-            Our academic team is online right now. Send us message on <b>WhatsApp</b> to skip <br />{" "}
+            Our academic team is online right now. <b>Text Us</b> to skip <br className="sm:block hidden"/>{" "}
             the queue and get your price instantly.
           </p>
         </div>
@@ -214,13 +217,25 @@ const ThankYou: FC<ThankYouProps> = ({}) => {
                 </Button>
               </a> */}
 
-              <div onClick={apiCall}>
+              {/* <div onClick={apiCall}>
                 <a
                   href="https://wa.me/17167081869?text=Hi%20There!%20We are here for you!"
                   target="_blank"
                 >
                   <Button className="bg-[#118C7E] w-full text-xl">
                     Connect on Whatsapp
+                  </Button>
+                </a>
+              </div> */}
+
+              <div onClick={apiCall}>
+                <a
+                  href={`sms:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Button className="bg-[#36454F] w-full text-xl">
+                    Text Us
                   </Button>
                 </a>
               </div>
