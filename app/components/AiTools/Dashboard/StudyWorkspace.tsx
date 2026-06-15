@@ -1534,7 +1534,7 @@ export default function StudyWorkspace() {
                       onClick={() => setQuizSubmitted((prev) => !prev)}
                       className="rounded-md bg-[#5f70ff] px-3 py-1.5 text-xs font-semibold text-white"
                     >
-                      {quizSubmitted ? "Review all" : "Practice mode"}
+                      {quizSubmitted ? "Back to practice" : "View all answers"}
                     </button>
                   ) : (
                     <button

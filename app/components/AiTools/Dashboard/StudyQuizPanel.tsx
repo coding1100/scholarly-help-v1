@@ -1,6 +1,7 @@
 "use client";
 
 import { Dispatch, SetStateAction } from "react";
+import { FiCheck, FiX } from "react-icons/fi";
 
 type QuizItem = {
   id: string;
@@ -23,6 +24,122 @@ function decodeText(input: string) {
       }
     })
     .replace(/&amp;/g, "&");
+}
+
+function getOptionStyle(selected: boolean, correct: boolean, showFeedback: boolean) {
+  if (!showFeedback) {
+    return selected
+      ? "border-2 border-[#5f70ff] bg-[#eef1ff] text-[#2f3a9e] shadow-sm"
+      : "border border-[#e8e9f6] bg-white text-[#4f5373] hover:border-[#c9d1ff]";
+  }
+
+  if (correct && selected) {
+    return "border-2 border-[#10b981] bg-[#ecfdf5] text-[#064e3b] shadow-sm";
+  }
+  if (correct) {
+    return "border-2 border-[#10b981] bg-[#ecfdf5] text-[#064e3b] shadow-sm";
+  }
+  if (selected) {
+    return "border-2 border-[#ef4444] bg-[#fef2f2] text-[#7f1d1d] shadow-sm";
+  }
+  return "border border-[#e8e9f6] bg-white text-[#8b8faa] opacity-80";
+}
+
+function OptionBadge({
+  selected,
+  correct,
+  showFeedback,
+}: {
+  selected: boolean;
+  correct: boolean;
+  showFeedback: boolean;
+}) {
+  if (!showFeedback) return null;
+
+  if (correct && selected) {
+    return (
+      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+        <FiCheck className="h-3 w-3" />
+        Your answer · Correct
+      </span>
+    );
+  }
+
+  if (correct) {
+    return (
+      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-400">
+        <FiCheck className="h-3 w-3" />
+        Correct answer
+      </span>
+    );
+  }
+
+  if (selected) {
+    return (
+      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-400">
+        <FiX className="h-3 w-3" />
+        Your answer
+      </span>
+    );
+  }
+
+  return null;
+}
+
+function QuizOptions({
+  quiz,
+  selectedIndex,
+  showFeedback,
+  onSelect,
+  decode,
+}: {
+  quiz: QuizItem;
+  selectedIndex: number | undefined;
+  showFeedback: boolean;
+  onSelect?: (idx: number) => void;
+  decode: (input: string) => string;
+}) {
+  return (
+    <div className="space-y-2">
+      {quiz.options.map((option, idx) => {
+        const selected = selectedIndex === idx;
+        const correct = idx === quiz.correctAnswerIndex;
+        const className = getOptionStyle(selected, correct, showFeedback);
+        const content = (
+          <div className="flex items-start justify-between gap-3">
+            <span className="flex-1">{decode(option)}</span>
+            <OptionBadge
+              selected={selected}
+              correct={correct}
+              showFeedback={showFeedback}
+            />
+          </div>
+        );
+
+        if (onSelect) {
+          return (
+            <button
+              key={`${quiz.id}-${idx}`}
+              type="button"
+              onClick={() => onSelect(idx)}
+              className={`w-full cursor-pointer rounded-lg px-3 py-2.5 text-left text-sm transition ${className}`}
+            >
+              {content}
+            </button>
+          );
+        }
+
+        return (
+          <div
+            key={`${quiz.id}-${idx}`}
+            className={`rounded-lg px-3 py-2.5 text-sm ${className}`}
+          >
+            {content}
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 export default function StudyQuizPanel({
@@ -72,32 +189,32 @@ export default function StudyQuizPanel({
   if (quizSubmitted) {
     return (
       <div className="max-h-[60vh] space-y-3 overflow-y-auto">
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[#dfe4ff] bg-[#f9faff] px-3 py-2 text-xs text-[#5a5f7d]">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#10b981]" />
+            Correct answer
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#ef4444]" />
+            Your answer (incorrect)
+          </span>
+        </div>
         {quizzes.map((quiz, qIndex) => (
-          <div key={quiz.id} className="rounded-md border border-[#e8e9f6] p-3">
+          <div key={quiz.id} className="rounded-lg border border-[#e8e9f6] p-3">
             <p className="text-sm font-semibold text-[#292a40]">
               {qIndex + 1}. {decode(quiz.question)}
             </p>
-            <div className="mt-2 space-y-1">
-              {quiz.options.map((option, idx) => {
-                const selected = quizSelections[quiz.id] === idx;
-                const correct = idx === quiz.correctAnswerIndex;
-                return (
-                  <div
-                    key={`${quiz.id}-${idx}`}
-                    className={`rounded-md px-2 py-2 text-sm ${
-                      correct
-                        ? "bg-emerald-100 text-emerald-800"
-                        : selected
-                          ? "bg-red-100 text-red-700"
-                          : "bg-[#f7f8ff] text-[#4f5373]"
-                    }`}
-                  >
-                    {decode(option)}
-                  </div>
-                );
-              })}
+            <div className="mt-2">
+              <QuizOptions
+                quiz={quiz}
+                selectedIndex={quizSelections[quiz.id]}
+                showFeedback
+                decode={decode}
+              />
             </div>
-            <p className="mt-2 text-xs text-[#696d8d]">{decode(quiz.explanation)}</p>
+            <p className="mt-2 rounded-md bg-[#f4f5fc] px-2.5 py-2 text-xs text-[#4f5373]">
+              {decode(quiz.explanation)}
+            </p>
           </div>
         ))}
         <p className="text-center text-sm font-semibold text-[#5f70ff]">
@@ -119,6 +236,9 @@ export default function StudyQuizPanel({
 
   if (!activeQuiz) return null;
 
+  const hasAnsweredCurrent = quizSelections[activeQuiz.id] !== undefined;
+  const showCurrentFeedback = hasAnsweredCurrent;
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between text-xs text-[#65698a]">
@@ -133,27 +253,26 @@ export default function StudyQuizPanel({
         <p className="text-base font-semibold leading-snug text-[#292a40]">
           {decode(activeQuiz.question)}
         </p>
-        <div className="mt-3 space-y-2">
-          {activeQuiz.options.map((option, idx) => {
-            const selected = quizSelections[activeQuiz.id] === idx;
-            return (
-              <button
-                key={`${activeQuiz.id}-${idx}`}
-                type="button"
-                onClick={() =>
-                  setQuizSelections((prev) => ({ ...prev, [activeQuiz.id]: idx }))
-                }
-                className={`w-full rounded-lg px-3 py-2.5 text-left text-sm transition ${
-                  selected
-                    ? "border border-[#5f70ff] bg-[#e8ebff] text-[#3441b5]"
-                    : "border border-[#e8e9f6] bg-white text-[#4f5373] hover:border-[#c9d1ff]"
-                }`}
-              >
-                {decode(option)}
-              </button>
-            );
-          })}
+        <div className="mt-3">
+          <QuizOptions
+            quiz={activeQuiz}
+            selectedIndex={quizSelections[activeQuiz.id]}
+            showFeedback={showCurrentFeedback}
+            onSelect={(idx) =>
+              setQuizSelections((prev) => ({ ...prev, [activeQuiz.id]: idx }))
+            }
+            decode={decode}
+          />
         </div>
+        {showCurrentFeedback ? (
+          <p className="mt-3 rounded-md border border-[#dfe4ff] bg-white px-3 py-2 text-xs text-[#4f5373]">
+            {decode(activeQuiz.explanation)}
+          </p>
+        ) : (
+          <p className="mt-3 text-xs text-[#7a7fa8]">
+            Select an answer to see whether it is correct.
+          </p>
+        )}
       </div>
       <div className="flex items-center justify-between">
         <button
