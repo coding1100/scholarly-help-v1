@@ -17,7 +17,7 @@ import CopyRight from "./CopyRight";
 import LogoNormal from "@/app/assets/Images/logo.svg";
 import cellPhone from "@/app/assets/Images/cellphone.png";
 import { usePathname } from "next/navigation";
-import { hideFooterLinks, sms, smsHide } from "../HideLinks/HideLinks";
+import { hideFooterLinks, smsHide, showSmsModule } from "../HideLinks/HideLinks";
 // import "./footer.css";
 // import ChatBubble from "@/app/assets/Icons/ChatBubble";
 import chatBubble from "@/app/assets/Images/chatBubble.png";
@@ -29,8 +29,9 @@ interface FooterProps {}
 const Footer: FC<FooterProps> = ({}) => {
   const currentPage = usePathname();
   const hidelinksfooter = hideFooterLinks.includes(currentPage);
-  const ShowSms = sms.includes(currentPage);
   const hideSMS = smsHide.includes(currentPage);
+  // The "Text Us" SMS button is shown ONLY on the thank-you pages.
+  const showTextUsSms = showSmsModule.includes(currentPage);
   const [GCLID, setGCLID] = useState("");
   const [url, setUrl] = useState("");
   const [isFooterInView, setIsFooterInView] = useState(false);
@@ -562,7 +563,7 @@ const Footer: FC<FooterProps> = ({}) => {
           </div>
         </div>
         <CopyRight />
-        {!ShowSms && (
+        {showTextUsSms && (
           <div>
             {/* sms module - desktop */}
             <button
