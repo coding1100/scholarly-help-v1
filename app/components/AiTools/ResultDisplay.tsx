@@ -39,7 +39,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 overflow-hidden transition-colors duration-300">
+    <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 overflow-hidden h-full flex flex-col transition-colors duration-300">
       {/* Header */}
       <div className="p-[9px] border-b border-gray-200 dark:border-gray-700 flex items-center justify-between transition-colors duration-300">
         <h2 className="text-xl font-normal text-gray-800 dark:text-gray-100 transition-colors duration-300">
@@ -66,13 +66,13 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
       </div>
 
       {/* Result Area */}
-      <div className="p-4 min-h-48">
+      <div className="p-4 min-h-48 flex-1">
         {customBody ? (
           <div className="w-full h-full">{customBody}</div>
         ) : (
           <textarea
             readOnly
-            className="w-full min-h-48 text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-800 focus:outline-none resize-none transition-colors duration-300"
+            className="w-full h-full min-h-48 text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-800 focus:outline-none resize-none overflow-hidden scrollbar-hide transition-colors duration-300"
             value={loading ? "In process..." : resultText}
             placeholder="Result will appear here..."
           ></textarea>

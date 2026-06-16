@@ -4,7 +4,6 @@ import React, { FC } from "react";
 // import Footer from "../(pages)/solver/components/footer";
 import Header from "../(pages)/scan/components/header";
 import Footer from "../(pages)/scan/components/footer";
-import { Toaster } from "react-hot-toast";
 
 type ScanProps = {
   children: React.ReactNode;
@@ -18,7 +17,6 @@ const Scan: FC<ScanProps> = ({ children, hideFooter, hideHeader }) => {
       {!hideHeader && <Header />}
       {children}
       {!hideFooter && <Footer />}
-      <Toaster />
     </>
   );
 };

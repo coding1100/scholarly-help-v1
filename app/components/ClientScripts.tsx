@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { useEffect, useCallback } from "react";
 import Script from "next/script";
+import { Toaster } from "react-hot-toast";
 
 declare global {
   interface Window {
@@ -72,6 +73,10 @@ export default function ClientScripts() {
 
   return (
     <>
+      {/* Global toast host. Mounted once here (a client component present on every
+          page) so success/error toasts from any tool are actually rendered. */}
+      <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
+
       {/* LiveChat - load script only on home page */}
       {ShowLiveChat && (
         <Script id="livechat-script" strategy="lazyOnload">
