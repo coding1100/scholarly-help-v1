@@ -60,7 +60,9 @@ async function fetchTokenUsage(accessToken: string): Promise<{
     throw err;
   }
 
-  const data = (await res.json()) as any;
+  const raw = (await res.json()) as any;
+  // Backend wraps responses as { success, message, data }
+  const data = raw?.data ?? raw;
   return {
     total_tokens: Number(data?.total_tokens ?? 0),
     usedTokens: Number(data?.usedTokens ?? 0),

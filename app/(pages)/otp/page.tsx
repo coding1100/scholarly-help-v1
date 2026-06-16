@@ -46,7 +46,8 @@ const OTPPage = () => {
         },
       );
       localStorage.removeItem("user_password");
-      const userData = response.data;
+      // Backend wraps responses as { success, message, data }
+      const userData = response.data?.data ?? response.data;
       localStorage.setItem("access_token", userData.access_token);
       localStorage.setItem("user_id", userData.user.user_id);
       localStorage.setItem("user_email", userData.user.email);

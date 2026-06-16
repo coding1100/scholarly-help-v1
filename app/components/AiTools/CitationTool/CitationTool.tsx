@@ -134,7 +134,7 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
       if (doi.trim()) payload.doi = doi.trim();
       if (accessDate.trim()) payload.access_date = accessDate.trim();
 
-      const response = await axios.post<CitationResponse>(
+      const response = await axios.post(
         `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/citation-generator`,
         payload,
         {
@@ -147,8 +147,11 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
 
       console.log("Response:", response.data);
 
-      if (response.data.status === "success") {
-        setResult(response.data);
+      // Backend wraps responses as { success, message, data }
+      const responsePayload = response.data?.data ?? response.data;
+
+      if (responsePayload.status === "success") {
+        setResult(responsePayload);
         setFlag(true);
         toast.success("Citation generated successfully!");
       } else {

@@ -117,7 +117,9 @@ const SignInCard: FC<SignInCardProps> = ({
       );
       setEmail("");
       setPassword("");
-      persistSessionAndRedirect(res.data);
+      // Backend now wraps responses as { success, message, data }. Unwrap to the
+      // session payload, falling back to the raw body for resilience.
+      persistSessionAndRedirect(res.data?.data ?? res.data);
     } catch (err: any) {
       const networkMsg = getAuthNetworkErrorMessage(err);
       const message =
