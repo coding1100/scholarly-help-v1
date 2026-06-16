@@ -148,7 +148,8 @@ const TextSummarizerInput: React.FC<TextSummarizerInputProps> = ({
           </div>
         )}
 
-        {/* Word count in bottom right */}
+        {/* Word count in bottom right. When a limit is enforced, show
+            "count / max" and turn red once the limit is exceeded. */}
         {showWordLimit ? (
           <div
             className={`absolute bottom-2 right-4 text-sm ${
@@ -157,7 +158,7 @@ const TextSummarizerInput: React.FC<TextSummarizerInputProps> = ({
                 : "text-gray-500 dark:text-gray-400"
             } transition-colors duration-300`}
           >
-            Word Count: {wordCount}
+            {wordCount.toLocaleString()}/{maxWords.toLocaleString()}
           </div>
         ) : (
           <div className="absolute bottom-2 right-4 text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300">
