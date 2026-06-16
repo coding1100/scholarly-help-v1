@@ -3,7 +3,7 @@
 import React, { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
-import { Toaster, toast } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import MainToolLayout from "@/app/components/AiTools/MainTool/MainToolLayout";
 import EditorContainer from "@/app/components/AiTools/MainTool/EditorContainer";
 import MainDocEditer from "@/app/components/AiTools/MainTool/MainDocEditer";
@@ -49,7 +49,6 @@ const ClientPage = () => {
           setOutlineResponse={setOutlineResponse}
         />
       )}
-      <Toaster />
     </MainToolLayout>
   );
 };

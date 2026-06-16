@@ -11,8 +11,13 @@ interface EssayTitleProps {
   setFlag: (value: boolean) => void;
 }
 
-interface TitleResponse {
-  status: string;
+interface ApiEnvelope<T> {
+  success: boolean;
+  message: string;
+  data: T;
+}
+
+interface TitleResponseData {
   topic: string | null;
   keywords: string | null;
   tone?: string;
@@ -25,6 +30,8 @@ interface TitleResponse {
   tokens_used: number;
 }
 
+type TitleResponse = ApiEnvelope<TitleResponseData>;
+
 // Tone options with display labels
 const toneOptions = [
   { value: "formal", label: "Formal" },
@@ -35,6 +42,7 @@ const toneOptions = [
   { value: "theoretical", label: "Theoretical" },
   { value: "empirical", label: "Empirical" },
   { value: "case-study-oriented", label: "Case Study-Oriented" },
+  { value: "custom", label: "Custom" },
 ];
 
 // Style & Engagement options with display labels
@@ -57,6 +65,7 @@ const EssayTitle: FC<EssayTitleProps> = ({ setFlag }) => {
   const [topic, setTopic] = useState<string>("");
   const [keywords, setKeywords] = useState<string>("");
   const [tone, setTone] = useState<string>("");
+  const [customToneInstructions, setCustomToneInstructions] = useState("");
   const [styleEngagement, setStyleEngagement] = useState<string>("");
   const [academicLevel, setAcademicLevel] = useState<string>("");
   const [count, setCount] = useState<number>(5);
@@ -74,6 +83,7 @@ const EssayTitle: FC<EssayTitleProps> = ({ setFlag }) => {
     setTopic("");
     setKeywords("");
     setTone("");
+    setCustomToneInstructions("");
     setStyleEngagement("");
     setAcademicLevel("");
     setCount(5);
@@ -86,6 +96,11 @@ const EssayTitle: FC<EssayTitleProps> = ({ setFlag }) => {
     if (!topic.trim()) {
       setError("Please provide a topic.");
       toast.error("Please provide a topic.");
+      return;
+    }
+    if (tone === "custom" && !customToneInstructions.trim()) {
+      setError("Please add custom tone instructions.");
+      toast.error("Please add custom tone instructions.");
       return;
     }
 
@@ -101,6 +116,7 @@ const EssayTitle: FC<EssayTitleProps> = ({ setFlag }) => {
         tone?: string;
         style_engagement?: string;
         academic_level?: string;
+        custom_tone_instructions?: string;
         count?: number;
       } = {};
 
@@ -112,6 +128,9 @@ const EssayTitle: FC<EssayTitleProps> = ({ setFlag }) => {
       }
       if (tone) {
         payload.tone = tone;
+      }
+      if (tone === "custom") {
+        payload.custom_tone_instructions = customToneInstructions.trim();
       }
       if (styleEngagement) {
         payload.style_engagement = styleEngagement;
@@ -136,18 +155,16 @@ const EssayTitle: FC<EssayTitleProps> = ({ setFlag }) => {
         },
       });
 
-      console.log("Response:", response.data);
-
-      if (response.data.status === "success" && response.data.titles) {
-        setTitles(response.data.titles);
+      const titles = response.data?.data?.titles;
+      if (response.data?.success && Array.isArray(titles) && titles.length > 0) {
+        setTitles(titles);
         setFlag(true);
-        toast.success("Titles generated successfully!");
+        toast.success(response.data?.message || "Titles generated successfully!");
       } else {
         setError("Failed to generate titles. Please try again.");
         toast.error("Failed to generate titles.");
       }
     } catch (error: any) {
-      console.error("Error generating titles:", error);
       const errorMessage =
         error?.response?.data?.message ||
         error?.message ||
@@ -267,6 +284,24 @@ const EssayTitle: FC<EssayTitleProps> = ({ setFlag }) => {
                 </div>
               </div>
 
+              {tone === "custom" && (
+                <div className="md:col-span-2">
+                  <label
+                    htmlFor="customTitleTone"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-300"
+                  >
+                    Custom Tone Instructions:
+                  </label>
+                  <textarea
+                    id="customTitleTone"
+                    value={customToneInstructions}
+                    onChange={(e) => setCustomToneInstructions(e.target.value)}
+                    placeholder="Write 3-4 lines describing the title tone you want..."
+                    className="w-full h-24 p-3 rounded-md focus:outline-none resize-none text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-[#2b7fff] transition-colors duration-300"
+                  />
+                </div>
+              )}
+
               {/* Style & Engagement Selector */}
               <div>
                 <label
@@ -355,9 +390,15 @@ const EssayTitle: FC<EssayTitleProps> = ({ setFlag }) => {
             <div className="flex items-center gap-3 pt-2">
               <button
                 onClick={handleGenerate}
-                disabled={isSubmitting || !topic.trim()}
+                disabled={
+                  isSubmitting ||
+                  !topic.trim() ||
+                  (tone === "custom" && !customToneInstructions.trim())
+                }
                 className={`px-6 py-2.5 rounded-md font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2b7fff] transition-colors duration-300 ${
-                  isSubmitting || !topic.trim()
+                  isSubmitting ||
+                  !topic.trim() ||
+                  (tone === "custom" && !customToneInstructions.trim())
                     ? "bg-[#565add] dark:bg-[#565add] cursor-not-allowed"
                     : "bg-[#565add] hover:bg-[#666adf] dark:bg-[#565add] dark:hover:[#565add]"
                 }`}

@@ -30,9 +30,9 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag }) => {
   const [token, setToken] = useState<string | null>(null);
   const [inputText, setInputText] = useState<string>("");
   const [resultText, setResultText] = useState<string>("");
-  const [style, setStyle] = useState("Standard");
+  const [toneMode, setToneMode] = useState("standard");
+  const [customToneInstructions, setCustomToneInstructions] = useState("");
   const [isSubmitting, setSubmitting] = useState<boolean>(false);
-  const [isPdfProcessed, setIsPdfProcessed] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [pdfData, setPdfData] = useState<any>(null);
   const [wordLimitExceeded, setWordLimitExceeded] = useState(false);
@@ -57,6 +57,8 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag }) => {
   const handleClear = () => {
     setInputText("");
     setResultText("");
+    setToneMode("standard");
+    setCustomToneInstructions("");
     // here are change inam
     setPdfData(null);
     setFile(null);
@@ -65,11 +67,6 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag }) => {
   const processinput = async () => {
     if (!inputText || !inputText.trim()) return;
 
-    if (isPdfProcessed) {
-      setIsPdfProcessed(false);
-      return;
-    }
-
     setSubmitting(true);
 
     try {
@@ -77,7 +74,10 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag }) => {
         `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/paraphrase`,
         {
           text: inputText,
-          style: style,
+          tone_mode: toneMode,
+          ...(toneMode === "custom"
+            ? { custom_tone_instructions: customToneInstructions.trim() }
+            : {}),
         },
         {
           headers: {
@@ -86,14 +86,18 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag }) => {
           },
         },
       );
-      console.log("response: ", response.data);
-
-      setResultText(response.data.paraphrased_text);
-      toast.success("Text paraphrased successfully!");
+      const paraphrased = response.data?.data?.paraphrased_text ?? "";
+      if (!paraphrased) {
+        throw new Error("No paraphrased text was returned.");
+      }
+      setResultText(paraphrased);
+      toast.success(response.data?.message || "Text paraphrased successfully!");
       setFlag(true);
     } catch (error: any) {
-      const msg = error?.response?.data?.message || "Something went wrong. Please try again.";
-      setResultText(msg);
+      const msg =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Something went wrong. Please try again.";
       toast.error(msg);
     } finally {
       setSubmitting(false);
@@ -120,13 +124,20 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag }) => {
           },
         );
 
-        const result = response.data;
-        console.log("result: ", result);
-        setInputText(result);
+        // parse-document returns the extracted text as a plain string inside the
+        // standard envelope: { success, message, data: "<text>" }.
+        const extracted = response.data?.data;
+        const text = typeof extracted === "string" ? extracted : extracted?.text ?? "";
+        if (!text) {
+          throw new Error("No text could be extracted from the document.");
+        }
+        setInputText(text);
         toast.success("Document extracted successfully!");
       } catch (err: any) {
-        const msg = err?.response?.data?.message || "Failed to extract text from PDF.";
-        setResultText(msg);
+        const msg =
+          err?.response?.data?.message ||
+          err?.message ||
+          "Failed to extract text from PDF.";
         toast.error(msg);
       } finally {
         setSubmitting(false);
@@ -138,6 +149,10 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag }) => {
   const handleParaphrase = async () => {
     if (wordLimitExceeded) {
       toast.error("Text exceeds 200-word limit. Please shorten your input.");
+      return;
+    }
+    if (toneMode === "custom" && !customToneInstructions.trim()) {
+      toast.error("Please add custom tone instructions.");
       return;
     }
     trackToolGenerate({ toolName: "Paraphraser Tool" });
@@ -163,27 +178,54 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag }) => {
 
             <div className="px-2 md:px-4 py-4 flex items-center justify-between space-x-3 border-b dark:border-gray-700">
               <label
-                htmlFor="style"
+                htmlFor="toneMode"
                 className="font-medium text-gray-700 dark:text-gray-300 transition-colors duration-300"
               >
-                Paraphrase Style:
+                Tone Mode:
               </label>
               <div className="relative w-[50%]">
                 <select
-                  id="style"
-                  value={style}
-                  onChange={(e) => setStyle(e.target.value)}
+                  id="toneMode"
+                  value={toneMode}
+                  onChange={(e) => setToneMode(e.target.value)}
                   className="p-1 pr-7 border w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-[#2b7fff] dark:focus:ring-[#51a2ff] hover:cursor-pointer transition-colors duration-300 appearance-none"
                 >
-                  <option>Standard</option>
-                  <option>Creative</option>
-                  <option>Formal</option>
-                  <option>Casual</option>
+                  <option value="standard">Standard</option>
+                  <option value="academic">Academic</option>
+                  <option value="formal">Formal</option>
+                  <option value="casual">Casual</option>
+                  <option value="creative">Creative</option>
+                  <option value="professional">Professional</option>
+                  <option value="persuasive">Persuasive</option>
+                  <option value="simple">Simple</option>
+                  <option value="custom">Custom</option>
                 </select>
                 <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-gray-500 dark:text-gray-300">
                   <FaChevronDown className="w-3 h-3" />
                 </span>
               </div>
+            </div>
+            {toneMode === "custom" && (
+              <div className="px-2 md:px-4 pb-4 border-b dark:border-gray-700">
+                <label
+                  htmlFor="customToneInstructions"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
+                  Custom tone instructions
+                </label>
+                <textarea
+                  id="customToneInstructions"
+                  value={customToneInstructions}
+                  onChange={(e) => setCustomToneInstructions(e.target.value)}
+                  placeholder="Write 3-4 lines describing the tone you want..."
+                  className="w-full h-24 p-3 rounded-md focus:outline-none resize-none text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors duration-300"
+                />
+              </div>
+            )}
+            <div className="mx-2 md:mx-4 my-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-100 font-semibold">
+              This tool is designed to enhance your writing style. Please remember
+              that AI detection is not 100% accurate; use this as a creative
+              assistant for drafting and refining your work.
             </div>
             {/* reusable action buttons */}
             <ActionButtons
@@ -191,7 +233,11 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag }) => {
               onSubmit={handleParaphrase}
               onClear={handleClear}
               isSubmitting={isSubmitting}
-              isDisabled={!inputText.trim() || wordLimitExceeded}
+              isDisabled={
+                !inputText.trim() ||
+                wordLimitExceeded ||
+                (toneMode === "custom" && !customToneInstructions.trim())
+              }
             />
           </div>
 
