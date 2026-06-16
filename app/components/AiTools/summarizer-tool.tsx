@@ -20,6 +20,7 @@ import ResultDisplay from "./ResultDisplay";
 import ActionButtons from "./ActionButtons";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
+import SummarizerChat from "@/app/components/AiTools/SummarizerChat/SummarizerChat";
 
 type OutputType = "text_summary" | "flashcards" | "slide_deck" | "audio_summary";
 
@@ -1243,6 +1244,10 @@ const SummarizerTool: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* NotebookLM-style assistant: answers strictly from the pasted content.
+          Hidden until the user has entered content to ground against. */}
+      <SummarizerChat context={currentInputText} />
     </div>
   );
 };
