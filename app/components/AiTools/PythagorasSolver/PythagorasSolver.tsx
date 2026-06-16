@@ -110,7 +110,7 @@ const PythagorasSolver: FC<PythagorasSolverProps> = ({ setFlag }) => {
         payload.c = cValue;
       }
 
-      const response = await axios.post<SolverResponse>(
+      const response = await axios.post(
         `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/pythagoras-equation-solver`,
         payload,
         {
@@ -123,8 +123,11 @@ const PythagorasSolver: FC<PythagorasSolverProps> = ({ setFlag }) => {
 
       console.log("Response:", response.data);
 
-      if (response.data.status === "success") {
-        setResult(response.data);
+      // Backend wraps responses as { success, message, data }
+      const responsePayload = response.data?.data ?? response.data;
+
+      if (responsePayload.status === "success") {
+        setResult(responsePayload);
         setFlag(true);
         toast.success("Triangle solved successfully!");
       } else {

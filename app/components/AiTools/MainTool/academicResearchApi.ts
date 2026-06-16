@@ -39,6 +39,7 @@ type ApiEnvelope<T> = {
 };
 
 const unwrapApiData = <T>(payload: T | ApiEnvelope<T>): T => {
+  // Backend wraps responses as { success, message, data }
   if (
     payload &&
     typeof payload === "object" &&

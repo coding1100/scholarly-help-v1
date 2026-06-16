@@ -100,9 +100,12 @@ const SocialAuthButtons = ({
           { idToken: response.credential },
         );
 
+        // Backend wraps responses as { success, message, data }. Unwrap to the
+        // session payload (fallback to raw body) BEFORE signalling success, so a
+        // shape mismatch surfaces as an error rather than a false success toast.
+        persistSessionAndRedirect(res.data?.data ?? res.data);
         pushGoogleAuthEvent("signup_success");
         toast.success("Signed in with Google successfully!");
-        persistSessionAndRedirect(res.data);
       } catch (err: any) {
         toast.error(
           getApiErrorMessage(err, "Google sign-in failed. Please try again."),
@@ -253,13 +256,15 @@ const SocialAuthButtons = ({
         { params: { redirectTo: callbackUrl } },
       );
 
-      if (!res?.data?.url) {
+      // Response is wrapped as { success, message, data: { url } } (fallback to raw).
+      const fbUrl = res?.data?.data?.url ?? res?.data?.url;
+      if (!fbUrl) {
         toast.error("Unable to start Facebook sign-in.");
         setFacebookLoading(false);
         return;
       }
 
-      window.location.href = res.data.url;
+      window.location.href = fbUrl;
     } catch (err: any) {
       toast.error(
         getApiErrorMessage(err, "Facebook sign-in failed. Please try again."),

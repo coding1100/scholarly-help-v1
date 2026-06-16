@@ -113,7 +113,9 @@ const PricingPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           },
         },
       );
-      const redirectTo = response?.data?.url;
+      // Backend wraps responses as { success, message, data }
+      const responseData = response?.data?.data ?? response?.data;
+      const redirectTo = responseData?.url;
       if (redirectTo) {
         window.location.href = redirectTo;
       }

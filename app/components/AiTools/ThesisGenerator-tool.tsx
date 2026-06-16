@@ -108,7 +108,8 @@ const ThesisGenerator = () => {
         },
       );
 
-      const data = response.data;
+      // Backend wraps responses as { success, message, data }
+      const data = response.data?.data ?? response.data;
       if (Array.isArray(data?.theses) && data.theses.length > 0) {
         setTheses(data.theses);
         toast.success("Thesis statements generated successfully!");
