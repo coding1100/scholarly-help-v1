@@ -184,6 +184,64 @@ const parseSlidesFromLegacyContent = (content?: string): EditableSlide[] => {
   return [];
 };
 
+// Interactive flashcard: shows the question; the answer is hidden until the
+// user clicks to reveal it (and can be hidden again).
+const FlashcardItem = ({
+  index,
+  question,
+  answer,
+}: {
+  index: number;
+  question: string;
+  answer: string;
+}) => {
+  const [revealed, setRevealed] = useState(false);
+  const canReveal = Boolean(answer);
+
+  return (
+    <article className="rounded-lg border border-emerald-100 bg-white p-4 shadow-sm dark:border-emerald-900/60 dark:bg-gray-900">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <span className="rounded-md bg-emerald-600 px-2 py-1 text-xs font-semibold text-white">
+          Card {index + 1}
+        </span>
+        {canReveal && (
+          <button
+            type="button"
+            onClick={() => setRevealed((v) => !v)}
+            className="text-xs font-semibold text-emerald-700 hover:underline focus:outline-none dark:text-emerald-300"
+            aria-expanded={revealed}
+          >
+            {revealed ? "Hide answer" : "Show answer"}
+          </button>
+        )}
+      </div>
+
+      <button
+        type="button"
+        onClick={() => canReveal && setRevealed((v) => !v)}
+        className="w-full cursor-pointer text-left"
+        aria-label={revealed ? "Hide answer" : "Reveal answer"}
+      >
+        <p className="text-sm font-semibold leading-6 text-gray-950 dark:text-gray-50">
+          {question}
+        </p>
+      </button>
+
+      {canReveal ? (
+        revealed ? (
+          <p className="mt-3 rounded-md bg-emerald-50 p-3 text-sm leading-6 text-gray-700 dark:bg-emerald-950/30 dark:text-gray-200">
+            {answer}
+          </p>
+        ) : (
+          <p className="mt-3 select-none rounded-md border border-dashed border-emerald-200 bg-emerald-50/40 p-3 text-center text-xs font-medium text-emerald-700/70 dark:border-emerald-900/60 dark:bg-emerald-950/10 dark:text-emerald-300/70">
+            Click to reveal the answer
+          </p>
+        )
+      ) : null}
+    </article>
+  );
+};
+
 const StructuredResultView = ({ result }: { result: SummarizerResult }) => {
   const slides = toList(result.slide_deck);
   const flashcards = toList(result.flashcards);
@@ -274,28 +332,17 @@ const StructuredResultView = ({ result }: { result: SummarizerResult }) => {
             </div>
             <div className="grid gap-3">
               {flashcards.map((card, index) => {
-                const question = card?.question || card?.front || card?.term || `Card ${index + 1}`;
+                const question =
+                  card?.question || card?.front || card?.term || `Card ${index + 1}`;
                 const answer = card?.answer || card?.back || card?.definition || "";
 
                 return (
-                  <article
+                  <FlashcardItem
                     key={`${question}-${index}`}
-                    className="rounded-lg border border-emerald-100 bg-white p-4 shadow-sm dark:border-emerald-900/60 dark:bg-gray-900"
-                  >
-                    <div className="mb-3 flex items-center gap-2">
-                      <span className="rounded-md bg-emerald-600 px-2 py-1 text-xs font-semibold text-white">
-                        Card {index + 1}
-                      </span>
-                    </div>
-                    <p className="text-sm font-semibold leading-6 text-gray-950 dark:text-gray-50">
-                      {question}
-                    </p>
-                    {answer && (
-                      <p className="mt-3 rounded-md bg-emerald-50 p-3 text-sm leading-6 text-gray-700 dark:bg-emerald-950/30 dark:text-gray-200">
-                        {answer}
-                      </p>
-                    )}
-                  </article>
+                    index={index}
+                    question={question}
+                    answer={answer}
+                  />
                 );
               })}
             </div>
@@ -312,11 +359,15 @@ const StructuredResultView = ({ result }: { result: SummarizerResult }) => {
   );
 };
 
+// Maximum input the summarizer accepts (words). Mirrors the backend
+// SUMMARIZER_MAX_INPUT_WORDS guard.
+const MAX_INPUT_WORDS = 50000;
+
 const SummarizerTool: React.FC = () => {
   const [token, setToken] = useState<string | null>(null);
   const [currentInputText, setCurrentInputText] = useState("");
   const [summaryStyle, setSummaryStyle] = useState("Paragraph");
-  const [wordLimit, setWordLimit] = useState(200);
+  const [inputWordsExceeded, setInputWordsExceeded] = useState(false);
   const [detailLevel, setDetailLevel] = useState("standard");
   const [outputs, setOutputs] = useState<OutputType[]>(["text_summary"]);
   const [result, setResult] = useState<SummarizerResult | null>(null);
@@ -598,6 +649,12 @@ const SummarizerTool: React.FC = () => {
       toast.error("Please enter text to summarize.");
       return;
     }
+    if (inputWordsExceeded) {
+      toast.error(
+        `Input exceeds the ${MAX_INPUT_WORDS.toLocaleString()}-word limit. Please shorten it.`,
+      );
+      return;
+    }
 
     trackToolGenerate({ toolName: "Summarizer Tool" });
     setIsLoading(true);
@@ -607,7 +664,6 @@ const SummarizerTool: React.FC = () => {
     try {
       const commonPayload = {
         format: summaryStyle,
-        word_limit: wordLimit,
         detail_level: detailLevel,
         outputs,
         save_to_document: saveToDocument,
@@ -638,7 +694,6 @@ const SummarizerTool: React.FC = () => {
       const formData = new FormData();
       formData.append("source_type", "text");
       formData.append("format", summaryStyle);
-      formData.append("word_limit", String(wordLimit));
       formData.append("detail_level", detailLevel);
       formData.append("outputs", outputs.join(","));
       formData.append("save_to_document", String(saveToDocument));
@@ -767,7 +822,9 @@ const SummarizerTool: React.FC = () => {
             placeholder="Enter long text for summarization, or upload a document..."
             accept=".pdf,.docx,.txt"
             uploadButtonText="Upload Document"
-            showWordLimit={false}
+            showWordLimit
+            maxWords={MAX_INPUT_WORDS}
+            onWordLimitExceeded={setInputWordsExceeded}
           />
 
           <div className="space-y-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-900/40 p-4 transition-colors duration-300">
@@ -786,28 +843,6 @@ const SummarizerTool: React.FC = () => {
                     <option value="Study Notes">Study Notes</option>
                   </select>
                   <FaChevronDown className="pointer-events-none absolute right-2 top-3 w-3 h-3 text-gray-500" />
-                </span>
-              </label>
-              <label className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                Word Limit
-                <input
-                  type="number"
-                  min={50}
-                  max={5000}
-                  value={wordLimit}
-                  // Let the user type freely; clamp to the valid range only on
-                  // blur so intermediate values (e.g. typing "1" toward "1500")
-                  // aren't snapped away mid-keystroke.
-                  onChange={(e) => setWordLimit(Number(e.target.value))}
-                  onBlur={(e) =>
-                    setWordLimit(
-                      Math.min(5000, Math.max(50, Number(e.target.value) || 200)),
-                    )
-                  }
-                  className="mt-1 w-full rounded-md border border-gray-200 text-black dark:border-gray-600 bg-white p-2 focus:outline-none focus:ring-2 focus:ring-primary-400 dark:bg-gray-900 dark:text-gray-100"
-                />
-                <span className="mt-1 block text-xs font-normal text-gray-500 dark:text-gray-400">
-                  Between 50 and 5000 words.
                 </span>
               </label>
             </div>
@@ -982,7 +1017,7 @@ const SummarizerTool: React.FC = () => {
             onSubmit={handleSummarize}
             submitButtonText="Summarize"
             isSubmitting={isLoading}
-            isDisabled={isLoading || !currentInputText.trim()}
+            isDisabled={isLoading || !currentInputText.trim() || inputWordsExceeded}
           />
         </div>
 
