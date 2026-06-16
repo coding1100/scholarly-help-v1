@@ -51,6 +51,46 @@ const EssayOutlinetool = () => {
     }
   };
 
+  const escapeHtml = (value: string) =>
+    value
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+
+  const outlineToHtml = (items: OutlineItem[]) =>
+    items
+      .map((item) => {
+        const subs = item.subsections
+          .map((s) => `<li>${escapeHtml(s)}</li>`)
+          .join("");
+        return `<h2>${escapeHtml(item.section)}</h2><ul>${subs}</ul>`;
+      })
+      .join("\n");
+
+  // Persist the CURRENTLY DISPLAYED outline as a document (no regeneration).
+  // Returns the saved document id. Reuses an existing saved doc id if present
+  // so repeated Save/Word clicks don't create duplicates.
+  const persistDisplayedOutline = async (): Promise<string> => {
+    if (savedDocumentId) return savedDocumentId;
+    const title = `Outline - ${lastFormData?.topic || "Essay"}`;
+    const response = await axios.post(
+      `${baseUrl}/documents`,
+      {
+        title,
+        content: outlineToHtml(outlineData),
+        source_tool: ESSAY_OUTLINE_SOURCE_TOOL,
+        ...(selectedFolderId ? { folder_id: selectedFolderId } : {}),
+      },
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    const id = response.data?.data?._id;
+    if (!id) {
+      throw new Error("Could not save the outline.");
+    }
+    setSavedDocumentId(id);
+    return id;
+  };
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       setToken(localStorage.getItem("access_token"));
@@ -88,10 +128,7 @@ const EssayOutlinetool = () => {
     }
   };
 
-  const submitOutlineRequest = async (
-    formData: OutlineFormData,
-    saveToDocument = false,
-  ) => {
+  const submitOutlineRequest = async (formData: OutlineFormData) => {
     const { topic, essay_level, essay_type, body_paragraph_count } = formData;
     trackToolGenerate({ toolName: "Essay Outline Tool" });
     setSubmitting(true);
@@ -103,8 +140,6 @@ const EssayOutlinetool = () => {
           essay_level,
           essay_type,
           body_paragraph_count,
-          save_to_document: saveToDocument,
-          ...(selectedFolderId ? { folder_id: selectedFolderId } : {}),
         },
         {
           headers: {
@@ -118,14 +153,7 @@ const EssayOutlinetool = () => {
         throw new Error("No outline was returned.");
       }
       setOutlineData(outline);
-      setSavedDocumentId(
-        response.data?.data?.saved_document_id || savedDocumentId,
-      );
-      toast.success(
-        saveToDocument
-          ? "Outline saved to your folder."
-          : "Essay outline generated successfully!",
-      );
+      toast.success("Essay outline generated successfully!");
     } catch (error: any) {
       toast.error(
         error?.response?.data?.message ||
@@ -144,21 +172,38 @@ const EssayOutlinetool = () => {
   };
 
   const handleSaveToFolder = async () => {
-    if (!lastFormData) {
+    if (!outlineData.length) {
       toast.error("Generate an outline first.");
       return;
     }
-    await submitOutlineRequest(lastFormData, true);
+    setSubmitting(true);
+    try {
+      await persistDisplayedOutline();
+      toast.success(
+        selectedFolderId ? "Outline saved to your folder." : "Outline saved.",
+      );
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Failed to save the outline.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleExportWord = async () => {
-    if (!savedDocumentId) {
-      toast.error("Save the outline before exporting to Word.");
+    if (!outlineData.length) {
+      toast.error("Generate an outline first.");
       return;
     }
     try {
+      // Save the displayed outline first if it isn't persisted yet, so Word
+      // export works straight after generating (no separate Save step needed).
+      const documentId = await persistDisplayedOutline();
       const response = await axios.get(
-        `${baseUrl}/documents/${savedDocumentId}/export?format=docx`,
+        `${baseUrl}/documents/${documentId}/export?format=docx`,
         {
           headers: { Authorization: `Bearer ${token}` },
           responseType: "blob",
@@ -214,7 +259,7 @@ const EssayOutlinetool = () => {
                 </button>
                 <button
                   onClick={handleExportWord}
-                  disabled={!savedDocumentId}
+                  disabled={!outlineData.length || isSubmitting}
                   className="px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-100 rounded-md flex items-center space-x-2 bg-white dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2b7fff] focus:ring-opacity-50 relative transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <FaRegFileWord />
