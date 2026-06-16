@@ -118,6 +118,31 @@ const AI_TELLS = [
   "plays a crucial role","plays a vital role","a testament to","in the realm of",
 ];
 
+// Heuristic check for gibberish / non-language input (e.g. random keyboard
+// mashing like "NBVGFDXZS..."). Humanizing or AI-checking such input is
+// meaningless, so we reject it up front. A token is "plausible" if it contains a
+// vowel and has no absurdly long consonant run. If too few tokens are plausible,
+// the input is treated as gibberish.
+function looksLikeGibberish(input: string): boolean {
+  const tokens = (input.toLowerCase().match(/[a-z]+/g) || []).filter(
+    (t) => t.length >= 2,
+  );
+  // Not enough alphabetic content to judge — let it through.
+  if (tokens.length < 3) return false;
+
+  const isPlausible = (t: string) => {
+    if (t.length > 18) return false; // real words are rarely this long
+    if (!/[aeiou]/.test(t)) return false; // a word with no vowel is unlikely
+    if (/[bcdfghjklmnpqrstvwxyz]{5,}/.test(t)) return false; // 5+ consonants in a row
+    return true;
+  };
+
+  const plausible = tokens.filter(isPlausible).length;
+  const ratio = plausible / tokens.length;
+  // Fewer than half the tokens look like real words → gibberish.
+  return ratio < 0.5;
+}
+
 function scoreSentenceAi(sentence: string): number {
   const lower = sentence.toLowerCase();
   const words = lower.match(/[a-z0-9']+/g) || [];
@@ -295,6 +320,12 @@ const HumanizerTool: React.FC = () => {
       toast.error("Please keep input at or under 1500 words.");
       return;
     }
+    if (looksLikeGibberish(text)) {
+      toast.error(
+        "This doesn't look like readable text. Please enter meaningful content to humanize.",
+      );
+      return;
+    }
 
     setLoading(true);
     setResult(null);
@@ -364,6 +395,12 @@ const HumanizerTool: React.FC = () => {
     }
     if (wordCount > 1500) {
       toast.error("Please keep input at or under 1500 words.");
+      return;
+    }
+    if (looksLikeGibberish(text)) {
+      toast.error(
+        "This doesn't look like readable text. Please enter meaningful content to check.",
+      );
       return;
     }
 
@@ -440,6 +477,13 @@ const HumanizerTool: React.FC = () => {
             <p className="text-sm text-gray-600 dark:text-gray-300">
               Makes text sound more natural, removes buzzwords, and keeps
               language simple.
+            </p>
+
+            {/* Disclaimer */}
+            <p className="rounded-md bg-amber-50 p-2 text-xs leading-5 text-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+              Disclaimer: This tool is designed to enhance your writing style.
+              Please remember that AI detection is not 100% accurate; use this as
+              a creative assistant for drafting and refining your work.
             </p>
 
             {/* Rewrite intensity */}
