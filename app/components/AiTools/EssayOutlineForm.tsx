@@ -9,6 +9,7 @@ interface EssayOutlinerFormProps {
     topic: string;
     essay_level: string;
     essay_type: string;
+    body_paragraph_count: number;
   }) => void;
 }
 
@@ -19,18 +20,26 @@ const EssayOutlinerForm: React.FC<EssayOutlinerFormProps> = ({
   const [essayTitle, setEssayTitle] = useState("");
   const [schoolLevel, setSchoolLevel] = useState("high school");
   const [essayType, setEssayType] = useState("argumentative");
+  const [bodyParagraphCount, setBodyParagraphCount] = useState(3);
 
   const handleClearInputs = () => {
     setEssayTitle("");
-    setSchoolLevel("High School");
-    setEssayType("Argumentative");
+    setSchoolLevel("high school");
+    setEssayType("argumentative");
+    setBodyParagraphCount(3);
   };
 
   const handleGenerate = () => {
+    // Guarantee a valid integer in [1, 10] regardless of the input's blur state.
+    const safeCount = Math.min(
+      10,
+      Math.max(1, Math.round(Number(bodyParagraphCount) || 3)),
+    );
     const formData = {
       topic: essayTitle,
       essay_level: schoolLevel,
       essay_type: essayType,
+      body_paragraph_count: safeCount,
     };
     onSubmit(formData);
   };
@@ -104,6 +113,29 @@ const EssayOutlinerForm: React.FC<EssayOutlinerFormProps> = ({
               <FaChevronDown className="w-3 h-3" />
             </span>
           </div>
+        </div>
+
+        <div className="mb-4">
+          <label
+            htmlFor="bodyParagraphCount"
+            className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-1 block transition-colors duration-300"
+          >
+            Body paragraphs:
+          </label>
+          <input
+            type="number"
+            id="bodyParagraphCount"
+            min={1}
+            max={10}
+            value={bodyParagraphCount}
+            onChange={(e) => setBodyParagraphCount(Number(e.target.value))}
+            onBlur={(e) =>
+              setBodyParagraphCount(
+                Math.min(10, Math.max(1, Number(e.target.value) || 3)),
+              )
+            }
+            className="w-full text-black dark:text-gray-100 p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-800 transition-colors duration-300"
+          />
         </div>
       </div>
 

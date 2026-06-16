@@ -1,5 +1,6 @@
 import React, { useState, ChangeEvent, useRef, useEffect } from "react";
 import { FaRegFileAlt, FaFileUpload } from "react-icons/fa";
+import { toast } from "react-hot-toast";
 
 interface TextSummarizerInputProps {
   onTextChange: (text: string) => void;
@@ -11,6 +12,8 @@ interface TextSummarizerInputProps {
   onWordLimitExceeded?: (exceeded: boolean) => void;
   maxWords?: number;
   accept?: string;
+  uploadButtonText?: string;
+  showWordLimit?: boolean;
 }
 
 const TextSummarizerInput: React.FC<TextSummarizerInputProps> = ({
@@ -23,6 +26,8 @@ const TextSummarizerInput: React.FC<TextSummarizerInputProps> = ({
   onWordLimitExceeded,
   maxWords = 200,
   accept = ".pdf",
+  uploadButtonText = "Upload Document",
+  showWordLimit = true,
 }) => {
   const [inputText, setInputText] = useState<string>(initialText);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -36,11 +41,13 @@ const TextSummarizerInput: React.FC<TextSummarizerInputProps> = ({
   useEffect(() => {
     const wordCount = countWords(inputText);
 
-    if (onWordLimitExceeded) {
+    if (onWordLimitExceeded && showWordLimit) {
       const isExceeded = wordCount > maxWords;
       onWordLimitExceeded(isExceeded);
+    } else if (onWordLimitExceeded) {
+      onWordLimitExceeded(false);
     }
-  }, [inputText, maxWords, onWordLimitExceeded]);
+  }, [inputText, maxWords, onWordLimitExceeded, showWordLimit]);
 
   const wordCount = countWords(inputText);
 
@@ -53,14 +60,14 @@ const TextSummarizerInput: React.FC<TextSummarizerInputProps> = ({
   const handlePasteText = async () => {
     try {
       const text = await navigator.clipboard.readText();
-      const newText = inputText + text;
+      // Separate pasted content from existing text so words don't run together.
+      const newText = inputText ? `${inputText}\n${text}` : text;
       setInputText(newText);
       onTextChange(newText);
     } catch (err) {
-      alert(
-        "Failed to paste text. Please use Ctrl+V or ⌘+V to paste text manually.",
+      toast.error(
+        "Failed to paste text. Please use Ctrl+V or ⌘+V to paste manually.",
       );
-      console.error("Clipboard error:", err);
     }
   };
 
@@ -85,7 +92,7 @@ const TextSummarizerInput: React.FC<TextSummarizerInputProps> = ({
           );
 
     if (!allowedByExt) {
-      alert(`Please upload one of the following: ${allowedExts.join(", ")}`);
+      toast.error(`Please upload one of the following: ${allowedExts.join(", ")}`);
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
@@ -107,7 +114,7 @@ const TextSummarizerInput: React.FC<TextSummarizerInputProps> = ({
       {/* Textarea */}
       <div className="relative px-4 pt-5 pb-8 border-b border-t border-gray-200 dark:border-gray-700 transition-colors duration-300 ">
         <textarea
-          className="w-full h-48 p-3 py-4 rounded-md focus:outline-none resize-none text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors duration-300"
+          className="w-full h-48 p-3 py-4 rounded-md focus:outline-none resize-none overflow-hidden scrollbar-hide text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors duration-300"
           placeholder={placeholder}
           value={inputText}
           onChange={handleInputChange}
@@ -136,21 +143,27 @@ const TextSummarizerInput: React.FC<TextSummarizerInputProps> = ({
               className="flex items-center space-x-2 px-2 md:px-4 py-2 text-gray-800 dark:text-gray-100 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-[#2b7fff] focus:ring-opacity-50 transition-colors duration-300"
             >
               <FaFileUpload />
-              <span>Upload Document</span>
+              <span>{uploadButtonText}</span>
             </button>
           </div>
         )}
 
         {/* Word count in bottom right */}
-        <div
-          className={`absolute bottom-2 right-4 text-sm ${
-            wordCount > maxWords
-              ? "text-[#fb2c36] dark:text-red-400 font-semibold"
-              : "text-gray-500 dark:text-gray-400"
-          } transition-colors duration-300`}
-        >
-          Word Count: {wordCount}
-        </div>
+        {showWordLimit ? (
+          <div
+            className={`absolute bottom-2 right-4 text-sm ${
+              wordCount > maxWords
+                ? "text-[#fb2c36] dark:text-red-400 font-semibold"
+                : "text-gray-500 dark:text-gray-400"
+            } transition-colors duration-300`}
+          >
+            Word Count: {wordCount}
+          </div>
+        ) : (
+          <div className="absolute bottom-2 right-4 text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300">
+            Word Count: {wordCount}
+          </div>
+        )}
       </div>
     </div>
   );
