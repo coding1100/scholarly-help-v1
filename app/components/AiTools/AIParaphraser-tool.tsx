@@ -10,18 +10,6 @@ import toast from "react-hot-toast";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 
-type ResData = {
-  data: {
-    client: string;
-    error: any;
-    llm_used: string;
-    original_text: string;
-    paraphrased_text: string;
-    status: string;
-    style: string;
-  };
-};
-
 interface AIParaphraserProp {
   setFlag: (value: boolean) => void;
 }
@@ -42,17 +30,6 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag }) => {
       setToken(localStorage.getItem("access_token"));
     }
   }, []);
-  const [resData, setResData] = useState<ResData>({
-    data: {
-      client: "",
-      error: null,
-      llm_used: "",
-      original_text: "",
-      paraphrased_text: "",
-      status: "",
-      style: "",
-    },
-  });
   /* ---------- handlers ---------- */
   const handleClear = () => {
     setInputText("");
@@ -67,6 +44,8 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag }) => {
   const processinput = async () => {
     if (!inputText || !inputText.trim()) return;
 
+    // Clear any prior result so stale output isn't shown during/after a new run.
+    setResultText("");
     setSubmitting(true);
 
     try {
