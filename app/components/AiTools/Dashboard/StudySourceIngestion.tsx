@@ -47,7 +47,15 @@ const UPLOAD_OPTIONS: Array<{
   { value: "record", label: "Record", subLabel: "Record Live Audio", icon: FiMic },
 ];
 
-export default function StudySourceIngestion() {
+type StudySourceIngestionProps = {
+  variant?: "toolbar" | "onboarding";
+  onContentReady?: () => void;
+};
+
+export default function StudySourceIngestion({
+  variant = "toolbar",
+  onContentReady,
+}: StudySourceIngestionProps) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
@@ -56,7 +64,6 @@ export default function StudySourceIngestion() {
     [],
   );
 
-  const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<UploadMode>("file");
   const [kind, setKind] = useState<StudySourceKind>("file");
   const [name, setName] = useState("");
@@ -67,6 +74,7 @@ export default function StudySourceIngestion() {
     "microphone",
   );
   const [assistantInput, setAssistantInput] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isStartingRecording, setIsStartingRecording] = useState(false);
   const [isSessionCreating, setIsSessionCreating] = useState(false);
@@ -134,7 +142,6 @@ export default function StudySourceIngestion() {
       const session = await createStudySession("My Study Session");
       await refreshSessions();
       switchSession(session._id);
-      setIsOpen(true);
       clearAllModeStatus();
     } catch (error) {
       console.error("Failed to create study session", error);
@@ -233,7 +240,7 @@ export default function StudySourceIngestion() {
           }),
         );
       }
-      closeModal();
+      onContentReady?.();
       setModeStatus("record", {
         tone: "success",
         message:
@@ -289,30 +296,18 @@ export default function StudySourceIngestion() {
     setTouchStartX(null);
   };
 
-  const resetModalForm = () => {
-    setName("");
-    setText("");
-    setUrlValue("");
-    setFile(null);
-    clearAllModeStatus();
-    setAssistantInput("");
-    setRecordType("microphone");
-    setMode("file");
-    setKind("file");
-  };
-
-  const closeModal = () => {
-    setIsOpen(false);
-    resetModalForm();
-  };
-
-  const openModal = () => {
-    setIsOpen(true);
-    clearAllModeStatus();
-  };
-
   useEffect(() => {
     void refreshSessions();
+  }, []);
+
+  useEffect(() => {
+    const rawName =
+      typeof window !== "undefined" ? localStorage.getItem("user_name") : null;
+    if (!rawName) {
+      setDisplayName("");
+      return;
+    }
+    setDisplayName(rawName.charAt(0).toUpperCase() + rawName.slice(1));
   }, []);
 
   useEffect(() => {
@@ -415,9 +410,7 @@ export default function StudySourceIngestion() {
         );
       }
       await refreshSessions();
-      setTimeout(() => {
-        closeModal();
-      }, 700);
+      onContentReady?.();
     } catch (error) {
       console.error("Failed to add source", error);
       const message =
@@ -434,9 +427,501 @@ export default function StudySourceIngestion() {
     }
   };
 
-  return (
-    <>
-      <section className="w-full px-3 pt-3 sm:px-5">
+  const isCompact = variant === "onboarding";
+
+  const uploadForm = (
+    <div className={`mx-auto ${isCompact ? "" : "rounded-[16px] bg-white p-4 sm:p-5"}`}>
+      <p className={`text-center text-[#38405f] ${isCompact ? "text-sm" : "text-base"}`}>
+        Select Option
+      </p>
+      <div
+        className={`grid grid-cols-2 md:grid-cols-4 ${isCompact ? "mt-1.5 gap-1.5" : "mt-3 gap-2"}`}
+      >
+        {UPLOAD_OPTIONS.map((option) => {
+          const Icon = option.icon;
+          const active = mode === option.value;
+          return (
+            <button
+              key={option.value}
+              type="button"
+              disabled={isSourceLoading}
+              onClick={() => {
+                setMode(option.value);
+                if (option.value === "file") setKind("file");
+                if (option.value === "url") setKind("url");
+                if (option.value === "text") setKind("text");
+                if (option.value === "record") setKind("youtube");
+              }}
+              className={`rounded-[12px] border text-center transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                isCompact ? "p-1.5" : "rounded-[16px] p-2"
+              } ${
+                active
+                  ? "border-[#c7b8ff] bg-[#f1ecff]"
+                  : "border-[#ddd4ff] bg-[#f7f6ff]"
+              }`}
+            >
+              <div
+                className={`mx-auto inline-flex items-center justify-center rounded-lg bg-[#dfe2ff] text-[#7180ff] ${
+                  isCompact ? "h-7 w-7" : "h-9 w-9"
+                }`}
+              >
+                <Icon className={isCompact ? "h-3.5 w-3.5" : "h-4 w-4"} />
+              </div>
+              <p
+                className={`font-semibold text-[#5f70ff] ${
+                  isCompact ? "mt-1 text-sm" : "mt-1.5 text-base"
+                }`}
+              >
+                {option.label}
+              </p>
+              <p className={`text-[#6c74a5] ${isCompact ? "text-[10px]" : "mt-0.5 text-[11px]"}`}>
+                {option.subLabel}
+              </p>
+            </button>
+          );
+        })}
+      </div>
+
+      <div
+        className={`relative rounded-[14px] border border-[#7f7fff] bg-[#f1ecff] ${
+          isCompact ? "mt-2 p-2" : "mt-4 p-3"
+        }`}
+      >
+        {isSourceLoading ? (
+          <div
+            className="absolute inset-0 z-10 flex items-center justify-center rounded-[14px] bg-[#f8f7ff]/92 backdrop-blur-[2px]"
+            role="status"
+            aria-live="polite"
+            aria-busy="true"
+            aria-label="Loading"
+          >
+            <FiLoader className="h-9 w-9 animate-spin text-[#5f70ff]" />
+          </div>
+        ) : null}
+        {mode === "file" ? (
+          <div className={isCompact ? "space-y-1.5" : "space-y-2"}>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="File title (e.g. World War II Notes)"
+              className={`w-full rounded-lg border border-[#d6d9f8] bg-white px-3 outline-none focus:border-[#6572ff] ${
+                isCompact ? "py-1.5 text-sm" : "rounded-xl py-2 text-sm"
+              }`}
+            />
+            <label
+              className={`flex w-full items-center justify-between gap-2 rounded-lg border border-[#d6d9f8] bg-white ${
+                isCompact ? "px-2 py-1.5" : "gap-3 rounded-xl px-3 py-2"
+              }`}
+            >
+              <span
+                className={`inline-flex shrink-0 items-center rounded-md border border-[#b8bde9] bg-[#f3f5ff] font-medium text-[#3f4aa0] transition hover:bg-[#e8ecff] ${
+                  isCompact ? "px-2 py-1 text-xs" : "px-3 py-1.5 text-sm"
+                }`}
+              >
+                Choose file
+              </span>
+              <span className="min-w-0 truncate text-xs text-[#6a6f98] sm:text-sm">
+                {file ? file.name : "No file chosen"}
+              </span>
+              <input
+                type="file"
+                accept=".pdf,.txt,.doc,.docx,text/plain,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                className="sr-only"
+              />
+            </label>
+            <button
+              type="button"
+              onClick={() => onSubmit({ nextKind: "file", nextFile: file })}
+              disabled={isSubmitting}
+              aria-busy={isSubmitting}
+              aria-label={isSubmitting ? "Loading" : "Upload File"}
+              className={`inline-flex w-full items-center justify-center rounded-lg bg-[#5f70ff] text-sm font-semibold text-white disabled:opacity-60 ${
+                isCompact ? "min-h-[34px] py-1.5" : "min-h-[40px] py-2"
+              }`}
+            >
+              {isSubmitting ? (
+                <FiLoader className="h-5 w-5 shrink-0 animate-spin" />
+              ) : (
+                "Upload File"
+              )}
+            </button>
+            {!isCompact ? (
+              <div className="mt-1 flex items-center justify-between text-sm text-[#5f6588]">
+                <span>
+                  {file
+                    ? `${file.name} (${Math.ceil(file.size / 1024)} KB)`
+                    : "No file selected"}
+                </span>
+                {statusByMode.file ? (
+                  <span
+                    className={
+                      statusByMode.file.tone === "success"
+                        ? "text-emerald-600"
+                        : statusByMode.file.tone === "error"
+                          ? "text-red-600"
+                          : "text-blue-600"
+                    }
+                  >
+                    {statusByMode.file.message}
+                  </span>
+                ) : null}
+              </div>
+            ) : statusByMode.file ? (
+              <p
+                className={`truncate text-xs ${
+                  statusByMode.file.tone === "success"
+                    ? "text-emerald-600"
+                    : statusByMode.file.tone === "error"
+                      ? "text-red-600"
+                      : "text-blue-600"
+                }`}
+              >
+                {statusByMode.file.message}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+
+        {mode === "url" ? (
+          <div className="space-y-2">
+            <div className="flex gap-2 rounded-xl border border-[#c6cbf7] bg-white p-2">
+              <input
+                value={urlValue}
+                onChange={(e) => {
+                  setUrlValue(e.target.value);
+                  setName(e.target.value);
+                }}
+                placeholder="https://"
+                className="flex-1 rounded-lg border border-[#e0e2f5] px-3 py-2 text-base outline-none"
+              />
+              <button
+                type="button"
+                onClick={() =>
+                  onSubmit({
+                    nextKind: "url",
+                    nextName: urlValue,
+                    nextText: "",
+                  })
+                }
+                disabled={isSubmitting}
+                aria-busy={isSubmitting}
+                aria-label={isSubmitting ? "Loading" : "Add Link"}
+                className="inline-flex min-h-[40px] min-w-[120px] items-center justify-center rounded-lg bg-[#5f70ff] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+              >
+                {isSubmitting ? (
+                  <FiLoader className="h-5 w-5 shrink-0 animate-spin" />
+                ) : (
+                  "Add Link"
+                )}
+              </button>
+            </div>
+            <div className="mt-1 flex items-center justify-between text-sm text-[#5f6588]">
+              <span>{urlValue.trim().length} URL characters</span>
+              {statusByMode.url ? (
+                <span
+                  className={
+                    statusByMode.url.tone === "success"
+                      ? "text-emerald-600"
+                      : statusByMode.url.tone === "error"
+                        ? "text-red-600"
+                        : "text-blue-600"
+                  }
+                >
+                  {statusByMode.url.message}
+                </span>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+
+        {mode === "text" ? (
+          <div className={isCompact ? "space-y-1.5" : "space-y-2"}>
+            <div
+              className={`flex gap-2 rounded-xl border border-[#c6cbf7] bg-[#d7d2ed] ${
+                isCompact ? "p-1.5" : "p-2"
+              }`}
+            >
+              <textarea
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                rows={isCompact ? 2 : 4}
+                placeholder="Paste text"
+                className="flex-1 resize-none rounded-lg border border-[#d3d6f2] bg-white px-3 py-2 text-sm outline-none"
+              />
+              <button
+                type="button"
+                onClick={() =>
+                  onSubmit({
+                    nextKind: "text",
+                    nextName: name || "Pasted Text",
+                    nextText: text,
+                  })
+                }
+                disabled={isSubmitting}
+                aria-busy={isSubmitting}
+                aria-label={isSubmitting ? "Loading" : "Submit"}
+                className="inline-flex h-fit min-h-[40px] min-w-[88px] shrink-0 items-center justify-center self-end rounded-lg bg-[#5f70ff] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+              >
+                {isSubmitting ? (
+                  <FiLoader className="h-5 w-5 shrink-0 animate-spin" />
+                ) : (
+                  "Submit"
+                )}
+              </button>
+            </div>
+            <div className="mt-1 flex items-center justify-between text-sm text-[#5f6588]">
+              <span>{textLength} characters</span>
+              {statusByMode.text ? (
+                <span
+                  className={
+                    statusByMode.text.tone === "success"
+                      ? "text-emerald-600"
+                      : statusByMode.text.tone === "error"
+                        ? "text-red-600"
+                        : "text-blue-600"
+                  }
+                >
+                  {statusByMode.text.message}
+                </span>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+
+        {mode === "record" ? (
+          <div
+            className={`rounded-[14px] border border-[#7a86ff] bg-[#d7d9ef] text-center ${
+              isCompact ? "p-2.5" : "p-4"
+            }`}
+          >
+            <p className={`font-semibold text-[#3b4257] ${isCompact ? "text-base" : "text-xl"}`}>
+              Choose Recording Type
+            </p>
+            <div
+              className={`mx-auto grid max-w-[420px] grid-cols-2 gap-2 ${
+                isCompact ? "mt-2" : "mt-4"
+              }`}
+            >
+              <button
+                type="button"
+                onClick={() => setRecordType("microphone")}
+                className={`rounded-xl border p-3 ${
+                  recordType === "microphone"
+                    ? "border-[#2f79ff] bg-[#eef3ff] shadow-[0_0_0_1px_rgba(47,121,255,0.25)]"
+                    : "border-transparent bg-transparent text-[#4f566d]"
+                }`}
+              >
+                <FiMic className="mx-auto h-5 w-5 text-[#4a4d61]" />
+                <p className="mt-1.5 text-md font-semibold text-[#191f33]">Microphone</p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setRecordType("browser-tab")}
+                className={`rounded-xl border p-3 ${
+                  recordType === "browser-tab"
+                    ? "border-[#2f79ff] bg-[#eef3ff] shadow-[0_0_0_1px_rgba(47,121,255,0.25)]"
+                    : "border-transparent bg-transparent text-[#4f566d]"
+                }`}
+              >
+                <FiMonitor className="mx-auto h-5 w-5 text-[#4a4d61]" />
+                <p className="mt-1.5 text-md font-semibold text-[#191f33]">Browser Tab</p>
+              </button>
+            </div>
+            {!isCompact ? (
+              <p className="mx-auto mt-4 max-w-xl text-md text-[#596178]">
+                Record audio from your microphone with live transcription
+              </p>
+            ) : null}
+            <button
+              type="button"
+              onClick={startRecordingFlow}
+              disabled={isStartingRecording}
+              aria-busy={isStartingRecording}
+              aria-label={isStartingRecording ? "Loading" : "Start Recording"}
+              className={`inline-flex items-center justify-center rounded-lg bg-[#6678f6] font-semibold text-white disabled:opacity-60 ${
+                isCompact
+                  ? "mt-2 min-h-[36px] min-w-[140px] px-6 py-1.5 text-sm"
+                  : "mt-4 min-h-[44px] min-w-[160px] px-8 py-2 text-base"
+              }`}
+            >
+              {isStartingRecording ? (
+                <FiLoader className="h-6 w-6 shrink-0 animate-spin" />
+              ) : (
+                "Start Recording"
+              )}
+            </button>
+            <div className="mt-2 flex items-center justify-between text-sm text-[#5f6588]">
+              <span>
+                Selected: {recordType === "microphone" ? "Microphone" : "Browser Tab"}
+              </span>
+              {statusByMode.record ? (
+                <span
+                  className={
+                    statusByMode.record.tone === "success"
+                      ? "text-emerald-600"
+                      : statusByMode.record.tone === "error"
+                        ? "text-red-600"
+                        : "text-blue-600"
+                  }
+                >
+                  {statusByMode.record.message}
+                </span>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+      </div>
+
+      <p
+        className={`text-center font-medium text-[#454b66] ${
+          isCompact ? "mt-1.5 text-xs" : "mt-3 text-md"
+        }`}
+      >
+        or ask your new AI tutor!
+      </p>
+
+      <div
+        className={`rounded-[14px] border-[#6376ff] bg-white ${
+          isCompact ? "mt-1.5 border-2 p-2" : "mt-2 rounded-[18px] border-[3px] p-2.5"
+        }`}
+      >
+        {isCompact ? (
+          <div className="flex items-center gap-2">
+            <input
+              value={assistantInput}
+              onChange={(e) => setAssistantInput(e.target.value)}
+              placeholder="Ask AI assistant..."
+              className="min-w-0 flex-1 text-sm text-[#1d2435] outline-none placeholder:text-[#a2a7bc]"
+            />
+            <button type="button" className="shrink-0 text-[#4d5468]">
+              <FiMic className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const input = assistantInput.trim();
+                if (!input) return;
+                setAssistantInput("");
+                toast(`Tutor prompt saved: ${input.slice(0, 40)}...`, {
+                  icon: "✨",
+                });
+              }}
+              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#5f70ff] text-white"
+            >
+              <FiSend className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ) : (
+          <>
+            <input
+              value={assistantInput}
+              onChange={(e) => setAssistantInput(e.target.value)}
+              placeholder="Ask AI assistant..."
+              className="w-full text-md text-[#1d2435] outline-none placeholder:text-[#a2a7bc]"
+            />
+            <div className="mt-3 flex items-center justify-between">
+              <button
+                type="button"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#d8dcf7] text-[#7683d5]"
+              >
+                <FiFolderPlus className="h-4 w-4" />
+              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-[#7480ff] px-4 py-1.5 text-base font-semibold text-[#6676ff]"
+                >
+                  <FiChevronDown className="h-4 w-4" />
+                  Default
+                </button>
+                <button type="button" className="text-[#4d5468]">
+                  <FiMic className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const input = assistantInput.trim();
+                    if (!input) return;
+                    setAssistantInput("");
+                    toast(`Tutor prompt saved: ${input.slice(0, 40)}...`, {
+                      icon: "✨",
+                    });
+                  }}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#5f70ff] text-white"
+                >
+                  <FiSend className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+
+  const sessionToolbarCompact = (
+    <section className="w-full shrink-0 px-2 pt-1 sm:px-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div
+          className="inline-flex items-center gap-1.5 text-xs text-[#4f5474] sm:text-sm"
+          onTouchStart={onSavedSessionsTouchStart}
+          onTouchEnd={onSavedSessionsTouchEnd}
+        >
+          <span className="font-semibold">Saved Sessions:</span>
+          <button
+            type="button"
+            onClick={() => navigateSessionByOffset(-1)}
+            disabled={
+              isSessionListLoading || isSessionCreating || activeSessionIndex <= 0
+            }
+            aria-label="Go to previous session"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-[#ccd2ff] bg-white text-[#5f70ff] transition hover:bg-[#f3f5ff] disabled:opacity-50"
+          >
+            <FiChevronLeft className="h-3.5 w-3.5" />
+          </button>
+          <select
+            value={sessionId || ""}
+            onChange={(e) => switchSession(e.target.value)}
+            disabled={isSessionListLoading || isSessionCreating}
+            className="max-w-[180px] rounded-md border border-[#ccd2ff] bg-white px-2 py-1 text-xs outline-none focus:border-[#5f70ff] sm:max-w-none sm:px-[10px] sm:py-[5px] sm:text-sm"
+          >
+            {sessions.length === 0 ? <option value="">No sessions</option> : null}
+            {sessions.map((session) => (
+              <option key={session._id} value={session._id}>
+                {session.title || "Untitled Session"}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={() => navigateSessionByOffset(1)}
+            disabled={
+              isSessionListLoading ||
+              isSessionCreating ||
+              activeSessionIndex < 0 ||
+              activeSessionIndex >= sessions.length - 1
+            }
+            aria-label="Go to next session"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-[#ccd2ff] bg-white text-[#5f70ff] transition hover:bg-[#f3f5ff] disabled:opacity-50"
+          >
+            <FiChevronRight className="h-3.5 w-3.5" />
+          </button>
+        </div>
+        <button
+          type="button"
+          onClick={createAndOpenNewSession}
+          disabled={isSessionCreating}
+          className="rounded-lg bg-[#5f70ff] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#5363ec] sm:px-4 sm:py-2 sm:text-sm"
+        >
+          {isSessionCreating ? "Creating..." : "+ New Study Session"}
+        </button>
+      </div>
+    </section>
+  );
+
+  const sessionToolbar = (
+    <section className="w-full px-3 pt-3 sm:px-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div
             className="inline-flex items-center gap-2 text-sm text-[#4f5474]"
@@ -572,370 +1057,70 @@ export default function StudySourceIngestion() {
             {isSessionCreating ? "Creating..." : "+ New Study Session"}
           </button>
         </div>
-      </section>
+    </section>
+  );
 
-      {isOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0f1020]/55 backdrop-blur-[2px] p-4">
-          <div className="relative w-full max-w-[600px] rounded-[20px] bg-[#f3f4fb] p-4 shadow-2xl">
-            <button
-              type="button"
-              onClick={closeModal}
-              disabled={isSourceLoading}
-              title={isSourceLoading ? "Please wait until upload finishes" : undefined}
-              className="absolute right-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#d7dbf7] bg-white text-[#5b6192] shadow-sm transition hover:bg-[#eef1ff] disabled:cursor-not-allowed disabled:opacity-50"
-              aria-label="Close upload popup"
-            >
-              <FiX className="h-4 w-4" />
-            </button>
+  if (variant === "onboarding") {
+    return (
+      <>
+        <section className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 py-2 sm:px-4">
+          {sessionToolbarCompact}
+          <div className="flex min-h-0 flex-1 items-center justify-center py-1">
+            <div className="w-full max-w-[640px]">
+              <div className="mb-3 px-2 text-center sm:mb-4">
+                <h1 className="text-[22px] font-bold leading-tight tracking-tight text-[#1a2033] sm:text-[28px] lg:text-[32px]">
+                  Welcome to AI Study Workspace
+                  {displayName ? `, ${displayName}` : ""}
+                </h1>
+                <p className="mx-auto mt-2 max-w-lg text-xs leading-relaxed text-[#64748b] sm:text-sm">
+                  Let&apos;s create your first study session together, select an option
+                  below to get started.
+                </p>
+              </div>
+              <div className="rounded-[28px] bg-white p-3 shadow-[0_8px_40px_rgba(15,23,42,0.06)] sm:rounded-[36px] sm:p-4">
+                {uploadForm}
+              </div>
+            </div>
+          </div>
+        </section>
 
-            <h2 className="text-center text-[36px] font-semibold tracking-tight text-[#1a2033]">
-              Upload
-            </h2>
-            <p className="mt-1 text-center text-base text-[#222739]">
-              Select the type of content you&apos;d like to add to a new session.
+        {showDeleteConfirm ? (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0f1020]/55 p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-[#e2e5ff] bg-white p-5 shadow-2xl">
+            <p className="text-base font-semibold text-[#1f2342]">
+              Are you sure to delete this session?
             </p>
-
-            <div className="mx-auto mt-4 rounded-[20px] bg-white p-4">
-              <p className="text-center text-base text-[#38405f]">Select Option</p>
-              <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
-                {UPLOAD_OPTIONS.map((option) => {
-                  const Icon = option.icon;
-                  const active = mode === option.value;
-                  return (
-                    <button
-                      key={option.value}
-                      type="button"
-                      disabled={isSourceLoading}
-                      onClick={() => {
-                        setMode(option.value);
-                        if (option.value === "file") setKind("file");
-                        if (option.value === "url") setKind("url");
-                        if (option.value === "text") setKind("text");
-                        if (option.value === "record") setKind("youtube");
-                      }}
-                      className={`rounded-[16px] border p-2 text-center transition disabled:cursor-not-allowed disabled:opacity-60 ${
-                        active
-                          ? "border-[#c7b8ff] bg-[#f1ecff]"
-                          : "border-[#ddd4ff] bg-[#f7f6ff]"
-                      }`}
-                    >
-                      <div className="mx-auto inline-flex h-9 w-9 items-center justify-center rounded-lg bg-[#dfe2ff] text-[#7180ff]">
-                        <Icon className="h-4 w-4" />
-                      </div>
-                      <p className="mt-1.5 text-base font-semibold text-[#5f70ff]">
-                        {option.label}
-                      </p>
-                      <p className="mt-0.5 text-[11px] text-[#6c74a5]">{option.subLabel}</p>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="relative mt-4 rounded-[16px] border border-[#7f7fff] bg-[#f1ecff] p-3">
-                {isSourceLoading ? (
-                  <div
-                    className="absolute inset-0 z-10 flex items-center justify-center rounded-[14px] bg-[#f8f7ff]/92 backdrop-blur-[2px]"
-                    role="status"
-                    aria-live="polite"
-                    aria-busy="true"
-                    aria-label="Loading"
-                  >
-                    <FiLoader className="h-9 w-9 animate-spin text-[#5f70ff]" />
-                  </div>
-                ) : null}
-                {mode === "file" ? (
-                  <div className="space-y-2">
-                    <input
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="File title (e.g. World War II Notes)"
-                      className="w-full rounded-xl border border-[#d6d9f8] bg-white px-3 py-2 text-sm outline-none focus:border-[#6572ff]"
-                    />
-                    <label className="flex w-full items-center justify-between gap-3 rounded-xl border border-[#d6d9f8] bg-white px-3 py-2">
-                      <span className="inline-flex items-center rounded-md border border-[#b8bde9] bg-[#f3f5ff] px-3 py-1.5 text-sm font-medium text-[#3f4aa0] transition hover:bg-[#e8ecff]">
-                        Choose file
-                      </span>
-                      <span className="truncate text-sm text-[#6a6f98]">
-                        {file ? file.name : "No file chosen"}
-                      </span>
-                      <input
-                        type="file"
-                        accept=".pdf,.txt,.doc,.docx,text/plain,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                        onChange={(e) => setFile(e.target.files?.[0] || null)}
-                        className="sr-only"
-                      />
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => onSubmit({ nextKind: "file", nextFile: file })}
-                      disabled={isSubmitting}
-                      aria-busy={isSubmitting}
-                      aria-label={isSubmitting ? "Loading" : "Upload File"}
-                      className="inline-flex min-h-[40px] w-full items-center justify-center rounded-lg bg-[#5f70ff] py-2 text-sm font-semibold text-white disabled:opacity-60"
-                    >
-                      {isSubmitting ? (
-                        <FiLoader className="h-5 w-5 shrink-0 animate-spin" />
-                      ) : (
-                        "Upload File"
-                      )}
-                    </button>
-                    <div className="mt-1 flex items-center justify-between text-sm text-[#5f6588]">
-                      <span>
-                        {file
-                          ? `${file.name} (${Math.ceil(file.size / 1024)} KB)`
-                          : "No file selected"}
-                      </span>
-                      {statusByMode.file ? (
-                        <span
-                          className={
-                            statusByMode.file.tone === "success"
-                              ? "text-emerald-600"
-                              : statusByMode.file.tone === "error"
-                                ? "text-red-600"
-                                : "text-blue-600"
-                          }
-                        >
-                          {statusByMode.file.message}
-                        </span>
-                      ) : null}
-                    </div>
-                  </div>
-                ) : null}
-
-                {mode === "url" ? (
-                  <div className="space-y-2">
-                    <div className="flex gap-2 rounded-xl border border-[#c6cbf7] bg-white p-2">
-                      <input
-                        value={urlValue}
-                        onChange={(e) => {
-                          setUrlValue(e.target.value);
-                          setName(e.target.value);
-                        }}
-                        placeholder="https://"
-                        className="flex-1 rounded-lg border border-[#e0e2f5] px-3 py-2 text-base outline-none"
-                      />
-                      <button
-                        type="button"
-                        onClick={() =>
-                          onSubmit({
-                            nextKind: "url",
-                            nextName: urlValue,
-                            nextText: "",
-                          })
-                        }
-                        disabled={isSubmitting}
-                        aria-busy={isSubmitting}
-                        aria-label={isSubmitting ? "Loading" : "Add Link"}
-                        className="inline-flex min-h-[40px] min-w-[120px] items-center justify-center rounded-lg bg-[#5f70ff] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-                      >
-                        {isSubmitting ? (
-                          <FiLoader className="h-5 w-5 shrink-0 animate-spin" />
-                        ) : (
-                          "Add Link"
-                        )}
-                      </button>
-                    </div>
-                    <div className="mt-1 flex items-center justify-between text-sm text-[#5f6588]">
-                      <span>{urlValue.trim().length} URL characters</span>
-                      {statusByMode.url ? (
-                        <span
-                          className={
-                            statusByMode.url.tone === "success"
-                              ? "text-emerald-600"
-                              : statusByMode.url.tone === "error"
-                                ? "text-red-600"
-                                : "text-blue-600"
-                          }
-                        >
-                          {statusByMode.url.message}
-                        </span>
-                      ) : null}
-                    </div>
-                  </div>
-                ) : null}
-
-                {mode === "text" ? (
-                  <div className="space-y-2">
-                    <div className="flex gap-2 rounded-xl border border-[#c6cbf7] bg-[#d7d2ed] p-2">
-                      <textarea
-                        value={text}
-                        onChange={(e) => setText(e.target.value)}
-                        rows={4}
-                        placeholder="Paste text"
-                        className="flex-1 resize-none rounded-lg border border-[#d3d6f2] bg-white px-3 py-2 text-sm outline-none"
-                      />
-                      <button
-                        type="button"
-                        onClick={() =>
-                          onSubmit({
-                            nextKind: "text",
-                            nextName: name || "Pasted Text",
-                            nextText: text,
-                          })
-                        }
-                        disabled={isSubmitting}
-                        aria-busy={isSubmitting}
-                        aria-label={isSubmitting ? "Loading" : "Submit"}
-                        className="inline-flex h-fit min-h-[40px] min-w-[88px] shrink-0 items-center justify-center self-end rounded-lg bg-[#5f70ff] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-                      >
-                        {isSubmitting ? (
-                          <FiLoader className="h-5 w-5 shrink-0 animate-spin" />
-                        ) : (
-                          "Submit"
-                        )}
-                      </button>
-                    </div>
-                    <div className="mt-1 flex items-center justify-between text-sm text-[#5f6588]">
-                      <span>{textLength} characters</span>
-                      {statusByMode.text ? (
-                        <span
-                          className={
-                            statusByMode.text.tone === "success"
-                              ? "text-emerald-600"
-                              : statusByMode.text.tone === "error"
-                                ? "text-red-600"
-                                : "text-blue-600"
-                          }
-                        >
-                          {statusByMode.text.message}
-                        </span>
-                      ) : null}
-                    </div>
-                  </div>
-                ) : null}
-
-                {mode === "record" ? (
-                  <div className="rounded-[14px] border border-[#7a86ff] bg-[#d7d9ef] p-4 text-center">
-                    <p className="text-xl font-semibold text-[#3b4257]">
-                      Choose Recording Type
-                    </p>
-                    <div className="mx-auto mt-4 grid max-w-[420px] grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setRecordType("microphone")}
-                        className={`rounded-xl border p-3 ${
-                          recordType === "microphone"
-                            ? "border-[#2f79ff] bg-[#eef3ff] shadow-[0_0_0_1px_rgba(47,121,255,0.25)]"
-                            : "border-transparent bg-transparent text-[#4f566d]"
-                        }`}
-                      >
-                        <FiMic className="mx-auto h-5 w-5 text-[#4a4d61]" />
-                        <p className="mt-1.5 text-md font-semibold text-[#191f33]">Microphone</p>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setRecordType("browser-tab")}
-                        className={`rounded-xl border p-3 ${
-                          recordType === "browser-tab"
-                            ? "border-[#2f79ff] bg-[#eef3ff] shadow-[0_0_0_1px_rgba(47,121,255,0.25)]"
-                            : "border-transparent bg-transparent text-[#4f566d]"
-                        }`}
-                      >
-                        <FiMonitor className="mx-auto h-5 w-5 text-[#4a4d61]" />
-                        <p className="mt-1.5 text-md font-semibold text-[#191f33]">Browser Tab</p>
-                      </button>
-                    </div>
-                    <p className="mx-auto mt-4 max-w-xl text-md text-[#596178]">
-                      Record audio from your microphone with live transcription
-                    </p>
-                    <button
-                      type="button"
-                      onClick={startRecordingFlow}
-                      disabled={isStartingRecording}
-                      aria-busy={isStartingRecording}
-                      aria-label={isStartingRecording ? "Loading" : "Start Recording"}
-                      className="mt-4 inline-flex min-h-[44px] min-w-[160px] items-center justify-center rounded-lg bg-[#6678f6] px-8 py-2 text-base font-semibold text-white disabled:opacity-60"
-                    >
-                      {isStartingRecording ? (
-                        <FiLoader className="h-6 w-6 shrink-0 animate-spin" />
-                      ) : (
-                        "Start Recording"
-                      )}
-                    </button>
-                    <p className="hidden mt-3 text-md text-[#3f455b]">
-                      You have 5 hours of recording credits left.
-                    </p>
-                    <div>
-                      <button
-                        type="button"
-                        className="mt-2 text-base text-[#6678f6] underline"
-                      >
-                        Need more?
-                      </button>
-                    </div>
-                    <div className="mt-2 flex items-center justify-between text-sm text-[#5f6588]">
-                      <span>
-                        Selected: {recordType === "microphone" ? "Microphone" : "Browser Tab"}
-                      </span>
-                      {statusByMode.record ? (
-                        <span
-                          className={
-                            statusByMode.record.tone === "success"
-                              ? "text-emerald-600"
-                              : statusByMode.record.tone === "error"
-                                ? "text-red-600"
-                                : "text-blue-600"
-                          }
-                        >
-                          {statusByMode.record.message}
-                        </span>
-                      ) : null}
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-              <p className="mt-3 text-center text-md font-medium text-[#454b66]">
-                or ask your new AI tutor!
-              </p>
-
-              <div className="mt-2 rounded-[18px] border-[3px] border-[#6376ff] bg-white p-2.5">
-                <input
-                  value={assistantInput}
-                  onChange={(e) => setAssistantInput(e.target.value)}
-                  placeholder="Ask AI assistant..."
-                  className="w-full text-md text-[#1d2435] outline-none placeholder:text-[#a2a7bc]"
-                />
-                <div className="mt-3 flex items-center justify-between">
-                  <button
-                    type="button"
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#d8dcf7] text-[#7683d5]"
-                  >
-                    <FiFolderPlus className="h-4 w-4" />
-                  </button>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      className="inline-flex items-center gap-1.5 rounded-full border border-[#7480ff] px-4 py-1.5 text-base font-semibold text-[#6676ff]"
-                    >
-                      <FiChevronDown className="h-4 w-4" />
-                      Default
-                    </button>
-                    <button type="button" className="text-[#4d5468]">
-                      <FiMic className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const input = assistantInput.trim();
-                        if (!input) return;
-                        setAssistantInput("");
-                        toast(`Tutor prompt saved: ${input.slice(0, 40)}...`, {
-                          icon: "✨",
-                        });
-                      }}
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#5f70ff] text-white"
-                    >
-                      <FiSend className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              
+            <p className="mt-2 text-sm text-[#656b91]">
+              This action cannot be undone and all related content will be removed.
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={isDeletingSession}
+                className="rounded-md border border-[#cfd5ff] px-3 py-1.5 text-sm text-[#4f577d] transition hover:bg-[#f3f5ff] disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteSession}
+                disabled={isDeletingSession}
+                className="rounded-md bg-[#d84848] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#c93d3d] disabled:opacity-60"
+              >
+                {isDeletingSession ? "Deleting..." : "Delete Session"}
+              </button>
             </div>
           </div>
         </div>
-      ) : null}
+        ) : null}
+      </>
+    );
+  }
+
+  return (
+    <>
+      {sessionToolbar}
       {showDeleteConfirm ? (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0f1020]/55 p-4">
           <div className="w-full max-w-sm rounded-2xl border border-[#e2e5ff] bg-white p-5 shadow-2xl">
