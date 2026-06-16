@@ -263,7 +263,9 @@ const HumanizerTool: React.FC = () => {
         },
       );
 
-      const extracted = String(response.data || "").trim();
+      // Backend wraps responses as { success, message, data }
+      const responseData = response.data?.data ?? response.data;
+      const extracted = String(responseData || "").trim();
       setText(extracted);
 
       if (countWords(extracted) > 1500) {
@@ -304,7 +306,9 @@ const HumanizerTool: React.FC = () => {
     try {
       if (!token) throw new Error("Access token not found");
 
-      const response = await axios.post<HumanizerResponse>(
+      const response = await axios.post<
+        HumanizerResponse | { data?: HumanizerResponse }
+      >(
         `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/humanizer`,
         {
           text,
@@ -321,7 +325,13 @@ const HumanizerTool: React.FC = () => {
         },
       );
 
-      setResult(response.data);
+      // Backend wraps responses as { success, message, data }
+      const humanizerResult = (
+        response.data && typeof response.data === "object" && "data" in response.data
+          ? (response.data as { data?: HumanizerResponse }).data
+          : response.data
+      ) as HumanizerResponse;
+      setResult(humanizerResult);
       toast.success("Humanized successfully!");
     } catch (err: any) {
       const status = err?.response?.status;

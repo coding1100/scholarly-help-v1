@@ -373,7 +373,9 @@ const MTSidebar = ({
           },
         );
         console.log("Token verification response:", response);
-        const user = response?.data?.user;
+        // Backend wraps responses as { success, message, data }
+        const responseData = response?.data?.data ?? response?.data;
+        const user = responseData?.user;
         const resolvedEmail = String(user?.email || user?.user_email || "")
           .trim()
           .toLowerCase();
