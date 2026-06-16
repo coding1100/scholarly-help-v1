@@ -17,7 +17,7 @@ const PUBLIC_BASE_URL = getPublicBaseUrl();
 const API_KEY =
   process.env.NEXT_PUBLIC_API_KEY ||
   process.env.API_KEY ||
-  "ak_6Mmmq4VJV6GwvTUmd6aOGKR47wMjaBw4i5IxIQ4-UyU";
+  "ak_dae663cc5f944c149aeff45bf8ac31ac_ak_691H1soLFYNia5Ot5sVGbc0kkeUqrL4_qnNxR56LTvA";
 
 export interface ChatResponse {
   conversation_id: string;
