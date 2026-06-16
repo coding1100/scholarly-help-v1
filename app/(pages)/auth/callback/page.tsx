@@ -43,7 +43,9 @@ const AuthCallbackPage = () => {
           },
         );
 
-        const user = verifyResponse?.data?.user;
+        // Response is wrapped as { success, message, data: { user } } (fallback to raw).
+        const user =
+          verifyResponse?.data?.data?.user ?? verifyResponse?.data?.user;
         if (!user?.user_id) {
           toast.error("Unable to verify authenticated user.");
           router.replace("/sign-in/");

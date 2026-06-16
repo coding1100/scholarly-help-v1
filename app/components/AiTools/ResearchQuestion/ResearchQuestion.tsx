@@ -138,7 +138,7 @@ const ResearchQuestion: FC<ResearchQuestionProps> = ({ setFlag }) => {
         ? `${baseUrl}/tools/research-question-generator`
         : `${baseUrl}/tools/research-question-generator`;
 
-      const response = await axios.post<QuestionResponse>(endpoint, payload, {
+      const response = await axios.post(endpoint, payload, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -147,8 +147,11 @@ const ResearchQuestion: FC<ResearchQuestionProps> = ({ setFlag }) => {
 
       console.log("Response:", response.data);
 
-      if (response.data.status === "success" && response.data.questions) {
-        setQuestions(response.data.questions);
+      // Backend wraps responses as { success, message, data }
+      const responsePayload = response.data?.data ?? response.data;
+
+      if (responsePayload.status === "success" && responsePayload.questions) {
+        setQuestions(responsePayload.questions);
         setFlag(true);
         toast.success("Research questions generated successfully!");
       } else {
