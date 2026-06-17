@@ -362,7 +362,7 @@ const StructuredResultView = ({ result }: { result: SummarizerResult }) => {
 
 // Maximum input the summarizer accepts (words). Mirrors the backend
 // SUMMARIZER_MAX_INPUT_WORDS guard.
-const MAX_INPUT_WORDS = 50000;
+const MAX_INPUT_WORDS = 20000;
 
 const SummarizerTool: React.FC = () => {
   const [token, setToken] = useState<string | null>(null);
