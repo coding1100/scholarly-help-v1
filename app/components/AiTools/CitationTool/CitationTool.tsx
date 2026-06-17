@@ -8,6 +8,9 @@ import {
   FaTimes,
   FaRegBookmark,
   FaCheck,
+  FaBolt,
+  FaPen,
+  FaRegQuestionCircle,
 } from "react-icons/fa";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -87,24 +90,38 @@ const MONTHS = [
   "December",
 ];
 
-/** Small hover tooltip matching the platform's styling (no external CSS). */
-const Tooltip: FC<{ text: string }> = ({ text }) => (
-  <span className="group relative inline-flex items-center align-middle">
+/**
+ * Hover/focus tooltip. Render-gated on local state (not CSS group-hover) so
+ * only the active tip ever shows and it never reserves layout space.
+ */
+const Tooltip: FC<{ text: string }> = ({ text }) => {
+  const [open, setOpen] = useState(false);
+  return (
     <span
-      tabIndex={0}
-      className="ml-1 flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-gray-300 text-[10px] font-bold text-gray-600 hover:bg-[#2b7fff] hover:text-white dark:bg-gray-600 dark:text-gray-200"
-      aria-label={text}
+      className="relative ml-1 inline-flex items-center align-middle"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
     >
-      ?
+      <button
+        type="button"
+        aria-label={text}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setOpen(false)}
+        className="flex items-center justify-center text-gray-400 hover:text-[#2b7fff] focus:outline-none dark:text-gray-500"
+      >
+        <FaRegQuestionCircle className="h-3.5 w-3.5" />
+      </button>
+      {open && (
+        <span
+          role="tooltip"
+          className="pointer-events-none absolute bottom-[calc(100%+8px)] left-1/2 z-50 w-56 -translate-x-1/2 rounded-md bg-gray-800 px-3 py-2 text-xs font-normal normal-case leading-relaxed text-white shadow-lg dark:bg-gray-700"
+        >
+          {text}
+        </span>
+      )}
     </span>
-    <span
-      role="tooltip"
-      className="pointer-events-none absolute bottom-[calc(100%+6px)] left-1/2 z-50 w-56 -translate-x-1/2 rounded-md bg-gray-900 px-3 py-2 text-xs leading-relaxed text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100 dark:bg-gray-700"
-    >
-      {text}
-    </span>
-  </span>
-);
+  );
+};
 
 const inputClass =
   "w-full p-3 rounded-md focus:outline-none text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-[#2b7fff] transition-colors duration-300";
@@ -614,13 +631,21 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
                   key={m}
                   type="button"
                   onClick={() => setMode(m)}
-                  className={`px-4 py-1.5 text-sm font-medium rounded transition-colors duration-200 ${
+                  className={`flex items-center gap-2 px-4 py-1.5 text-sm font-medium rounded transition-colors duration-200 ${
                     mode === m
                       ? "bg-[#565add] text-white"
                       : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
                   }`}
                 >
-                  {m === "autofill" ? "⚡ Auto-fill" : "✏️ Manual"}
+                  {m === "autofill" ? (
+                    <>
+                      <FaBolt className="h-3 w-3" /> Auto-fill
+                    </>
+                  ) : (
+                    <>
+                      <FaPen className="h-3 w-3" /> Manual
+                    </>
+                  )}
                 </button>
               ))}
             </div>
