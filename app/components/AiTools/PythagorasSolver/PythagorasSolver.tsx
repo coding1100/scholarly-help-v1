@@ -6,6 +6,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
+import StemSolver from "./StemSolver";
 
 interface PythagorasSolverProps {
   setFlag: (value: boolean) => void;
@@ -34,6 +35,7 @@ interface SolverResponse {
 
 const PythagorasSolver: FC<PythagorasSolverProps> = ({ setFlag }) => {
   const [token, setToken] = useState<string | null>(null);
+  const [solverMode, setSolverMode] = useState<"triangle" | "stem">("triangle");
   const [sideA, setSideA] = useState<string>("");
   const [sideB, setSideB] = useState<string>("");
   const [sideC, setSideC] = useState<string>("");
@@ -172,11 +174,45 @@ const PythagorasSolver: FC<PythagorasSolverProps> = ({ setFlag }) => {
         {/* Main Overview Section */}
         <div className="pt-6">
           <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-3 transition-colors duration-300 text-center">
-            Pythagoras Equation Solver
+            {solverMode === "triangle"
+              ? "Pythagoras Equation Solver"
+              : "STEM Problem Solver"}
           </h2>
         </div>
 
-        {/* Input Section */}
+        {/* Mode toggle: deterministic triangle solver vs AI STEM solver */}
+        <div className="flex justify-center pb-2">
+          <div className="inline-flex rounded-md border border-gray-300 dark:border-gray-600 p-1 bg-gray-50 dark:bg-gray-900">
+            {(
+              [
+                { key: "triangle", label: "Triangle Solver" },
+                { key: "stem", label: "STEM Solver (Math · Physics · Chemistry)" },
+              ] as { key: "triangle" | "stem"; label: string }[]
+            ).map((m) => (
+              <button
+                key={m.key}
+                type="button"
+                onClick={() => setSolverMode(m.key)}
+                className={`px-4 py-1.5 text-sm font-medium rounded transition-colors duration-200 ${
+                  solverMode === m.key
+                    ? "bg-[#155dfc] text-white"
+                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                }`}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {solverMode === "stem" && (
+          <div className="p-6 border-b dark:border-gray-700">
+            <StemSolver setFlag={setFlag} />
+          </div>
+        )}
+
+        {/* Input Section (Triangle solver) */}
+        {solverMode === "triangle" && (
         <div className="p-6 border-b dark:border-gray-700">
           <div className="space-y-4">
             {/* Formula Display */}
@@ -295,9 +331,10 @@ const PythagorasSolver: FC<PythagorasSolverProps> = ({ setFlag }) => {
             </div>
           </div>
         </div>
+        )}
 
-        {/* Results Section */}
-        {result && (
+        {/* Results Section (Triangle solver) */}
+        {solverMode === "triangle" && result && (
           <div className="p-6 space-y-6">
             {/* Formula */}
             <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md p-4">
@@ -476,7 +513,7 @@ const PythagorasSolver: FC<PythagorasSolverProps> = ({ setFlag }) => {
       {/* Footer Quote */}
       <div className="text-sm font-serif text-center pt-8 text-gray-500 dark:text-gray-400 transition-colors duration-300">
         <q>
-          Master the Pythagorean theorem with ScholarlyHelp's Pythagoras
+          Master the Pythagorean theorem with ScholarlyHelp&apos;s Pythagoras
           Equation Solver. Get instant, accurate solutions with step-by-step
           explanations and simplified radical forms for your right-angled
           triangle problems.
