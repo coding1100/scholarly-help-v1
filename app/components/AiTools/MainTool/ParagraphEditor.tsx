@@ -17,6 +17,7 @@ import {
 } from "@tiptap/react";
 import { NodeViewProps } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
+import Underline from "@tiptap/extension-underline";
 import Heading from "@tiptap/extension-heading";
 import Paragraph from "@tiptap/extension-paragraph";
 import CodeBlock from "@tiptap/extension-code-block";
@@ -535,6 +536,7 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
           style: "border: 1px solid #ddd; padding: 12px; min-width: 100px;",
         },
       }),
+      Underline,
       AISuggestionExtension,
     ],
     content: computedInitialContent,
@@ -846,6 +848,36 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
     };
   }, [editor, setEditorContext]);
 
+  // Ctrl+/ (or Cmd+/) — manually trigger an AI suggestion even when autocomplete is off
+  useEffect(() => {
+    if (!editor) return;
+    const handleManualSuggestion = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "/") {
+        e.preventDefault();
+        const pos = editor.state.selection.from;
+        const resolvedPos = editor.state.doc.resolve(pos);
+        if (resolvedPos.parent.type.name !== "paragraph") {
+          toast.error("Place the cursor inside a paragraph to get a suggestion.", {
+            id: "manual-suggestion-para",
+          });
+          return;
+        }
+        const textBefore = resolvedPos.parent
+          .textBetween(0, resolvedPos.parentOffset, " ")
+          .trim();
+        if (textBefore.length < MIN_CHARS_BEFORE_CURSOR) {
+          toast.error("Type a bit more text first, then use Ctrl + /.", {
+            id: "manual-suggestion-short",
+          });
+          return;
+        }
+        void handleTryAgain();
+      }
+    };
+    document.addEventListener("keydown", handleManualSuggestion);
+    return () => document.removeEventListener("keydown", handleManualSuggestion);
+  }, [editor, handleTryAgain]);
+
   // Calculate and update word count
   useEffect(() => {
     if (!editor) return;
@@ -864,13 +896,11 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
     // Update on initial load
     updateWordCount();
 
-    // Update on editor changes
+    // Update on content changes only — selectionUpdate does not change word count
     editor.on("update", updateWordCount);
-    editor.on("selectionUpdate", updateWordCount);
 
     return () => {
       editor.off("update", updateWordCount);
-      editor.off("selectionUpdate", updateWordCount);
     };
   }, [editor, setWordCount]);
 
