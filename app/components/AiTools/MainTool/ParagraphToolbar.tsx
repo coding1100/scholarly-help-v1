@@ -288,7 +288,7 @@ const ParagraphToolbar: React.FC<ParagraphToolbarProps> = ({
       {isActionMenuOpen && (
         <div
           ref={actionMenuRef}
-          className=" z-[9999] w-44 rounded-md border border-gray-200 bg-white shadow-lg py-1"
+          className="fixed z-[9999] w-44 rounded-md border border-gray-200 bg-white shadow-lg py-1"
           style={{ top: actionPos.top, left: actionPos.left }}
         >
           <button
