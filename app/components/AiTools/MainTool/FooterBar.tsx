@@ -65,20 +65,19 @@ const FooterBar = () => {
       }
     };
 
-    updateUndoRedoState();
-    updateBlockType();
-    editor.on("update", () => {
+    // Use a single stable handler reference so editor.off can correctly remove it
+    const handleEditorEvent = () => {
       updateUndoRedoState();
       updateBlockType();
-    });
-    editor.on("selectionUpdate", () => {
-      updateUndoRedoState();
-      updateBlockType();
-    });
+    };
+
+    handleEditorEvent();
+    editor.on("update", handleEditorEvent);
+    editor.on("selectionUpdate", handleEditorEvent);
 
     return () => {
-      editor.off("update", updateUndoRedoState);
-      editor.off("selectionUpdate", updateUndoRedoState);
+      editor.off("update", handleEditorEvent);
+      editor.off("selectionUpdate", handleEditorEvent);
     };
   }, [editor]);
 
