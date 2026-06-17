@@ -45,11 +45,11 @@ const EssayOutlinerForm: React.FC<EssayOutlinerFormProps> = ({
   };
 
   return (
-    <div className="h-full border-r border-gray-200 dark:border-gray-700 flex flex-col justify-between bg-white dark:bg-gray-900 transition-colors duration-300">
+    <div className="h-full border-r border-gray-200 dark:border-gray-700 flex flex-col bg-white dark:bg-gray-900 transition-colors duration-300 overflow-hidden">
       <h2 className="bg-white dark:bg-gray-800 text-lg font-semibold text-gray-800 dark:text-gray-100 py-4 px-4 mb-4 border-b border-gray-200 dark:border-gray-700 transition-colors duration-300">
         Essay Outliner
       </h2>
-      <div className="border-gray-200 dark:border-gray-700 px-2 md:px-8">
+      <div className="flex-1 overflow-y-auto min-h-0 border-gray-200 dark:border-gray-700 px-2 md:px-8 py-2">
         {/* Essay Title */}
         <div className="mb-4">
           <label
@@ -140,7 +140,7 @@ const EssayOutlinerForm: React.FC<EssayOutlinerFormProps> = ({
       </div>
 
       {/* Action Buttons */}
-      <div className="mt-6 bg-white dark:bg-gray-900 transition-colors duration-300">
+      <div className="flex-shrink-0 mt-auto bg-white dark:bg-gray-900 transition-colors duration-300">
         <ActionButtons
           onClear={handleClearInputs}
           onSubmit={handleGenerate}
