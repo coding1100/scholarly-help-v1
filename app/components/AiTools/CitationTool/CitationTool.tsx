@@ -30,6 +30,8 @@ interface CitationResponse {
   source_type: SourceType;
   full_citation: string;
   in_text_citation: string | null;
+  /** Chicago notes-bibliography only: the footnote (full note) form. */
+  footnote?: string | null;
   engine?: string;
   tokens_used?: number;
 }
@@ -140,6 +142,10 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
   const [journalName, setJournalName] = useState<string>("");
   const [websiteName, setWebsiteName] = useState<string>("");
   const [edition, setEdition] = useState<string>("");
+  const [bookVolume, setBookVolume] = useState<string>("");
+  const [chicagoVariant, setChicagoVariant] = useState<
+    "notes-bibliography" | "author-date"
+  >("notes-bibliography");
   const [url, setUrl] = useState<string>("");
   const [city, setCity] = useState<string>("");
   const [volume, setVolume] = useState<string>("");
@@ -238,13 +244,20 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
           ...(isForm ? {} : { "Content-Type": "application/json" }),
         },
       });
-      const data = res.data?.data ?? res.data;
-      if (data?.data) populateFromExtracted(data.data as ExtractedCitation);
+      // Backend returns { status, message, manual_fallback, fields }, wrapped by
+      // the API envelope as res.data.data.
+      const result = res.data?.data ?? res.data;
+      if (result?.fields) populateFromExtracted(result.fields as ExtractedCitation);
       setLookupStatus({
-        state: data?.status === "success" ? "success" : "partial",
-        message: data?.message || "Done.",
+        state:
+          result?.status === "success"
+            ? "success"
+            : result?.status === "error" || result?.status === "not_found"
+              ? "error"
+              : "partial",
+        message: result?.message || "Done.",
       });
-      if (data?.manual_fallback) setMode("manual");
+      if (result?.manual_fallback) setMode("manual");
     } catch (err: any) {
       const msg =
         err?.response?.data?.message ||
@@ -350,6 +363,10 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
 
   const hasAuthor = authors.some((a) => a.last.trim() || a.first.trim());
 
+  // Warn when an edition abbreviation ("ed"/"edn") is missing its trailing period.
+  const editionNeedsPeriod =
+    sourceType === "book" && /\b(ed|edn)$/i.test(edition.trim());
+
   const updateAuthor = (idx: number, field: keyof AuthorRow, value: string) => {
     setAuthors((prev) =>
       prev.map((a, i) => (i === idx ? { ...a, [field]: value } : a)),
@@ -378,6 +395,8 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
     setJournalName("");
     setWebsiteName("");
     setEdition("");
+    setBookVolume("");
+    setChicagoVariant("notes-bibliography");
     setUrl("");
     setCity("");
     setVolume("");
@@ -453,9 +472,13 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
       if (sourceType === "website" && websiteName.trim())
         payload.website_name = websiteName.trim();
       if (sourceType === "book" && edition.trim()) payload.edition = edition.trim();
+      if (sourceType === "book" && bookVolume.trim())
+        payload.book_volume = bookVolume.trim();
       if (showCity && city.trim()) payload.city = city.trim();
-      if (volume.trim()) payload.volume = volume.trim();
-      if (issue.trim()) payload.issue = issue.trim();
+      // `volume` is the journal volume; books use `book_volume`.
+      if (sourceType === "journal" && volume.trim()) payload.volume = volume.trim();
+      if (sourceType === "journal" && issue.trim()) payload.issue = issue.trim();
+      if (citationStyle === "Chicago") payload.chicago_variant = chicagoVariant;
       if (pages.trim()) payload.pages = pages.trim();
       // DOI/URL only when relevant: websites always, others when online.
       if (showOnlineFields && doi.trim()) payload.doi = doi.trim();
@@ -501,9 +524,12 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
     }
   };
 
+  // The engine wraps italic titles in <i></i>; strip tags for plain-text copy.
+  const stripHtml = (s: string) => s.replace(/<\/?i>/g, "");
+
   const handleCopy = async (text: string) => {
     try {
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(stripHtml(text));
       toast.success("Copied to clipboard!");
     } catch (err) {
       console.error("Failed to copy:", err);
@@ -526,8 +552,12 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
     setIsSaving(true);
     try {
       const docTitle = `Citation — ${result.citation_style} (${result.source_type})`;
+      // full_citation/footnote contain only trusted <i> markup from the engine.
       const contentHtml =
-        `<p>${escapeHtml(result.full_citation)}</p>` +
+        `<p>${result.full_citation}</p>` +
+        (result.footnote
+          ? `<p><strong>Footnote:</strong> ${result.footnote}</p>`
+          : "") +
         (result.in_text_citation
           ? `<p><strong>In-text:</strong> ${escapeHtml(result.in_text_citation)}</p>`
           : "");
@@ -623,6 +653,49 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
                 </div>
               </div>
             </div>
+
+            {/* Chicago system selector */}
+            {citationStyle === "Chicago" && (
+              <div>
+                <label className={labelClass}>Chicago system</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {(
+                    [
+                      {
+                        key: "notes-bibliography",
+                        label: "Notes & Bibliography",
+                        sub: "Bibliography entry + footnote",
+                      },
+                      {
+                        key: "author-date",
+                        label: "Author-Date",
+                        sub: "Reference list + (Author Year)",
+                      },
+                    ] as {
+                      key: "notes-bibliography" | "author-date";
+                      label: string;
+                      sub: string;
+                    }[]
+                  ).map((opt) => (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => setChicagoVariant(opt.key)}
+                      className={`rounded-md border p-3 text-left transition-colors ${
+                        chicagoVariant === opt.key
+                          ? "border-[#565add] bg-[#565add]/5 dark:bg-[#565add]/10"
+                          : "border-gray-300 dark:border-gray-600 hover:border-[#2b7fff]"
+                      }`}
+                    >
+                      <div className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                        {opt.label}
+                      </div>
+                      <div className="text-[11px] text-gray-400">{opt.sub}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Mode toggle: Auto-fill vs Manual */}
             <div className="inline-flex rounded-md border border-gray-300 dark:border-gray-600 p-1 bg-gray-50 dark:bg-gray-900">
@@ -956,8 +1029,17 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
                       value={edition}
                       onChange={(e) => setEdition(e.target.value)}
                       placeholder="e.g., 3rd ed."
-                      className={inputClass}
+                      className={`${inputClass} ${
+                        editionNeedsPeriod
+                          ? "border-red-400 focus:ring-red-400 dark:border-red-500"
+                          : ""
+                      }`}
                     />
+                    {editionNeedsPeriod && (
+                      <p className="mt-1 text-xs text-red-500">
+                        Add a period after the abbreviation — e.g. “2nd ed.” not “2nd ed”.
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label htmlFor="publisher" className={labelClass}>
@@ -972,6 +1054,24 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
                       className={inputClass}
                     />
                   </div>
+                </div>
+
+                <div>
+                  <label htmlFor="book_volume" className={labelClass}>
+                    Volume{" "}
+                    <span className="ml-1 text-xs font-normal text-gray-400">
+                      (optional)
+                    </span>
+                    <Tooltip text="Add only if the book is part of a multi-volume set, e.g. “1” for Vol. 1. Leave blank otherwise." />
+                  </label>
+                  <input
+                    id="book_volume"
+                    type="text"
+                    value={bookVolume}
+                    onChange={(e) => setBookVolume(e.target.value)}
+                    placeholder="e.g., 1"
+                    className={inputClass}
+                  />
                 </div>
 
                 {showCity && (
@@ -1290,7 +1390,12 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
             <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 transition-colors duration-300">
-                  Full Citation ({result.citation_style} - {result.source_type}):
+                  {result.citation_style === "Chicago" && result.footnote
+                    ? "Bibliography Entry"
+                    : result.citation_style === "Chicago"
+                      ? "Reference List Entry"
+                      : "Full Citation"}{" "}
+                  ({result.citation_style} - {result.source_type}):
                 </h3>
                 <div className="flex items-center gap-2">
                   <button
@@ -1317,11 +1422,50 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
                 </div>
               </div>
               <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md p-4">
-                <p className="text-gray-800 dark:text-gray-100 whitespace-pre-wrap transition-colors duration-300">
-                  {result.full_citation}
-                </p>
+                <p
+                  className="text-gray-800 dark:text-gray-100 whitespace-pre-wrap transition-colors duration-300 [&_i]:italic"
+                  // Engine output contains only <i></i> markup for italic titles.
+                  dangerouslySetInnerHTML={{ __html: result.full_citation }}
+                />
               </div>
+              {savedDocId && (
+                <p className="mt-2 text-xs text-green-700 dark:text-green-400">
+                  Saved to your{" "}
+                  <a
+                    href="/tools/dashboard"
+                    className="font-medium underline hover:text-green-800"
+                  >
+                    dashboard library
+                  </a>
+                  . Find it under your saved documents.
+                </p>
+              )}
             </div>
+
+            {/* Chicago footnote (notes-bibliography only) */}
+            {result.footnote && (
+              <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                    Footnote (Full Note):
+                  </h3>
+                  <button
+                    onClick={() => handleCopy(result.footnote!)}
+                    className="flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2b7fff] transition-colors duration-300"
+                    title="Copy footnote"
+                  >
+                    <FaRegCopy />
+                    Copy
+                  </button>
+                </div>
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md p-4">
+                  <p
+                    className="text-gray-800 dark:text-gray-100 whitespace-pre-wrap transition-colors duration-300 [&_i]:italic"
+                    dangerouslySetInnerHTML={{ __html: result.footnote }}
+                  />
+                </div>
+              </div>
+            )}
 
             {/* In-Text Citation */}
             {result.in_text_citation && (
