@@ -13,10 +13,12 @@ import SuccessStoriesAndReviewsAdmin from "@/app/(admin)/admin/success-stories-a
 import PlagiarismFreeProcessAdmin from "@/app/(admin)/admin/plagiarism-free-process/page";
 import OnTimeDeliveryGuaranteeAdmin from "@/app/(admin)/admin/on-time-delivery-guarantee/page";
 import FaqAdmin from "@/app/(admin)/admin/faq/page";
+import AcademicResearchAdmin from "@/app/(admin)/admin/academic-research/page";
 
 const DUPLICATE_EDITOR_BY_SOURCE_PATH: Record<string, ComponentType> = {
   "/admin/a-or-b-grade-guarantee": AOrBGradeGuaranteeAdmin,
   "/admin/tools": ToolsAdmin,
+  "/admin/academic-research": AcademicResearchAdmin,
   "/admin/guarantee-anonymity": GuaranteeAnonymityAdmin,
   "/admin/us-based-phd-experts": UsBasedPhdExpertsAdmin,
   "/admin/success-stories-and-reviews": SuccessStoriesAndReviewsAdmin,
