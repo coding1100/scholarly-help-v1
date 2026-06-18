@@ -1,12 +1,13 @@
 "use client";
 
 import React, { FC, useEffect, useRef, useState } from "react";
-import { FaRegCopy, FaImage, FaKeyboard } from "react-icons/fa";
+import { FaRegCopy, FaImage, FaKeyboard, FaSuperscript } from "react-icons/fa";
 import axios from "axios";
 import toast from "react-hot-toast";
+import katex from "katex";
+import "katex/dist/katex.min.css";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
-import MarkDown from "@/app/components/MarkDown/MarkDown";
 
 type Subject = "math" | "physics" | "chemistry" | "general";
 type InputMode = "image" | "text";
@@ -48,11 +49,101 @@ const SUBJECTS: { key: Subject; label: string }[] = [
   { key: "chemistry", label: "Chemistry" },
 ];
 
+/**
+ * Formula keyboard. `insert` is the literal inserted at the cursor; `back`
+ * moves the caret back into a template so the user types inside it. Symbols
+ * are written in notation the solver reads reliably (^, /, √, Greek, etc.).
+ */
+const FORMULA_KEYS: { label: string; insert: string; back?: number }[] = [
+  { label: "x²", insert: "^2" },
+  { label: "xⁿ", insert: "^()", back: 1 },
+  { label: "√", insert: "√()", back: 1 },
+  { label: "ⁿ√", insert: "root()()", back: 3 },
+  { label: "a/b", insert: "()/()", back: 4 },
+  { label: "π", insert: "π" },
+  { label: "θ", insert: "θ" },
+  { label: "°", insert: "°" },
+  { label: "×", insert: "×" },
+  { label: "÷", insert: "÷" },
+  { label: "±", insert: "±" },
+  { label: "≤", insert: "≤" },
+  { label: "≥", insert: "≥" },
+  { label: "≠", insert: "≠" },
+  { label: "≈", insert: "≈" },
+  { label: "∞", insert: "∞" },
+  { label: "Δ", insert: "Δ" },
+  { label: "Σ", insert: "Σ" },
+  { label: "∫", insert: "∫" },
+  { label: "→", insert: " → " },
+  { label: "α", insert: "α" },
+  { label: "β", insert: "β" },
+  { label: "μ", insert: "μ" },
+  { label: "λ", insert: "λ" },
+];
+
 const inputClass =
   "w-full p-3 rounded-md focus:outline-none text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-[#2b7fff] transition-colors duration-300";
 
-/** Wrap a bare KaTeX expression as a display-math markdown block. */
-const mathBlock = (m: string) => (m ? `$$${m}$$` : "");
+/** Render a bare KaTeX string to an HTML string; falls back to the raw text. */
+function renderKatex(tex: string, displayMode: boolean): string {
+  try {
+    return katex.renderToString(tex.trim(), {
+      displayMode,
+      throwOnError: false,
+      output: "html",
+    });
+  } catch {
+    return tex;
+  }
+}
+
+/** A pure-LaTeX expression (the schema's `math` field), rendered as block math. */
+const BlockMath: FC<{ tex: string }> = ({ tex }) => (
+  <div
+    className="my-1 overflow-x-auto"
+    dangerouslySetInnerHTML={{ __html: renderKatex(tex, true) }}
+  />
+);
+
+const InlineMath: FC<{ tex: string }> = ({ tex }) => (
+  <span dangerouslySetInnerHTML={{ __html: renderKatex(tex, false) }} />
+);
+
+/**
+ * Render prose that may contain inline/block math in mixed delimiters. The model
+ * is inconsistent — it emits $...$, $$...$$, \(...\), \[...\], and sometimes
+ * escapes a literal \$. Normalize everything to $/$$ first, then split on those
+ * delimiters and render the math segments with KaTeX and the rest as plain text.
+ * This avoids the markdown "two stray dollars become garbled math" false positive.
+ */
+const LITERAL_DOLLAR = " DOLLAR ";
+
+function normalizeMathDelimiters(input: string): string {
+  return input
+    .replace(/\\\$/g, LITERAL_DOLLAR)
+    .replace(/\\\[([\s\S]+?)\\\]/g, (_m, x) => `$$${x}$$`)
+    .replace(/\\\(([\s\S]+?)\\\)/g, (_m, x) => `$${x}$`);
+}
+
+const MathProse: FC<{ text: string; className?: string }> = ({ text, className }) => {
+  const normalized = normalizeMathDelimiters(text || "");
+  // Split on $$...$$ (block) and $...$ (inline), keeping the delimiters.
+  const parts = normalized.split(/(\$\$[\s\S]+?\$\$|\$[^$\n]+?\$)/g);
+  return (
+    <span className={className}>
+      {parts.map((part, i) => {
+        if (part.startsWith("$$") && part.endsWith("$$")) {
+          return <BlockMath key={i} tex={part.slice(2, -2)} />;
+        }
+        if (part.startsWith("$") && part.endsWith("$") && part.length > 2) {
+          return <InlineMath key={i} tex={part.slice(1, -1)} />;
+        }
+        // Restore any protected literal dollar signs.
+        return <span key={i}>{part.split(LITERAL_DOLLAR).join("$")}</span>;
+      })}
+    </span>
+  );
+};
 
 const StemSolver: FC<{ setFlag: (v: boolean) => void }> = ({ setFlag }) => {
   const [token, setToken] = useState<string | null>(null);
@@ -64,7 +155,25 @@ const StemSolver: FC<{ setFlag: (v: boolean) => void }> = ({ setFlag }) => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [result, setResult] = useState<StemSolution | null>(null);
   const [error, setError] = useState<string>("");
+  const [showKeyboard, setShowKeyboard] = useState<boolean>(false);
   const resultRef = useRef<HTMLDivElement>(null);
+  const problemRef = useRef<HTMLTextAreaElement>(null);
+
+  /** Insert a symbol/snippet at the textarea cursor; `caretBack` re-positions
+   * the caret inside a template (e.g. between fraction braces). */
+  const insertSymbol = (snippet: string, caretBack = 0) => {
+    const el = problemRef.current;
+    const start = el ? el.selectionStart : problem.length;
+    const end = el ? el.selectionEnd : problem.length;
+    const next = problem.slice(0, start) + snippet + problem.slice(end);
+    setProblem(next);
+    const caret = start + snippet.length - caretBack;
+    requestAnimationFrame(() => {
+      if (!problemRef.current) return;
+      problemRef.current.focus();
+      problemRef.current.setSelectionRange(caret, caret);
+    });
+  };
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -370,13 +479,44 @@ const StemSolver: FC<{ setFlag: (v: boolean) => void }> = ({ setFlag }) => {
       {/* Text input */}
       {inputMode === "text" && (
         <div className="mb-4">
+          <div className="mb-2 flex justify-end">
+            <button
+              type="button"
+              onClick={() => setShowKeyboard((v) => !v)}
+              aria-pressed={showKeyboard}
+              className={`flex items-center gap-2 px-3 py-1.5 text-sm rounded-md border transition-colors ${
+                showKeyboard
+                  ? "border-[#155dfc] bg-blue-50 text-[#155dfc] dark:bg-blue-900/20 dark:text-blue-300"
+                  : "border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-[#2b7fff]"
+              }`}
+            >
+              <FaSuperscript className="h-3 w-3" />
+              Symbols
+            </button>
+          </div>
           <textarea
+            ref={problemRef}
             value={problem}
             onChange={(e) => setProblem(e.target.value)}
             placeholder="e.g. A 5 kg block slides down a 30° frictionless incline. Find its acceleration."
             rows={4}
             className={inputClass}
           />
+          {showKeyboard && (
+            <div className="mt-2 flex flex-wrap gap-1.5 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 p-2">
+              {FORMULA_KEYS.map((k) => (
+                <button
+                  key={k.label}
+                  type="button"
+                  onClick={() => insertSymbol(k.insert, k.back ?? 0)}
+                  className="min-w-9 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-2.5 py-1.5 text-sm text-gray-700 dark:text-gray-200 hover:border-[#2b7fff] hover:text-[#2b7fff] transition-colors"
+                  title={`Insert ${k.label}`}
+                >
+                  {k.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -428,18 +568,20 @@ const StemSolver: FC<{ setFlag: (v: boolean) => void }> = ({ setFlag }) => {
               </button>
             </div>
             {result.problem_restatement && (
-              <div className="text-gray-700 dark:text-gray-300 mb-2">
-                <MarkDown content={result.problem_restatement} />
-              </div>
+              <MathProse
+                text={result.problem_restatement}
+                className="block text-gray-700 dark:text-gray-300 mb-2 leading-relaxed"
+              />
             )}
             {result.final_answer && (
               <div className="mt-2 rounded-md bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-[#193cb8] p-3">
                 <span className="text-sm font-semibold text-[#193cb8] dark:text-blue-300">
                   Final answer:{" "}
                 </span>
-                <span className="text-gray-800 dark:text-gray-100">
-                  <MarkDown content={result.final_answer} />
-                </span>
+                <MathProse
+                  text={result.final_answer}
+                  className="text-gray-800 dark:text-gray-100 font-medium"
+                />
               </div>
             )}
           </div>
@@ -472,8 +614,10 @@ const StemSolver: FC<{ setFlag: (v: boolean) => void }> = ({ setFlag }) => {
                       {si + 1}
                     </span>
                     <div className="flex-1 text-gray-700 dark:text-gray-300">
-                      <MarkDown content={st.explanation} />
-                      {st.math && <MarkDown content={mathBlock(st.math)} />}
+                      {st.explanation && (
+                        <MathProse text={st.explanation} className="block leading-relaxed" />
+                      )}
+                      {st.math && <BlockMath tex={st.math} />}
                     </div>
                   </div>
                 ))}
@@ -487,9 +631,10 @@ const StemSolver: FC<{ setFlag: (v: boolean) => void }> = ({ setFlag }) => {
               <h4 className="text-base font-semibold text-gray-800 dark:text-gray-100 mb-2">
                 Understanding the concept
               </h4>
-              <div className="text-gray-700 dark:text-gray-300">
-                <MarkDown content={result.tutorial} />
-              </div>
+              <MathProse
+                text={result.tutorial}
+                className="block text-gray-700 dark:text-gray-300 leading-relaxed"
+              />
             </div>
           )}
 
