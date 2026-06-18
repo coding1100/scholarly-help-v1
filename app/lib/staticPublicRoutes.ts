@@ -6,6 +6,7 @@
 export const STATIC_TOP_LEVEL_SEGMENTS = new Set([
   "about-us",
   "a-or-b-grade-guarantee",
+  "academic-research",
   "ai-academic-research",
   "ai-essay-generator",
   "ai-paraphraser",
