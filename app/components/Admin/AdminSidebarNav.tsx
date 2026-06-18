@@ -16,6 +16,7 @@ const mainNavigation = buildMainNavigation();
 const pagesNavigation = [
   { name: "A/B Grade Guarantee", href: "/admin/a-or-b-grade-guarantee" },
   { name: "Academic Tools", href: "/admin/tools" },
+  { name: "Academic Research", href: "/admin/academic-research" },
   { name: "Guarantee Anonymity", href: "/admin/guarantee-anonymity" },
   { name: "US-Based PhD Experts", href: "/admin/us-based-phd-experts" },
   { name: "Success Stories", href: "/admin/success-stories-and-reviews" },
