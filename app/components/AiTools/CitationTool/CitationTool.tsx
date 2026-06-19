@@ -524,16 +524,41 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
     }
   };
 
-  // The engine wraps italic titles in <i></i>; strip tags for plain-text copy.
+  // The engine wraps italic titles in <i></i>; strip tags for the plain-text fallback.
   const stripHtml = (s: string) => s.replace(/<\/?i>/g, "");
 
-  const handleCopy = async (text: string) => {
+  /**
+   * Copy preserving italics: write both text/html (so rich editors keep the
+   * italic title) and text/plain (fallback). Falls back to plain text on
+   * browsers without the async ClipboardItem API.
+   */
+  const handleCopy = async (html: string) => {
+    const plain = stripHtml(html);
     try {
-      await navigator.clipboard.writeText(stripHtml(text));
+      if (
+        typeof ClipboardItem !== "undefined" &&
+        navigator.clipboard &&
+        "write" in navigator.clipboard
+      ) {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            "text/html": new Blob([html], { type: "text/html" }),
+            "text/plain": new Blob([plain], { type: "text/plain" }),
+          }),
+        ]);
+      } else {
+        await navigator.clipboard.writeText(plain);
+      }
       toast.success("Copied to clipboard!");
     } catch (err) {
       console.error("Failed to copy:", err);
-      toast.error("Failed to copy.");
+      // Last resort: plain text.
+      try {
+        await navigator.clipboard.writeText(plain);
+        toast.success("Copied to clipboard!");
+      } catch {
+        toast.error("Failed to copy.");
+      }
     }
   };
 
