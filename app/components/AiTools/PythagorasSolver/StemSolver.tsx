@@ -54,31 +54,98 @@ const SUBJECTS: { key: Subject; label: string }[] = [
  * moves the caret back into a template so the user types inside it. Symbols
  * are written in notation the solver reads reliably (^, /, √, Greek, etc.).
  */
-const FORMULA_KEYS: { label: string; insert: string; back?: number }[] = [
-  { label: "x²", insert: "^2" },
-  { label: "xⁿ", insert: "^()", back: 1 },
-  { label: "√", insert: "√()", back: 1 },
-  { label: "ⁿ√", insert: "root()()", back: 3 },
-  { label: "a/b", insert: "()/()", back: 4 },
-  { label: "π", insert: "π" },
-  { label: "θ", insert: "θ" },
-  { label: "°", insert: "°" },
-  { label: "×", insert: "×" },
-  { label: "÷", insert: "÷" },
-  { label: "±", insert: "±" },
-  { label: "≤", insert: "≤" },
-  { label: "≥", insert: "≥" },
-  { label: "≠", insert: "≠" },
-  { label: "≈", insert: "≈" },
-  { label: "∞", insert: "∞" },
-  { label: "Δ", insert: "Δ" },
-  { label: "Σ", insert: "Σ" },
-  { label: "∫", insert: "∫" },
-  { label: "→", insert: " → " },
-  { label: "α", insert: "α" },
-  { label: "β", insert: "β" },
-  { label: "μ", insert: "μ" },
-  { label: "λ", insert: "λ" },
+type FormulaKey = { label: string; insert: string; back?: number };
+
+/**
+ * Formula keyboard grouped into tabs (mathgptpro-style). `insert` is the literal
+ * inserted at the cursor; `back` moves the caret into a template so the user
+ * types inside it. Symbols use notation the solver reads reliably.
+ */
+const FORMULA_TABS: { id: string; label: string; keys: FormulaKey[] }[] = [
+  {
+    id: "basic",
+    label: "Basic",
+    keys: [
+      { label: "x²", insert: "^2" },
+      { label: "xⁿ", insert: "^()", back: 1 },
+      { label: "√", insert: "√()", back: 1 },
+      { label: "ⁿ√", insert: "root()()", back: 3 },
+      { label: "a/b", insert: "()/()", back: 4 },
+      { label: "(", insert: "(" },
+      { label: ")", insert: ")" },
+      { label: "+", insert: " + " },
+      { label: "−", insert: " - " },
+      { label: "×", insert: " × " },
+      { label: "÷", insert: " ÷ " },
+      { label: "=", insert: " = " },
+      { label: "±", insert: "±" },
+      { label: "·", insert: "·" },
+      { label: "%", insert: "%" },
+    ],
+  },
+  {
+    id: "trig",
+    label: "sin cos",
+    keys: [
+      { label: "sin", insert: "sin()", back: 1 },
+      { label: "cos", insert: "cos()", back: 1 },
+      { label: "tan", insert: "tan()", back: 1 },
+      { label: "cot", insert: "cot()", back: 1 },
+      { label: "sec", insert: "sec()", back: 1 },
+      { label: "csc", insert: "csc()", back: 1 },
+      { label: "sin⁻¹", insert: "arcsin()", back: 1 },
+      { label: "cos⁻¹", insert: "arccos()", back: 1 },
+      { label: "tan⁻¹", insert: "arctan()", back: 1 },
+      { label: "sinh", insert: "sinh()", back: 1 },
+      { label: "cosh", insert: "cosh()", back: 1 },
+      { label: "tanh", insert: "tanh()", back: 1 },
+      { label: "log", insert: "log()", back: 1 },
+      { label: "ln", insert: "ln()", back: 1 },
+      { label: "logₐ", insert: "log_()", back: 1 },
+    ],
+  },
+  {
+    id: "symbols",
+    label: "≥ ≠",
+    keys: [
+      { label: "≤", insert: "≤" },
+      { label: "≥", insert: "≥" },
+      { label: "≠", insert: "≠" },
+      { label: "≈", insert: "≈" },
+      { label: "∞", insert: "∞" },
+      { label: "°", insert: "°" },
+      { label: "∝", insert: "∝" },
+      { label: "→", insert: " → " },
+      { label: "∑", insert: "∑" },
+      { label: "∏", insert: "∏" },
+      { label: "∫", insert: "∫()", back: 1 },
+      { label: "∂", insert: "∂" },
+      { label: "∇", insert: "∇" },
+      { label: "∈", insert: "∈" },
+      { label: "≅", insert: "≅" },
+    ],
+  },
+  {
+    id: "greek",
+    label: "αβγ",
+    keys: [
+      { label: "α", insert: "α" },
+      { label: "β", insert: "β" },
+      { label: "γ", insert: "γ" },
+      { label: "δ", insert: "δ" },
+      { label: "θ", insert: "θ" },
+      { label: "λ", insert: "λ" },
+      { label: "μ", insert: "μ" },
+      { label: "π", insert: "π" },
+      { label: "ρ", insert: "ρ" },
+      { label: "σ", insert: "σ" },
+      { label: "τ", insert: "τ" },
+      { label: "φ", insert: "φ" },
+      { label: "ω", insert: "ω" },
+      { label: "Δ", insert: "Δ" },
+      { label: "Ω", insert: "Ω" },
+    ],
+  },
 ];
 
 const inputClass =
@@ -118,11 +185,93 @@ const InlineMath: FC<{ tex: string }> = ({ tex }) => (
  */
 const LITERAL_DOLLAR = " DOLLAR ";
 
+/**
+ * Safety net for prose that contains BARE LaTeX (\sqrt{}, \text{}, ^, _, \to …)
+ * not wrapped in $…$. The model is now told to always use $…$, but older or
+ * lapsed responses can still leak raw commands; this wraps detected LaTeX runs
+ * so KaTeX renders them instead of showing "\sqrt{75}" as literal text.
+ * Brace-aware so groups containing spaces (e.g. \text{ m/s}) stay intact.
+ */
+function autoWrapBareLatex(s: string): string {
+  if (!s || s.includes("$")) return s; // leave existing $-delimited math alone
+  if (!/\\[a-zA-Z]+|[\^_]/.test(s)) return s; // no LaTeX markers at all
+
+  const readBraces = (j: number): number => {
+    let depth = 0;
+    for (let k = j; k < s.length; k++) {
+      if (s[k] === "{") depth++;
+      else if (s[k] === "}" && --depth === 0) return k + 1;
+    }
+    return s.length;
+  };
+  const readMathToken = (j: number): number => {
+    const c = s[j];
+    if (c === "\\") {
+      const m = /^\\[a-zA-Z]+/.exec(s.slice(j));
+      if (!m) return Math.min(j + 2, s.length);
+      let end = j + m[0].length;
+      while (s[end] === "{") end = readBraces(end);
+      return end;
+    }
+    if (c === "^" || c === "_") {
+      const end = j + 1;
+      return s[end] === "{" ? readBraces(end) : Math.min(end + 1, s.length);
+    }
+    return -1;
+  };
+  const isOperand = (c: string) => /[0-9.+\-=×*/()]/.test(c);
+
+  let out = "";
+  let i = 0;
+  while (i < s.length) {
+    const c = s[i];
+    if (c !== "\\" && c !== "^" && c !== "_") {
+      out += c;
+      i++;
+      continue;
+    }
+    // Pull a leading numeric operand back into the run (e.g. "4.9 " before \text).
+    let lead = "";
+    out = out.replace(/([0-9.]+\s*)$/, (mm) => {
+      lead = mm;
+      return "";
+    });
+    let run = lead;
+    let j = i;
+    while (j < s.length) {
+      const tEnd = readMathToken(j);
+      if (tEnd > j) {
+        run += s.slice(j, tEnd);
+        j = tEnd;
+        continue;
+      }
+      if (isOperand(s[j])) {
+        run += s[j++];
+        continue;
+      }
+      if (s[j] === " ") {
+        let k = j;
+        while (s[k] === " ") k++;
+        if (readMathToken(k) > k || (s[k] && isOperand(s[k]))) {
+          run += s.slice(j, k);
+          j = k;
+          continue;
+        }
+      }
+      break;
+    }
+    out += `$${run.trim()}$`;
+    i = j;
+  }
+  return out;
+}
+
 function normalizeMathDelimiters(input: string): string {
-  return input
+  const withDelims = input
     .replace(/\\\$/g, LITERAL_DOLLAR)
     .replace(/\\\[([\s\S]+?)\\\]/g, (_m, x) => `$$${x}$$`)
     .replace(/\\\(([\s\S]+?)\\\)/g, (_m, x) => `$${x}$`);
+  return autoWrapBareLatex(withDelims);
 }
 
 const MathProse: FC<{ text: string; className?: string }> = ({ text, className }) => {
@@ -156,6 +305,7 @@ const StemSolver: FC<{ setFlag: (v: boolean) => void }> = ({ setFlag }) => {
   const [result, setResult] = useState<StemSolution | null>(null);
   const [error, setError] = useState<string>("");
   const [showKeyboard, setShowKeyboard] = useState<boolean>(false);
+  const [keyboardTab, setKeyboardTab] = useState<string>("basic");
   const resultRef = useRef<HTMLDivElement>(null);
   const problemRef = useRef<HTMLTextAreaElement>(null);
 
@@ -503,18 +653,40 @@ const StemSolver: FC<{ setFlag: (v: boolean) => void }> = ({ setFlag }) => {
             className={inputClass}
           />
           {showKeyboard && (
-            <div className="mt-2 flex flex-wrap gap-1.5 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 p-2">
-              {FORMULA_KEYS.map((k) => (
-                <button
-                  key={k.label}
-                  type="button"
-                  onClick={() => insertSymbol(k.insert, k.back ?? 0)}
-                  className="min-w-9 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-2.5 py-1.5 text-sm text-gray-700 dark:text-gray-200 hover:border-[#2b7fff] hover:text-[#2b7fff] transition-colors"
-                  title={`Insert ${k.label}`}
-                >
-                  {k.label}
-                </button>
-              ))}
+            <div className="mt-2 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 p-2">
+              {/* Category tabs */}
+              <div className="mb-2 flex flex-wrap gap-1 border-b border-gray-200 dark:border-gray-700 pb-2">
+                {FORMULA_TABS.map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setKeyboardTab(tab.id)}
+                    className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
+                      keyboardTab === tab.id
+                        ? "bg-[#155dfc] text-white"
+                        : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+              {/* Keys for the active tab */}
+              <div className="flex flex-wrap gap-1.5">
+                {(FORMULA_TABS.find((t) => t.id === keyboardTab) ?? FORMULA_TABS[0]).keys.map(
+                  (k) => (
+                    <button
+                      key={k.label}
+                      type="button"
+                      onClick={() => insertSymbol(k.insert, k.back ?? 0)}
+                      className="min-w-9 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-2.5 py-1.5 text-sm text-gray-700 dark:text-gray-200 hover:border-[#2b7fff] hover:text-[#2b7fff] transition-colors"
+                      title={`Insert ${k.label}`}
+                    >
+                      {k.label}
+                    </button>
+                  ),
+                )}
+              </div>
             </div>
           )}
         </div>
