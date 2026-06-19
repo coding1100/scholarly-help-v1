@@ -239,6 +239,24 @@ const MainDocEditor: React.FC<MainDocEditorProps> = ({
     }
   };
 
+  // A fixed, generic academic skeleton used for "Standard headings" and as the
+  // fallback when "Smart headings" comes back empty — never a lone "Main Heading".
+  const standardOutline = (topic: string): string[] => [
+    `Introduction to ${topic}`.slice(0, 90),
+    "Background and Context",
+    "Key Findings and Discussion",
+    "Conclusion",
+  ];
+
+  const outlineToHtml = (sections: string[]): string =>
+    sections
+      .map((section, index) =>
+        index === 0
+          ? `<h1>${section}</h1><p></p>`
+          : `<h2>${section}</h2><p></p>`,
+      )
+      .join("");
+
   const handleGenerateHeadings = async () => {
     const prompt = promptInput.trim();
     if (!prompt) {
@@ -246,42 +264,46 @@ const MainDocEditor: React.FC<MainDocEditorProps> = ({
       return;
     }
 
+    const docTitle = prompt.split(/[.?!]/)[0].slice(0, 80) || "Untitled";
+
+    // Standard headings: deterministic structure, no AI call, never empty.
+    if (selectedOutline === "standard") {
+      const sections = standardOutline(prompt);
+      setOutlineResponse(sections);
+      if (!title.trim()) setTitle(docTitle);
+      await startPersistedDocument(outlineToHtml(sections), docTitle);
+      return;
+    }
+
     setIsGenerating(true);
     try {
       const response = await generateEssayOutline({
         topic: prompt,
-        essay_type: selectedOutline === "none" ? "not_provided" : "descriptive",
+        essay_type: "descriptive",
         essay_level: "post graduate",
       });
 
-      const sectionTitles = response.outline
-        ?.map((item: any) =>
-          typeof item === "string" ? item : item.section || item.title,
-        )
-        .filter(Boolean);
+      const sectionTitles: string[] =
+        response.outline
+          ?.map((item: any) =>
+            typeof item === "string" ? item : item.section || item.title,
+          )
+          .filter(Boolean) ?? [];
 
-      if (sectionTitles?.length) {
-        setOutlineResponse(sectionTitles);
-      }
-
-      if (!title.trim()) {
-        setTitle(prompt.split(/[.?!]/)[0].slice(0, 80) || "Untitled");
-      }
-
-      const initialContent = sectionTitles?.length
+      // Smart headings empty → fall back to the standard skeleton (and say so),
+      // rather than a single useless "Main Heading".
+      const sections = sectionTitles.length
         ? sectionTitles
-            .map((section, index) =>
-              index === 0
-                ? `<h1>${section}</h1><p></p>`
-                : `<h2>${section}</h2><p></p>`,
-            )
-            .join("")
-        : "<h1>Main Heading</h1><p></p>";
+        : standardOutline(prompt);
+      if (!sectionTitles.length) {
+        toast("Couldn’t build a custom outline — used a standard structure.", {
+          id: "outline-fallback",
+        });
+      }
 
-      await startPersistedDocument(
-        initialContent,
-        prompt.split(/[.?!]/)[0].slice(0, 80) || "Untitled",
-      );
+      setOutlineResponse(sections);
+      if (!title.trim()) setTitle(docTitle);
+      await startPersistedDocument(outlineToHtml(sections), docTitle);
     } catch (error) {
       console.error("Error generating outline:", error);
       toast.error(

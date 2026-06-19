@@ -18,6 +18,7 @@ import {
 import { NodeViewProps } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
+import Highlight from "@tiptap/extension-highlight";
 import Heading from "@tiptap/extension-heading";
 import Paragraph from "@tiptap/extension-paragraph";
 import CodeBlock from "@tiptap/extension-code-block";
@@ -31,7 +32,7 @@ import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import BlockMenu from "./BlockMenu";
 import BlockToolbar from "./BlockToolbar";
 import ParagraphToolbar from "./ParagraphToolbar";
-import { MdOutlineDragIndicator, MdAdd } from "react-icons/md";
+import { MdOutlineDragIndicator, MdAdd, MdClose } from "react-icons/md";
 import {
   WordCountContext,
   EditorContext,
@@ -65,6 +66,13 @@ type InlineChatMessage = {
   id: string;
   role: "user" | "assistant";
   content: string;
+};
+
+// A source inserted via the Cite action, shown in the References panel.
+type DocumentReference = {
+  id: string;
+  inText: string;
+  full: string;
 };
 
 const clamp = (value: number, min: number, max: number) =>
@@ -179,6 +187,67 @@ const NodeWithControls: React.FC<NodeViewProps> = (props) => {
     setMenuPosition(getPosition());
     setShowToolbar(true);
   }, []);
+
+  // Select this block's full text range; returns false if the position is gone.
+  const selectThisBlock = useCallback((): boolean => {
+    const pos = props.getPos();
+    if (typeof pos !== "number") return false;
+    const from = pos + 1;
+    const to = pos + (props.node?.nodeSize ?? 1) - 1;
+    props.editor.chain().focus().setTextSelection({ from, to }).run();
+    return true;
+  }, [props]);
+
+  // Drag-handle menu actions. Block-level edits run here directly; the three
+  // AI/selection actions select the block and hand off to the parent editor's
+  // existing handlers via a custom event (the NodeView can't call them directly).
+  const handleToolbarSelect = useCallback(
+    (option: string) => {
+      setShowToolbar(false);
+      const pos = props.getPos();
+      const hasPos = typeof pos === "number";
+
+      switch (option) {
+        case "turnInto":
+          // Reuse the block-type picker (text / headings / lists).
+          setMenuPosition(getPosition());
+          setShowMenu(true);
+          return;
+        case "highlight": {
+          if (!selectThisBlock()) return;
+          props.editor.chain().focus().toggleHighlight().run();
+          return;
+        }
+        case "duplicate": {
+          if (!hasPos) return;
+          const json = props.node.toJSON();
+          const insertAt = (pos as number) + props.node.nodeSize;
+          props.editor.chain().focus().insertContentAt(insertAt, json).run();
+          return;
+        }
+        case "delete": {
+          if (!hasPos) return;
+          const from = pos as number;
+          const to = from + props.node.nodeSize;
+          props.editor.chain().focus().deleteRange({ from, to }).run();
+          return;
+        }
+        case "cite":
+        case "aiChat":
+        case "aiEdit": {
+          if (!selectThisBlock()) return;
+          // Hand off to the parent component's selection handlers.
+          window.dispatchEvent(
+            new CustomEvent("mainTool:blockAction", { detail: { action: option } }),
+          );
+          return;
+        }
+        default:
+          return;
+      }
+    },
+    [props, selectThisBlock],
+  );
 
   const onDragStart = (event: React.DragEvent) => {
     const pos = props.getPos();
@@ -297,7 +366,7 @@ const NodeWithControls: React.FC<NodeViewProps> = (props) => {
       {showToolbar && (
         <BlockToolbar
           position={menuPosition}
-          onSelect={() => setShowToolbar(false)}
+          onSelect={handleToolbarSelect}
           onClose={() => setShowToolbar(false)}
         />
       )}
@@ -537,6 +606,7 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
         },
       }),
       Underline,
+      Highlight.configure({ multicolor: false }),
       AISuggestionExtension,
     ],
     content: computedInitialContent,
@@ -570,6 +640,9 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
   const [suggestionCursorPos, setSuggestionCursorPos] = useState<number | null>(
     null,
   );
+  // Citation insert feedback + collected references (bibliography).
+  const [citing, setCiting] = useState(false);
+  const [references, setReferences] = useState<DocumentReference[]>([]);
   const [suggestionButtonPos, setSuggestionButtonPos] = useState<{
     top: number;
     left: number;
@@ -750,6 +823,17 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
           " ",
         );
         if (textBeforeCursor.trim().length < MIN_CHARS_BEFORE_CURSOR) {
+          clearSuggestion();
+          return;
+        }
+
+        // Only auto-suggest when the user is at the END of the paragraph and has
+        // just finished a word/sentence (trailing space or sentence punctuation).
+        // This avoids firing while they are editing mid-sentence, which the QA
+        // found intrusive — suggestions at an unexpected cursor position.
+        const atBlockEnd = resolvedPos.parentOffset === resolvedPos.parent.content.size;
+        const endsAtBoundary = /[\s.!?;:]$/.test(textBeforeCursor);
+        if (!atBlockEnd || !endsAtBoundary) {
           clearSuggestion();
           return;
         }
@@ -957,6 +1041,19 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
     }
   }, [editor, aiSuggestion, suggestionCursorPos]);
 
+  // Dismiss the current suggestion without accepting it. Suppress auto-retrigger
+  // briefly so it doesn't immediately reappear at the same cursor.
+  const handleDismissSuggestion = useCallback(() => {
+    if (!editor) return;
+    suppressSuggestionRef.current = true;
+    (editor.commands as any).clearAISuggestion?.();
+    setAISuggestion("");
+    setSuggestionCursorPos(null);
+    window.setTimeout(() => {
+      suppressSuggestionRef.current = false;
+    }, 1500);
+  }, [editor]);
+
   const handleTryAgain = useCallback(async () => {
     if (!editor) return;
     trackToolGenerate({ toolName: "Main Tool" });
@@ -1072,13 +1169,15 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
     const q = selectedText.slice(0, 180);
     const style = normalizeCitationStyle(citationStyle);
 
+    setCiting(true);
+    toast.loading("Finding a citation…", { id: "cite-status" });
     try {
       const res = await searchCitations({ q, style, type: "title" });
       const first = res.results?.[0];
       if (!first) {
         toast.error(
           "No citation found for this selection. Try selecting the paper title / DOI / PubMed ID, or a bit more context.",
-          { id: "cite-none-found", duration: 5200 },
+          { id: "cite-status", duration: 5200 },
         );
         return;
       }
@@ -1088,7 +1187,7 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
       const citationText = inText || fallback;
       if (!citationText) {
         toast.error("Citation service returned an empty result.", {
-          id: "cite-empty",
+          id: "cite-status",
         });
         return;
       }
@@ -1096,7 +1195,23 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
       const insert = inText ? ` ${inText}` : ` (${fallback})`;
       editor.chain().focus().insertContentAt(to, insert).run();
 
-      toast.success("Citation inserted.", { id: "cite-inserted" });
+      // Record the source for the References panel (dedupe by full text).
+      if (fallback) {
+        setReferences((prev) =>
+          prev.some((r) => r.full === fallback)
+            ? prev
+            : [
+                ...prev,
+                {
+                  id: `${Date.now()}-${prev.length}`,
+                  inText: inText || `(${fallback})`,
+                  full: fallback,
+                },
+              ],
+        );
+      }
+
+      toast.success("Citation inserted.", { id: "cite-status" });
     } catch (error) {
       const status = getAxiosStatus(error);
       const backendMessage = pickBackendMessage(error);
@@ -1105,7 +1220,7 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
         toast.error(
           getAcademicErrorMessage(error, "Token balance exhausted."),
           {
-            id: "cite-error-paywall",
+            id: "cite-status",
             duration: 5200,
           },
         );
@@ -1119,23 +1234,25 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
       ) {
         toast.error(
           "Citation search isn’t available on this server yet. Please ask your backend team to enable `GET /v1/tools/citation-search`.",
-          { id: "cite-search-unavailable", duration: 6500 },
+          { id: "cite-status", duration: 6500 },
         );
         return;
       }
 
       if (backendMessage) {
         toast.error(backendMessage, {
-          id: "cite-error-backend",
+          id: "cite-status",
           duration: 5200,
         });
         return;
       }
 
       toast.error("Citation failed. Try a different selection (title/DOI).", {
-        id: "cite-error-generic",
+        id: "cite-status",
         duration: 5200,
       });
+    } finally {
+      setCiting(false);
     }
   }, [citationStyle, editor]);
 
@@ -1413,9 +1530,13 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
     if (!editor) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.shiftKey && event.key === "ArrowRight" && aiSuggestion) {
+      if (!aiSuggestion) return;
+      if (event.shiftKey && event.key === "ArrowRight") {
         event.preventDefault();
         handleAccept();
+      } else if (event.key === "Escape") {
+        event.preventDefault();
+        handleDismissSuggestion();
       }
     };
 
@@ -1423,7 +1544,21 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [editor, aiSuggestion, handleAccept]);
+  }, [editor, aiSuggestion, handleAccept, handleDismissSuggestion]);
+
+  // The block drag-handle menu (a Tiptap NodeView) dispatches AI/selection
+  // actions as a custom event; route them to the same handlers the floating
+  // selection toolbar uses. The NodeView has already selected the block's text.
+  useEffect(() => {
+    const onBlockAction = (e: Event) => {
+      const action = (e as CustomEvent<{ action?: string }>).detail?.action;
+      if (action === "cite") void handleCiteSelectedText();
+      else if (action === "aiChat") void openSelectionChat();
+      else if (action === "aiEdit") void handleHumanizeSelectedText();
+    };
+    window.addEventListener("mainTool:blockAction", onBlockAction);
+    return () => window.removeEventListener("mainTool:blockAction", onBlockAction);
+  }, [handleCiteSelectedText, openSelectionChat, handleHumanizeSelectedText]);
 
   return (
     <div ref={editorShellRef} className="relative">
@@ -1667,8 +1802,49 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
             >
               Try Again
             </button>
+            <button
+              aria-label="Dismiss suggestion"
+              title="Dismiss (Esc)"
+              className="flex items-center justify-center h-6 w-6 rounded text-gray-500 hover:bg-gray-200 hover:text-gray-700"
+              onClick={handleDismissSuggestion}
+            >
+              <MdClose size={14} />
+            </button>
           </div>
         )}
+
+      {references.length > 0 && (
+        <div className="mt-8 border-t border-gray-200 pt-4">
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-gray-700">
+              References{" "}
+              <span className="font-normal text-gray-400">
+                ({references.length})
+              </span>
+            </h3>
+            <button
+              type="button"
+              className="text-xs text-[#2b7fff] hover:underline"
+              onClick={() => {
+                void navigator.clipboard
+                  .writeText(references.map((r) => r.full).join("\n"))
+                  .then(() =>
+                    toast.success("References copied.", { id: "refs-copied" }),
+                  );
+              }}
+            >
+              Copy all
+            </button>
+          </div>
+          <ol className="list-decimal space-y-1 pl-5 text-sm text-gray-700">
+            {references.map((r) => (
+              <li key={r.id} className="break-words">
+                {r.full}
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
     </div>
   );
 };
