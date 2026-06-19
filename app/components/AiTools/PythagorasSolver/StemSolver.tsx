@@ -308,7 +308,8 @@ function latexToReadable(input: string): string {
     [/\\mathrm\s*\{([^{}]*)\}/g, "$1"],
     [/\\sqrt\s*\{([^{}]*)\}/g, "√($1)"], // \sqrt{2} -> √(2)
     [/\\frac\s*\{([^{}]*)\}\s*\{([^{}]*)\}/g, "($1)/($2)"],
-    [/\^\\circ/g, "°"], // 30^\circ -> 30°
+    [/\^\s*\{\s*\\circ\s*\}/g, "°"], // 30^{\circ} -> 30°
+    [/\^\s*\\circ/g, "°"], // 30^\circ -> 30°
     [/\\circ/g, "°"],
     [/\\times/g, "×"],
     [/\\cdot/g, "·"],
@@ -339,6 +340,8 @@ function latexToReadable(input: string): string {
   s = s.replace(/\^\{([^{}]*)\}/g, "^$1").replace(/_\{([^{}]*)\}/g, "_$1");
   // Drop any leftover backslash-commands we didn't map, keeping their text.
   s = s.replace(/\\([a-zA-Z]+)/g, "$1");
+  // Strip stray braces left over from unmatched/odd LaTeX groups.
+  s = s.replace(/[{}]/g, "");
   // Collapse the extra spaces those edits can leave behind.
   return s.replace(/[ \t]{2,}/g, " ");
 }
@@ -893,7 +896,9 @@ const StemSolver: FC<{ setFlag: (v: boolean) => void }> = ({ setFlag }) => {
               </h4>
               <ul className="list-disc pl-5 space-y-1 text-gray-700 dark:text-gray-300">
                 {result.common_mistakes.map((mk, i) => (
-                  <li key={i}>{mk}</li>
+                  <li key={i}>
+                    <MathProse text={mk} />
+                  </li>
                 ))}
               </ul>
             </div>
