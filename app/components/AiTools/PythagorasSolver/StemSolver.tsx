@@ -294,6 +294,55 @@ const MathProse: FC<{ text: string; className?: string }> = ({ text, className }
   );
 };
 
+/**
+ * Convert pasted LaTeX-formatted text into clean, readable plain text for the
+ * input box (a textarea can't render math, so raw "$20\text{ m/s}$" looks bad).
+ * The solver still understands the cleaned text. Conservative — only common
+ * constructs; anything unrecognized is left as-is minus the $ delimiters.
+ */
+function latexToReadable(input: string): string {
+  let s = input;
+  // Common symbol/command replacements.
+  const REPLACEMENTS: [RegExp, string][] = [
+    [/\\text\s*\{([^{}]*)\}/g, "$1"], // \text{ m/s} -> m/s
+    [/\\mathrm\s*\{([^{}]*)\}/g, "$1"],
+    [/\\sqrt\s*\{([^{}]*)\}/g, "√($1)"], // \sqrt{2} -> √(2)
+    [/\\frac\s*\{([^{}]*)\}\s*\{([^{}]*)\}/g, "($1)/($2)"],
+    [/\^\\circ/g, "°"], // 30^\circ -> 30°
+    [/\\circ/g, "°"],
+    [/\\times/g, "×"],
+    [/\\cdot/g, "·"],
+    [/\\div/g, "÷"],
+    [/\\pm/g, "±"],
+    [/\\leq/g, "≤"],
+    [/\\geq/g, "≥"],
+    [/\\neq/g, "≠"],
+    [/\\approx/g, "≈"],
+    [/\\infty/g, "∞"],
+    [/\\to/g, "→"],
+    [/\\rightarrow/g, "→"],
+    [/\\pi/g, "π"],
+    [/\\theta/g, "θ"],
+    [/\\alpha/g, "α"],
+    [/\\beta/g, "β"],
+    [/\\mu/g, "μ"],
+    [/\\lambda/g, "λ"],
+    [/\\Delta/g, "Δ"],
+    [/\\degree/g, "°"],
+    [/\\,/g, " "], // thin space
+    [/\\;/g, " "],
+    [/\\!/g, ""],
+  ];
+  for (const [re, rep] of REPLACEMENTS) s = s.replace(re, rep);
+  // Strip remaining $/$$ delimiters and superscript/subscript braces.
+  s = s.replace(/\$\$?/g, "");
+  s = s.replace(/\^\{([^{}]*)\}/g, "^$1").replace(/_\{([^{}]*)\}/g, "_$1");
+  // Drop any leftover backslash-commands we didn't map, keeping their text.
+  s = s.replace(/\\([a-zA-Z]+)/g, "$1");
+  // Collapse the extra spaces those edits can leave behind.
+  return s.replace(/[ \t]{2,}/g, " ");
+}
+
 const StemSolver: FC<{ setFlag: (v: boolean) => void }> = ({ setFlag }) => {
   const [token, setToken] = useState<string | null>(null);
   const [inputMode, setInputMode] = useState<InputMode>("text");
@@ -322,6 +371,30 @@ const StemSolver: FC<{ setFlag: (v: boolean) => void }> = ({ setFlag }) => {
       if (!problemRef.current) return;
       problemRef.current.focus();
       problemRef.current.setSelectionRange(caret, caret);
+    });
+  };
+
+  /**
+   * Clean pasted LaTeX into readable text. Only intercepts when the clipboard
+   * actually contains LaTeX markers ($, \cmd, ^, _) — ordinary text pastes
+   * through untouched. Works for both the textarea and the context input.
+   */
+  const handleLatexPaste = (
+    e: React.ClipboardEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const pasted = e.clipboardData.getData("text");
+    if (!pasted || !/\$|\\[a-zA-Z]+|[\^_]/.test(pasted)) return; // no LaTeX → default paste
+    e.preventDefault();
+    const cleaned = latexToReadable(pasted);
+    const el = e.currentTarget;
+    const start = el.selectionStart ?? problem.length;
+    const end = el.selectionEnd ?? problem.length;
+    const next = problem.slice(0, start) + cleaned + problem.slice(end);
+    setProblem(next);
+    const caret = start + cleaned.length;
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(caret, caret);
     });
   };
 
@@ -620,6 +693,7 @@ const StemSolver: FC<{ setFlag: (v: boolean) => void }> = ({ setFlag }) => {
             type="text"
             value={problem}
             onChange={(e) => setProblem(e.target.value)}
+            onPaste={handleLatexPaste}
             placeholder="Optional: add any extra context"
             className={`${inputClass} mt-3`}
           />
@@ -648,6 +722,7 @@ const StemSolver: FC<{ setFlag: (v: boolean) => void }> = ({ setFlag }) => {
             ref={problemRef}
             value={problem}
             onChange={(e) => setProblem(e.target.value)}
+            onPaste={handleLatexPaste}
             placeholder="e.g. A 5 kg block slides down a 30° frictionless incline. Find its acceleration."
             rows={4}
             className={inputClass}
