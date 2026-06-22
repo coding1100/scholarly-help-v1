@@ -39,21 +39,32 @@ async function connectWithRetry(retries = 2): Promise<MongoClient> {
     throw lastError;
 }
 
+/**
+ * IMPORTANT:
+ * Don't connect to MongoDB at module-import time.
+ * Next.js may import server modules during build-time "Collecting page data",
+ * and a hard DB connect here can break builds in environments without DB access.
+ */
 if (uri) {
-    if (!globalWithMongo._mongoClientPromise) {
-        globalWithMongo._mongoClientPromise = connectWithRetry();
-    }
-    clientPromise = globalWithMongo._mongoClientPromise;
+    // Create a client instance immediately (no network), connect only on-demand.
+    client = new MongoClient(uri, options);
+    clientPromise = Promise.resolve(client);
 } else {
     console.warn('DATABASE_URL is missing; MongoDB connection disabled.');
+    // Dummy promise to keep default export stable
+    clientPromise = Promise.reject(new Error('DATABASE_URL is not set'));
 }
 
 // Get database instance
 async function getDb(): Promise<Db | null> {
     if (!uri) return null;
     try {
-        const client = await clientPromise;
-        return client.db('scholarly_help');
+        // Connect only when DB is actually requested.
+        if (!globalWithMongo._mongoClientPromise) {
+            globalWithMongo._mongoClientPromise = connectWithRetry();
+        }
+        const connectedClient = await globalWithMongo._mongoClientPromise;
+        return connectedClient.db('scholarly_help');
     } catch (error) {
         console.error('Failed to get MongoDB connection:', error);
         return null;
