@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import toast from "react-hot-toast";
 import Step1 from "./Step1";
 import Step2 from "./Step2";
 import Step3 from "./Step3";
@@ -80,16 +81,21 @@ export default function MicroLearningFlow() {
                         setCurrentStep(9);
                     }}
                     onReviewFlashcards={() => {
-                        // Handle review flashcards
-                        console.log("Review flashcards");
+                        // Start a lesson session for the current topic so the
+                        // flashcard/lesson flow is reachable from this button.
+                        setLessonDuration(minutesPerDay);
+                        setLessonTopic(selectedTopics[0] || "Science");
+                        setCurrentStep(9);
                     }}
                     onViewProgress={() => {
-                        // Handle view progress
-                        console.log("View progress");
+                        toast("Your learning progress is tracked on your dashboard.", {
+                            id: "ml-progress",
+                        });
                     }}
                     onStartNow={() => {
-                        // Handle start now
-                        console.log("Start now");
+                        setLessonDuration(minutesPerDay);
+                        setLessonTopic(selectedTopics[0] || "Science");
+                        setCurrentStep(9);
                     }}
                 />
             )}
@@ -103,8 +109,11 @@ export default function MicroLearningFlow() {
                         setCurrentStep(10);
                     }}
                     onCompleteLesson={() => {
-                        // Handle complete lesson
-                        console.log("Complete lesson");
+                        // Completing a lesson returns to the dashboard step.
+                        setCurrentStep(6);
+                        toast.success("Lesson complete. Nice work!", {
+                            id: "ml-complete",
+                        });
                     }}
                 />
             )}
