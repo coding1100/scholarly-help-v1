@@ -25,6 +25,7 @@ import {
 } from "./MainTool/academicResearchApi";
 import { outlineToHtml } from "./MainTool/outlineGeneration";
 import { appendQueryString } from "@/app/utils/url";
+import { clearAuthSession } from "@/app/utils/auth";
 import { upsertFbclidToolContext } from "@/app/utils/fbclidTracking";
 import { __TOOLS_SHEET_EVENT_NAME__ } from "@/app/utils/toolsSheetClient";
 import type { AssistantPanel } from "./MainTool/AcademicAssistantPanel";
@@ -152,45 +153,11 @@ const MTSidebar = ({
     // },
   ];
 
-  const handleLogout = () => {
-    console.log("🔄 Starting logout - clearing localStorage...");
-    // Clear all auth-related localStorage items
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("provider");
-    localStorage.removeItem("refresh_token");
-    localStorage.removeItem("user");
-    localStorage.removeItem("user_id");
-    localStorage.removeItem("user_name");
-    localStorage.removeItem("user_email");
-    localStorage.removeItem("package_type");
-    localStorage.removeItem("totalTokens");
-    localStorage.removeItem("provider");
-    localStorage.removeItem("profile_image");
-    localStorage.removeItem("authState");
-    localStorage.removeItem("user_password");
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("localUserId");
-    console.log("✅ Logout complete - localStorage cleared");
-    router.push("/");
-  };
-
   useEffect(() => {
     if (typeof window !== "undefined") {
       const name = localStorage.getItem("user_name");
       const image = localStorage.getItem("profile_image");
-      console.log("🔄 Sidebar useEffect - localStorage values:", {
-        user_name: name,
-        profile_image: image,
-        access_token: localStorage.getItem("access_token") ? "✅" : "❌",
-        user_id: localStorage.getItem("user_id"),
-        provider: localStorage.getItem("provider"),
-      });
-      if (name) {
-        setUserName(name);
-        console.log("✅ Set user name in sidebar:", name);
-      } else {
-        console.log("❌ No user name found in localStorage");
-      }
+      if (name) setUserName(name);
       if (image) setProfileImage(image);
     }
   }, []);
@@ -443,17 +410,8 @@ const MTSidebar = ({
           }
         }
       } catch (error) {
-        console.error("❌ Token verification failed:", error);
         toast.error("Session expired. Please sign in again.");
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
-        localStorage.removeItem("user_id");
-        localStorage.removeItem("user_name");
-        localStorage.removeItem("user_email");
-        localStorage.removeItem("package_type");
-        localStorage.removeItem("totalTokens");
-        localStorage.removeItem("provider");
-        localStorage.removeItem("profile_image");
+        clearAuthSession();
 
         if (currentRoute.includes("tools") || currentRoute === "/pricing/") {
           const currentQs = searchParams?.toString();
