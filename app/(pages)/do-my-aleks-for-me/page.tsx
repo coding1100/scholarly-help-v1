@@ -62,6 +62,7 @@ export function generateMetadata({}) {
   return {
     title: `${MetaData.doMyAleksForMe.title}`,
     description: `${MetaData.doMyAleksForMe.description}`,
+    robots: { index: false, follow: false },
     alternates: {
       canonical: canonicalUrl,
     },
