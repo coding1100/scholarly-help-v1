@@ -9,7 +9,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { CgRename } from "react-icons/cg";
 import axios from "axios";
-import { ColorRing } from "react-loader-spinner";
+import AuthButtonSpinner from "./AuthButtonSpinner";
 import SocialAuthButtons from "./SocialAuthButtons";
 import { buildHrefWithSameQuery } from "@/app/utils/url";
 
@@ -231,12 +231,7 @@ const SignUpCard: FC<SignUpCardProps> = ({
           aria-live="polite"
         >
           {loading ? (
-            <ColorRing
-              height="24"
-              width="24"
-              ariaLabel="color-ring-loading"
-              colors={["white", "white", "white", "white", "white"]}
-            />
+            <AuthButtonSpinner />
           ) : (
             <>
               <span>Sign Up</span>
