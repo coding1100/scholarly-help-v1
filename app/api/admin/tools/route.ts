@@ -3,6 +3,8 @@ import { MongoClient } from 'mongodb';
 
 export const dynamic = 'force-dynamic';
 
+const PAGE_ID = "academic-research";
+
 // CORS headers
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -31,10 +33,7 @@ export async function GET(request: NextRequest) {
     await client.connect();
     const db = client.db('scholarly_help');
     
-    // Query for academic-tools page by id (using existing MongoDB data)
-    const query = { 
-      id: "academic-tools"
-    };
+    const query = { id: PAGE_ID };
     
     console.log('Querying pages collection, query:', JSON.stringify(query));
     const content = await db.collection('pages').findOne(query);
@@ -53,7 +52,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('POST /api/admin/tools - Starting save operation (using academic-tools data)');
+    console.log('POST /api/admin/tools - Starting save operation (academic-research)');
 
     const databaseUrl = process.env.DATABASE_URL;
     if (!databaseUrl) {
@@ -105,15 +104,12 @@ export async function POST(request: NextRequest) {
     const db = client.db('scholarly_help');
     console.log('Using database: scholarly_help');
 
-    // For tools page, use academic-tools as id to use existing MongoDB data
-    const query = { 
-      id: "academic-tools"
-    };
+    const query = { id: PAGE_ID };
     
     const dataToSave = { 
       ...cleanedData, 
-      id: "academic-tools", 
-      pageType: "academic-tools" 
+      id: PAGE_ID, 
+      pageType: "academic-research" 
     };
     
     const result = await db.collection('pages').replaceOne(query, dataToSave, { upsert: true });
