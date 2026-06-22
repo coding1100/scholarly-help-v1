@@ -66,6 +66,7 @@ export function generateMetadata({}) {
   return {
     title: `${MetaData.savemyTime.title}`,
     description: `${MetaData.savemyTime.description}`,
+    robots: { index: false, follow: false },
     alternates: {
       canonical: canonicalUrl,
     },
