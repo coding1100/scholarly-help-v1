@@ -14,8 +14,7 @@ const getPublicBaseUrl = () => {
 const PUBLIC_BASE_URL = getPublicBaseUrl();
 // No hardcoded fallback: a real key must come from the environment. Shipping a
 // literal key in source exposes it to the browser and to git history.
-const API_KEY =
-  process.env.NEXT_PUBLIC_API_KEY || "ak_dae663cc5f944c149aeff45bf8ac31ac_ak_691H1soLFYNia5Ot5sVGbc0kkeUqrL4_qnNxR56LTvA";
+const API_KEY = process.env.NEXT_PUBLIC_API_KEY || "";
 
 const assertApiConfig = () => {
   if (!PUBLIC_BASE_URL || !API_KEY) {

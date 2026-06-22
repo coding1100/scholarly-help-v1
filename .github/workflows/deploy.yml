@@ -31,6 +31,10 @@ jobs:
           NEXT_PUBLIC_SITE_URL: https://scholarlyhelp.com/
           NEXT_PUBLIC_GOOGLE_CLIENT_ID: 772400319491-nvr9lgmaphm8cs8udslad1opjct0mam5.apps.googleusercontent.com
           NEXT_PUBLIC_NGROX_URL: https://scholarly.namatechnologlies.com/v1
+          # Agentic platform (powers Tutor / Micro Learning / Exam Prep agents).
+          # NEXT_PUBLIC_* are inlined at build time, so they must be present here.
+          NEXT_PUBLIC_BASE_URL: ${{ secrets.NEXT_PUBLIC_BASE_URL }}
+          NEXT_PUBLIC_API_KEY: ${{ secrets.NEXT_PUBLIC_API_KEY }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           GHL_AUTHORIZATION_TOKEN: ${{ secrets.GHL_AUTHORIZATION_TOKEN }}
           GHL_CGPA_CUSTOM_FIELD_ID: ${{ secrets.GHL_CGPA_CUSTOM_FIELD_ID }}
