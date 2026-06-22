@@ -12,6 +12,7 @@ import { getPageData } from "@/app/lib/mongodb";
 import { AcademicResearchDataProvider } from "./AcademicResearchDataProvider";
 import { mergeAcademicResearchContent } from "@/app/components/MainToolLanding/mergeAcademicResearchContent";
 import { defaultAcademicResearchContent } from "@/app/components/MainToolLanding/MainToolContent";
+import DeadLine from "@/app/components/MainToolLanding/DeadLine";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -54,6 +55,7 @@ const Page = async ({}: PageProps) => {
               : undefined
           }
         />
+        <DeadLine />
       </MainLayout>
     </AcademicResearchDataProvider>
   );
