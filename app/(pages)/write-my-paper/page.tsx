@@ -64,6 +64,7 @@ export function generateMetadata({}) {
   return {
     title: `${MetaData.writeMyPaper.title}`,
     description: `${MetaData.writeMyPaper.description}`,
+    robots: { index: false, follow: false },
     alternates: {
       canonical: canonicalUrl,
     },
