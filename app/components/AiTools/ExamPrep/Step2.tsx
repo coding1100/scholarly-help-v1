@@ -63,13 +63,9 @@ function parseScheduleMarkdown(
   if (paceMatch) schedule.pace = paceMatch[1].trim();
   if (levelMatch) schedule.level = levelMatch[1].trim();
 
-  // Extract exam date from the message if available
-  const examDateMatch = markdown.match(
-    /\*\*February 1st, 2026\*\*|February 1st, 2026|2026-02-01/,
-  );
-  if (examDateMatch) {
-    schedule.examDate = "2026-02-01";
-  }
+  // The user-provided exam date is the source of truth (set above). We do NOT
+  // override it from the agent's prose — a previous hardcoded match forced every
+  // schedule to 2026-02-01 regardless of what the user picked.
 
   // Clean up the message - remove intro and ending questions
   let cleanedMessage = markdown;

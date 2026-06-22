@@ -2,6 +2,7 @@
 
 import React from "react";
 import BlockMenu from "./BlockMenu";
+import type { RewriteKind } from "./RewritePreview";
 
 type ParagraphToolbarProps = {
   className?: string;
@@ -9,6 +10,8 @@ type ParagraphToolbarProps = {
   onCite?: () => void;
   onHumanize?: () => void;
   onOpenChat?: () => void;
+  onRewrite?: (kind: RewriteKind) => void;
+  onConvertList?: (kind: "bullet" | "numbered") => void;
   onToggleBold?: () => void;
   onToggleItalic?: () => void;
   onToggleUnderline?: () => void;
@@ -17,8 +20,28 @@ type ParagraphToolbarProps = {
   onLink?: () => void;
 };
 
+const MenuItem: React.FC<{
+  label: string;
+  onClick: () => void;
+  title?: string;
+  indent?: boolean;
+}> = ({ label, onClick, title, indent }) => (
+  <button
+    type="button"
+    className={`w-full py-2 text-left text-sm text-gray-700 hover:bg-gray-100 ${
+      indent ? "pl-6 pr-3" : "px-3"
+    }`}
+    title={title}
+    onMouseDown={(e) => e.preventDefault()}
+    onClick={onClick}
+  >
+    {label}
+  </button>
+);
+
 /**
- * Presentational toolbar only. Matches the requested design without behaviors.
+ * Floating selection toolbar. Exposes citation, rewrite, transform, and chat
+ * actions for the current text selection.
  */
 const ParagraphToolbar: React.FC<ParagraphToolbarProps> = ({
   className = "",
@@ -26,6 +49,8 @@ const ParagraphToolbar: React.FC<ParagraphToolbarProps> = ({
   onCite,
   onHumanize,
   onOpenChat,
+  onRewrite,
+  onConvertList,
   onToggleBold,
   onToggleItalic,
   onToggleUnderline,
@@ -47,6 +72,18 @@ const ParagraphToolbar: React.FC<ParagraphToolbarProps> = ({
     left: number;
   }>({ top: 0, left: 0 });
   const actionMenuRef = React.useRef<HTMLDivElement | null>(null);
+  const [tenseOpen, setTenseOpen] = React.useState(false);
+
+  const runRewrite = (kind: RewriteKind) => {
+    setIsActionMenuOpen(false);
+    setTenseOpen(false);
+    onRewrite?.(kind);
+  };
+
+  const runConvertList = (kind: "bullet" | "numbered") => {
+    setIsActionMenuOpen(false);
+    onConvertList?.(kind);
+  };
 
   const labelForSelected = (value: string) => {
     switch (value) {
@@ -103,6 +140,7 @@ const ParagraphToolbar: React.FC<ParagraphToolbarProps> = ({
       const menu = actionMenuRef.current;
       if (btn?.contains(t) || menu?.contains(t)) return;
       setIsActionMenuOpen(false);
+      setTenseOpen(false);
     };
     const onDocKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setIsActionMenuOpen(false);
@@ -288,45 +326,97 @@ const ParagraphToolbar: React.FC<ParagraphToolbarProps> = ({
       {isActionMenuOpen && (
         <div
           ref={actionMenuRef}
-          className="fixed z-[9999] w-44 rounded-md border border-gray-200 bg-white shadow-lg py-1"
+          className="fixed z-[9999] max-h-[70vh] w-56 overflow-y-auto rounded-md border border-gray-200 bg-white shadow-lg py-1"
           style={{ top: actionPos.top, left: actionPos.left }}
+          onMouseDown={(e) => e.preventDefault()}
         >
+          {/* Group: rewrite */}
+          <div className="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+            Strengthen writing
+          </div>
+          <MenuItem label="Improve fluency" onClick={() => runRewrite("fluency")} />
+          <MenuItem label="Paraphrase" onClick={() => runRewrite("paraphrase")} />
+          <MenuItem label="Simplify" onClick={() => runRewrite("simplify")} />
+          <MenuItem
+            label="Strengthen argument"
+            onClick={() => runRewrite("strengthen")}
+          />
+          <MenuItem
+            label="Add counter-argument"
+            onClick={() => runRewrite("counter")}
+          />
+
+          {/* Change tense (submenu) */}
           <button
             type="button"
-            className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
-            title="Add an in-text citation for the selection"
-            onMouseDown={(e) => e.preventDefault()}
+            className="flex w-full items-center justify-between px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+            onClick={() => setTenseOpen((v) => !v)}
+          >
+            <span>Change tense</span>
+            <span className="text-gray-400">{tenseOpen ? "▾" : "▸"}</span>
+          </button>
+          {tenseOpen && (
+            <div className="bg-gray-50/60">
+              <MenuItem
+                label="Past"
+                indent
+                onClick={() => runRewrite("tense-past")}
+              />
+              <MenuItem
+                label="Present"
+                indent
+                onClick={() => runRewrite("tense-present")}
+              />
+              <MenuItem
+                label="Future"
+                indent
+                onClick={() => runRewrite("tense-future")}
+              />
+            </div>
+          )}
+
+          <div className="my-1 h-px bg-gray-100" />
+
+          {/* Group: transform */}
+          <div className="px-3 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+            Transform
+          </div>
+          <MenuItem
+            label="Convert to bullet list"
+            onClick={() => runConvertList("bullet")}
+          />
+          <MenuItem
+            label="Convert to numbered list"
+            onClick={() => runConvertList("numbered")}
+          />
+
+          <div className="my-1 h-px bg-gray-100" />
+
+          {/* Group: tools */}
+          <MenuItem
+            label="Citation"
+            title="Find and insert a citation for the selection"
             onClick={() => {
               setIsActionMenuOpen(false);
               onCite?.();
             }}
-          >
-            Citation
-          </button>
-          <button
-            type="button"
-            className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+          />
+          <MenuItem
+            label="Humanizer"
             title="Rewrite the selection to sound more human"
-            onMouseDown={(e) => e.preventDefault()}
             onClick={() => {
               setIsActionMenuOpen(false);
               onHumanize?.();
             }}
-          >
-            Humanizer
-          </button>
-          <button
-            type="button"
-            className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+          />
+          <MenuItem
+            label="Chat"
             title="Chat with AI about the selection"
-            onMouseDown={(e) => e.preventDefault()}
             onClick={() => {
               setIsActionMenuOpen(false);
               onOpenChat?.();
             }}
-          >
-            Chat
-          </button>
+          />
         </div>
       )}
     </div>
