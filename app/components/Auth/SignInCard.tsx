@@ -8,7 +8,7 @@ import Logo from "@/app/assets/Images/logo.png";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
-import { ColorRing } from "react-loader-spinner";
+import AuthButtonSpinner from "./AuthButtonSpinner";
 import SocialAuthButtons from "./SocialAuthButtons";
 import { buildHrefWithSameQuery } from "@/app/utils/url";
 
@@ -84,14 +84,12 @@ const SignInCard: FC<SignInCardProps> = ({
   const currentPage = usePathname();
   // Check if user is already authenticated
   useEffect(() => {
-    console.log("SignInCard - returnUrl:", returnUrl);
     const token = localStorage.getItem("access_token");
     if (token) {
       // Set cookie for middleware if not already set
       document.cookie = `access_token=${token}; path=/; max-age=86400`;
 
       if (returnUrl) {
-        console.log("Redirecting to:", returnUrl);
         // Small delay to ensure cookie is set before redirect
         setTimeout(() => {
           route.replace(returnUrl);
@@ -206,12 +204,7 @@ const SignInCard: FC<SignInCardProps> = ({
           aria-live="polite"
         >
           {loading ? (
-            <ColorRing
-              height="24"
-              width="24"
-              ariaLabel="color-ring-loading"
-              colors={["white", "white", "white", "white", "white"]}
-            />
+            <AuthButtonSpinner />
           ) : (
             <span>Sign In</span>
           )}
