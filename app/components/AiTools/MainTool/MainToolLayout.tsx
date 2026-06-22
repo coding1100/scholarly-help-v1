@@ -13,6 +13,12 @@ import AcademicAssistantPanel, {
 } from "./AcademicAssistantPanel";
 import MainToolProductTour from "./MainToolProductTour";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
+import toast from "react-hot-toast";
+import {
+  createDocument,
+  getAcademicErrorMessage,
+} from "./academicResearchApi";
+import { outlineToHtml } from "./outlineGeneration";
 export interface TitleContextValue {
   title: string;
   setTitle: React.Dispatch<React.SetStateAction<string>>;
@@ -95,6 +101,53 @@ const MainToolLayout: React.FC<MainToolLayoutProps> = ({
   const [token, setToken] = useState<string | null>(null);
   const [checked, setChecked] = useState(false);
   const [tourRestartNonce, setTourRestartNonce] = useState(0);
+  // Outline produced by the layout-level "New document" PromptModal. Captured in
+  // a ref because PromptModal calls setOutlineResponse() then onStartWriting()
+  // in the same tick, before the state update has flushed.
+  const [, setPendingOutlineState] = useState<string[]>([]);
+  const pendingOutlineRef = React.useRef<string[]>([]);
+  const setPendingOutline = React.useCallback(
+    (value: React.SetStateAction<string[]>) => {
+      const next =
+        typeof value === "function"
+          ? (value as (prev: string[]) => string[])(pendingOutlineRef.current)
+          : value;
+      pendingOutlineRef.current = next;
+      setPendingOutlineState(next);
+    },
+    [],
+  );
+
+  // Persist the generated outline as a real document, then open it by id so the
+  // headings survive reload (instead of relying on transient in-memory state,
+  // which previously dropped the outline entirely — the "Got only this" bug).
+  const persistOutlineAndOpen = React.useCallback(
+    async (sections: string[]) => {
+      const target = pathname || "/tools/academic-research-assistant";
+      try {
+        const content = sections.length
+          ? outlineToHtml(sections)
+          : "<h1>Untitled</h1><p></p>";
+        const doc = await createDocument({
+          title: (title.trim() || sections[0] || "Untitled").slice(0, 120),
+          content,
+        });
+        const id = doc.id || doc._id;
+        pendingOutlineRef.current = [];
+        if (id) {
+          router.push(`${target}?doc=${id}`);
+          return;
+        }
+        router.push(`${target}?start=1`);
+      } catch (error) {
+        toast.error(
+          getAcademicErrorMessage(error, "Could not create the document."),
+        );
+        router.push(`${target}?start=1`);
+      }
+    },
+    [pathname, router, title],
+  );
 
   const normalizedPath = pathname?.endsWith("/")
     ? pathname.slice(0, -1)
@@ -220,11 +273,10 @@ const MainToolLayout: React.FC<MainToolLayoutProps> = ({
             <PromptModal
               isOpen={isPromptModalOpen}
               onClose={() => setPromptModalOpen(false)}
+              setOutlineResponse={setPendingOutline}
               onStartWriting={() => {
                 setPromptModalOpen(false);
-                router.push(
-                  `${pathname || "/tools/academic-research-assistant"}?start=1`,
-                );
+                void persistOutlineAndOpen(pendingOutlineRef.current);
               }}
             />
             {hasProductTour && (

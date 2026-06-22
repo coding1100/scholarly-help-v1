@@ -32,6 +32,8 @@ import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import BlockMenu from "./BlockMenu";
 import BlockToolbar from "./BlockToolbar";
 import ParagraphToolbar from "./ParagraphToolbar";
+import CitationPicker, { type CitationCandidate } from "./CitationPicker";
+import RewritePreview, { type RewriteKind } from "./RewritePreview";
 import { MdOutlineDragIndicator, MdAdd, MdClose } from "react-icons/md";
 import {
   WordCountContext,
@@ -45,6 +47,8 @@ import {
   getAcademicErrorMessage,
   getAxiosStatus,
   humanizeText,
+  paraphraseSelection,
+  rewriteAction,
   searchCitations,
   sendResearchChat,
   updateDocumentContent,
@@ -73,6 +77,8 @@ type DocumentReference = {
   id: string;
   inText: string;
   full: string;
+  /** The sentence/selection this citation was attached to (provenance). */
+  citedText?: string;
 };
 
 const clamp = (value: number, min: number, max: number) =>
@@ -140,6 +146,49 @@ function parseTransformResult(content: string): TransformResultPayload | null {
     return null;
   }
 }
+
+// References are persisted alongside the document by appending a hidden,
+// machine-readable block to the saved HTML. This keeps the bibliography (and
+// its source provenance) across reloads without a separate API.
+const REFERENCES_MARKER_RE =
+  /<!--\s*scholarly-references:(.*?)-->/s;
+
+const serializeReferences = (references: DocumentReference[]): string => {
+  if (!references.length) return "";
+  try {
+    const json = JSON.stringify(references);
+    // Base64 so the JSON can't break out of the HTML comment.
+    const encoded =
+      typeof window !== "undefined"
+        ? window.btoa(unescape(encodeURIComponent(json)))
+        : Buffer.from(json, "utf-8").toString("base64");
+    return `<!-- scholarly-references:${encoded} -->`;
+  } catch {
+    return "";
+  }
+};
+
+const parseReferences = (html: string): DocumentReference[] => {
+  const match = html.match(REFERENCES_MARKER_RE);
+  if (!match) return [];
+  try {
+    const encoded = match[1].trim();
+    const json =
+      typeof window !== "undefined"
+        ? decodeURIComponent(escape(window.atob(encoded)))
+        : Buffer.from(encoded, "base64").toString("utf-8");
+    const parsed = JSON.parse(json);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (r) => r && typeof r.full === "string" && r.full.trim(),
+    );
+  } catch {
+    return [];
+  }
+};
+
+const stripReferencesMarker = (html: string): string =>
+  html.replace(REFERENCES_MARKER_RE, "").trim();
 
 // Custom node views by extending built-in nodes
 const CustomHeading = Heading.extend({
@@ -236,10 +285,16 @@ const NodeWithControls: React.FC<NodeViewProps> = (props) => {
         case "aiChat":
         case "aiEdit": {
           if (!selectThisBlock()) return;
-          // Hand off to the parent component's selection handlers.
-          window.dispatchEvent(
-            new CustomEvent("mainTool:blockAction", { detail: { action: option } }),
-          );
+          // Hand off to the parent's selection handlers. Defer to the next tick
+          // so the selection transaction is fully applied (and the toolbar has
+          // closed) before the parent reads editor.state.selection.
+          setTimeout(() => {
+            window.dispatchEvent(
+              new CustomEvent("mainTool:blockAction", {
+                detail: { action: option },
+              }),
+            );
+          }, 0);
           return;
         }
         default:
@@ -287,7 +342,11 @@ const NodeWithControls: React.FC<NodeViewProps> = (props) => {
         chain.toggleCodeBlock().run();
         break;
       case "table":
-      case "image":
+        chain
+          .setParagraph()
+          .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+          .run();
+        break;
       default:
         break;
     }
@@ -368,6 +427,7 @@ const NodeWithControls: React.FC<NodeViewProps> = (props) => {
           position={menuPosition}
           onSelect={handleToolbarSelect}
           onClose={() => setShowToolbar(false)}
+          blockType={props.node?.type?.name}
         />
       )}
     </NodeViewWrapper>
@@ -548,17 +608,26 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
   );
   const editorShellRef = useRef<HTMLDivElement | null>(null);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const referencesSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const referencesLoadedRef = useRef(false);
   const suggestionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSuggestionKeyRef = useRef("");
   const suggestionRequestIdRef = useRef(0);
   const suggestionLoadingRef = useRef(false);
   const suppressSuggestionRef = useRef(false);
   const lastLoadedDocumentIdRef = useRef<string | null>(null);
+  // Set briefly when a block drag-handle action (Cite / AI Chat / AI Edit)
+  // programmatically selects a block and opens a popup. The block-selection
+  // transaction would otherwise fire selectionUpdate handlers that immediately
+  // dismiss the just-opened popup — the PDF's "Not working" block menus.
+  const blockActionGuardRef = useRef(false);
 
   // Generate content from outlineResponse
   const computedInitialContent = useMemo(() => {
     if (initialContent) {
-      return initialContent;
+      return stripReferencesMarker(initialContent);
     }
 
     if (!outlineResponse || outlineResponse.length === 0) {
@@ -621,6 +690,41 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
     },
   });
 
+  // Citation insert feedback + collected references (bibliography).
+  const [citing, setCiting] = useState(false);
+  const [references, setReferences] = useState<DocumentReference[]>([]);
+  // Mirror of `references` for reading inside the autosave timer closure.
+  const referencesRef = useRef<DocumentReference[]>([]);
+  useEffect(() => {
+    referencesRef.current = references;
+  }, [references]);
+
+  // Persist the bibliography when it changes, even without further doc edits,
+  // so an inserted citation survives reload. Skips the initial load.
+  useEffect(() => {
+    if (!editor || !documentId) return;
+    if (!referencesLoadedRef.current) return;
+
+    if (referencesSaveTimerRef.current) {
+      clearTimeout(referencesSaveTimerRef.current);
+    }
+    referencesSaveTimerRef.current = setTimeout(() => {
+      const html = `${editor.getHTML()}${serializeReferences(references)}`;
+      void updateDocumentContent(documentId, html).catch((error) => {
+        console.error(
+          "Saving references failed:",
+          getAcademicErrorMessage(error, "Could not save references."),
+        );
+      });
+    }, 1500);
+
+    return () => {
+      if (referencesSaveTimerRef.current) {
+        clearTimeout(referencesSaveTimerRef.current);
+      }
+    };
+  }, [references, editor, documentId]);
+
   useEffect(() => {
     if (
       !editor ||
@@ -631,18 +735,42 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
     }
 
     editor.commands.setContent(
-      initialContent || "<h1>Main Heading</h1><p></p>",
+      initialContent
+        ? stripReferencesMarker(initialContent) || "<h1>Main Heading</h1><p></p>"
+        : "<h1>Main Heading</h1><p></p>",
     );
+    // Restore the persisted bibliography for this document.
+    setReferences(initialContent ? parseReferences(initialContent) : []);
+    referencesLoadedRef.current = true;
     lastLoadedDocumentIdRef.current = documentId;
   }, [documentId, editor, initialContent]);
+
+  // When there is no document id (the in-memory page flow), the outline may
+  // arrive AFTER the editor mounts — the editor only reads `content` at
+  // creation, so headings would otherwise never appear. Apply them once the
+  // outline is available and the editor is still effectively empty.
+  const appliedOutlineRef = useRef(false);
+  useEffect(() => {
+    if (!editor || documentId) return;
+    if (appliedOutlineRef.current) return;
+    if (!outlineResponse || outlineResponse.length === 0) return;
+
+    // Only overwrite an empty/default editor so we never clobber user typing.
+    const text = editor.state.doc.textContent.trim();
+    const isDefault = text === "" || text === "Main Heading";
+    if (!isDefault) {
+      appliedOutlineRef.current = true;
+      return;
+    }
+
+    editor.commands.setContent(computedInitialContent);
+    appliedOutlineRef.current = true;
+  }, [editor, documentId, outlineResponse, computedInitialContent]);
 
   const [aiSuggestion, setAISuggestion] = useState<string>("");
   const [suggestionCursorPos, setSuggestionCursorPos] = useState<number | null>(
     null,
   );
-  // Citation insert feedback + collected references (bibliography).
-  const [citing, setCiting] = useState(false);
-  const [references, setReferences] = useState<DocumentReference[]>([]);
   const [suggestionButtonPos, setSuggestionButtonPos] = useState<{
     top: number;
     left: number;
@@ -652,6 +780,27 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
     top: number;
     left: number;
   }>({ top: 0, left: 0 });
+
+  // Citation picker (Cite shows candidates; user picks before inserting).
+  const [citePickerOpen, setCitePickerOpen] = useState(false);
+  const [citeLoading, setCiteLoading] = useState(false);
+  const [citeQuery, setCiteQuery] = useState("");
+  const [citeResults, setCiteResults] = useState<CitationCandidate[]>([]);
+  // The selection range to act on, captured before any modal steals focus.
+  const pendingRangeRef = useRef<{ from: number; to: number } | null>(null);
+  const pendingCiteTextRef = useRef<string>("");
+
+  // Selection rewrite preview (Improve fluency / Paraphrase / Simplify /
+  // Strengthen / Counter-argument / Change tense) — preview before applying.
+  const [rewriteOpen, setRewriteOpen] = useState(false);
+  const [rewriteLoading, setRewriteLoading] = useState(false);
+  const [rewriteKind, setRewriteKind] = useState<RewriteKind | null>(null);
+  const [rewriteOriginal, setRewriteOriginal] = useState("");
+  const [rewriteResult, setRewriteResult] = useState("");
+  // "replace" swaps the selection; "append" inserts after it (counter-argument).
+  const [rewriteMode, setRewriteMode] = useState<"replace" | "append">(
+    "replace",
+  );
 
   // Helper function to extract all headings from the document
   const getAllHeadings = useCallback((): string[] => {
@@ -971,14 +1120,15 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
       }
 
       autosaveTimerRef.current = setTimeout(() => {
-        void updateDocumentContent(documentId, editor.getHTML()).catch(
-          (error) => {
-            console.error(
-              "Autosave failed:",
-              getAcademicErrorMessage(error, "Could not autosave document."),
-            );
-          },
-        );
+        const html = `${editor.getHTML()}${serializeReferences(
+          referencesRef.current,
+        )}`;
+        void updateDocumentContent(documentId, html).catch((error) => {
+          console.error(
+            "Autosave failed:",
+            getAcademicErrorMessage(error, "Could not autosave document."),
+          );
+        });
       }, AUTOSAVE_MS);
     };
 
@@ -986,6 +1136,9 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
 
     return () => {
       editor.off("update", handleAutosave);
+      if (referencesSaveTimerRef.current) {
+        clearTimeout(referencesSaveTimerRef.current);
+      }
       if (autosaveTimerRef.current) {
         clearTimeout(autosaveTimerRef.current);
       }
@@ -995,6 +1148,12 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
   useEffect(() => {
     if (!editor) return;
     const handleSelection = () => {
+      // A block action is opening its own popup (cite/chat/edit) — don't pop the
+      // format toolbar on top of it.
+      if (blockActionGuardRef.current) {
+        setShowFormatToolbar(false);
+        return;
+      }
       const { state } = editor;
       const { from, to } = state.selection;
       const hasSelection = from !== to;
@@ -1149,6 +1308,55 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
     return () => document.removeEventListener("keydown", handleManualSuggestion);
   }, [editor, handleTryAgain]);
 
+  // Run a citation search and load the results into the picker. Shared by the
+  // initial Cite action and the picker's own in-modal search box.
+  const runCitationSearch = useCallback(
+    async (rawQuery: string) => {
+      const q = rawQuery.trim().slice(0, 180);
+      if (q.length < 3) return;
+      const style = normalizeCitationStyle(citationStyle);
+
+      setCiteQuery(q);
+      setCiteLoading(true);
+      setCiting(true);
+      try {
+        const res = await searchCitations({ q, style, type: "title" });
+        setCiteResults(res.results ?? []);
+      } catch (error) {
+        setCiteResults([]);
+        const status = getAxiosStatus(error);
+        const backendMessage = pickBackendMessage(error);
+
+        if (status === 403) {
+          toast.error(getAcademicErrorMessage(error, "Token balance exhausted."), {
+            id: "cite-status",
+            duration: 5200,
+          });
+        } else if (
+          status === 404 ||
+          status === 405 ||
+          (backendMessage && isRouteMissingMessage(backendMessage))
+        ) {
+          toast.error(
+            "Citation search isn’t available on this server yet. Please ask your backend team to enable `GET /v1/tools/citation-search`.",
+            { id: "cite-status", duration: 6500 },
+          );
+        } else if (backendMessage) {
+          toast.error(backendMessage, { id: "cite-status", duration: 5200 });
+        } else {
+          toast.error("Citation search failed. Try a title or DOI.", {
+            id: "cite-status",
+            duration: 5200,
+          });
+        }
+      } finally {
+        setCiteLoading(false);
+        setCiting(false);
+      }
+    },
+    [citationStyle],
+  );
+
   const handleCiteSelectedText = useCallback(async () => {
     if (!editor) return;
 
@@ -1166,37 +1374,35 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
       return;
     }
 
-    const q = selectedText.slice(0, 180);
-    const style = normalizeCitationStyle(citationStyle);
+    // Capture the insertion point (and the cited sentence, for provenance)
+    // before the modal steals editor focus.
+    pendingRangeRef.current = { from, to };
+    pendingCiteTextRef.current = selectedText;
+    setCiteResults([]);
+    setCiteQuery(selectedText.slice(0, 180));
+    setCitePickerOpen(true);
+    await runCitationSearch(selectedText);
+  }, [editor, runCitationSearch]);
 
-    setCiting(true);
-    toast.loading("Finding a citation…", { id: "cite-status" });
-    try {
-      const res = await searchCitations({ q, style, type: "title" });
-      const first = res.results?.[0];
-      if (!first) {
-        toast.error(
-          "No citation found for this selection. Try selecting the paper title / DOI / PubMed ID, or a bit more context.",
-          { id: "cite-status", duration: 5200 },
-        );
+  // Insert the citation the user chose from the picker and record it in the
+  // References panel — the user sees what was found and picks, instead of the
+  // first hit being inserted silently.
+  const handleSelectCitation = useCallback(
+    (choice: CitationCandidate) => {
+      if (!editor) return;
+      const inText = String(choice.in_text_citation || "").trim();
+      const fallback = String(choice.full_citation || "").trim();
+      if (!inText && !fallback) {
+        toast.error("That source has no citation text.", { id: "cite-status" });
         return;
       }
 
-      const inText = String(first.in_text_citation || "").trim();
-      const fallback = String(first.full_citation || "").trim();
-      const citationText = inText || fallback;
-      if (!citationText) {
-        toast.error("Citation service returned an empty result.", {
-          id: "cite-status",
-        });
-        return;
-      }
-
+      const at = pendingRangeRef.current?.to ?? editor.state.selection.to;
       const insert = inText ? ` ${inText}` : ` (${fallback})`;
-      editor.chain().focus().insertContentAt(to, insert).run();
+      editor.chain().focus().insertContentAt(at, insert).run();
 
-      // Record the source for the References panel (dedupe by full text).
       if (fallback) {
+        const citedText = pendingCiteTextRef.current;
         setReferences((prev) =>
           prev.some((r) => r.full === fallback)
             ? prev
@@ -1206,55 +1412,191 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
                   id: `${Date.now()}-${prev.length}`,
                   inText: inText || `(${fallback})`,
                   full: fallback,
+                  citedText: citedText || undefined,
                 },
               ],
         );
       }
 
+      setCitePickerOpen(false);
+      pendingRangeRef.current = null;
+      pendingCiteTextRef.current = "";
       toast.success("Citation inserted.", { id: "cite-status" });
-    } catch (error) {
-      const status = getAxiosStatus(error);
-      const backendMessage = pickBackendMessage(error);
+    },
+    [editor],
+  );
 
-      if (status === 403) {
-        toast.error(
-          getAcademicErrorMessage(error, "Token balance exhausted."),
-          {
-            id: "cite-status",
+  // --- Selection rewrite suite (preview-before-apply) ---------------------
+
+  // Calls the right backend for a rewrite kind and returns { text, mode }.
+  const fetchRewrite = useCallback(
+    async (
+      kind: RewriteKind,
+      text: string,
+    ): Promise<{ text: string; mode: "replace" | "append" }> => {
+      switch (kind) {
+        case "fluency": {
+          const r = await paraphraseSelection({ text, tone_mode: "standard" });
+          return { text: String(r.paraphrased_text || "").trim(), mode: "replace" };
+        }
+        case "paraphrase": {
+          const r = await paraphraseSelection({ text, tone_mode: "academic" });
+          return { text: String(r.paraphrased_text || "").trim(), mode: "replace" };
+        }
+        case "simplify": {
+          const r = await paraphraseSelection({ text, tone_mode: "simple" });
+          return { text: String(r.paraphrased_text || "").trim(), mode: "replace" };
+        }
+        case "strengthen": {
+          const r = await rewriteAction({ text, action: "strengthen" });
+          return { text: String(r.result_text || "").trim(), mode: r.mode };
+        }
+        case "counter": {
+          const r = await rewriteAction({ text, action: "counter" });
+          return { text: String(r.result_text || "").trim(), mode: r.mode };
+        }
+        case "tense-past":
+        case "tense-present":
+        case "tense-future": {
+          const tense = kind.replace("tense-", "") as
+            | "past"
+            | "present"
+            | "future";
+          const r = await rewriteAction({ text, action: "tense", tense });
+          return { text: String(r.result_text || "").trim(), mode: r.mode };
+        }
+        default:
+          return { text: "", mode: "replace" };
+      }
+    },
+    [],
+  );
+
+  const requestRewrite = useCallback(
+    async (kind: RewriteKind, text: string) => {
+      setRewriteLoading(true);
+      setRewriteResult("");
+      try {
+        const { text: next, mode } = await fetchRewrite(kind, text);
+        if (!next) {
+          toast.error("The rewrite came back empty. Try again.", {
+            id: "rewrite-status",
+          });
+          setRewriteResult("");
+          return;
+        }
+        setRewriteMode(mode);
+        setRewriteResult(next);
+      } catch (error) {
+        const status = getAxiosStatus(error);
+        const backendMessage = pickBackendMessage(error);
+        if (status === 403) {
+          toast.error(getAcademicErrorMessage(error, "Token balance exhausted."), {
+            id: "rewrite-status",
             duration: 5200,
-          },
-        );
+          });
+        } else if (
+          status === 404 ||
+          status === 405 ||
+          (backendMessage && isRouteMissingMessage(backendMessage))
+        ) {
+          toast.error(
+            "This rewrite isn’t available on this server yet. Please enable the rewrite endpoints.",
+            { id: "rewrite-status", duration: 6500 },
+          );
+        } else if (backendMessage) {
+          toast.error(backendMessage, { id: "rewrite-status", duration: 5200 });
+        } else {
+          toast.error("Rewrite failed. Try again.", {
+            id: "rewrite-status",
+            duration: 5200,
+          });
+        }
+        setRewriteResult("");
+      } finally {
+        setRewriteLoading(false);
+      }
+    },
+    [fetchRewrite],
+  );
+
+  const handleRewriteAction = useCallback(
+    (kind: RewriteKind) => {
+      if (!editor) return;
+      const { from, to } = editor.state.selection;
+      if (from === to) {
+        toast.error("Select text first.", { id: "rewrite-select-first" });
         return;
       }
-
-      if (
-        status === 404 ||
-        status === 405 ||
-        (backendMessage && isRouteMissingMessage(backendMessage))
-      ) {
-        toast.error(
-          "Citation search isn’t available on this server yet. Please ask your backend team to enable `GET /v1/tools/citation-search`.",
-          { id: "cite-status", duration: 6500 },
-        );
-        return;
-      }
-
-      if (backendMessage) {
-        toast.error(backendMessage, {
-          id: "cite-status",
-          duration: 5200,
+      const selectedText = editor.state.doc.textBetween(from, to, " ").trim();
+      if (selectedText.length < 3) {
+        toast.error("Select a bit more text first.", {
+          id: "rewrite-select-more",
         });
         return;
       }
 
-      toast.error("Citation failed. Try a different selection (title/DOI).", {
-        id: "cite-status",
-        duration: 5200,
-      });
-    } finally {
-      setCiting(false);
+      pendingRangeRef.current = { from, to };
+      setRewriteKind(kind);
+      setRewriteOriginal(selectedText);
+      setRewriteResult("");
+      setRewriteOpen(true);
+      void requestRewrite(kind, selectedText);
+    },
+    [editor, requestRewrite],
+  );
+
+  const handleRewriteTryAgain = useCallback(() => {
+    if (!rewriteKind || !rewriteOriginal) return;
+    void requestRewrite(rewriteKind, rewriteOriginal);
+  }, [rewriteKind, rewriteOriginal, requestRewrite]);
+
+  // List conversions are pure editor commands — instant and undoable, no AI.
+  const handleConvertList = useCallback(
+    (kind: "bullet" | "numbered") => {
+      if (!editor) return;
+      const { from, to } = editor.state.selection;
+      if (from === to) {
+        toast.error("Select text first.", { id: "list-select-first" });
+        return;
+      }
+      if (kind === "bullet") {
+        editor.chain().focus().toggleBulletList().run();
+      } else {
+        editor.chain().focus().toggleOrderedList().run();
+      }
+    },
+    [editor],
+  );
+
+  const handleAcceptRewrite = useCallback(() => {
+    if (!editor || !rewriteResult) return;
+    const range = pendingRangeRef.current;
+    if (!range) {
+      setRewriteOpen(false);
+      return;
     }
-  }, [citationStyle, editor]);
+
+    if (rewriteMode === "append") {
+      // Insert after the selection on a new line (counter-argument).
+      editor
+        .chain()
+        .focus()
+        .insertContentAt(range.to, `\n\n${rewriteResult}`)
+        .run();
+    } else {
+      editor
+        .chain()
+        .focus()
+        .insertContentAt({ from: range.from, to: range.to }, rewriteResult)
+        .run();
+    }
+
+    setRewriteOpen(false);
+    setRewriteKind(null);
+    pendingRangeRef.current = null;
+    toast.success("Applied.", { id: "rewrite-status" });
+  }, [editor, rewriteResult, rewriteMode]);
 
   const [selectionChatOpen, setSelectionChatOpen] = useState(false);
   const [selectionChatText, setSelectionChatText] = useState("");
@@ -1345,6 +1687,8 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
 
     const handler = () => {
       if (!selectionChatOpen) return;
+      // Don't auto-close while a block action is opening the popup.
+      if (blockActionGuardRef.current) return;
       const range = selectionChatRangeRef.current;
       if (!range) return;
       const { from, to } = editor.state.selection;
@@ -1552,6 +1896,14 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
   useEffect(() => {
     const onBlockAction = (e: Event) => {
       const action = (e as CustomEvent<{ action?: string }>).detail?.action;
+      // Guard the opening transaction so selection handlers don't dismiss the
+      // popup we're about to open. Cleared on the next tick, after the block's
+      // selection has settled.
+      blockActionGuardRef.current = true;
+      window.setTimeout(() => {
+        blockActionGuardRef.current = false;
+      }, 250);
+
       if (action === "cite") void handleCiteSelectedText();
       else if (action === "aiChat") void openSelectionChat();
       else if (action === "aiEdit") void handleHumanizeSelectedText();
@@ -1576,6 +1928,8 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
             onCite={() => void handleCiteSelectedText()}
             onHumanize={() => void handleHumanizeSelectedText()}
             onOpenChat={() => void openSelectionChat()}
+            onRewrite={(kind) => handleRewriteAction(kind)}
+            onConvertList={(kind) => handleConvertList(kind)}
             onSetBlock={(value) => {
               const { from, to } = editor.state.selection;
               const hasSelection = from !== to;
@@ -1661,6 +2015,37 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
           />
         </div>
       )}
+
+      <CitationPicker
+        open={citePickerOpen}
+        loading={citeLoading}
+        query={citeQuery}
+        style={normalizeCitationStyle(citationStyle)}
+        results={citeResults}
+        onSearch={(q) => void runCitationSearch(q)}
+        onSelect={handleSelectCitation}
+        onClose={() => {
+          setCitePickerOpen(false);
+          pendingRangeRef.current = null;
+        }}
+      />
+
+      <RewritePreview
+        open={rewriteOpen}
+        loading={rewriteLoading}
+        kind={rewriteKind}
+        mode={rewriteMode}
+        original={rewriteOriginal}
+        result={rewriteResult}
+        onAccept={handleAcceptRewrite}
+        onTryAgain={handleRewriteTryAgain}
+        onClose={() => {
+          setRewriteOpen(false);
+          setRewriteKind(null);
+          pendingRangeRef.current = null;
+        }}
+      />
+
       {selectionChatOpen && (
         <div
           className="absolute z-[60] w-[360px] rounded-lg border border-gray-200 bg-white shadow-lg p-3"
@@ -1836,10 +2221,16 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
               Copy all
             </button>
           </div>
-          <ol className="list-decimal space-y-1 pl-5 text-sm text-gray-700">
+          <ol className="list-decimal space-y-2 pl-5 text-sm text-gray-700">
             {references.map((r) => (
               <li key={r.id} className="break-words">
-                {r.full}
+                <div>{r.full}</div>
+                {r.citedText ? (
+                  <div className="mt-0.5 text-xs text-gray-400">
+                    Cited from: “{r.citedText.slice(0, 120)}
+                    {r.citedText.length > 120 ? "…" : ""}”
+                  </div>
+                ) : null}
               </li>
             ))}
           </ol>

@@ -145,12 +145,10 @@ const ResearchQuestion: FC<ResearchQuestionProps> = ({ setFlag }) => {
         },
       });
 
-      console.log("Response:", response.data);
-
       // Backend wraps responses as { success, message, data }
       const responsePayload = response.data?.data ?? response.data;
 
-      if (responsePayload.status === "success" && responsePayload.questions) {
+      if (responsePayload?.status === "success" && responsePayload?.questions) {
         setQuestions(responsePayload.questions);
         setFlag(true);
         toast.success("Research questions generated successfully!");

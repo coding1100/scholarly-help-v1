@@ -5,7 +5,12 @@ import PopModal from "./PopModal";
 import DocumentSettingsModalContent from "./DocumentSettingsModal";
 import { TbSettings } from "react-icons/tb";
 import { LiaFileAltSolid } from "react-icons/lia";
-import { generateEssayOutline } from "./MainTool/academicResearchApi";
+import toast from "react-hot-toast";
+import {
+  generateOutline,
+  standardOutline,
+  type OutlineMode,
+} from "./MainTool/outlineGeneration";
 
 interface PromptModalProps {
   isOpen: boolean;
@@ -49,78 +54,34 @@ const PromptModal: React.FC<PromptModalProps> = ({
     setSelectedOutline(value);
   };
 
-  // const handleStartWritingButtonClick = async () => {
-  //   const headingType =
-  //     selectedOutline === "standard"
-  //       ? "descriptive"
-  //       : selectedOutline === "smart"
-  //       ? "descriptive"
-  //       : "not_provided";
-  //   setIsLoading(true);
-  //   try {
-  //     const response = await axios.post(
-  //       `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/essay-outline`,
-  //       {
-  //         topic: input,
-  //         essay_type: headingType,
-  //         essay_level: "post graduate",
-  //       },
-  //       {
-  //         headers: {
-  //           Authorization: `Bearer ${token}`,
-  //           "Content-Type": "application/json",
-  //         },
-  //       }
-  //     );
-  //     // Only store sections, not subsections
-  //     const sectionsOnly = response.data.data.outline.filter(
-  //       (item: any) => item.type === "section"
-  //     );
-  //     if (!sectionsOnly || sectionsOnly.length === 0) {
-  //       console.warn(
-  //         "Essay outline response is empty:",
-  //         response.data.data.outline
-  //       );
-  //     }
-  //     setOutlineResponse(sectionsOnly);
-  //     console.log("response essay outline", outlineResponse);
-  //   } catch (error) {
-  //     // Silently ignore for now as per request: no extra changes
-  //   } finally {
-  //     onClose();
-  //     onStartWriting();
-  //     setIsLoading(false);
-  //   }
-  // };
   const handleStartWritingButtonClick = async () => {
-    const headingType =
-      selectedOutline === "none" ? "not_provided" : "descriptive";
+    const prompt = input.trim();
+    const mode = selectedOutline as OutlineMode;
     setIsLoading(true);
 
     try {
-      const response = await generateEssayOutline({
-        topic: input,
-        essay_type: headingType,
-        essay_level: "post graduate",
-      });
+      // "standard"/"none" are deterministic; "smart" calls the API and falls
+      // back to the standard skeleton on empty — never a lone "Main Heading".
+      const { sections, usedFallback } = prompt
+        ? await generateOutline(mode, prompt)
+        : { sections: [] as string[], usedFallback: false };
 
-      // Extract the section titles (strings) based on your image structure
-      const sectionTitles = (response.outline || []).map(
-        (item: any) =>
-          typeof item === "string" ? item : item.section || item.title,
-      );
-
-      if (!sectionTitles || sectionTitles.length === 0) {
-        console.warn("No sections found in the response");
+      if (usedFallback) {
+        toast("Couldn’t build a custom outline — used a standard structure.", {
+          id: "outline-fallback",
+        });
       }
 
-      // Update state only if setOutlineResponse is provided
-      setOutlineResponse?.(sectionTitles);
-
-      // Log the local constant to see immediate results
-      console.log("Sections captured:", sectionTitles);
-    } catch (error) {
-      console.error("Error fetching outline:", error);
+      setOutlineResponse?.(sections);
+    } catch {
+      // Graceful degradation: never strand the user on a blank page.
+      const sections = prompt ? standardOutline(prompt) : [];
+      if (sections.length) {
+        toast("Couldn’t reach the outline service — used a standard structure.", {
+          id: "outline-fallback",
+        });
+      }
+      setOutlineResponse?.(sections);
     } finally {
       onClose();
       onStartWriting();

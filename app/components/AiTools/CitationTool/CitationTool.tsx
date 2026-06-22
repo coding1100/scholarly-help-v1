@@ -16,6 +16,21 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
+import DOMPurify from "dompurify";
+
+// Citations only ever contain italic markup for titles. Restrict the allowed
+// tags tightly so nothing executable can be injected even if upstream changes.
+const sanitizeCitation = (html: string | null | undefined): string => {
+  const input = typeof html === "string" ? html : "";
+  if (!input) return "";
+  if (typeof window === "undefined") {
+    return input.replace(/<(?!\/?(i|em|b|strong)\b)[^>]*>/gi, "");
+  }
+  return DOMPurify.sanitize(input, {
+    ALLOWED_TAGS: ["i", "em", "b", "strong"],
+    ALLOWED_ATTR: [],
+  });
+};
 
 interface CitationToolProps {
   setFlag: (value: boolean) => void;
@@ -1450,7 +1465,9 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
                 <p
                   className="text-gray-800 dark:text-gray-100 whitespace-pre-wrap transition-colors duration-300 [&_i]:italic"
                   // Engine output contains only <i></i> markup for italic titles.
-                  dangerouslySetInnerHTML={{ __html: result.full_citation }}
+                  dangerouslySetInnerHTML={{
+                    __html: sanitizeCitation(result.full_citation),
+                  }}
                 />
               </div>
               {savedDocId && (
@@ -1486,7 +1503,9 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
                 <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md p-4">
                   <p
                     className="text-gray-800 dark:text-gray-100 whitespace-pre-wrap transition-colors duration-300 [&_i]:italic"
-                    dangerouslySetInnerHTML={{ __html: result.footnote }}
+                    dangerouslySetInnerHTML={{
+                      __html: sanitizeCitation(result.footnote),
+                    }}
                   />
                 </div>
               </div>

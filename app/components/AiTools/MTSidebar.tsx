@@ -19,6 +19,11 @@ import AccountPopover from "./AccountPopover";
 import UsageAndPricing from "./UsageAndPricing";
 import PromptModal from "./PromptModal";
 import axios from "axios";
+import {
+  createDocument,
+  getAcademicErrorMessage,
+} from "./MainTool/academicResearchApi";
+import { outlineToHtml } from "./MainTool/outlineGeneration";
 import { appendQueryString } from "@/app/utils/url";
 import { upsertFbclidToolContext } from "@/app/utils/fbclidTracking";
 import { __TOOLS_SHEET_EVENT_NAME__ } from "@/app/utils/toolsSheetClient";
@@ -85,6 +90,40 @@ const MTSidebar = ({
   const [userToggled, setUserToggled] = useState(false);
   const [showPopover, setShowPopover] = useState(false);
   const [isPromptModalOpen, setPromptModalOpen] = useState(false);
+  // Outline from the sidebar "New document" modal — captured via ref because the
+  // modal sets state then calls onStartWriting() in the same tick.
+  const pendingOutlineRef = useRef<string[]>([]);
+
+  const persistOutlineAndOpen = React.useCallback(
+    async (sections: string[]) => {
+      const target = appendQueryString(
+        "/tools/academic-research-assistant",
+        "",
+      );
+      try {
+        const content = sections.length
+          ? outlineToHtml(sections)
+          : "<h1>Untitled</h1><p></p>";
+        const doc = await createDocument({
+          title: (sections[0] || "Untitled").slice(0, 120),
+          content,
+        });
+        const id = doc.id || doc._id;
+        pendingOutlineRef.current = [];
+        if (id) {
+          router.push(`${target}?doc=${id}`);
+          return;
+        }
+        router.push(`${target}?start=1`);
+      } catch (error) {
+        toast.error(
+          getAcademicErrorMessage(error, "Could not create the document."),
+        );
+        router.push(`${target}?start=1`);
+      }
+    },
+    [router],
+  );
   // Documents panel is controlled by parent layout
   const isAssistantRoute =
     normalizedRoute === "/tools/academic-research-assistant";
@@ -604,17 +643,16 @@ const MTSidebar = ({
       <PromptModal
         isOpen={isPromptModalOpen}
         onClose={() => setPromptModalOpen(false)}
+        setOutlineResponse={(value) => {
+          pendingOutlineRef.current =
+            typeof value === "function"
+              ? (value as (prev: string[]) => string[])(
+                  pendingOutlineRef.current,
+                )
+              : value;
+        }}
         onStartWriting={() => {
-          toast.loading("Generating document...", { duration: 1500 });
-          setTimeout(() => {
-            toast.success("Document ready!", { duration: 1000 });
-            router.push(
-              appendQueryString(
-                "/tools/academic-research-assistant?start=1",
-                searchParams?.toString() || "",
-              ),
-            );
-          }, 2000);
+          void persistOutlineAndOpen(pendingOutlineRef.current);
         }}
       />
     </aside>

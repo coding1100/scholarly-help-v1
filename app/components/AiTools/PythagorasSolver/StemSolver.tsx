@@ -8,6 +8,7 @@ import katex from "katex";
 import "katex/dist/katex.min.css";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
+import { sanitizeHtml } from "@/app/utils/sanitizeHtml";
 
 type Subject = "math" | "physics" | "chemistry" | "general";
 type InputMode = "image" | "text";
@@ -934,8 +935,10 @@ const StemSolver: FC<{ setFlag: (v: boolean) => void }> = ({ setFlag }) => {
               </div>
               <div
                 className="flex justify-center bg-white rounded-md p-3 overflow-auto"
-                // The SVG is sanitized server-side (no scripts/handlers/external refs).
-                dangerouslySetInnerHTML={{ __html: result.diagram.svg }}
+                // Sanitized client-side (SVG profile) before injection.
+                dangerouslySetInnerHTML={{
+                  __html: sanitizeHtml(result.diagram.svg),
+                }}
               />
               {result.diagram.caption && (
                 <p className="mt-2 text-center text-sm text-gray-500 dark:text-gray-400">

@@ -21,6 +21,7 @@ import ActionButtons from "./ActionButtons";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import SummarizerChat from "@/app/components/AiTools/SummarizerChat/SummarizerChat";
+import { sanitizeHtml } from "@/app/utils/sanitizeHtml";
 
 type OutputType = "text_summary" | "flashcards" | "slide_deck" | "audio_summary";
 
@@ -387,6 +388,16 @@ const SummarizerTool: React.FC = () => {
   const [isSavingDocument, setIsSavingDocument] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const editorRef = useRef<HTMLDivElement | null>(null);
+  // Tracks the job currently being polled. A new submit or unmount changes this
+  // so stale polls stop updating state / clobbering newer results.
+  const activeJobRef = useRef<string | null>(null);
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+      activeJobRef.current = null;
+    };
+  }, []);
 
   const baseUrl =
     process.env.NEXT_PUBLIC_NGROX_URL || process.env.NEXT_PUBLIC_BASE_URL || "";
@@ -614,11 +625,24 @@ const SummarizerTool: React.FC = () => {
     }
   };
 
-  const pollJob = async (jobId: string) => {
+  const pollJob = async (jobId: string | undefined) => {
+    if (!jobId) {
+      throw new Error("Server did not return a job id.");
+    }
+    // Mark this as the active job; supersedes any earlier in-flight poll.
+    activeJobRef.current = jobId;
+
     for (let attempt = 0; attempt < 120; attempt += 1) {
-      const response = await axios.get(`${baseUrl}/tools/summarizer/jobs/${jobId}`, {
-        headers: authHeaders,
-      });
+      // Stop if the component unmounted or a newer job took over.
+      if (!isMountedRef.current || activeJobRef.current !== jobId) return;
+
+      const response = await axios.get(
+        `${baseUrl}/tools/summarizer/jobs/${jobId}`,
+        { headers: authHeaders },
+      );
+
+      if (!isMountedRef.current || activeJobRef.current !== jobId) return;
+
       const job = response.data?.data;
       if (!job) {
         throw new Error("Invalid job response from server.");
@@ -631,6 +655,7 @@ const SummarizerTool: React.FC = () => {
           setIsFolderPanelOpen(true);
         }
         toast.success("Summary generated successfully!");
+        activeJobRef.current = null;
         return;
       }
       if (job.status === "failed") {
@@ -658,6 +683,8 @@ const SummarizerTool: React.FC = () => {
     }
 
     trackToolGenerate({ toolName: "Summarizer Tool" });
+    // Invalidate any previous in-flight poll so it can't clobber this run.
+    activeJobRef.current = null;
     setIsLoading(true);
     setResult(null);
     setJobMessage("");
@@ -1210,7 +1237,9 @@ const SummarizerTool: React.FC = () => {
                   contentEditable
                   suppressContentEditableWarning
                   className="min-h-[420px] rounded-lg border border-gray-200 bg-white p-5 text-sm leading-7 text-gray-900 outline-none focus:ring-2 focus:ring-primary-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 [&_h2]:mb-3 [&_h2]:mt-4 [&_h2]:text-lg [&_h2]:font-semibold [&_h3]:mb-2 [&_h3]:mt-3 [&_h3]:font-semibold [&_li]:ml-5 [&_li]:list-disc [&_p]:mb-3"
-                  dangerouslySetInnerHTML={{ __html: editingDocument.content || "" }}
+                  dangerouslySetInnerHTML={{
+                    __html: sanitizeHtml(editingDocument.content || ""),
+                  }}
                 />
               )}
             </div>

@@ -123,12 +123,10 @@ const PythagorasSolver: FC<PythagorasSolverProps> = ({ setFlag }) => {
         },
       );
 
-      console.log("Response:", response.data);
-
       // Backend wraps responses as { success, message, data }
       const responsePayload = response.data?.data ?? response.data;
 
-      if (responsePayload.status === "success") {
+      if (responsePayload?.status === "success") {
         setResult(responsePayload);
         setFlag(true);
         toast.success("Triangle solved successfully!");
