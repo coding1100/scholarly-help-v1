@@ -41,6 +41,7 @@ export async function generateMetadata({}): Promise<Metadata> {
   return {
     title: pageData?.meta?.title || MetaData.takeMyExam.title,
     description: pageData?.meta?.description || MetaData.takeMyExam.description,
+    robots: { index: false, follow: false },
     alternates: {
       canonical: canonicalUrl,
     },
