@@ -24,10 +24,16 @@ import PromptModal from "../PromptModal";
 import toast from "react-hot-toast";
 import {
   createDocument,
-  generateEssayOutline,
   getAcademicErrorMessage,
   parseDocumentFile,
 } from "./academicResearchApi";
+import {
+  generateOutline,
+  outlineToHtml,
+  standardOutline,
+  titleFromPrompt,
+  type OutlineMode,
+} from "./outlineGeneration";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 // import ParagraphToolbar from "../../Paragraph-tool/ParagraphToolbar";
 
@@ -239,24 +245,6 @@ const MainDocEditor: React.FC<MainDocEditorProps> = ({
     }
   };
 
-  // A fixed, generic academic skeleton used for "Standard headings" and as the
-  // fallback when "Smart headings" comes back empty — never a lone "Main Heading".
-  const standardOutline = (topic: string): string[] => [
-    `Introduction to ${topic}`.slice(0, 90),
-    "Background and Context",
-    "Key Findings and Discussion",
-    "Conclusion",
-  ];
-
-  const outlineToHtml = (sections: string[]): string =>
-    sections
-      .map((section, index) =>
-        index === 0
-          ? `<h1>${section}</h1><p></p>`
-          : `<h2>${section}</h2><p></p>`,
-      )
-      .join("");
-
   const handleGenerateHeadings = async () => {
     const prompt = promptInput.trim();
     if (!prompt) {
@@ -264,38 +252,25 @@ const MainDocEditor: React.FC<MainDocEditorProps> = ({
       return;
     }
 
-    const docTitle = prompt.split(/[.?!]/)[0].slice(0, 80) || "Untitled";
+    const docTitle = titleFromPrompt(prompt);
+    const mode = selectedOutline as OutlineMode;
 
-    // Standard headings: deterministic structure, no AI call, never empty.
-    if (selectedOutline === "standard") {
-      const sections = standardOutline(prompt);
+    // Standard / none are deterministic — no AI call, no spinner needed.
+    if (mode === "standard" || mode === "none") {
+      const sections = mode === "standard" ? standardOutline(prompt) : [];
       setOutlineResponse(sections);
       if (!title.trim()) setTitle(docTitle);
-      await startPersistedDocument(outlineToHtml(sections), docTitle);
+      await startPersistedDocument(
+        sections.length ? outlineToHtml(sections) : "<p></p>",
+        docTitle,
+      );
       return;
     }
 
     setIsGenerating(true);
     try {
-      const response = await generateEssayOutline({
-        topic: prompt,
-        essay_type: "descriptive",
-        essay_level: "post graduate",
-      });
-
-      const sectionTitles: string[] =
-        response.outline
-          ?.map((item: any) =>
-            typeof item === "string" ? item : item.section || item.title,
-          )
-          .filter(Boolean) ?? [];
-
-      // Smart headings empty → fall back to the standard skeleton (and say so),
-      // rather than a single useless "Main Heading".
-      const sections = sectionTitles.length
-        ? sectionTitles
-        : standardOutline(prompt);
-      if (!sectionTitles.length) {
+      const { sections, usedFallback } = await generateOutline(mode, prompt);
+      if (usedFallback) {
         toast("Couldn’t build a custom outline — used a standard structure.", {
           id: "outline-fallback",
         });
@@ -305,14 +280,19 @@ const MainDocEditor: React.FC<MainDocEditorProps> = ({
       if (!title.trim()) setTitle(docTitle);
       await startPersistedDocument(outlineToHtml(sections), docTitle);
     } catch (error) {
-      console.error("Error generating outline:", error);
-      toast.error(
+      // Never strand the user on an empty page: fall back to the deterministic
+      // skeleton instead of a blank draft.
+      const sections = standardOutline(prompt);
+      toast(
         getAcademicErrorMessage(
           error,
-          "Could not generate headings. Starting a blank draft.",
+          "Couldn’t reach the outline service — used a standard structure.",
         ),
+        { id: "outline-fallback" },
       );
-      onStartWriting();
+      setOutlineResponse(sections);
+      if (!title.trim()) setTitle(docTitle);
+      await startPersistedDocument(outlineToHtml(sections), docTitle);
     } finally {
       setIsGenerating(false);
     }

@@ -52,11 +52,17 @@ const unwrapApiData = <T>(payload: T | ApiEnvelope<T>): T => {
   return payload as T;
 };
 
+// Default network timeout for research-assistant API calls. Generous enough for
+// LLM-backed endpoints, but bounded so a hung backend doesn't leave the UI
+// stuck on a spinner forever.
+const DEFAULT_TIMEOUT_MS = 60_000;
+
 const request = async <T>(
   path: string,
   config: AxiosRequestConfig = {},
 ): Promise<T> => {
   const response = await axios.request<T | ApiEnvelope<T>>({
+    timeout: DEFAULT_TIMEOUT_MS,
     ...config,
     url: `${getApiBaseUrl()}${path}`,
     headers: {
@@ -239,6 +245,62 @@ export const humanizeText = (payload: {
         : {}),
       preserve_citations: true,
       return_diff: false,
+    },
+    headers: { "Content-Type": "application/json" },
+  });
+
+export type ParaphraseToneMode =
+  | "standard"
+  | "academic"
+  | "formal"
+  | "casual"
+  | "creative"
+  | "professional"
+  | "persuasive"
+  | "simple";
+
+/** Selection rewrites that map onto the existing paraphrase tone modes. */
+export const paraphraseSelection = (payload: {
+  text: string;
+  tone_mode: ParaphraseToneMode;
+}) =>
+  request<{
+    original_text: string;
+    paraphrased_text: string;
+    tone_mode: string;
+    llm_used?: string;
+    tokens_used?: number;
+  }>("/tools/paraphrase", {
+    method: "POST",
+    data: { text: payload.text, tone_mode: payload.tone_mode },
+    headers: { "Content-Type": "application/json" },
+  });
+
+export type RewriteActionName = "strengthen" | "counter" | "tense";
+export type RewriteTense = "past" | "present" | "future";
+
+/** Content-changing selection rewrites not covered by paraphrase tone modes. */
+export const rewriteAction = (payload: {
+  text: string;
+  action: RewriteActionName;
+  tense?: RewriteTense;
+  topic?: string;
+}) =>
+  request<{
+    original_text: string;
+    result_text: string;
+    action: RewriteActionName;
+    tense?: RewriteTense;
+    mode: "append" | "replace";
+    llm_used?: string;
+    tokens_used?: number;
+  }>("/tools/rewrite-action", {
+    method: "POST",
+    data: {
+      text: payload.text,
+      action: payload.action,
+      ...(payload.tense ? { tense: payload.tense } : {}),
+      ...(payload.topic ? { topic: payload.topic } : {}),
     },
     headers: { "Content-Type": "application/json" },
   });

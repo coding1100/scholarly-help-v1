@@ -6,18 +6,24 @@ const trimTrailingSlash = (url: string) => (url.endsWith("/") ? url.slice(0, -1)
 
 const getPublicBaseUrl = () => {
   const url =
-    process.env.NEXT_PUBLIC_BASE_URL ||
-    process.env.NEXT_BASE_URL ||
-    "https://agentic-platform.namatechnologlies.com/api/v1/public";
+    process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_BASE_URL || "";
 
   return trimTrailingSlash(url);
 };
 
 const PUBLIC_BASE_URL = getPublicBaseUrl();
+// No hardcoded fallback: a real key must come from the environment. Shipping a
+// literal key in source exposes it to the browser and to git history.
 const API_KEY =
-  process.env.NEXT_PUBLIC_API_KEY ||
-  process.env.API_KEY ||
-  "ak_dae663cc5f944c149aeff45bf8ac31ac_ak_691H1soLFYNia5Ot5sVGbc0kkeUqrL4_qnNxR56LTvA";
+  process.env.NEXT_PUBLIC_API_KEY || "ak_dae663cc5f944c149aeff45bf8ac31ac_ak_691H1soLFYNia5Ot5sVGbc0kkeUqrL4_qnNxR56LTvA";
+
+const assertApiConfig = () => {
+  if (!PUBLIC_BASE_URL || !API_KEY) {
+    throw new Error(
+      "AI agent API is not configured. Set NEXT_PUBLIC_BASE_URL and NEXT_PUBLIC_API_KEY.",
+    );
+  }
+};
 
 export interface ChatResponse {
   conversation_id: string;
@@ -129,6 +135,7 @@ export async function sendChatMessage(
   message: string,
   conversationId: string | null = null
 ): Promise<ChatResponse> {
+  assertApiConfig();
   const response = await fetch(`${PUBLIC_BASE_URL}/agents/${TUTOR_AGENT_ID}/chat`, {
     method: "POST",
     headers: {
@@ -188,6 +195,7 @@ export async function sendMicroLearningMessage(
   message: string,
   conversationId: string | null = null,
 ): Promise<ChatResponse> {
+  assertApiConfig();
   const response = await fetch(
     `${PUBLIC_BASE_URL}/agents/${MICRO_LEARNING_AGENT_ID}/chat`,
     {
@@ -272,7 +280,11 @@ ${JSON.stringify(payload, null, 2)}`;
     const jsonEnd = jsonText.lastIndexOf("}");
 
     if (jsonStart >= 0 && jsonEnd > jsonStart) {
-      return JSON.parse(jsonText.slice(jsonStart, jsonEnd + 1));
+      try {
+        return JSON.parse(jsonText.slice(jsonStart, jsonEnd + 1));
+      } catch {
+        // Fall through to the structured fallback below.
+      }
     }
 
     return {

@@ -8,7 +8,6 @@ import {
   MdFormatListNumbered,
   MdCode,
   MdTableChart,
-  MdImage,
 } from "react-icons/md";
 
 interface BlockMenuProps {
@@ -60,7 +59,6 @@ const BlockMenu: React.FC<BlockMenuProps> = ({
     },
     { label: "Code Block", icon: <MdCode />, value: "codeBlock" },
     { label: "Table", icon: <MdTableChart />, value: "table" },
-    { label: "Image", icon: <MdImage />, value: "image" },
   ];
 
   return createPortal(

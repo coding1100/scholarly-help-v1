@@ -15,12 +15,15 @@ interface BlockToolbarProps {
   position: { top: number; left: number };
   onSelect: (option: string) => void;
   onClose: () => void;
+  /** Node type of the block this menu belongs to (e.g. "heading", "paragraph"). */
+  blockType?: string;
 }
 
 const BlockToolbar: React.FC<BlockToolbarProps> = ({
   position,
   onSelect,
   onClose,
+  blockType,
 }) => {
   const containerRef = React.useRef<HTMLDivElement | null>(null);
 
@@ -43,8 +46,12 @@ const BlockToolbar: React.FC<BlockToolbarProps> = ({
       document.removeEventListener("touchstart", handlePointerDown, true);
     };
   }, [onClose]);
+  const isHeading = blockType === "heading";
   const options = [
-    { label: "Cite", icon: <MdOutlineAlternateEmail />, value: "cite" },
+    // You don't cite a heading — only offer Cite on prose blocks.
+    ...(isHeading
+      ? []
+      : [{ label: "Cite", icon: <MdOutlineAlternateEmail />, value: "cite" }]),
     { label: "AI Chat", icon: <MdOutlineChatBubbleOutline />, value: "aiChat" },
     { label: "AI Edit", icon: <MdOutlineAutoFixHigh />, value: "aiEdit" },
     { label: "Turn into", icon: <MdSwapHoriz />, value: "turnInto" },

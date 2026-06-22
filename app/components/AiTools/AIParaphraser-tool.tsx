@@ -22,7 +22,6 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag }) => {
   const [customToneInstructions, setCustomToneInstructions] = useState("");
   const [isSubmitting, setSubmitting] = useState<boolean>(false);
   const [file, setFile] = useState<File | null>(null);
-  const [pdfData, setPdfData] = useState<any>(null);
   const [wordLimitExceeded, setWordLimitExceeded] = useState(false);
 
   useEffect(() => {
@@ -36,8 +35,6 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag }) => {
     setResultText("");
     setToneMode("standard");
     setCustomToneInstructions("");
-    // here are change inam
-    setPdfData(null);
     setFile(null);
   };
 
@@ -85,8 +82,13 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag }) => {
 
   // Auto-process PDF when selected
   useEffect(() => {
+    if (!file) return;
+    // Guard against a slower earlier parse overwriting a newer file (or running
+    // after unmount). The controller also aborts the in-flight request.
+    let cancelled = false;
+    const controller = new AbortController();
+
     const processPdf = async () => {
-      if (!file) return;
       setSubmitting(true);
       try {
         const formData = new FormData();
@@ -100,8 +102,11 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag }) => {
               "Content-Type": "multipart/form-data",
               Authorization: `Bearer ${token}`,
             },
+            signal: controller.signal,
           },
         );
+
+        if (cancelled) return;
 
         // parse-document returns the extracted text as a plain string inside the
         // standard envelope: { success, message, data: "<text>" }.
@@ -113,17 +118,23 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag }) => {
         setInputText(text);
         toast.success("Document extracted successfully!");
       } catch (err: any) {
+        if (cancelled || axios.isCancel?.(err)) return;
         const msg =
           err?.response?.data?.message ||
           err?.message ||
           "Failed to extract text from PDF.";
         toast.error(msg);
       } finally {
-        setSubmitting(false);
+        if (!cancelled) setSubmitting(false);
       }
     };
 
     processPdf();
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
   }, [file, token]);
   const handleParaphrase = async () => {
     if (wordLimitExceeded) {
