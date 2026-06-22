@@ -66,6 +66,7 @@ export function generateMetadata({}) {
   return {
     title: `${MetaData.classHelpDiscount.title}`,
     description: `${MetaData.classHelpDiscount.description}`,
+    robots: { index: false, follow: false },
     alternates: {
       canonical: canonicalUrl,
     },
