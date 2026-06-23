@@ -57,7 +57,14 @@ const OTPPage = () => {
 
       toast.dismiss();
       toast.success(response?.data?.message || "Email verified successfully!");
-      route.push("/tools/paraphraser-tool/");
+      const returnUrl =
+        typeof window !== "undefined"
+          ? new URLSearchParams(window.location.search).get("returnUrl")
+          : null;
+      // Only honour same-origin internal paths to avoid open-redirects.
+      const safeReturn =
+        returnUrl && returnUrl.startsWith("/") ? returnUrl : null;
+      route.push(safeReturn || "/tools/paraphraser-tool/");
     } catch (error: any) {
       toast.dismiss();
       const errorMessage =

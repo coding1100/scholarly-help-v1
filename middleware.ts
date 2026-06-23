@@ -22,13 +22,27 @@ function maybeRewriteDynamicLanding(
   return NextResponse.rewrite(rewriteUrl);
 }
 
+/**
+ * Tool routes that guests may use without signing in. These tools enforce
+ * their own in-app gate (e.g. the Study Workspace shows an email gate after a
+ * free allowance) instead of the blanket middleware redirect.
+ */
+const GUEST_ALLOWED_TOOL_PATHS = ["/tools/study-workspace"];
+
+function isGuestAllowedToolPath(pathname: string): boolean {
+  return GUEST_ALLOWED_TOOL_PATHS.some(
+    (base) => pathname === base || pathname.startsWith(`${base}/`),
+  );
+}
+
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   if (
     pathname.startsWith("/tools/") &&
     pathname !== "/tools" &&
-    pathname !== "/tools/"
+    pathname !== "/tools/" &&
+    !isGuestAllowedToolPath(pathname)
   ) {
     const token = request.cookies.get("access_token")?.value;
 

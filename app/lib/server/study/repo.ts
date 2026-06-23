@@ -115,6 +115,38 @@ export async function createSession(userId: string, title: string) {
   return { ...payload, _id: result.insertedId.toString() };
 }
 
+/**
+ * Re-key a guest's study sessions onto a real account after sign-up. Sources,
+ * artifacts and tutor messages are keyed by sessionId, so only the session
+ * ownership needs to move. Idempotent and a no-op if the ids match or the guest
+ * had no data. Returns the number of sessions migrated.
+ */
+export async function claimGuestSessions(
+  guestUserId: string,
+  realUserId: string,
+): Promise<number> {
+  const from = normalizeText(guestUserId || "");
+  const to = normalizeText(realUserId || "");
+  if (!from || !to || from === to) return 0;
+
+  const db = await getDbSafe();
+  if (!db) {
+    let count = 0;
+    for (const [id, session] of memoryStore.sessions.entries()) {
+      if (session.userId === from) {
+        memoryStore.sessions.set(id, { ...session, userId: to });
+        count += 1;
+      }
+    }
+    return count;
+  }
+
+  const result = await db
+    .collection(COLLECTIONS.sessions)
+    .updateMany({ userId: from }, { $set: { userId: to } });
+  return result.modifiedCount ?? 0;
+}
+
 export async function listSessions(userId: string) {
   const db = await getDbSafe();
   if (!db) {

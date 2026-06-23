@@ -18,11 +18,14 @@ const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
 interface SignUpCardProps {
   switchAuthForm?: string;
   setSwitchAuthForm?: React.Dispatch<React.SetStateAction<"signin" | "signup">>;
+  /** When set, the OTP step returns here after verifying (instead of the default tool). */
+  returnUrl?: string;
 }
 
 const SignUpCard: FC<SignUpCardProps> = ({
   switchAuthForm = "",
   setSwitchAuthForm,
+  returnUrl,
 }) => {
   const route = useRouter();
   const currentPage = usePathname();
@@ -128,7 +131,9 @@ const SignUpCard: FC<SignUpCardProps> = ({
       setName("");
       setEmail("");
       setPassword("");
-      route.push(buildHrefWithSameQuery("/otp", new URLSearchParams(qs)));
+      const otpParams = new URLSearchParams(qs);
+      if (returnUrl) otpParams.set("returnUrl", returnUrl);
+      route.push(buildHrefWithSameQuery("/otp", otpParams));
     } catch (err: any) {
       const networkMsg = getAuthNetworkErrorMessage(err);
       const message =
@@ -244,7 +249,7 @@ const SignUpCard: FC<SignUpCardProps> = ({
           )}
           {!submitError && <FaArrowRight />}
         </button>
-        <SocialAuthButtons authAction="sign_up" />
+        <SocialAuthButtons authAction="sign_up" returnUrl={returnUrl} />
       </form>
       <p className="text-center text-sm  mt-8 relative">
         If you have an account?

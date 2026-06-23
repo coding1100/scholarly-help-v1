@@ -6,18 +6,26 @@ import { FiLoader } from "react-icons/fi";
 import ToolsLayout from "@/app/components/AiTools/ToolsLayout";
 import StudySourceIngestion from "@/app/components/AiTools/Dashboard/StudySourceIngestion";
 import StudyWorkspace from "@/app/components/AiTools/Dashboard/StudyWorkspace";
+import ToolGrid from "@/app/components/AiTools/Dashboard/ToolGrid";
+import StudyAuthGateModal from "@/app/components/AiTools/StudyWorkspace/StudyAuthGateModal";
 import { appendQueryString } from "@/app/utils/url";
 import {
   getStudyRecordingSnapshot,
   onStudyRecordingChange,
 } from "@/app/lib/client/studyRecording";
 import {
+  claimGuestStudyData,
   createStudySession,
   getActiveStudySessionId,
   getStudySessionDetails,
   listStudySessions,
   setActiveStudySessionId,
 } from "@/app/utils/studyApiClient";
+import {
+  incrementGuestSessionCount,
+  isGuest,
+  takePendingGuestMigrationId,
+} from "@/app/lib/client/guestStudyLimits";
 
 export default function StudyWorkspacePageContent() {
   const [flag, setFlag] = useState<boolean>(false);
@@ -30,32 +38,40 @@ export default function StudyWorkspacePageContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("sessionId");
 
+  // Email gate (guests): shown on a 2nd session attempt or the 4th query.
+  const [gateOpen, setGateOpen] = useState(false);
+  const [gateReason, setGateReason] = useState<"query" | "session">("session");
+
+  // No upfront sign-in gate: guests may use the workspace. The email/password
+  // gate appears later — on the 4th tutor query or a 2nd session creation.
+
+  // The query (4th) gate is triggered from the child workspace via an event.
   useEffect(() => {
-    const isAuthenticated =
-      localStorage.getItem("access_token") || localStorage.getItem("authToken");
-    if (!isAuthenticated) {
-      const currentQs =
-        typeof window !== "undefined" ? window.location.search.slice(1) : "";
-      const signInBase = currentQs ? `/sign-in?${currentQs}` : "/sign-in";
-      const returnTo = `${pathname || "/tools/study-workspace"}${currentQs ? `?${currentQs}` : ""}`;
-      router.replace(
-        appendQueryString(
-          signInBase,
-          `returnUrl=${encodeURIComponent(returnTo)}`,
-        ),
-      );
-    }
-  }, [pathname, router]);
+    const onAuthGate = (e: Event) => {
+      const reason =
+        (e as CustomEvent<{ reason?: "query" | "session" }>).detail?.reason ||
+        "query";
+      setGateReason(reason);
+      setGateOpen(true);
+    };
+    window.addEventListener("study:auth-gate", onAuthGate);
+    return () => window.removeEventListener("study:auth-gate", onAuthGate);
+  }, []);
+
+  // After returning signed in, migrate the guest's work onto the new account.
+  useEffect(() => {
+    if (isGuest()) return;
+    const pendingGuestId = takePendingGuestMigrationId();
+    if (!pendingGuestId) return;
+    claimGuestStudyData(pendingGuestId).catch((error) => {
+      console.error("Failed to migrate guest study data", error);
+    });
+  }, []);
 
   useEffect(() => {
     let active = true;
 
     async function bootstrapStudySession() {
-      const isAuthenticated =
-        localStorage.getItem("access_token") ||
-        localStorage.getItem("authToken");
-      if (!isAuthenticated) return;
-
       const qsSessionId = searchParams.get("sessionId");
       const localSessionId = getActiveStudySessionId();
       const sessions = await listStudySessions();
@@ -66,7 +82,13 @@ export default function StudyWorkspacePageContent() {
         sessions[0];
 
       if (!resolvedSession) {
+        // Bootstrap (initial page load) is never gated — a guest always gets
+        // their first session created automatically here. The email gate lives
+        // only on the explicit "+ New Study Session" button (see
+        // StudySourceIngestion), which fires on the 2nd-session attempt. We
+        // still count this first session so that button knows the limit is hit.
         resolvedSession = await createStudySession("My Study Session");
+        if (isGuest()) incrementGuestSessionCount();
       }
 
       if (!active) return;
@@ -167,13 +189,17 @@ export default function StudyWorkspacePageContent() {
 
   return (
     <ToolsLayout setFlag={setFlag} flag={flag}>
-      <main
-        className={`bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 ${
-          showOnboarding
-            ? "flex h-[calc(100vh-8vh)] min-h-0 flex-col overflow-hidden"
-            : "h-[90vh] overflow-y-auto"
-        }`}
-      >
+      {/* ToolsLayout clones its single child element to inject `token`, so the
+          page must pass exactly one element here — wrap the workspace and the
+          auth-gate modal in a fragment. */}
+      <>
+        <main
+          className={`bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 ${
+            showOnboarding
+              ? "flex h-[calc(100vh-8vh)] min-h-0 flex-col overflow-hidden"
+              : "h-[90vh] overflow-y-auto"
+          }`}
+        >
         {isBootstrapping ? (
           <div className="flex h-full min-h-[320px] items-center justify-center">
             <FiLoader className="h-10 w-10 animate-spin text-[#5f70ff]" aria-label="Loading" />
@@ -185,9 +211,22 @@ export default function StudyWorkspacePageContent() {
               onContentReady={() => setHasSessionContent(true)}
             />
             {showWorkspace ? <StudyWorkspace /> : null}
+            {showWorkspace ? <ToolGrid /> : null}
           </>
         )}
-      </main>
+        </main>
+
+        {gateOpen ? (
+          <StudyAuthGateModal
+            open={gateOpen}
+            reason={gateReason}
+            returnUrl={`${pathname || "/tools/study-workspace"}${
+              sessionId ? `?sessionId=${sessionId}` : ""
+            }`}
+            onClose={() => setGateOpen(false)}
+          />
+        ) : null}
+      </>
     </ToolsLayout>
   );
 }

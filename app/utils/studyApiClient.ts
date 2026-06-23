@@ -88,7 +88,14 @@ interface ApiEnvelope<T> {
 
 function getUserId() {
   if (typeof window === "undefined") return "anonymous";
-  return localStorage.getItem("user_id") || "anonymous";
+  const existing = localStorage.getItem("user_id");
+  if (existing) return existing;
+  // Mint a stable per-guest id so guest Study data is isolated and can be
+  // migrated to the real account on sign-up. Overwritten with the real
+  // user_id at login (see auth/callback).
+  const guestId = `guest_${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
+  localStorage.setItem("user_id", guestId);
+  return guestId;
 }
 
 function getAccessToken() {
@@ -137,6 +144,14 @@ export async function createStudySession(title: string) {
   return callStudyApi<StudySessionDto>("/sessions", {
     method: "POST",
     body: JSON.stringify({ title }),
+  });
+}
+
+/** Move a guest's study sessions onto the now-authenticated account. */
+export async function claimGuestStudyData(guestUserId: string) {
+  return callStudyApi<{ migrated: number }>("/claim-guest", {
+    method: "POST",
+    body: JSON.stringify({ guestUserId }),
   });
 }
 

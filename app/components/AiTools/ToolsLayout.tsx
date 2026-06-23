@@ -26,6 +26,14 @@ const ToolsLayout: React.FC<ToolsLayoutProps> = ({
   const [checked, setChecked] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // Inject `token` into the page content. cloneElement requires a single React
+  // element — if a page passes multiple children (an array) or a non-element,
+  // clone would throw "Element type is invalid", so fall back to rendering the
+  // children untouched in that case.
+  const content = React.isValidElement(children)
+    ? React.cloneElement(children, { token } as Partial<unknown>)
+    : children;
+
   return (
     <div className="h-screen w-full flex flex-col relative bg-white dark:bg-gray-900 transition-colors duration-300">
       <TrackingParamKeeper />
@@ -89,7 +97,7 @@ const ToolsLayout: React.FC<ToolsLayoutProps> = ({
         <div className="flex-1 h-screen bg-white dark:bg-gray-900 transition-colors duration-300 w-full">
           {/* {children} */}
           <ToolHeader />
-          {React.cloneElement(children as React.ReactElement, { token })}
+          {content}
         </div>
       </div>
     </div>
