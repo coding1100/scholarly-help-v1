@@ -61,12 +61,20 @@ const MainToolDashboardsection: FC = () => {
                             </li>
                         ))}
                     </ul>
-                    <Link
-                        href={dashboard.ctaButtonUrl || "#"}
-                        className="inline-block w-full sm:w-fit bg-primary-400 text-white text-lg sm:text-xl font-medium py-3 px-8 rounded-[4px] text-center"
-                    >
-                        {dashboard.ctaButton}
-                    </Link>
+                    <div className="flex flex-col sm:flex-row flex-wrap gap-3">
+                        <Link
+                            href={dashboard.ctaButtonUrl || "#"}
+                            className="inline-block w-full sm:w-fit bg-primary-400 text-white font-medium py-3 px-8 rounded-[4px] text-center"
+                        >
+                            {dashboard.ctaButton}
+                        </Link>
+                        <Link
+                            href={dashboard.loginButtonUrl || "#"}
+                            className="inline-block w-full sm:w-fit text-primary-400 font-medium py-3 px-8 rounded-[4px] text-center border border-primary-400"
+                        >
+                            {dashboard.loginButton}
+                        </Link>
+                    </div>
                 </div>
                 <div>
                     <div className="w-full h-full bg-[#ECECFC] rounded-2xl py-4 sm:py-5 px-4 sm:px-[30px]">

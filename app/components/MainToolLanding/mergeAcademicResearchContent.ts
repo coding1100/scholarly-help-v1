@@ -2,10 +2,7 @@ import {
   AcademicResearchPageData,
   defaultAcademicResearchContent,
 } from "./MainToolContent";
-import {
-  PickToolItem,
-  buildDefaultTabTools,
-} from "./pickTabUtils";
+import { PickToolItem } from "./pickTabUtils";
 
 function mergeArray<T>(fallback: T[], fromDb?: T[] | null): T[] {
   if (Array.isArray(fromDb) && fromDb.length > 0) return fromDb;
@@ -21,11 +18,10 @@ function mergeObject<T extends Record<string, unknown>>(
 }
 
 function mergeTabTools(
-  allTools: PickToolItem[],
+  defaultTabTools: Record<string, PickToolItem[]>,
   fromDb?: Record<string, PickToolItem[]> | null,
 ): Record<string, PickToolItem[]> {
-  const defaults = buildDefaultTabTools(allTools);
-  const merged = { ...defaults };
+  const merged = { ...defaultTabTools };
 
   if (fromDb && typeof fromDb === "object") {
     for (const [slug, tools] of Object.entries(fromDb)) {
@@ -73,10 +69,7 @@ export function mergeAcademicResearchContent(
         pageData.pickSection?.tools,
       ),
       tabTools: mergeTabTools(
-        mergeArray(
-          defaultAcademicResearchContent.pickSection.tools,
-          pageData.pickSection?.tools,
-        ),
+        defaultAcademicResearchContent.pickSection.tabTools,
         pageData.pickSection?.tabTools,
       ),
     },
