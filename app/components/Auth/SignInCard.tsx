@@ -15,21 +15,28 @@ import { buildHrefWithSameQuery } from "@/app/utils/url";
 interface SignInCardProps {
   switchAuthForm?: string;
   setSwitchAuthForm?: React.Dispatch<React.SetStateAction<"signin" | "signup">>;
+  /** Where to return after sign-in. Overrides the `returnUrl` query param
+   *  (used when this card is rendered outside a routed page, e.g. in a modal). */
+  returnUrl?: string;
 }
 
 const SignInCard: FC<SignInCardProps> = ({
   switchAuthForm = "",
   setSwitchAuthForm,
+  returnUrl: returnUrlProp,
 }) => {
   const route = useRouter();
   const searchParams = useSearchParams();
-  const returnUrl = searchParams.get("returnUrl");
+  const returnUrl = returnUrlProp ?? searchParams.get("returnUrl");
   const qs = searchParams?.toString() || "";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // Require both fields before the Sign In button is enabled.
+  const isFormValid = email.trim().length > 0 && password.length > 0;
   const getApiErrorMessage = (err: any, fallback: string) => {
     const message = err?.response?.data?.message;
     if (Array.isArray(message)) return message.join(", ");
@@ -197,10 +204,10 @@ const SignInCard: FC<SignInCardProps> = ({
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !isFormValid}
           className={`w-[90%] bg-[#ff641a] text-white font-semibold min-h-[39px] px-4 py-2 rounded-lg hover:bg-[#ff641a]/80 transition duration-300 flex items-center justify-center gap-2 ${
             submitError ? "flex-col text-center gap-1" : ""
-          }`}
+          } ${!isFormValid || loading ? "opacity-50 cursor-not-allowed" : ""}`}
           aria-live="polite"
         >
           {loading ? (

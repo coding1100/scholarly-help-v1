@@ -44,6 +44,11 @@ import {
   TutorMessageDto,
 } from "@/app/utils/studyApiClient";
 import {
+  hasReachedGuestQueryLimit,
+  incrementGuestQueryCount,
+  isGuest,
+} from "@/app/lib/client/guestStudyLimits";
+import {
   getStudyRecordingSnapshot,
   onStudyRecordingChange,
   stopStudyRecording,
@@ -904,6 +909,14 @@ export default function StudyWorkspace() {
     const message = tutorInput.trim();
     if (!message) return;
 
+    // Guests get 3 free questions; the 4th opens the email gate instead of sending.
+    if (hasReachedGuestQueryLimit()) {
+      window.dispatchEvent(
+        new CustomEvent("study:auth-gate", { detail: { reason: "query" } }),
+      );
+      return;
+    }
+
     const intent = detectStudyChatIntent(message);
     const suggestedMode = intentSuggestedMode(intent);
     let tutorMode = learningMode;
@@ -991,6 +1004,8 @@ export default function StudyWorkspace() {
           );
         },
         onDone: ({ citations, provenance }) => {
+          // Count successful guest questions toward the free allowance.
+          if (isGuest()) incrementGuestQueryCount();
           setTutorMessages((prev) =>
             prev.map((item) =>
               item._id === assistantMessageId
@@ -1874,12 +1889,12 @@ function TabCard({
     <div className="rounded-xl border border-[#e3e4f3] bg-white p-5 text-center shadow-[inset_0_0_0_1px_rgba(95,112,255,0.04)]">
       <p className="text-[34px] font-semibold tracking-tight text-[#1f2138]">{title}</p>
       <p className="mx-auto mt-3 max-w-xl text-sm text-[#6d7191]">{subtitle}</p>
-      <p>{!children ? (
+      {!children ? (
         <div className="mt-6 inline-flex items-center gap-1 rounded-full bg-[#f2f4ff] px-3 py-1 text-[11px] text-[#6d7191]">
           <FiZap className="h-3 w-3 text-[#6070ff]" />
           AI generation uses your imported source only
         </div>
-      ) : null}</p>
+      ) : null}
       <button
         type="button"
         onClick={onGenerate}

@@ -30,6 +30,11 @@ import {
 } from "@/app/utils/studyApiClient";
 import { startStudyRecording } from "@/app/lib/client/studyRecording";
 import { validateStudyUploadFileClient } from "@/app/lib/studyUploadConstraints";
+import {
+  hasReachedGuestSessionLimit,
+  incrementGuestSessionCount,
+  isGuest,
+} from "@/app/lib/client/guestStudyLimits";
 
 type UploadMode = "file" | "url" | "text" | "record";
 type InlineTone = "success" | "error" | "info";
@@ -137,9 +142,20 @@ export default function StudySourceIngestion({
   };
 
   const createAndOpenNewSession = async () => {
+    // The email gate lives on this button: a guest who already used their one
+    // free session must sign up before a second one is created. Open the gate
+    // (handled by the page) instead of creating, and do not count the attempt.
+    if (hasReachedGuestSessionLimit()) {
+      window.dispatchEvent(
+        new CustomEvent("study:auth-gate", { detail: { reason: "session" } }),
+      );
+      return;
+    }
+
     setIsSessionCreating(true);
     try {
       const session = await createStudySession("My Study Session");
+      if (isGuest()) incrementGuestSessionCount();
       await refreshSessions();
       switchSession(session._id);
       clearAllModeStatus();
