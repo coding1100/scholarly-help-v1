@@ -414,32 +414,37 @@ export default function Header() {
         {/* Phone Number - Shown for special routes (take-my-class, take-my-exam): always show number on mobile */}
 
         {isSpecialRoute && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center sm:gap-2 gap-1.5 shrink-0">
             {/* Text Us CTA (SMS) */}
             <a
               href={`sms:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER || "17167081869"}`}
-              className="flex items-center sm:text-primary-400 sm:text-[#565add] transition sm:bg-white bg-[#9F92EC] sm:rounded-none rounded-full sm:px-4 px-4 sm:py-0 py-1"
+              aria-label="Text us"
+              className="flex items-center justify-center sm:text-[#565add] text-white transition sm:bg-white bg-[#9F92EC] sm:rounded-none rounded-full sm:px-4 px-3 sm:py-0 py-1.5 sm:text-base text-sm whitespace-nowrap"
             >
-              <span className="w-6 mr-1 text-[#565add] sm:block hidden">
-                <MessageSquare size={22} aria-hidden="true" />
+              <span className="flex items-center justify-center w-5 sm:w-6 mr-1 sm:text-[#565add] text-white">
+                <MessageSquare className="w-[18px] h-[18px] sm:w-[22px] sm:h-[22px]" aria-hidden="true" />
               </span>
-              <span className="text-white sm:text-[#565add]">Text Us</span>
+              <span>Text Us</span>
             </a>
-            {/* Phone Number CTA (call) */}
+            {/* Phone Number CTA (call): number is hidden on the smallest screens
+                so two pills + logo fit; shown from sm up. */}
             <a
               href={`tel:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER || "17167081869"}`}
-              className="flex items-center sm:text-primary-400 sm:text-[#565add] transition sm:bg-white bg-[#9F92EC] sm:rounded-none rounded-full sm:px-0 px-4 sm:py-0 py-1"
+              aria-label="Call us"
+              className="flex items-center justify-center sm:text-[#565add] text-white transition sm:bg-white bg-[#9F92EC] sm:rounded-none rounded-full sm:px-0 px-3 sm:py-0 py-1.5 sm:text-base text-sm whitespace-nowrap"
             >
-              <span className="w-6 mr-1 text-primary-400 sm:block hidden">
+              <span className="flex items-center justify-center w-5 sm:w-6 sm:mr-1 sm:text-primary-400 text-white">
                 <Image
                   src={Phone}
-                  alt="Phone"
+                  alt=""
+                  aria-hidden="true"
                   width={22}
                   height={22}
+                  className="w-[18px] h-[18px] sm:w-[22px] sm:h-[22px]"
                   fetchPriority="high"
                 />
               </span>
-              <span className="text-white sm:text-[#565add]">+1 646 480 6092</span>
+              <span className="hidden sm:inline">+1 646 480 6092</span>
             </a>
           </div>
         )}
