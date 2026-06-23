@@ -232,7 +232,7 @@ export const content = {
         title: "Sociology",
       },
       {
-        url: "/assignment/pharmachology",
+        url: "/assignment/pharmacology",
         title: "Pharmacology",
       },
       {
