@@ -234,7 +234,8 @@ export default function AcademicResearchAdmin() {
           <div className="grid grid-cols-1 gap-4 mb-6">
             <input className={inputClass} value={pageData.pickSection?.heading || ""} onChange={(e) => updatePageData("pickSection.heading", e.target.value)} />
             <textarea rows={2} className={inputClass} value={pageData.pickSection?.description || ""} onChange={(e) => updatePageData("pickSection.description", e.target.value)} />
-            <input className={inputClass} value={pageData.pickSection?.showAllButtonText || ""} onChange={(e) => updatePageData("pickSection.showAllButtonText", e.target.value)} />
+            <input className={inputClass} placeholder="Show all button text" value={pageData.pickSection?.showAllButtonText || ""} onChange={(e) => updatePageData("pickSection.showAllButtonText", e.target.value)} />
+            <input className={inputClass} placeholder="Show less button text" value={pageData.pickSection?.showLessButtonText || ""} onChange={(e) => updatePageData("pickSection.showLessButtonText", e.target.value)} />
             <textarea
               rows={2}
               className={inputClass}
@@ -311,6 +312,8 @@ export default function AcademicResearchAdmin() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <input className={inputClass} placeholder="CTA button" value={pageData.dashboardSection?.ctaButton || ""} onChange={(e) => updatePageData("dashboardSection.ctaButton", e.target.value)} />
               <input className={inputClass} placeholder="CTA URL" value={pageData.dashboardSection?.ctaButtonUrl || ""} onChange={(e) => updatePageData("dashboardSection.ctaButtonUrl", e.target.value)} />
+              <input className={inputClass} placeholder="Login button" value={pageData.dashboardSection?.loginButton || ""} onChange={(e) => updatePageData("dashboardSection.loginButton", e.target.value)} />
+              <input className={inputClass} placeholder="Login URL" value={pageData.dashboardSection?.loginButtonUrl || ""} onChange={(e) => updatePageData("dashboardSection.loginButtonUrl", e.target.value)} />
             </div>
           </div>
           <h3 className="font-medium mb-3">Features</h3>
