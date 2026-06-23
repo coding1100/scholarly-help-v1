@@ -332,7 +332,7 @@ export const MetaData = {
       "Pay Someone To Do My Homework | Online Homework Help | Scholarly Help",
     description:
       "Doing architecture homework could be difficult. That’s where Scholarly Help comes. With “do my architecture homework” services, boost your score effortlessly.",
-    url: "homework/architetcure/",
+    url: "homework/architecture/",
   },
   homeArt: {
     title: "Hire an Expert to Do My Art Homework for Me | Scholarly Help",
@@ -416,7 +416,7 @@ export const MetaData = {
       "Help Me Do My Linguistics Homework | Linguistics Homework Help | Scholarly Help",
     description:
       "Help me do my linguistics homework. At Scholarly Help, we provide best homework services through professional subject experts. We deliver unique content before the deadline.",
-    url: "homework/linguististics/",
+    url: "homework/linguistics/",
   },
   homeMarketing: {
     title: "Do My Marketing Homework | Professional Homework Help",

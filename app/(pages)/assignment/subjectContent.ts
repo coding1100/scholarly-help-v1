@@ -193,10 +193,6 @@ export const assignmentSubjects = [
   "operation-management",
   "organizational-behavior",
   "pharmacology",
-  // Legacy misspelled slug kept as a valid alias so the previously-published
-  // /assignment/pharmachology URL (still linked in sitemap/content) renders the
-  // dynamic page instead of 404ing after the static folder was removed.
-  "pharmachology",
   "philosophy",
   "physics",
   "psychology",

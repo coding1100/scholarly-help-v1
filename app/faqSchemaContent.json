@@ -1384,7 +1384,7 @@
       }
     ]
   },
-  "/homework/architetcure/": {
+  "/homework/architecture/": {
     "@context": "https://schema.org",
     "@type": "FAQPage",
     "mainEntity": [
@@ -1902,7 +1902,7 @@
       }
     ]
   },
-  "/homework/linguististics/": {
+  "/homework/linguistics/": {
     "@context": "https://schema.org",
     "@type": "FAQPage",
     "mainEntity": [
@@ -3050,7 +3050,7 @@
       }
     ]
   },
-  "/assignment/pharmachology/": {
+  "/assignment/pharmacology/": {
     "@context": "https://schema.org",
     "@type": "FAQPage",
     "mainEntity": [
