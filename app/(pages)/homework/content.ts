@@ -227,7 +227,7 @@ export const content = {
         title: "Organizational Behavior",
       },
       {
-        url: "/homework/architetcure",
+        url: "/homework/architecture",
         title: "Architecture",
       },
       {
@@ -249,7 +249,7 @@ export const content = {
         title: "Nutrition",
       },
       {
-        url: "/homework/linguististics",
+        url: "/homework/linguistics",
         title: "Linguistics",
       },
       {
