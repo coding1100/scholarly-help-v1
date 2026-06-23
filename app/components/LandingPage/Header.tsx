@@ -415,25 +415,24 @@ export default function Header() {
 
         {isSpecialRoute && (
           <div className="flex items-center sm:gap-2 gap-1.5 shrink-0">
-            {/* Text Us CTA (SMS) */}
+            {/* Text Us CTA (SMS): same white-bg / purple look on mobile and desktop */}
             <a
               href={`sms:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER || "17167081869"}`}
               aria-label="Text us"
-              className="flex items-center justify-center sm:text-[#565add] text-white transition sm:bg-white bg-[#9F92EC] sm:rounded-none rounded-full sm:px-4 px-3 sm:py-0 py-1.5 sm:text-base text-sm whitespace-nowrap"
+              className="flex items-center justify-center text-[#565add] transition bg-white sm:px-4 px-2 sm:py-0 py-1 sm:text-base text-sm whitespace-nowrap"
             >
-              <span className="flex items-center justify-center w-5 sm:w-6 mr-1 sm:text-[#565add] text-white">
+              <span className="flex items-center justify-center w-5 sm:w-6 mr-1 text-[#565add]">
                 <MessageSquare className="w-[18px] h-[18px] sm:w-[22px] sm:h-[22px]" aria-hidden="true" />
               </span>
               <span>Text Us</span>
             </a>
-            {/* Phone Number CTA (call): number is hidden on the smallest screens
-                so two pills + logo fit; shown from sm up. */}
+            {/* Phone Number CTA (call): same white-bg / purple look on mobile and desktop */}
             <a
               href={`tel:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER || "17167081869"}`}
               aria-label="Call us"
-              className="flex items-center justify-center sm:text-[#565add] text-white transition sm:bg-white bg-[#9F92EC] sm:rounded-none rounded-full sm:px-0 px-3 sm:py-0 py-1.5 sm:text-base text-sm whitespace-nowrap"
+              className="flex items-center justify-center text-[#565add] transition bg-white sm:px-0 px-2 sm:py-0 py-1 sm:text-base text-sm whitespace-nowrap"
             >
-              <span className="flex items-center justify-center w-5 sm:w-6 sm:mr-1 sm:text-primary-400 text-white">
+              <span className="flex items-center justify-center w-5 sm:w-6 mr-1 text-[#565add]">
                 <Image
                   src={Phone}
                   alt=""
@@ -444,7 +443,7 @@ export default function Header() {
                   fetchPriority="high"
                 />
               </span>
-              <span className="hidden sm:inline">+1 646 480 6092</span>
+              <span>+1 646 480 6092</span>
             </a>
           </div>
         )}
