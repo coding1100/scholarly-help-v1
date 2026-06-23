@@ -1,4 +1,162 @@
-import { buildDefaultTabTools } from "./pickTabUtils";
+import {
+  flattenPickTools,
+  PickToolItem,
+} from "./pickTabUtils";
+
+const defaultPickTabTools: Record<string, PickToolItem[]> = {
+  "essay-writing": [
+    {
+      iconKey: "tmIcon1",
+      tag: "Popular",
+      heading: "AI Essay Generator",
+      description:
+        "Generate structured, high-quality essays with strong arguments, smooth transitions, and proper academic tone.",
+      buttonText: "Generate essay",
+      link: "/tools/main-tool",
+    },
+    {
+      iconKey: "tmIcon2",
+      tag: "Free",
+      heading: "AI Paraphraser",
+      description:
+        "Rewrite any text instantly while preserving its meaning, improving clarity and originality without losing your argument.",
+      buttonText: "Paraphrase text",
+      link: "/tools/paraphraser-tool",
+    },
+    {
+      iconKey: "tmIcon3",
+      tag: "Popular",
+      heading: "Essay Title Generator",
+      description:
+        "Create compelling, research-matched essay titles that signal your main argument and impress from the first line.",
+      buttonText: "Generate title",
+      link: "/tools/essay-title",
+    },
+    {
+      iconKey: "tmIcon4",
+      tag: "Popular",
+      heading: "Essay Outline Tool",
+      description:
+        "Create structured outlines that keep your writing on track with clear sections and logical flow.",
+      buttonText: "Build outline",
+      link: "/tools/essay-outline-tool",
+    },
+    {
+      iconKey: "tmIcon1",
+      tag: "New",
+      heading: "Humanizer Tool",
+      description:
+        "Make AI-generated text sound more natural and human while keeping your original meaning intact.",
+      buttonText: "Humanize text",
+      link: "/tools/humanizer-tool",
+    },
+  ],
+  research: [
+    {
+      iconKey: "tmIcon1",
+      tag: "Popular",
+      heading: "AI Thesis Generator",
+      description:
+        "Build a focused, arguable thesis statement for any topic. Adapts to your academic level and discipline.",
+      buttonText: "Build thesis",
+      link: "/tools/thesis-generator-tool",
+    },
+    {
+      iconKey: "tmIcon2",
+      tag: "Free",
+      heading: "Research Question Generator",
+      description:
+        "Turn vague topics into precise, measurable research questions at the right academic level for your paper.",
+      buttonText: "Generate question",
+      link: "/tools/research-question",
+    },
+    {
+      iconKey: "tmIcon3",
+      tag: "Popular",
+      heading: "Academic Research Assistant",
+      description:
+        "Draft, rewrite, and improve academic work with one focused research and writing editor.",
+      buttonText: "Start research",
+      link: "/tools/academic-research-assistant",
+    },
+    {
+      iconKey: "tmIcon4",
+      tag: "Popular",
+      heading: "Citation Generator",
+      description:
+        "Create accurate citations instantly in APA, MLA, Chicago, Harvard, and more. One click, no manual formatting.",
+      buttonText: "Generate citation",
+      link: "/tools/citation-tool",
+    },
+  ],
+  "math-science": [
+    {
+      iconKey: "tmIcon1",
+      tag: "Popular",
+      heading: "Pythagoras Equation Solver",
+      description:
+        "Instant triangle problem solutions with step-by-step working shown. Understand the method, not just the answer.",
+      buttonText: "Solve equation",
+      link: "/tools/pythagoras-solver",
+    },
+  ],
+  "study-tools": [
+    {
+      iconKey: "tmIcon1",
+      tag: "Popular",
+      heading: "AI Summarizer",
+      description:
+        "Condense long papers, PDFs, or articles into clear, digestible key points in seconds. Perfect for research and study notes.",
+      buttonText: "Summarize now",
+      link: "/tools/summarizer-tool",
+    },
+    {
+      iconKey: "tmIcon2",
+      tag: "New",
+      heading: "Tutor Tool",
+      description:
+        "Ask questions and get step-by-step explanations to understand concepts faster and study with confidence.",
+      buttonText: "Ask a question",
+      link: "/tools/tutor",
+    },
+    {
+      iconKey: "tmIcon3",
+      tag: "Free",
+      heading: "CGPA Calculator",
+      description:
+        "Calculate GPA and CGPA with an easy semester view to track your academic performance.",
+      buttonText: "Calculate GPA",
+      link: "/tools/cgpa-calculator",
+    },
+    {
+      iconKey: "tmIcon4",
+      tag: "New",
+      heading: "Exam Prep Tool",
+      description:
+        "Practice smarter with guided exam prep, quick drills, and focused revision sessions.",
+      buttonText: "Start prep",
+      link: "/tools/exam-prep",
+    },
+    {
+      iconKey: "tmIcon1",
+      tag: "New",
+      heading: "Language Practice",
+      description:
+        "Build fluency with structured language practice sessions tailored to your learning goals.",
+      buttonText: "Start practice",
+      link: "/tools/language-practice",
+    },
+    {
+      iconKey: "tmIcon2",
+      tag: "New",
+      heading: "Micro Learning",
+      description:
+        "Learn in short, guided steps you can finish anytime — perfect for busy study schedules.",
+      buttonText: "Start learning",
+      link: "/tools/micro-learning",
+    },
+  ],
+};
 
 export const defaultAcademicResearchContent = {
   id: "academic-research",
@@ -38,86 +196,13 @@ export const defaultAcademicResearchContent = {
       "All tools",
       "Essay writing",
       "Research",
-      "Citations",
       "Math & Science",
       "Study tools",
     ],
     showAllButtonText: "Show all 16 tools",
-    tools: [
-      {
-        iconKey: "tmIcon1",
-        tag: "POPULAR",
-        heading: "AI Essay Generator",
-        description:
-          "Generate structured, high-quality essays with strong arguments, smooth transitions, and proper academic tone.",
-        buttonText: "Generate Essay",
-        link: "/tools/essay-outline-tool",
-      },
-      {
-        iconKey: "tmIcon2",
-        tag: "FREE",
-        heading: "AI Paraphraser",
-        description:
-          "Rewrite any text instantly while preserving its meaning, improving clarity and originality without losing your argument.",
-        buttonText: "Paraphrase text",
-        link: "/tools/paraphraser-tool",
-      },
-      {
-        iconKey: "tmIcon3",
-        tag: "POPULAR",
-        heading: "AI Summarizer",
-        description:
-          "Condense long papers, PDFs, or articles into clear, digestible key points in seconds. Perfect for research and study notes.",
-        buttonText: "Summarize now",
-        link: "/tools/summarizer-tool",
-      },
-      {
-        iconKey: "tmIcon4",
-        tag: "POPULAR",
-        heading: "AI Thesis Generator",
-        description:
-          "Build a focused, arguable thesis statement for any topic. Adapts to your academic level and discipline.",
-        buttonText: "Build thesis",
-        link: "/tools/thesis-generator-tool",
-      },
-      {
-        iconKey: "tmIcon1",
-        tag: "POPULAR",
-        heading: "Citation Generator",
-        description:
-          "Create accurate citations instantly in APA, MLA, Chicago, Harvard, and more. One click, no manual formatting.",
-        buttonText: "Generate citation",
-        link: "/tools/citation-tool",
-      },
-      {
-        iconKey: "tmIcon2",
-        tag: "FREE",
-        heading: "Research Question Generator",
-        description:
-          "Turn vague topics into precise, measurable research questions at the right academic level for your paper.",
-        buttonText: "Generate question",
-        link: "/tools/research-question",
-      },
-      {
-        iconKey: "tmIcon3",
-        tag: "POPULAR",
-        heading: "Essay Title Generator",
-        description:
-          "Create compelling, research-matched essay titles that signal your main argument and impress from the first line.",
-        buttonText: "Generate title",
-        link: "/tools/essay-title",
-      },
-      {
-        iconKey: "tmIcon4",
-        tag: "POPULAR",
-        heading: "Pythagoras Equation Solver",
-        description:
-          "Instant triangle problem solutions with step-by-step working shown. Understand the method, not just the answer.",
-        buttonText: "Solve equation",
-        link: "/tools/pythagoras-solver",
-      },
-    ],
-    tabTools: {} as Record<string, import("./pickTabUtils").PickToolItem[]>,
+    showLessButtonText: "Show less",
+    tools: flattenPickTools(defaultPickTabTools),
+    tabTools: defaultPickTabTools,
   },
   dashboardSection: {
     badge: "SaaS Dashboard",
@@ -125,8 +210,10 @@ export const defaultAcademicResearchContent = {
     headingLine2: "All in One Place.",
     description:
       "The free tools are yours forever. But if you're using ScholarlyHelp regularly, the dashboard saves your history, lets you download results, and tracks your usage in one place.",
-    ctaButton: "Get free access",
+    ctaButton: "Create Free Account",
     ctaButtonUrl: "/sign-up",
+    loginButton: "Already have an account? Login",
+    loginButtonUrl: "/sign-in",
     features: [
       {
         title: "Save Every Result",
@@ -216,7 +303,3 @@ export const defaultAcademicResearchContent = {
 };
 
 export type AcademicResearchPageData = typeof defaultAcademicResearchContent;
-
-defaultAcademicResearchContent.pickSection.tabTools = buildDefaultTabTools(
-  defaultAcademicResearchContent.pickSection.tools,
-);

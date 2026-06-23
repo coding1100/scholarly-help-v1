@@ -33,11 +33,26 @@ function ToolCard({ tool }: { tool: PickToolItem }) {
     );
 }
 
+const ALL_TOOLS_PREVIEW_COUNT = 8;
+
 const MainToolPick: FC = () => {
     const pageData = useAcademicResearchData();
     const pick = pageData?.pickSection ?? defaultAcademicResearchContent.pickSection;
     const [activeTab, setActiveTab] = useState(pick.tabs[0] || "All tools");
+    const [showAllTools, setShowAllTools] = useState(false);
     const activeTools = getPickToolsForTab(pick, activeTab);
+    const isAllToolsTab = activeTab === "All tools";
+    const displayedTools =
+        isAllToolsTab && !showAllTools
+            ? activeTools.slice(0, ALL_TOOLS_PREVIEW_COUNT)
+            : activeTools;
+    const canToggleAllTools =
+        isAllToolsTab && activeTools.length > ALL_TOOLS_PREVIEW_COUNT;
+
+    const handleTabChange = (tab: string) => {
+        setActiveTab(tab);
+        setShowAllTools(false);
+    };
 
     return (
         <div id="pick-tools" className="w-full max-w-7xl container py-6 sm:py-9 px-4 sm:px-8 lg:px-14 rounded-lg mx-auto">
@@ -53,7 +68,7 @@ const MainToolPick: FC = () => {
                     <button
                         key={tab}
                         type="button"
-                        onClick={() => setActiveTab(tab)}
+                        onClick={() => handleTabChange(tab)}
                         className={`rounded-full py-2 px-4 sm:px-6 lg:px-9 text-sm sm:text-base ${
                             activeTab === tab
                                 ? "bg-[#534AB7] text-white"
@@ -67,16 +82,24 @@ const MainToolPick: FC = () => {
 
             <div className="py-6 sm:py-10">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                    {activeTools.map((tool) => (
+                    {displayedTools.map((tool) => (
                         <ToolCard key={`${activeTab}-${tool.heading}`} tool={tool} />
                     ))}
                 </div>
             </div>
-            <div className="w-full flex justify-center items-center">
-                <button className="w-full sm:w-fit bg-transparent border border-[#8E8E8E] text-black px-8 sm:px-11 py-3 text-base sm:text-[17px] mx-auto">
-                    {pick.showAllButtonText}
-                </button>
-            </div>
+            {canToggleAllTools && (
+                <div className="w-full flex justify-center items-center">
+                    <button
+                        type="button"
+                        onClick={() => setShowAllTools((prev) => !prev)}
+                        className="w-full sm:w-fit bg-transparent border border-[#8E8E8E] text-black px-8 sm:px-11 py-3 text-base sm:text-[17px] mx-auto"
+                    >
+                        {showAllTools
+                            ? (pick.showLessButtonText ?? "Show less")
+                            : pick.showAllButtonText}
+                    </button>
+                </div>
+            )}
         </div>
     );
 };
