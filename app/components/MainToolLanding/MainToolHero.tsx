@@ -8,9 +8,23 @@ import Image from "next/image";
 import { useAcademicResearchData } from "@/app/(pages)/academic-research/AcademicResearchDataProvider";
 import { defaultAcademicResearchContent } from "@/app/components/MainToolLanding/MainToolContent";
 
+function isHashLink(url: string) {
+    return url.startsWith("#");
+}
+
+function scrollToSection(hash: string) {
+    const id = hash.replace(/^#/, "");
+    const target = document.getElementById(id);
+    if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+}
+
 const MainToolHero: FC = () => {
     const pageData = useAcademicResearchData();
     const hero = pageData?.heroSection ?? defaultAcademicResearchContent.heroSection;
+    const btn1Url = hero.btn1Url || "#";
+    const btn1IsHashLink = isHashLink(btn1Url);
 
     return (
         <section className="main-tool-hero relative w-full overflow-hidden">
@@ -83,12 +97,22 @@ const MainToolHero: FC = () => {
                     />
                 </div>
                 <div className="flex flex-col sm:flex-row justify-center items-stretch sm:items-center gap-3 sm:gap-4 px-2 sm:px-0">
-                    <Link
-                        href={hero.btn1Url || "#"}
-                        className="bg-[#565ADD] text-base sm:text-xl text-white px-6 sm:px-9 py-3 rounded-[4px] text-center"
-                    >
-                        {hero.btn1}
-                    </Link>
+                    {btn1IsHashLink ? (
+                        <button
+                            type="button"
+                            onClick={() => scrollToSection(btn1Url)}
+                            className="bg-[#565ADD] text-base sm:text-xl text-white px-6 sm:px-9 py-3 rounded-[4px] text-center"
+                        >
+                            {hero.btn1}
+                        </button>
+                    ) : (
+                        <Link
+                            href={btn1Url}
+                            className="bg-[#565ADD] text-base sm:text-xl text-white px-6 sm:px-9 py-3 rounded-[4px] text-center"
+                        >
+                            {hero.btn1}
+                        </Link>
+                    )}
                     <Link
                         href={hero.btn2Url || "#"}
                         className="bg-white text-base sm:text-xl text-black px-6 sm:px-9 py-3 rounded-[4px] text-center"
@@ -120,6 +144,18 @@ const MainToolHero: FC = () => {
                             <p className="text-sm sm:text-base font-normal text-black">{spec}</p>
                         </div>
                     ))}
+                </div>
+                <div className="w-full flex justify-center items-center">
+                    <Link
+                        href="/sign-in/"
+                        className="group relative inline-block text-sm sm:text-base text-primary-400"
+                    >
+                        Already have an account? Signin
+                        <span
+                            aria-hidden="true"
+                            className="pointer-events-none absolute bottom-[-3px] left-1/2 block h-[1px] w-0 -translate-x-1/2 bg-[repeating-linear-gradient(to_right,#565add_0,#565add_6px,transparent_6px,transparent_12px)] transition-[width] duration-300 ease-out group-hover:w-full"
+                        />
+                    </Link>
                 </div>
             </div>
         </section>
