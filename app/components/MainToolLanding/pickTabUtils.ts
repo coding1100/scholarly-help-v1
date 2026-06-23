@@ -10,7 +10,6 @@ export type PickToolItem = {
 export const PICK_TAB_SLUGS: Record<string, string> = {
   "Essay writing": "essay-writing",
   Research: "research",
-  Citations: "citations",
   "Math & Science": "math-science",
   "Study tools": "study-tools",
 };
@@ -20,19 +19,22 @@ export function getPickTabSlug(tab: string) {
   return PICK_TAB_SLUGS[tab] || tab.toLowerCase().replace(/\s+/g, "-");
 }
 
-export function duplicatePickTools(tools: PickToolItem[]): PickToolItem[] {
-  return tools.map((tool) => ({ ...tool }));
-}
+export function flattenPickTools(
+  tabTools: Record<string, PickToolItem[]>,
+): PickToolItem[] {
+  const allTools: PickToolItem[] = [];
+  const seen = new Set<string>();
 
-export function buildDefaultTabTools(
-  allTools: PickToolItem[],
-): Record<string, PickToolItem[]> {
-  return Object.fromEntries(
-    Object.values(PICK_TAB_SLUGS).map((slug) => [
-      slug,
-      duplicatePickTools(allTools),
-    ]),
-  );
+  for (const slug of Object.values(PICK_TAB_SLUGS)) {
+    for (const tool of tabTools[slug] || []) {
+      if (!seen.has(tool.heading)) {
+        seen.add(tool.heading);
+        allTools.push({ ...tool });
+      }
+    }
+  }
+
+  return allTools;
 }
 
 export function getPickToolsForTab(
@@ -48,5 +50,5 @@ export function getPickToolsForTab(
   const tabTools = pickSection.tabTools?.[slug];
   if (Array.isArray(tabTools) && tabTools.length > 0) return tabTools;
 
-  return pickSection.tools;
+  return [];
 }
