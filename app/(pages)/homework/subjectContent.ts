@@ -278,12 +278,6 @@ export const homeworkSubjects = [
   "sociology",
   "statistics",
   "human-resources",
-  // Legacy misspelled slugs kept as valid aliases so the previously-published
-  // /homework/architetcure and /homework/linguististics URLs (still linked in
-  // sitemap/metadata/content) render the dynamic page instead of 404ing after
-  // the static folders were removed.
-  "architetcure",
-  "linguististics",
 ] as const;
 
 export type HomeworkSubject = typeof homeworkSubjects[number];

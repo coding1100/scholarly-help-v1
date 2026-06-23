@@ -122,6 +122,27 @@ const nextConfig = {
     return config;
   },
 
+  // Permanent redirects for previously-published misspelled subject URLs.
+  async redirects() {
+    return [
+      {
+        source: '/homework/architetcure',
+        destination: '/homework/architecture',
+        permanent: true,
+      },
+      {
+        source: '/homework/linguististics',
+        destination: '/homework/linguistics',
+        permanent: true,
+      },
+      {
+        source: '/assignment/pharmachology',
+        destination: '/assignment/pharmacology',
+        permanent: true,
+      },
+    ];
+  },
+
   // Headers for caching static assets and enabling bfcache
   async headers() {
     const isProd = process.env.NODE_ENV === 'production';
