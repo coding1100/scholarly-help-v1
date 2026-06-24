@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { FaFacebookF } from "react-icons/fa";
-import { useRouter } from "next/navigation";
 import { buildHrefWithSameQuery } from "@/app/utils/url";
 
 declare global {
@@ -23,7 +22,6 @@ const SocialAuthButtons = ({
   returnUrl,
   authAction,
 }: SocialAuthButtonsProps) => {
-  const route = useRouter();
   const googleButtonRef = useRef<HTMLDivElement | null>(null);
   const googleIframeObserverRef = useRef<MutationObserver | null>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -70,20 +68,21 @@ const SocialAuthButtons = ({
       if (resolvedEmail) localStorage.setItem("user_email", resolvedEmail);
       document.cookie = `access_token=${data.access_token}; path=/; max-age=86400`;
 
-      setTimeout(() => {
-        const redirectPath = returnUrl || "/tools/dashboard/";
-        const currentQs =
-          typeof window !== "undefined" ? window.location.search.slice(1) : "";
-        const redirectUrl = returnUrl
-          ? redirectPath
-          : buildHrefWithSameQuery(
-              redirectPath,
-              new URLSearchParams(currentQs),
-            );
-        route.replace(redirectUrl);
-      }, 100);
+      const redirectPath = returnUrl || "/tools/dashboard/";
+      const currentQs =
+        typeof window !== "undefined" ? window.location.search.slice(1) : "";
+      const redirectUrl = returnUrl
+        ? redirectPath
+        : buildHrefWithSameQuery(redirectPath, new URLSearchParams(currentQs));
+
+      // Hard navigation (not the client router): the access_token cookie was
+      // just set via document.cookie, and /tools/* is guarded by middleware.
+      // A client-side route.replace can race the cookie write and get bounced
+      // back to /sign-in; a full document load guarantees the new cookie is
+      // sent so middleware lets the request through.
+      window.location.assign(redirectUrl);
     },
-    [returnUrl, route],
+    [returnUrl],
   );
 
   const handleGoogleCallback = useCallback(
