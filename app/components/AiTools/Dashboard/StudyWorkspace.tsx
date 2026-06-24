@@ -416,6 +416,9 @@ export default function StudyWorkspace() {
   // run with the previous session's recordings still in state and leak them
   // into the new session's storage key before the load effect resets them.
   const loadedRecordingsSessionRef = useRef<string | null>(null);
+  // Guards against re-submitting an onboarding-handed tutor question more than
+  // once (the consuming effect can re-run on hydration/session changes).
+  const consumedPendingQuestionRef = useRef<string | null>(null);
   const livePreviewRef = useRef<HTMLVideoElement | null>(null);
   const tutorMessagesScrollRef = useRef<HTMLDivElement | null>(null);
   const tutorAttachmentInputRef = useRef<HTMLInputElement | null>(null);
@@ -925,12 +928,14 @@ export default function StudyWorkspace() {
     recognition.start();
   };
 
-  const submitTutorQuestion = async () => {
+  const submitTutorQuestion = async (explicitMessage?: string) => {
     if (!sessionId) {
       toast.error("Session is still loading. Please wait.");
       return;
     }
-    const message = tutorInput.trim();
+    // Allow an explicit message (e.g. the question typed on the onboarding
+    // screen) so we don't depend on the async tutorInput state being set yet.
+    const message = (explicitMessage ?? tutorInput).trim();
     if (!message) return;
 
     // Guests get 3 free questions; the 4th opens the email gate instead of sending.
@@ -1096,6 +1101,22 @@ export default function StudyWorkspace() {
     if (!container) return;
     container.scrollTop = container.scrollHeight;
   }, [tutorMessages]);
+
+  // Consume a question typed on the onboarding "Ask AI assistant" chat. It is
+  // stashed in sessionStorage because the tutor only mounts once the workspace
+  // is visible. Run after hydration so the submit has a ready session.
+  useEffect(() => {
+    if (!sessionId || isSessionHydrating || typeof window === "undefined") return;
+    const key = `study_pending_tutor_question_${sessionId}`;
+    const pending = window.sessionStorage.getItem(key);
+    if (!pending) return;
+    if (consumedPendingQuestionRef.current === key) return;
+    consumedPendingQuestionRef.current = key;
+    window.sessionStorage.removeItem(key);
+    setTutorInput(pending);
+    void submitTutorQuestion(pending);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, isSessionHydrating]);
 
   useEffect(() => {
     return () => {
@@ -1790,7 +1811,7 @@ export default function StudyWorkspace() {
               </button>
               <button
                 type="button"
-                onClick={submitTutorQuestion}
+                onClick={() => void submitTutorQuestion()}
                 disabled={isTutorResponding || isSessionHydrating}
                 className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#5f70ff] text-white disabled:opacity-60"
               >
