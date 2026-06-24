@@ -924,6 +924,17 @@ export default function StudySourceIngestion({
           >
             <FiChevronRight className="h-3.5 w-3.5" />
           </button>
+          {/* Delete is also available here so empty sessions (which only ever
+              show the onboarding view) can be removed. */}
+          <button
+            type="button"
+            onClick={() => setShowDeleteConfirm(true)}
+            disabled={!sessionId || isSessionListLoading || isDeletingSession}
+            aria-label="Delete session"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-[#ffd1d1] bg-white text-[#d75757] transition hover:bg-[#fff1f1] disabled:opacity-50"
+          >
+            <FiTrash2 className="h-3.5 w-3.5" />
+          </button>
         </div>
         <button
           type="button"
