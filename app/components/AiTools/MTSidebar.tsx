@@ -26,7 +26,7 @@ import {
 import { outlineToHtml } from "./MainTool/outlineGeneration";
 import { appendQueryString } from "@/app/utils/url";
 import { clearAuthSession } from "@/app/utils/auth";
-import { isGuest } from "@/app/lib/client/guestStudyLimits";
+import { isGuest, stashGuestMigrationId } from "@/app/lib/client/guestStudyLimits";
 import { upsertFbclidToolContext } from "@/app/utils/fbclidTracking";
 import { __TOOLS_SHEET_EVENT_NAME__ } from "@/app/utils/toolsSheetClient";
 import type { AssistantPanel } from "./MainTool/AcademicAssistantPanel";
@@ -171,8 +171,28 @@ const MTSidebar = ({
   // visitors (falls back to "User" only in the brief pre-hydration window).
   const displayName = guest ? "Guest" : userName;
   const authQs = searchParams?.toString() || "";
-  const signInHref = appendQueryString("/sign-in", authQs);
-  const signUpHref = appendQueryString("/sign-up", authQs);
+  // Carry a returnUrl back to the current workspace URL so that, after auth, the
+  // user lands here and the page's migration effect runs (claims the guest's
+  // stashed work onto the new account). Without a returnUrl the user would be
+  // sent to the default tools page and the migration would still fire, but
+  // returning here keeps them on their session.
+  const authReturnUrl =
+    typeof window !== "undefined"
+      ? `${window.location.pathname}${window.location.search}`
+      : currentRoute || "/tools/study-workspace";
+  const buildAuthHref = (base: string) => {
+    const params = new URLSearchParams(authQs);
+    params.set("returnUrl", authReturnUrl);
+    return `${base}?${params.toString()}`;
+  };
+  const signInHref = buildAuthHref("/sign-in");
+  const signUpHref = buildAuthHref("/sign-up");
+
+  // Before leaving for auth, remember the current guest id so the workspace can
+  // migrate that guest's sessions/queries onto the new account on return.
+  const handleAuthNavigate = () => {
+    stashGuestMigrationId();
+  };
 
   useEffect(() => {
     const fbclid = searchParams?.get("fbclid");
@@ -629,12 +649,14 @@ const MTSidebar = ({
             <div className="mt-2 flex items-center gap-2">
               <Link
                 href={signInHref}
+                onClick={handleAuthNavigate}
                 className="flex-1 rounded-md border border-primary-300 bg-white px-3 py-1.5 text-center text-sm font-semibold text-primary-400 transition-colors hover:bg-primary-200"
               >
                 Sign in
               </Link>
               <Link
                 href={signUpHref}
+                onClick={handleAuthNavigate}
                 className="flex-1 rounded-md bg-primary-400 px-3 py-1.5 text-center text-sm font-semibold text-white transition-colors hover:bg-primary-500"
               >
                 Sign Up
