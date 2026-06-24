@@ -410,6 +410,12 @@ export default function StudyWorkspace() {
   const [showExamTopicsModal, setShowExamTopicsModal] = useState(false);
   const [quizQuestionIndex, setQuizQuestionIndex] = useState(0);
   const handledRecordingResultIds = useRef<Set<string>>(new Set());
+  // Tracks which session the in-state `savedRecordings` were loaded for. The
+  // persist effect must only write back for THAT session — otherwise, when
+  // sessionId changes (e.g. after deleting a session), the persist effect can
+  // run with the previous session's recordings still in state and leak them
+  // into the new session's storage key before the load effect resets them.
+  const loadedRecordingsSessionRef = useRef<string | null>(null);
   const livePreviewRef = useRef<HTMLVideoElement | null>(null);
   const tutorMessagesScrollRef = useRef<HTMLDivElement | null>(null);
   const tutorAttachmentInputRef = useRef<HTMLInputElement | null>(null);
@@ -604,6 +610,10 @@ export default function StudyWorkspace() {
 
   useEffect(() => {
     if (!sessionId || typeof window === "undefined") return;
+    // Mark that the in-state recordings now belong to this session BEFORE we set
+    // them, so the persist effect (which also reacts to sessionId) won't write
+    // the previous session's recordings under this session's key.
+    loadedRecordingsSessionRef.current = sessionId;
     try {
       const raw = window.localStorage.getItem(`study_saved_recordings_${sessionId}`);
       if (!raw) {
@@ -612,9 +622,13 @@ export default function StudyWorkspace() {
         return;
       }
       const parsed = JSON.parse(raw) as SavedRecording[];
-      if (!Array.isArray(parsed)) return;
+      if (!Array.isArray(parsed)) {
+        setSavedRecordings([]);
+        setActiveRecordingId(null);
+        return;
+      }
       setSavedRecordings(parsed);
-      setActiveRecordingId((prev) => prev || parsed[0]?.id || null);
+      setActiveRecordingId(parsed[0]?.id || null);
     } catch {
       setSavedRecordings([]);
       setActiveRecordingId(null);
@@ -622,12 +636,22 @@ export default function StudyWorkspace() {
   }, [sessionId]);
 
   useEffect(() => {
-    if (!sessionId || typeof window === "undefined") return;
+    if (typeof window === "undefined") return;
+    // Persist reacts ONLY to savedRecordings changes — never to sessionId. This
+    // is critical: on a sessionId switch the load effect runs in the same commit
+    // and resets savedRecordings, but state updates are async, so a sessionId-
+    // triggered persist would still see the PREVIOUS session's recordings in its
+    // closure and write them under the NEW session's key (the reported leak).
+    // We write under the session those recordings were loaded for (the ref),
+    // which the load effect sets synchronously before any user mutation.
+    const ownerSession = loadedRecordingsSessionRef.current;
+    if (!ownerSession) return;
     window.localStorage.setItem(
-      `study_saved_recordings_${sessionId}`,
+      `study_saved_recordings_${ownerSession}`,
       JSON.stringify(savedRecordings),
     );
-  }, [savedRecordings, sessionId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [savedRecordings]);
 
   useEffect(() => {
     const stream = recordingSnapshot.previewStream;
