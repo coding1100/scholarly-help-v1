@@ -1,3 +1,6 @@
+"use client";
+
+import { useMemo, useState } from "react";
 import {
   FiBookOpen,
   FiBarChart,
@@ -16,9 +19,13 @@ import {
   FiTriangle,
   FiZap,
 } from "react-icons/fi";
-import ToolCard, { type ToolCardData } from "./ToolCard";
+import ToolCard, {
+  type ToolCardData,
+  type ToolCategory,
+} from "./ToolCard";
 
 const tools: ToolCardData[] = [
+  // Study tools
   {
     name: "Study Workspace",
     description:
@@ -26,131 +33,228 @@ const tools: ToolCardData[] = [
     href: "/tools/study-workspace",
     icon: FiBookmark,
     badge: "New",
-  },
-  {
-    name: "Academic Research Assistant",
-    description: "Draft, rewrite, and improve with one focused editor.",
-    href: "/tools/academic-research-assistant",
-    icon: FiEdit3,
-    badge: "Popular",
-  },
-  {
-    name: "Paraphraser Tool",
-    description: "Rephrase sentences to sound clearer and more academic.",
-    href: "/tools/paraphraser-tool",
-    icon: FiLayers,
+    category: "study-tools",
+    cta: "Open workspace",
   },
   {
     name: "Summarizer Tool",
     description: "Turn long readings into crisp, study-ready notes.",
     href: "/tools/summarizer-tool",
     icon: FiFileText,
-  },
-  {
-    name: "Humanizer Tool",
-    description: "Make AI text sound more natural and human.",
-    href: "/tools/humanizer-tool",
-    icon: FiSmile,
-  },
-  {
-    name: "AI Thesis Statement Generator",
-    description: "Generate strong thesis statements from your topic.",
-    href: "/tools/thesis-generator-tool",
-    icon: FiTarget,
-  },
-  {
-    name: "Essay Outline Tool",
-    description: "Create structured outlines that keep writing on track.",
-    href: "/tools/essay-outline-tool",
-    icon: FiBookOpen,
-  },
-  {
-    name: "Essay Title Generator",
-    description: "Get compelling titles that match your assignment tone.",
-    href: "/tools/essay-title",
-    icon: FiPenTool,
-  },
-  {
-    name: "Research Question Generator",
-    description: "Find clear, specific research questions fast.",
-    href: "/tools/research-question",
-    icon: FiSearch,
-  },
-  {
-    name: "Pythagoras Equation Solver",
-    description: "Solve right-triangle problems with clean steps.",
-    href: "/tools/pythagoras-solver",
-    icon: FiTriangle,
-  },
-  {
-    name: "Citation Tool",
-    description: "Create citations that look clean and consistent.",
-    href: "/tools/citation-tool",
-    icon: FiHash,
+    badge: "Popular",
+    category: "study-tools",
+    cta: "Summarize now",
   },
   {
     name: "Tutor Tool",
     description: "Ask questions and get step-by-step explanations.",
     href: "/tools/tutor",
     icon: FiHelpCircle,
-  },
-  {
-    name: "Micro Learning",
-    description: "Learn in short, guided steps you can finish.",
-    href: "/tools/micro-learning",
-    icon: FiZap,
-    badge: "Focus",
-  },
-  {
-    name: "Exam Prep",
-    description: "Practice smarter with guided prep and quick drills.",
-    href: "/tools/exam-prep",
-    icon: FiMessageSquare,
     badge: "New",
-  },
-  {
-    name: "Language Practice",
-    description: "Build fluency with structured practice sessions.",
-    href: "/tools/language-practice",
-    icon: FiGlobe,
+    category: "study-tools",
+    cta: "Ask a question",
   },
   {
     name: "CGPA Calculator",
     description: "Calculate GPA/CGPA with an easy semester view.",
     href: "/tools/cgpa-calculator",
     icon: FiBarChart,
+    badge: "Free",
+    category: "study-tools",
+    cta: "Calculate GPA",
+  },
+  {
+    name: "Exam Prep Tool",
+    description: "Practice smarter with guided prep and quick drills.",
+    href: "/tools/exam-prep",
+    icon: FiMessageSquare,
+    badge: "New",
+    category: "study-tools",
+    cta: "Start prep",
+  },
+  {
+    name: "Language Practice",
+    description: "Build fluency with structured practice sessions.",
+    href: "/tools/language-practice",
+    icon: FiGlobe,
+    badge: "New",
+    category: "study-tools",
+    cta: "Start practice",
+  },
+  {
+    name: "Micro Learning",
+    description: "Learn in short, guided steps you can finish.",
+    href: "/tools/micro-learning",
+    icon: FiZap,
+    badge: "New",
+    category: "study-tools",
+    cta: "Start learning",
+  },
+
+  // Essay writing
+  {
+    name: "AI Essay Generator",
+    description: "Draft, rewrite, and improve with one focused editor.",
+    href: "/tools/academic-research-assistant",
+    icon: FiEdit3,
+    badge: "Popular",
+    category: "essay-writing",
+    cta: "Generate essay",
+  },
+  {
+    name: "AI Paraphraser",
+    description: "Rephrase sentences to sound clearer and more academic.",
+    href: "/tools/paraphraser-tool",
+    icon: FiLayers,
+    badge: "Free",
+    category: "essay-writing",
+    cta: "Paraphrase text",
+  },
+  {
+    name: "Essay Title Generator",
+    description: "Get compelling titles that match your assignment tone.",
+    href: "/tools/essay-title",
+    icon: FiPenTool,
+    badge: "Popular",
+    category: "essay-writing",
+    cta: "Generate title",
+  },
+  {
+    name: "Essay Outline Tool",
+    description: "Create structured outlines that keep writing on track.",
+    href: "/tools/essay-outline-tool",
+    icon: FiBookOpen,
+    badge: "Popular",
+    category: "essay-writing",
+    cta: "Build outline",
+  },
+  {
+    name: "Humanizer Tool",
+    description: "Make AI text sound more natural and human.",
+    href: "/tools/humanizer-tool",
+    icon: FiSmile,
+    badge: "New",
+    category: "essay-writing",
+    cta: "Humanize text",
+  },
+
+  // Research
+  {
+    name: "AI Thesis Generator",
+    description: "Generate strong thesis statements from your topic.",
+    href: "/tools/thesis-generator-tool",
+    icon: FiTarget,
+    badge: "Popular",
+    category: "research",
+    cta: "Build thesis",
+  },
+  {
+    name: "Research Question Generator",
+    description: "Find clear, specific research questions fast.",
+    href: "/tools/research-question",
+    icon: FiSearch,
+    badge: "Free",
+    category: "research",
+    cta: "Generate question",
+  },
+  {
+    name: "Academic Research Assistant",
+    description: "Draft, rewrite, and improve with one focused editor.",
+    href: "/tools/academic-research-assistant",
+    icon: FiFileText,
+    badge: "Popular",
+    category: "research",
+    cta: "Start research",
+  },
+  {
+    name: "Citation Generator",
+    description: "Create citations that look clean and consistent.",
+    href: "/tools/citation-tool",
+    icon: FiHash,
+    badge: "Popular",
+    category: "research",
+    cta: "Generate citation",
+  },
+
+  // Math & Science
+  {
+    name: "Pythagoras Equation Solver",
+    description: "Solve right-triangle problems with clean steps.",
+    href: "/tools/pythagoras-solver",
+    icon: FiTriangle,
+    badge: "Popular",
+    category: "math-science",
+    cta: "Solve equation",
   },
 ];
 
+type TabKey = "all" | ToolCategory;
+
+const TABS: Array<{ key: TabKey; label: string }> = [
+  { key: "all", label: "All tools" },
+  { key: "essay-writing", label: "Essay writing" },
+  { key: "research", label: "Research" },
+  { key: "math-science", label: "Math & Science" },
+  { key: "study-tools", label: "Study tools" },
+];
+
 export default function ToolGrid() {
+  const [activeTab, setActiveTab] = useState<TabKey>("all");
+
+  const visibleTools = useMemo(
+    () =>
+      activeTab === "all"
+        ? tools
+        : tools.filter((tool) => tool.category === activeTab),
+    [activeTab],
+  );
+
+  const toolCount = visibleTools.length;
+
   return (
-    <section
-      id="tools"
-      className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8"
-    >
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-            Your academic toolkit
-          </h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600 dark:text-gray-300 sm:text-base">
-            Choose a tool, get results quickly, and keep moving. Everything is
-            designed to feel calm, premium, and easy to use.
-          </p>
-        </div>
-        <div className="rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 shadow-sm dark:border-gray-800 dark:bg-gray-850 dark:text-gray-200">
-          <div className="font-semibold">Tip for best results</div>
-          <div className="mt-0.5 text-gray-600 dark:text-gray-300">
-            Start with an outline, then paraphrase and polish.
-          </div>
-        </div>
+    <section id="tools" className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
+      {/* Category tabs — horizontally scrollable on mobile, wrap on desktop. */}
+      <div
+        role="tablist"
+        aria-label="Tool categories"
+        className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 scrollbar-hide sm:mx-0 sm:flex-wrap sm:px-0"
+      >
+        {TABS.map((tab) => {
+          const active = activeTab === tab.key;
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => setActiveTab(tab.key)}
+              className={`shrink-0 rounded-xl border px-4 py-2 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2 ${
+                active
+                  ? "border-primary-400 bg-primary-400 text-white"
+                  : "border-gray-200 bg-white text-gray-700 hover:border-primary-300 hover:bg-primary-100"
+              }`}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
-      <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {tools.map((tool) => (
-          <ToolCard key={tool.href} tool={tool} />
-        ))}
-      </div>
+      <p className="mt-4 text-sm font-medium text-gray-500 dark:text-gray-400">
+        {toolCount} {toolCount === 1 ? "tool" : "tools"}
+      </p>
+
+      {visibleTools.length > 0 ? (
+        <div className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {visibleTools.map((tool) => (
+            <ToolCard key={`${tool.category}-${tool.href}`} tool={tool} />
+          ))}
+        </div>
+      ) : (
+        <p className="mt-8 text-sm text-gray-500 dark:text-gray-400">
+          No tools in this category yet.
+        </p>
+      )}
     </section>
   );
 }
