@@ -31,6 +31,7 @@ import {
 import { startStudyRecording } from "@/app/lib/client/studyRecording";
 import { validateStudyUploadFileClient } from "@/app/lib/studyUploadConstraints";
 import {
+  hasReachedGuestQueryLimit,
   hasReachedGuestSessionLimit,
   incrementGuestSessionCount,
   isGuest,
@@ -246,6 +247,40 @@ export default function StudySourceIngestion({
     } finally {
       setIsDeletingSession(false);
     }
+  };
+
+  // Onboarding "Ask AI assistant" chat: hand the question to the real tutor.
+  // The StudyWorkspace tutor only mounts once the workspace is visible, so we
+  // stash the question (keyed by session) and reveal the workspace via
+  // onContentReady — the workspace picks the question up on mount and sends it.
+  const submitAssistantQuestion = () => {
+    const input = assistantInput.trim();
+    if (!input) return;
+    if (!sessionId) {
+      toast.error("Session is still loading. Please wait.");
+      return;
+    }
+    // Same guest gate as the in-workspace tutor: 4th question opens the email gate.
+    if (hasReachedGuestQueryLimit()) {
+      window.dispatchEvent(
+        new CustomEvent("study:auth-gate", { detail: { reason: "query" } }),
+      );
+      return;
+    }
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem(
+        `study_pending_tutor_question_${sessionId}`,
+        input,
+      );
+    }
+    setAssistantInput("");
+    // Reveal the workspace (mounts StudyWorkspace, which consumes the question).
+    onContentReady?.();
+    window.dispatchEvent(
+      new CustomEvent("study-tutor-question", {
+        detail: { sessionId, question: input },
+      }),
+    );
   };
 
   const startRecordingFlow = async () => {
@@ -819,6 +854,12 @@ export default function StudySourceIngestion({
             <input
               value={assistantInput}
               onChange={(e) => setAssistantInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  submitAssistantQuestion();
+                }
+              }}
               placeholder="Ask AI assistant..."
               className="min-w-0 flex-1 text-sm text-[#1d2435] outline-none placeholder:text-[#a2a7bc]"
             />
@@ -827,14 +868,8 @@ export default function StudySourceIngestion({
             </button>
             <button
               type="button"
-              onClick={() => {
-                const input = assistantInput.trim();
-                if (!input) return;
-                setAssistantInput("");
-                toast(`Tutor prompt saved: ${input.slice(0, 40)}...`, {
-                  icon: "✨",
-                });
-              }}
+              onClick={submitAssistantQuestion}
+              aria-label="Send question to AI tutor"
               className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#5f70ff] text-white"
             >
               <FiSend className="h-3.5 w-3.5" />
@@ -845,6 +880,12 @@ export default function StudySourceIngestion({
             <input
               value={assistantInput}
               onChange={(e) => setAssistantInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  submitAssistantQuestion();
+                }
+              }}
               placeholder="Ask AI assistant..."
               className="w-full text-md text-[#1d2435] outline-none placeholder:text-[#a2a7bc]"
             />
@@ -868,14 +909,8 @@ export default function StudySourceIngestion({
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    const input = assistantInput.trim();
-                    if (!input) return;
-                    setAssistantInput("");
-                    toast(`Tutor prompt saved: ${input.slice(0, 40)}...`, {
-                      icon: "✨",
-                    });
-                  }}
+                  onClick={submitAssistantQuestion}
+                  aria-label="Send question to AI tutor"
                   className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#5f70ff] text-white"
                 >
                   <FiSend className="h-4 w-4" />
