@@ -71,7 +71,11 @@ export async function POST(request: NextRequest) {
       if (obj && typeof obj === 'object') {
         const cleaned: any = {};
         for (const [key, value] of Object.entries(obj)) {
-          // Skip image/icon related fields
+          if (key === "iconKey") {
+            cleaned[key] = value;
+            continue;
+          }
+          // Skip image/icon related fields (but keep iconKey string references)
           if (key.toLowerCase().includes('icon') || 
               key.toLowerCase().includes('image') || 
               key.toLowerCase().includes('img') ||
