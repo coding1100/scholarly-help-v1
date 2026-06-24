@@ -67,6 +67,10 @@ export async function POST(request: NextRequest) {
       if (obj && typeof obj === "object") {
         const cleaned: Record<string, unknown> = {};
         for (const [key, value] of Object.entries(obj)) {
+          if (key === "iconKey") {
+            cleaned[key] = value;
+            continue;
+          }
           if (
             key.toLowerCase().includes("icon") ||
             key.toLowerCase().includes("image") ||
