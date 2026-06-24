@@ -9,6 +9,14 @@ function mergeArray<T>(fallback: T[], fromDb?: T[] | null): T[] {
   return fallback;
 }
 
+function mergeArrayByIndex<T extends object>(fallback: T[], fromDb?: T[] | null): T[] {
+  if (!Array.isArray(fromDb) || fromDb.length === 0) return fallback;
+  return fromDb.map((item, index) => ({
+    ...(fallback[index] ?? {}),
+    ...item,
+  }));
+}
+
 function mergeObject<T extends Record<string, unknown>>(
   fallback: T,
   fromDb?: Partial<T> | null,
@@ -26,7 +34,11 @@ function mergeTabTools(
   if (fromDb && typeof fromDb === "object") {
     for (const [slug, tools] of Object.entries(fromDb)) {
       if (Array.isArray(tools) && tools.length > 0) {
-        merged[slug] = tools;
+        const defaults = defaultTabTools[slug] || [];
+        merged[slug] = tools.map((item, index) => ({
+          ...(defaults[index] ?? {}),
+          ...item,
+        }));
       }
     }
   }
@@ -64,7 +76,7 @@ export function mergeAcademicResearchContent(
         defaultAcademicResearchContent.pickSection.tabs,
         pageData.pickSection?.tabs,
       ),
-      tools: mergeArray(
+      tools: mergeArrayByIndex(
         defaultAcademicResearchContent.pickSection.tools,
         pageData.pickSection?.tools,
       ),
@@ -100,7 +112,7 @@ export function mergeAcademicResearchContent(
     cardsSection: {
       ...defaultAcademicResearchContent.cardsSection,
       ...pageData.cardsSection,
-      cards: mergeArray(
+      cards: mergeArrayByIndex(
         defaultAcademicResearchContent.cardsSection.cards,
         pageData.cardsSection?.cards,
       ),

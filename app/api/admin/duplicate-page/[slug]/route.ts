@@ -22,6 +22,10 @@ function removeImageFields(obj: unknown): unknown {
   if (obj && typeof obj === "object") {
     const cleaned: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(obj)) {
+      if (key === "iconKey") {
+        cleaned[key] = value;
+        continue;
+      }
       const k = key.toLowerCase();
       if (
         k.includes("icon") ||
