@@ -642,7 +642,9 @@ const MTSidebar = ({
             </div>
           </div>
         )}
-        <UsageAndPricing setFlag={setFlag} flag={flag} />
+        {/* Token limit + See Pricing are not relevant to guests (no usage/account
+            yet) — show only once signed in. */}
+        {!guest && <UsageAndPricing setFlag={setFlag} flag={flag} />}
       </div>
       <PromptModal
         isOpen={isPromptModalOpen}

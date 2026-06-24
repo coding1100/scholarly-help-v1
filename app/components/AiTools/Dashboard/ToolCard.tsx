@@ -39,7 +39,7 @@ export default function ToolCard({ tool }: { tool: ToolCardData }) {
   // Compact card: icon + badge, tool name, and a per-tool action button. The
   // card itself is not clickable — only the button navigates.
   return (
-    <div className="group relative flex flex-col gap-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+    <div className="group relative flex flex-col gap-4 rounded-2xl border border-gray-200 bg-primary-100 p-4 shadow-[0_4px_16px_rgba(86,90,221,0.08)] transition duration-200 hover:-translate-y-1 hover:border-primary-300 hover:bg-white hover:shadow-[0_12px_28px_rgba(86,90,221,0.20)]">
       <div className="flex w-full items-start justify-between gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-200 text-primary-400 ring-1 ring-primary-300">
           <Icon className="h-5 w-5" />
