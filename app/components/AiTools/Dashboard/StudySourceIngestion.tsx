@@ -49,7 +49,8 @@ const UPLOAD_OPTIONS: Array<{
   { value: "file", label: "File", subLabel: "Upload File", icon: FiFolderPlus },
   { value: "url", label: "Link", subLabel: "Paste a Link", icon: FiLink },
   { value: "text", label: "Text", subLabel: "Paste some Text", icon: FiFolderPlus },
-  { value: "record", label: "Record", subLabel: "Record Live Audio", icon: FiMic },
+  // "Record" intentionally hidden per product feedback — the recording flow code
+  // remains below but is not offered as a source option.
 ];
 
 type StudySourceIngestionProps = {
@@ -451,7 +452,7 @@ export default function StudySourceIngestion({
         Select Option
       </p>
       <div
-        className={`grid grid-cols-2 md:grid-cols-4 ${isCompact ? "mt-1.5 gap-1.5" : "mt-3 gap-2"}`}
+        className={`grid grid-cols-2 sm:grid-cols-3 ${isCompact ? "mt-1.5 gap-1.5" : "mt-3 gap-2"}`}
       >
         {UPLOAD_OPTIONS.map((option) => {
           const Icon = option.icon;
