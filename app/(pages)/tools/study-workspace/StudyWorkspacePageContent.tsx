@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { FiLoader } from "react-icons/fi";
 import ToolsLayout from "@/app/components/AiTools/ToolsLayout";
@@ -59,19 +59,34 @@ export default function StudyWorkspacePageContent() {
   }, []);
 
   // After returning signed in, migrate the guest's work onto the new account.
-  useEffect(() => {
-    if (isGuest()) return;
-    const pendingGuestId = takePendingGuestMigrationId();
-    if (!pendingGuestId) return;
-    claimGuestStudyData(pendingGuestId).catch((error) => {
-      console.error("Failed to migrate guest study data", error);
-    });
+  // Run exactly once and expose the promise so bootstrap can await it BEFORE
+  // listing sessions — otherwise bootstrap may list (and create a fresh empty
+  // session) before the claim commits, and the migrated work won't appear.
+  const migrationPromiseRef = useRef<Promise<void> | null>(null);
+  const ensureGuestMigration = useCallback((): Promise<void> => {
+    if (migrationPromiseRef.current) return migrationPromiseRef.current;
+    const run = (async () => {
+      if (isGuest()) return;
+      const pendingGuestId = takePendingGuestMigrationId();
+      if (!pendingGuestId) return;
+      try {
+        await claimGuestStudyData(pendingGuestId);
+      } catch (error) {
+        console.error("Failed to migrate guest study data", error);
+      }
+    })();
+    migrationPromiseRef.current = run;
+    return run;
   }, []);
 
   useEffect(() => {
     let active = true;
 
     async function bootstrapStudySession() {
+      // Migrate guest work first so the freshly-claimed sessions are visible to
+      // the list call below (prevents creating a duplicate empty session).
+      await ensureGuestMigration();
+      if (!active) return;
       const qsSessionId = searchParams.get("sessionId");
       const localSessionId = getActiveStudySessionId();
       const sessions = await listStudySessions();
@@ -112,7 +127,7 @@ export default function StudyWorkspacePageContent() {
     return () => {
       active = false;
     };
-  }, [pathname, router, searchParams]);
+  }, [pathname, router, searchParams, ensureGuestMigration]);
 
   const refreshSessionContentState = useCallback(async (targetSessionId: string) => {
     try {
