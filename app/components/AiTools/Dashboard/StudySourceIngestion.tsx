@@ -214,8 +214,19 @@ export default function StudySourceIngestion({
       return;
     }
     setIsDeletingSession(true);
+    const deletedSessionId = sessionId;
     try {
-      await deleteStudySession(sessionId);
+      await deleteStudySession(deletedSessionId);
+      // Purge this session's client-only state so saved recordings / workspace
+      // state can never leak into another session (or reappear after delete).
+      if (typeof window !== "undefined") {
+        window.localStorage.removeItem(
+          `study_saved_recordings_${deletedSessionId}`,
+        );
+        window.localStorage.removeItem(
+          `study_workspace_state_${deletedSessionId}`,
+        );
+      }
       const list = await listStudySessions();
       if (list.length > 0) {
         const nextSessionId = list[0]._id;
