@@ -26,6 +26,7 @@ import {
 import { outlineToHtml } from "./MainTool/outlineGeneration";
 import { appendQueryString } from "@/app/utils/url";
 import { clearAuthSession } from "@/app/utils/auth";
+import { isGuest } from "@/app/lib/client/guestStudyLimits";
 import { upsertFbclidToolContext } from "@/app/utils/fbclidTracking";
 import { __TOOLS_SHEET_EVENT_NAME__ } from "@/app/utils/toolsSheetClient";
 import type { AssistantPanel } from "./MainTool/AcademicAssistantPanel";
@@ -85,6 +86,9 @@ const MTSidebar = ({
   const [showTools, setShowTools] = useState(false);
   const [userName, setUserName] = useState("User");
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  // Guests (no auth token) are shown as "Guest" with sign-in / sign-up actions.
+  // Defaults to false during SSR so the markup is stable until we read storage.
+  const [guest, setGuest] = useState(false);
   const accessToken =
     typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
   const isVerifying = useRef(false);
@@ -159,8 +163,16 @@ const MTSidebar = ({
       const image = localStorage.getItem("profile_image");
       if (name) setUserName(name);
       if (image) setProfileImage(image);
+      setGuest(isGuest());
     }
   }, []);
+
+  // Display label: real name when known, otherwise "Guest" for logged-out
+  // visitors (falls back to "User" only in the brief pre-hydration window).
+  const displayName = guest ? "Guest" : userName;
+  const authQs = searchParams?.toString() || "";
+  const signInHref = appendQueryString("/sign-in", authQs);
+  const signUpHref = appendQueryString("/sign-up", authQs);
 
   useEffect(() => {
     const fbclid = searchParams?.get("fbclid");
@@ -455,9 +467,16 @@ const MTSidebar = ({
       {/* 1. User Profile Section */}
       <div className="relative flex-shrink-0 mb-2">
         <div
-          className="flex items-center w-full gap-2 cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-700 rounded-md transition-colors duration-300"
+          className={`flex items-center w-full gap-2 rounded-md transition-colors duration-300 ${
+            guest
+              ? ""
+              : "cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-700"
+          }`}
           // ref={profileRef}
-          onClick={() => setShowPopover((prev) => !prev)}
+          onClick={() => {
+            if (guest) return;
+            setShowPopover((prev) => !prev);
+          }}
         >
           {/* <div className="flex items-center gap-2"> */}
           {profileImage ? (
@@ -470,25 +489,30 @@ const MTSidebar = ({
             />
           ) : (
             <div className="w-8 h-8 flex items-center justify-center bg-indigo-200 dark:bg-indigo-700 text-indigo-700 dark:text-indigo-200 font-bold rounded-full text-sm uppercase">
-              {userName.charAt(0)}
+              {displayName.charAt(0)}
             </div>
           )}
           <span className="text-md font-semibold text-gray-800 dark:text-gray-200">
-            {userName}
+            {displayName}
           </span>
           {/* </div> */}
 
-          <span className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors">
-            <HiOutlineChevronUpDown className="h-4 w-4" />
-          </span>
+          {!guest && (
+            <span className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors">
+              <HiOutlineChevronUpDown className="h-4 w-4" />
+            </span>
+          )}
           <button
-            onClick={onToggle}
-            className="text-gray-500 dark:text-gray-400 block lg:hidden hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggle?.();
+            }}
+            className="ml-auto text-gray-500 dark:text-gray-400 block lg:hidden hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
           >
             <BiChevronsLeft className="h-5 w-5" />
           </button>
         </div>
-        {showPopover && (
+        {!guest && showPopover && (
           <div className="absolute left-0 mt-2 z-50">
             <AccountPopover setFlag={setFlag} flag={flag} />
           </div>
@@ -596,6 +620,28 @@ const MTSidebar = ({
       </div>
 
       <div className="flex-shrink-0 mt-auto">
+        {guest && (
+          <div className="mb-3 rounded-lg border border-primary-300 bg-primary-100 p-3">
+            <p className="text-xs font-medium text-gray-600">
+              Optional: sign in or create an account to save your work across
+              devices.
+            </p>
+            <div className="mt-2 flex items-center gap-2">
+              <Link
+                href={signInHref}
+                className="flex-1 rounded-md border border-primary-300 bg-white px-3 py-1.5 text-center text-sm font-semibold text-primary-400 transition-colors hover:bg-primary-200"
+              >
+                Sign in
+              </Link>
+              <Link
+                href={signUpHref}
+                className="flex-1 rounded-md bg-primary-400 px-3 py-1.5 text-center text-sm font-semibold text-white transition-colors hover:bg-primary-500"
+              >
+                Sign Up
+              </Link>
+            </div>
+          </div>
+        )}
         <UsageAndPricing setFlag={setFlag} flag={flag} />
       </div>
       <PromptModal
