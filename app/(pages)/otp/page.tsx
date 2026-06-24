@@ -5,11 +5,9 @@ import Image from "next/image";
 import Logo from "@/app/assets/Images/logo.png";
 import toast from "react-hot-toast";
 import axios from "axios";
-import { useRouter } from "next/navigation";
 import OTPInput from "./OTPInput";
 
 const OTPPage = () => {
-  const route = useRouter();
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -54,6 +52,9 @@ const OTPPage = () => {
       localStorage.setItem("user_name", userData.user.name);
       localStorage.setItem("package_type", userData.user.plan);
       localStorage.setItem("totalTokens", userData.user.total_tokens);
+      // Middleware guards /tools/* by the access_token COOKIE (not localStorage),
+      // so it must be set here or the redirect below bounces back to sign-in.
+      document.cookie = `access_token=${userData.access_token}; path=/; max-age=86400`;
 
       toast.dismiss();
       toast.success(response?.data?.message || "Email verified successfully!");
@@ -64,7 +65,8 @@ const OTPPage = () => {
       // Only honour same-origin internal paths to avoid open-redirects.
       const safeReturn =
         returnUrl && returnUrl.startsWith("/") ? returnUrl : null;
-      route.push(safeReturn || "/tools/paraphraser-tool/");
+      // Hard navigation so the freshly-set cookie is sent with the request.
+      window.location.assign(safeReturn || "/tools/paraphraser-tool/");
     } catch (error: any) {
       toast.dismiss();
       const errorMessage =

@@ -6,7 +6,7 @@ import { FaArrowRight } from "react-icons/fa";
 import Image from "next/image";
 import Logo from "@/app/assets/Images/logo.png";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import axios from "axios";
 import AuthButtonSpinner from "./AuthButtonSpinner";
 import SocialAuthButtons from "./SocialAuthButtons";
@@ -25,7 +25,6 @@ const SignInCard: FC<SignInCardProps> = ({
   setSwitchAuthForm,
   returnUrl: returnUrlProp,
 }) => {
-  const route = useRouter();
   const searchParams = useSearchParams();
   const returnUrl = returnUrlProp ?? searchParams.get("returnUrl");
   const qs = searchParams?.toString() || "";
@@ -76,16 +75,18 @@ const SignInCard: FC<SignInCardProps> = ({
       if (resolvedEmail) localStorage.setItem("user_email", resolvedEmail);
       document.cookie = `access_token=${data.access_token}; path=/; max-age=86400`;
 
-      setTimeout(() => {
-        const redirectPath = returnUrl || "/tools/dashboard/";
-        const qs = searchParams?.toString() || "";
-        const redirectUrl = returnUrl
-          ? redirectPath
-          : buildHrefWithSameQuery(redirectPath, new URLSearchParams(qs));
-        route.replace(redirectUrl);
-      }, 100);
+      const redirectPath = returnUrl || "/tools/dashboard/";
+      const qs = searchParams?.toString() || "";
+      const redirectUrl = returnUrl
+        ? redirectPath
+        : buildHrefWithSameQuery(redirectPath, new URLSearchParams(qs));
+
+      // Hard navigation so the just-set access_token cookie is sent with the
+      // request — /tools/* is middleware-guarded and a client-side replace can
+      // race the cookie write and bounce back to /sign-in.
+      window.location.assign(redirectUrl);
     },
-    [returnUrl, route, searchParams, email],
+    [returnUrl, searchParams, email],
   );
 
   const currentPage = usePathname();
@@ -97,13 +98,11 @@ const SignInCard: FC<SignInCardProps> = ({
       document.cookie = `access_token=${token}; path=/; max-age=86400`;
 
       if (returnUrl) {
-        // Small delay to ensure cookie is set before redirect
-        setTimeout(() => {
-          route.replace(returnUrl);
-        }, 100);
+        // Hard navigation so middleware sees the cookie (see persist above).
+        window.location.assign(returnUrl);
       }
     }
-  }, [returnUrl, route]);
+  }, [returnUrl]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
