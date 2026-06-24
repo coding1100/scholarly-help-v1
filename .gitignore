@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Playwright MCP scratch artifacts
+.playwright-mcp/
+/sidebar-final.png
+/sidebar-auth-bottom-desktop.png
+/study-workspace-guest-sidebar.png
+/toolgrid-mobile-375.png
