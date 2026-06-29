@@ -9,24 +9,66 @@ import { useAcademicResearchData } from "@/app/(pages)/academic-research/Academi
 import { defaultAcademicResearchContent } from "@/app/components/MainToolLanding/MainToolContent";
 import { useExpertQuoteModal } from "@/app/components/MainToolLanding/ExpertQuoteModal";
 
-function isHashLink(url: string) {
-    return url.startsWith("#");
+const PICK_TOOLS_SECTION_ID = "pick-tools";
+const HEADER_SCROLL_OFFSET = 96;
+
+function resolveScrollTargetId(url: string): string | null {
+    const trimmed = url.trim();
+    if (!trimmed || trimmed === "#") return null;
+
+    if (trimmed.startsWith("#")) {
+        const id = trimmed.slice(1);
+        return id || null;
+    }
+
+    const hashIndex = trimmed.indexOf("#");
+    if (hashIndex !== -1) {
+        const id = trimmed.slice(hashIndex + 1);
+        return id || null;
+    }
+
+    if (!trimmed.includes("/") && !trimmed.startsWith("http")) {
+        return trimmed;
+    }
+
+    return null;
 }
 
-function scrollToSection(hash: string) {
-    const id = hash.replace(/^#/, "");
-    const target = document.getElementById(id);
-    if (target) {
-        target.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+function scrollToSection(url: string) {
+    const id = resolveScrollTargetId(url);
+    if (!id) return;
+
+    const performScroll = () => {
+        const target = document.getElementById(id);
+        if (!target) return false;
+
+        const top =
+            target.getBoundingClientRect().top +
+            window.scrollY -
+            HEADER_SCROLL_OFFSET;
+        window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+        return true;
+    };
+
+    if (performScroll()) return;
+
+    requestAnimationFrame(() => {
+        if (!performScroll()) {
+            requestAnimationFrame(performScroll);
+        }
+    });
 }
 
 const MainToolHero: FC = () => {
     const pageData = useAcademicResearchData();
     const { openExpertQuoteModal } = useExpertQuoteModal();
     const hero = pageData?.heroSection ?? defaultAcademicResearchContent.heroSection;
-    const btn1Url = hero.btn1Url || "#";
-    const btn1IsHashLink = isHashLink(btn1Url);
+    const btn1Url =
+        hero.btn1Url?.trim() ||
+        defaultAcademicResearchContent.heroSection.btn1Url ||
+        `#${PICK_TOOLS_SECTION_ID}`;
+    const btn1ScrollTargetId = resolveScrollTargetId(btn1Url);
+    const btn1IsScrollLink = btn1ScrollTargetId !== null;
 
     return (
         <section className="main-tool-hero relative w-full overflow-hidden">
@@ -99,7 +141,7 @@ const MainToolHero: FC = () => {
                     />
                 </div>
                 <div className="flex flex-col sm:flex-row justify-center items-stretch sm:items-center gap-3 sm:gap-4 px-2 sm:px-0">
-                    {/* {btn1IsHashLink ? ( */}
+                    {btn1IsScrollLink ? (
                         <button
                             type="button"
                             onClick={() => scrollToSection(btn1Url)}
@@ -107,14 +149,14 @@ const MainToolHero: FC = () => {
                         >
                             {hero.btn1}
                         </button>
-                    {/* ) : (
+                    ) : (
                         <Link
                             href={btn1Url}
                             className="bg-[#565ADD] text-base sm:text-xl text-white px-6 sm:px-9 py-3 rounded-[4px] text-center"
                         >
                             {hero.btn1}
                         </Link>
-                    )} */}
+                    )}
                     <button
                         type="button"
                         onClick={openExpertQuoteModal}

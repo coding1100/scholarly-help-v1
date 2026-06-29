@@ -55,7 +55,10 @@ const MainToolPick: FC = () => {
     };
 
     return (
-        <div id="pick-tools" className="w-full max-w-7xl container py-6 sm:py-9 px-4 sm:px-8 lg:px-14 rounded-lg mx-auto">
+        <div
+            id="pick-tools"
+            className="w-full max-w-7xl container scroll-mt-24 py-6 sm:py-9 px-4 sm:px-8 lg:px-14 rounded-lg mx-auto"
+        >
             <p className="text-[28px] sm:text-[34px] lg:text-[42px] font-bold text-center leading-tight">
                 {pick.heading}
             </p>
