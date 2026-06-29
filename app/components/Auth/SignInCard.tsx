@@ -11,6 +11,7 @@ import axios from "axios";
 import AuthButtonSpinner from "./AuthButtonSpinner";
 import SocialAuthButtons from "./SocialAuthButtons";
 import { buildHrefWithSameQuery } from "@/app/utils/url";
+import { validateEmail, validateSignInPassword } from "@/app/lib/authValidation";
 
 interface SignInCardProps {
   switchAuthForm?: string;
@@ -33,9 +34,16 @@ const SignInCard: FC<SignInCardProps> = ({
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  // Inline field validation. Errors are only surfaced once a field is "touched"
+  // (blurred or after a submit attempt), so the user isn't scolded mid-typing.
+  const [touched, setTouched] = useState<{ email: boolean; password: boolean }>({
+    email: false,
+    password: false,
+  });
 
-  // Require both fields before the Sign In button is enabled.
-  const isFormValid = email.trim().length > 0 && password.length > 0;
+  const emailError = validateEmail(email);
+  const passwordError = validateSignInPassword(password);
+  const isFormValid = !emailError && !passwordError;
   const getApiErrorMessage = (err: any, fallback: string) => {
     const message = err?.response?.data?.message;
     if (Array.isArray(message)) return message.join(", ");
@@ -107,7 +115,10 @@ const SignInCard: FC<SignInCardProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
-    const newEmail = email.toLowerCase();
+    // Surface any field errors and block the request if invalid.
+    setTouched({ email: true, password: true });
+    if (emailError || passwordError) return;
+    const newEmail = email.trim().toLowerCase();
     let payload: any = {
       email: newEmail,
       password,
@@ -158,12 +169,22 @@ const SignInCard: FC<SignInCardProps> = ({
             <input
               type="email"
               placeholder="Enter your email address"
-              className="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className={`w-full pl-10 pr-4 py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 ${
+                touched.email && emailError
+                  ? "ring-2 ring-[#F73032] focus:ring-[#F73032]"
+                  : "focus:ring-indigo-500"
+              }`}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              onBlur={() => setTouched((p) => ({ ...p, email: true }))}
+              aria-invalid={touched.email && !!emailError}
+              autoComplete="email"
               required
             />
           </div>
+          {touched.email && emailError && (
+            <p className="text-[#F73032] text-xs mt-1">{emailError}</p>
+          )}
         </div>
         <div>
           <label className="text-sm font-medium ">Password</label>
@@ -171,20 +192,31 @@ const SignInCard: FC<SignInCardProps> = ({
             <input
               type={showPassword ? "text" : "password"}
               placeholder="Enter your password"
-              className="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className={`w-full pl-4 pr-10 py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 ${
+                touched.password && passwordError
+                  ? "ring-2 ring-[#F73032] focus:ring-[#F73032]"
+                  : "focus:ring-indigo-500"
+              }`}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              onBlur={() => setTouched((p) => ({ ...p, password: true }))}
+              aria-invalid={touched.password && !!passwordError}
+              autoComplete="current-password"
               required
             />
             <button
               type="button"
-              className="absolute left-3 top-1/2 cursor-pointer -translate-y-1/2 "
+              className="absolute right-3 top-1/2 cursor-pointer -translate-y-1/2 text-gray-500"
               tabIndex={0}
+              aria-label={showPassword ? "Hide password" : "Show password"}
               onClick={() => setShowPassword((prev) => !prev)}
             >
               {showPassword ? <FiEyeOff /> : <FiEye />}
             </button>
           </div>
+          {touched.password && passwordError && (
+            <p className="text-[#F73032] text-xs mt-1">{passwordError}</p>
+          )}
         </div>
         {submitError && (
           <span className="text-xs font-normal leading-tight text-[#F73032]">

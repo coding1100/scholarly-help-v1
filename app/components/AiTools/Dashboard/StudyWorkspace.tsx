@@ -325,6 +325,117 @@ function StudyTutorMarkdown({ content }: { content: string }) {
   );
 }
 
+// Full-page Markdown renderer for the AI Summary tab. Unlike the compact tutor
+// chat styling, this uses a real heading hierarchy, generous spacing, and
+// left-aligned text so headings, bullets, and paragraphs read as a polished,
+// scannable document.
+function StudySummaryMarkdown({ content }: { content: string }) {
+  return (
+    <div className="summary-md max-w-none break-words text-left text-[15px] leading-7 text-[#3a3f5c]">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm as never]}
+        components={{
+          h1: ({ children }) => (
+            <h2 className="mb-3 mt-6 border-b border-[#e3e7ff] pb-2 text-[22px] font-bold leading-snug text-[#1c2138] first:mt-0">
+              {children}
+            </h2>
+          ),
+          h2: ({ children }) => (
+            <h3 className="mb-2.5 mt-6 text-[18px] font-bold leading-snug text-[#2a2d4a] first:mt-0">
+              {children}
+            </h3>
+          ),
+          h3: ({ children }) => (
+            <h4 className="mb-2 mt-5 text-[16px] font-semibold leading-snug text-[#3a3d5c] first:mt-0">
+              {children}
+            </h4>
+          ),
+          h4: ({ children }) => (
+            <h5 className="mb-1.5 mt-4 text-[14px] font-semibold uppercase tracking-wide text-[#5f70ff] first:mt-0">
+              {children}
+            </h5>
+          ),
+          p: ({ children }) => (
+            <p className="mb-4 leading-7 last:mb-0">{children}</p>
+          ),
+          ul: ({ children }) => (
+            <ul className="mb-4 ml-1 list-disc space-y-2 pl-5 marker:text-[#6c7aff]">
+              {children}
+            </ul>
+          ),
+          ol: ({ children }) => (
+            <ol className="mb-4 ml-1 list-decimal space-y-2 pl-5 marker:font-semibold marker:text-[#6c7aff]">
+              {children}
+            </ol>
+          ),
+          li: ({ children }) => <li className="pl-1 leading-7">{children}</li>,
+          strong: ({ children }) => (
+            <strong className="font-semibold text-[#1c2138]">{children}</strong>
+          ),
+          em: ({ children }) => <em className="italic text-[#4a4f72]">{children}</em>,
+          blockquote: ({ children }) => (
+            <blockquote className="my-4 border-l-4 border-[#b8c4ff] bg-[#f7f8ff] py-2 pl-4 pr-3 text-[#5a5f82]">
+              {children}
+            </blockquote>
+          ),
+          hr: () => <hr className="my-6 border-[#e3e7ff]" />,
+          a: ({ href, children, ...props }) => (
+            <a
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-[#4f5dff] underline decoration-[#c9d1ff] underline-offset-2 hover:text-[#3d49e6]"
+              {...props}
+            >
+              {children}
+            </a>
+          ),
+          code: ({ className, children, ...props }) => {
+            const isBlock = Boolean(className);
+            if (!isBlock) {
+              return (
+                <code
+                  className="rounded bg-[#eef1ff] px-1.5 py-0.5 font-mono text-[0.85em] text-[#2a2d4a]"
+                  {...props}
+                >
+                  {children}
+                </code>
+              );
+            }
+            return (
+              <pre className="my-4 max-w-full overflow-x-auto rounded-lg bg-[#1a1d33] p-4 text-[13px] text-[#e8e9f5]">
+                <code className={className} {...props}>
+                  {children}
+                </code>
+              </pre>
+            );
+          },
+          table: ({ children }) => (
+            <div className="my-4 max-w-full overflow-x-auto rounded-lg border border-[#e3e7ff]">
+              <table className="w-full min-w-[300px] border-collapse text-left text-[14px]">
+                {children}
+              </table>
+            </div>
+          ),
+          thead: ({ children }) => <thead className="bg-[#eef1ff]">{children}</thead>,
+          th: ({ children }) => (
+            <th className="border-b border-[#dfe4ff] px-3 py-2 font-semibold text-[#2f3250]">
+              {children}
+            </th>
+          ),
+          td: ({ children }) => (
+            <td className="border-b border-[#f0f2fc] px-3 py-2 align-top text-[#424660]">
+              {children}
+            </td>
+          ),
+        }}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
+  );
+}
+
 type SavedRecording = {
   id: string;
   mode: "microphone" | "browser-tab";
@@ -1418,20 +1529,20 @@ export default function StudyWorkspace() {
                 isLoading={isLoading}
               >
                 {summaryContent.short || summaryContent.detailed ? (
-                  <div className="mt-5 space-y-3 text-left">
+                  <div className="mt-6 space-y-4 text-left">
                     {summaryContent.short ? (
-                      <div className="rounded-lg border border-[#c9d1ff] bg-[#f5f7ff] p-3">
+                      <div className="rounded-xl border border-[#c9d1ff] bg-[#f5f7ff] p-4">
                         <p className="text-[11px] font-semibold uppercase tracking-wide text-[#5f70ff]">
                           TL;DR
                         </p>
-                        <p className="mt-1 text-sm text-[#40435d]">
+                        <p className="mt-1.5 text-[15px] leading-7 text-[#40435d]">
                           {decodeHtmlEntities(summaryContent.short)}
                         </p>
                       </div>
                     ) : null}
                     {summaryContent.detailed ? (
-                      <div className="rounded-lg border border-[#e3e4f3] p-4">
-                        <StudyTutorMarkdown
+                      <div className="rounded-xl border border-[#e3e4f3] bg-white p-5 sm:p-6">
+                        <StudySummaryMarkdown
                           content={decodeHtmlEntities(summaryContent.detailed)}
                         />
                       </div>

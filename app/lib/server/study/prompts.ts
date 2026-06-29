@@ -160,7 +160,9 @@ export function summaryUserPrompt(
 ): string {
   // Give the model a workable band around the computed target rather than a
   // single number, so it can land naturally without padding or truncating.
-  const lower = Math.max(60, Math.round(targetWordCount * 0.85));
+  // The target is already floored at 80 words upstream; keep the band's lower
+  // bound at the floor so we never instruct the model to go below it.
+  const lower = Math.max(80, Math.round(targetWordCount * 0.9));
   const upper = Math.round(targetWordCount * 1.15);
 
   const examNote =
@@ -173,13 +175,18 @@ export function summaryUserPrompt(
     '{ "short": "string", "detailed": "string (Markdown)" }',
     examNote,
     `detailed: a well-formatted Markdown summary of about ${targetWordCount} words (acceptable range ${lower}-${upper}).`,
-    "detailed MUST use real formatting, not one flat paragraph:",
-    "- Use ## / ### headings to group related ideas.",
-    "- Use bullet lists for facts, steps, and key points (one idea per bullet).",
+    "detailed MUST be structured Markdown, NEVER one flat paragraph:",
+    "- Start with at least TWO ## section headings (more for longer summaries), each grouping a distinct theme.",
+    "- Optionally open with a one-line ## Overview, then themed sections.",
+    "- Under each heading use a bullet list (- ) for the key facts/points — one idea per bullet.",
     "- Use **bold** for the key terms a student must remember.",
-    "- Keep paragraphs to 2-3 short sentences; prefer bullets over long prose.",
-    "Scale the depth to the length: cover the main themes proportionally, do not pad.",
+    "- Keep any prose to 1-2 short sentences; prefer bullets over paragraphs.",
+    "- Separate every heading, paragraph, and list with a real newline (use \\n in the JSON string).",
+    "Scale depth to the length: more sections/bullets for long sources, fewer for short — but ALWAYS keep headings + bullets.",
     "Use only SOURCE TEXT facts. Do not invent content to hit the word count.",
+    "",
+    "Example of the detailed value (shape only, not content):",
+    '"## Overview\\n- Main idea in one line\\n\\n## Key Concepts\\n- **Term**: explanation\\n- **Term**: explanation\\n\\n## Why It Matters\\n- Point one\\n- Point two"',
     "",
     "SOURCE TEXT:",
     sourceText,
