@@ -153,7 +153,7 @@ const MainToolHero: FC = () => {
                         href="/sign-in/"
                         className="group relative inline-block text-sm sm:text-base text-primary-400"
                     >
-                        Already have an account? Signin
+                        Already have an account? Sign-in
                         <span
                             aria-hidden="true"
                             className="pointer-events-none absolute bottom-[-3px] left-1/2 block h-[1px] w-0 -translate-x-1/2 bg-[repeating-linear-gradient(to_right,#565add_0,#565add_6px,transparent_6px,transparent_12px)] transition-[width] duration-300 ease-out group-hover:w-full"
