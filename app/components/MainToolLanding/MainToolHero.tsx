@@ -7,6 +7,7 @@ import mainToolAiIcon from "@/app/assets/Icons/mainToolAiIcon.png";
 import Image from "next/image";
 import { useAcademicResearchData } from "@/app/(pages)/academic-research/AcademicResearchDataProvider";
 import { defaultAcademicResearchContent } from "@/app/components/MainToolLanding/MainToolContent";
+import { useExpertQuoteModal } from "@/app/components/MainToolLanding/ExpertQuoteModal";
 
 function isHashLink(url: string) {
     return url.startsWith("#");
@@ -22,6 +23,7 @@ function scrollToSection(hash: string) {
 
 const MainToolHero: FC = () => {
     const pageData = useAcademicResearchData();
+    const { openExpertQuoteModal } = useExpertQuoteModal();
     const hero = pageData?.heroSection ?? defaultAcademicResearchContent.heroSection;
     const btn1Url = hero.btn1Url || "#";
     const btn1IsHashLink = isHashLink(btn1Url);
@@ -113,12 +115,13 @@ const MainToolHero: FC = () => {
                             {hero.btn1}
                         </Link>
                     )}
-                    <Link
-                        href={hero.btn2Url || "#"}
+                    <button
+                        type="button"
+                        onClick={openExpertQuoteModal}
                         className="bg-white text-base sm:text-xl text-black px-6 sm:px-9 py-3 rounded-[4px] text-center"
                     >
                         {hero.btn2}
-                    </Link>
+                    </button>
                 </div>
                 <div className="flex flex-wrap justify-center items-center gap-x-6 sm:gap-x-9 gap-y-3 py-4 sm:py-5 px-2">
                     {hero.specs.map((spec, index) => (

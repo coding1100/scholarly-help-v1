@@ -13,6 +13,7 @@ import { AcademicResearchDataProvider } from "./AcademicResearchDataProvider";
 import { mergeAcademicResearchContent } from "@/app/components/MainToolLanding/mergeAcademicResearchContent";
 import { defaultAcademicResearchContent } from "@/app/components/MainToolLanding/MainToolContent";
 import DeadLine from "@/app/components/MainToolLanding/DeadLine";
+import { ExpertQuoteModalProvider } from "@/app/components/MainToolLanding/ExpertQuoteModal";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -34,29 +35,31 @@ const Page = async ({}: PageProps) => {
 
   return (
     <AcademicResearchDataProvider data={content}>
-      <MainLayout>
-        <MainToolHero />
-        <div className="bg-[#f3f4f9]">
-          <MainToolHelp />
-          <MainToolPick />
-        </div>
-        <MainToolDashboardsection />
-        <MainToolWhyTool />
-        <MainToolCards />
-        <CustomerReviews />
-        <Faq
-          content={
-            content.faq.length > 0
-              ? content.faq.map((item, index) => ({
-                  id: item.id ?? index + 1,
-                  question: item.question,
-                  answer: item.answer,
-                }))
-              : undefined
-          }
-        />
-        <DeadLine />
-      </MainLayout>
+      <ExpertQuoteModalProvider>
+        <MainLayout>
+          <MainToolHero />
+          <div className="bg-[#f3f4f9]">
+            <MainToolHelp />
+            <MainToolPick />
+          </div>
+          <MainToolDashboardsection />
+          <MainToolWhyTool />
+          <MainToolCards />
+          <CustomerReviews />
+          <Faq
+            content={
+              content.faq.length > 0
+                ? content.faq.map((item, index) => ({
+                    id: item.id ?? index + 1,
+                    question: item.question,
+                    answer: item.answer,
+                  }))
+                : undefined
+            }
+          />
+          <DeadLine />
+        </MainLayout>
+      </ExpertQuoteModalProvider>
     </AcademicResearchDataProvider>
   );
 };
