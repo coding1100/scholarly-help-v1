@@ -12,8 +12,11 @@ import axios from "axios";
 import AuthButtonSpinner from "./AuthButtonSpinner";
 import SocialAuthButtons from "./SocialAuthButtons";
 import { buildHrefWithSameQuery } from "@/app/utils/url";
-
-const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
+import {
+  validateEmail,
+  validateName,
+  validatePassword,
+} from "@/app/lib/authValidation";
 
 interface SignUpCardProps {
   switchAuthForm?: string;
@@ -39,27 +42,14 @@ const SignUpCard: FC<SignUpCardProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [nameError, setNameError] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Password validation function
-  const getPasswordValidationMsg = (password: string) => {
-    if (!password) return "";
-    if (password.length < 8) return "At least 8 characters required.";
-    if (!/[A-Z]/.test(password))
-      return "At least one uppercase letter required.";
-    if (!/[a-z]/.test(password))
-      return "At least one lowercase letter required.";
-    if (!/\d/.test(password)) return "At least one number required.";
-    if (!passwordRegex.test(password))
-      return "Only letters and numbers allowed.";
-    return "";
-  };
-
-  const getNameValidationMsg = (name: string) => {
-    if (!name.trim()) return "Name is required.";
-    if (name.trim().length < 3)
-      return "Name must be at least 3 characters long.";
-    return "";
+  // While typing, suppress the message for an empty field so the user isn't
+  // warned before they've had a chance to type; full validation runs on submit.
+  const liveError = (validate: (v: string) => string, value: string) => {
+    if (!value) return "";
+    return validate(value);
   };
 
   const getAuthNetworkErrorMessage = (err: any) => {
@@ -79,35 +69,24 @@ const SignUpCard: FC<SignUpCardProps> = ({
     return null;
   };
 
-  // --- Add derived state for button enablement ---
+  // Button is enabled only when every field passes its validator.
   const isFormValid =
-    name.trim().length >= 3 &&
-    email.trim().length > 0 &&
-    password.length >= 8 &&
-    !getPasswordValidationMsg(password) &&
-    !getNameValidationMsg(name);
+    !validateName(name) && !validateEmail(email) && !validatePassword(password);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
 
-    const newEmail = email.toLowerCase();
-    // Validate password and name on submit
-    const validationMsg = getPasswordValidationMsg(password);
-    if (validationMsg !== "") {
-      setPasswordError(validationMsg);
-      return;
-    } else {
-      setPasswordError(null);
-    }
-    const nameValidationMsg = getNameValidationMsg(name);
-    if (nameValidationMsg !== "") {
-      setNameError(nameValidationMsg);
-      return;
-    } else {
-      setNameError(null);
-    }
+    // Validate all fields on submit; surface every error at once.
+    const nameMsg = validateName(name);
+    const emailMsg = validateEmail(email);
+    const passwordMsg = validatePassword(password);
+    setNameError(nameMsg || null);
+    setEmailError(emailMsg || null);
+    setPasswordError(passwordMsg || null);
+    if (nameMsg || emailMsg || passwordMsg) return;
 
+    const newEmail = email.trim().toLowerCase();
     let payload: any = {
       email: newEmail,
       password,
@@ -124,8 +103,8 @@ const SignUpCard: FC<SignUpCardProps> = ({
         payload,
       );
       // Only proceed if response is OK
-      localStorage.setItem("user_name", name);
-      localStorage.setItem("user_email", email);
+      localStorage.setItem("user_name", name.trim());
+      localStorage.setItem("user_email", newEmail);
       localStorage.setItem("user_password", password);
 
       setName("");
@@ -171,12 +150,19 @@ const SignUpCard: FC<SignUpCardProps> = ({
             <input
               type="text"
               placeholder="Enter your full name"
-              className="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className={`w-full pl-10 pr-4 py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 ${
+                nameError
+                  ? "ring-2 ring-[#ff641a] focus:ring-[#ff641a]"
+                  : "focus:ring-indigo-500"
+              }`}
               value={name}
               onChange={(e) => {
                 setName(e.target.value);
-                setNameError(getNameValidationMsg(e.target.value));
+                setNameError(liveError(validateName, e.target.value) || null);
               }}
+              onBlur={() => setNameError(validateName(name) || null)}
+              aria-invalid={!!nameError}
+              autoComplete="name"
               required
             />
           </div>
@@ -191,12 +177,25 @@ const SignUpCard: FC<SignUpCardProps> = ({
             <input
               type="email"
               placeholder="Enter your email address"
-              className="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className={`w-full pl-10 pr-4 py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 ${
+                emailError
+                  ? "ring-2 ring-[#ff641a] focus:ring-[#ff641a]"
+                  : "focus:ring-indigo-500"
+              }`}
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setEmailError(liveError(validateEmail, e.target.value) || null);
+              }}
+              onBlur={() => setEmailError(validateEmail(email) || null)}
+              aria-invalid={!!emailError}
+              autoComplete="email"
               required
             />
           </div>
+          {emailError && (
+            <p className="text-[#ff641a] text-xs mt-1">{emailError}</p>
+          )}
         </div>
         <div>
           <label className="text-sm font-medium ">Password</label>
@@ -204,18 +203,28 @@ const SignUpCard: FC<SignUpCardProps> = ({
             <input
               type={showPassword ? "text" : "password"}
               placeholder="Enter your password"
-              className="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className={`w-full pl-4 pr-10 py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 ${
+                passwordError
+                  ? "ring-2 ring-[#ff641a] focus:ring-[#ff641a]"
+                  : "focus:ring-indigo-500"
+              }`}
               value={password}
               onChange={(e) => {
                 setPassword(e.target.value);
-                setPasswordError(getPasswordValidationMsg(e.target.value));
+                setPasswordError(
+                  liveError(validatePassword, e.target.value) || null,
+                );
               }}
+              onBlur={() => setPasswordError(validatePassword(password) || null)}
+              aria-invalid={!!passwordError}
+              autoComplete="new-password"
               required
             />
             <button
               type="button"
-              className="absolute left-3 top-1/2 cursor-pointer -translate-y-1/2 "
+              className="absolute right-3 top-1/2 cursor-pointer -translate-y-1/2 text-gray-500"
               tabIndex={0}
+              aria-label={showPassword ? "Hide password" : "Show password"}
               onClick={() => setShowPassword((prev) => !prev)}
             >
               {showPassword ? <FiEyeOff /> : <FiEye />}
