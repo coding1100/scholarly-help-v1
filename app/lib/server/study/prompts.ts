@@ -146,19 +146,40 @@ export function notesUserPrompt(
 }
 
 export function summarySystemInstruction(mode: StudyLearningMode): string {
-  return `${STUDENT_TUTOR_VOICE} Summarize for a student. Return valid JSON only without markdown fences.`;
+  return [
+    STUDENT_TUTOR_VOICE,
+    "Summarize for a student with clear structure they can scan.",
+    "Return valid JSON only without markdown fences (the JSON values may contain Markdown).",
+  ].join(" ");
 }
 
-export function summaryUserPrompt(sourceText: string, mode: StudyLearningMode): string {
+export function summaryUserPrompt(
+  sourceText: string,
+  mode: StudyLearningMode,
+  targetWordCount: number,
+): string {
+  // Give the model a workable band around the computed target rather than a
+  // single number, so it can land naturally without padding or truncating.
+  const lower = Math.max(60, Math.round(targetWordCount * 0.85));
+  const upper = Math.round(targetWordCount * 1.15);
+
   const examNote =
     mode === "exam"
-      ? 'short must be "what to focus on for the exam" in 2-3 sentences; detailed is high-yield exam prep under 200 words.'
-      : "short is 2-3 friendly sentences; detailed is one readable paragraph under 220 words.";
+      ? 'short: "what to focus on for the exam" in 2-3 sentences.'
+      : "short: a 1-2 sentence TL;DR a student can read at a glance.";
+
   return [
-    "Summarize into JSON:",
-    '{ "short": "string", "detailed": "string" }',
+    "Summarize the SOURCE TEXT into JSON with this exact shape:",
+    '{ "short": "string", "detailed": "string (Markdown)" }',
     examNote,
-    "Use only SOURCE TEXT facts.",
+    `detailed: a well-formatted Markdown summary of about ${targetWordCount} words (acceptable range ${lower}-${upper}).`,
+    "detailed MUST use real formatting, not one flat paragraph:",
+    "- Use ## / ### headings to group related ideas.",
+    "- Use bullet lists for facts, steps, and key points (one idea per bullet).",
+    "- Use **bold** for the key terms a student must remember.",
+    "- Keep paragraphs to 2-3 short sentences; prefer bullets over long prose.",
+    "Scale the depth to the length: cover the main themes proportionally, do not pad.",
+    "Use only SOURCE TEXT facts. Do not invent content to hit the word count.",
     "",
     "SOURCE TEXT:",
     sourceText,

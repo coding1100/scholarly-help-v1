@@ -1,4 +1,8 @@
-import { splitSentences } from "@/app/lib/server/study/text";
+import {
+  countWords,
+  splitSentences,
+  summaryTargetWordCount,
+} from "@/app/lib/server/study/text";
 import {
   flashcardsSystemInstruction,
   flashcardsUserPrompt,
@@ -41,11 +45,17 @@ function prepareSource(
 
 async function buildSummary(sourceText: string, mode: StudyLearningMode) {
   const prepared = prepareSource(sourceText, mode, []);
+  // Scale length to the ORIGINAL source, not the prioritized/truncated slice, so
+  // the ratio reflects what the student actually uploaded.
+  const { target } = summaryTargetWordCount(countWords(sourceText));
+  // ~1.4 tokens per word, plus headroom for Markdown/JSON syntax. Clamp so a
+  // huge source can still produce its (capped) 5% summary without overrunning.
+  const maxOutputTokens = Math.min(8192, Math.max(700, Math.round(target * 2) + 400));
   const raw = await generateGeminiText({
     systemInstruction: summarySystemInstruction(mode),
-    userPrompt: summaryUserPrompt(prepared, mode),
+    userPrompt: summaryUserPrompt(prepared, mode, target),
     temperature: 0.3,
-    maxOutputTokens: 1200,
+    maxOutputTokens,
   });
   return parseJson<{ short: string; detailed: string }>(raw);
 }

@@ -5,6 +5,27 @@ import {
   type StudyUploadExtension,
 } from "@/app/lib/studyUploadConstraints";
 
+/**
+ * Extract text from a PDF buffer. Shared by file uploads and URL imports of
+ * PDFs served over http(s).
+ */
+export async function parsePdfBuffer(buffer: Buffer): Promise<string> {
+  // Import the implementation file, not the package entry: `pdf-parse/index.js`
+  // runs a debug readFileSync(test pdf) when `!module.parent`, which breaks
+  // under webpack.
+  const pdfParseModule = (await import("pdf-parse/lib/pdf-parse.js")) as {
+    default?: (data: Buffer) => Promise<{ text?: string }>;
+  };
+  const pdfParse =
+    pdfParseModule.default ??
+    (pdfParseModule as unknown as (data: Buffer) => Promise<{ text?: string }>);
+  if (typeof pdfParse !== "function") {
+    throw new Error("PDF parser is not available");
+  }
+  const result = await pdfParse(buffer);
+  return (result?.text || "").trim();
+}
+
 export async function parseUploadedStudyFile(file: File): Promise<string> {
   const filename = (file.name || "").toLowerCase();
   const mimeType = (file.type || "").toLowerCase();
@@ -27,17 +48,7 @@ export async function parseUploadedStudyFile(file: File): Promise<string> {
   }
 
   if (ext === "pdf" || mimeType === "application/pdf") {
-    // Import the implementation file, not package entry: `pdf-parse/index.js`
-    // runs a debug readFileSync(test pdf) when `!module.parent`, which breaks under webpack.
-    const pdfParseModule = (await import("pdf-parse/lib/pdf-parse.js")) as {
-      default?: (data: Buffer) => Promise<{ text?: string }>;
-    };
-    const pdfParse = pdfParseModule.default ?? (pdfParseModule as unknown as (data: Buffer) => Promise<{ text?: string }>);
-    if (typeof pdfParse !== "function") {
-      throw new Error("PDF parser is not available");
-    }
-    const result = await pdfParse(buffer);
-    return (result?.text || "").trim();
+    return parsePdfBuffer(buffer);
   }
 
   if (
