@@ -24,22 +24,14 @@ import {
 } from "react-icons/fi";
 import {
   detectStudyChatIntent,
-  intentSuggestedMode,
   intentTargetTab,
 } from "@/app/lib/client/studyIntent";
-import {
-  getStoredExamTopics,
-  getStoredStudyMode,
-  setStoredExamTopics,
-  setStoredStudyMode,
-} from "@/app/lib/client/studyModeStorage";
 import {
   addStudySource,
   generateStudyArtifact,
   getStudySessionDetails,
   streamStudyTutor,
   StudyArtifactType,
-  StudyLearningMode,
   TutorAttachmentInput,
   TutorMessageDto,
 } from "@/app/utils/studyApiClient";
@@ -55,9 +47,11 @@ import {
   StudyRecordingResult,
   StudyRecordingSnapshot,
 } from "@/app/lib/client/studyRecording";
-import ExamTopicsModal from "@/app/components/AiTools/Dashboard/ExamTopicsModal";
-import StudyLearningModeBar from "@/app/components/AiTools/Dashboard/StudyLearningModeBar";
 import StudyQuizPanel from "@/app/components/AiTools/Dashboard/StudyQuizPanel";
+
+// Learning modes were removed from the UI; generation/tutor now always run in
+// the default "research" mode (the backend still accepts a mode param).
+const STUDY_MODE = "research" as const;
 
 type WorkspaceTab = "original" | "notes" | "summary" | "flashcards" | "quizzes";
 
@@ -405,9 +399,6 @@ export default function StudyWorkspace() {
   const [isTutorResponding, setIsTutorResponding] = useState(false);
   const [isMicListening, setIsMicListening] = useState(false);
   const [pendingAttachment, setPendingAttachment] = useState<TutorAttachmentInput | null>(null);
-  const [learningMode, setLearningMode] = useState<StudyLearningMode>("research");
-  const [examTopics, setExamTopics] = useState<string[]>([]);
-  const [showExamTopicsModal, setShowExamTopicsModal] = useState(false);
   const [quizQuestionIndex, setQuizQuestionIndex] = useState(0);
   const handledRecordingResultIds = useRef<Set<string>>(new Set());
   // Tracks which session the in-state `savedRecordings` were loaded for. The
@@ -424,11 +415,6 @@ export default function StudyWorkspace() {
   const tutorAttachmentInputRef = useRef<HTMLInputElement | null>(null);
   const speechRecognitionRef = useRef<SpeechRecognitionInstance | null>(null);
 
-  useEffect(() => {
-    if (!sessionId) return;
-    setLearningMode(getStoredStudyMode(sessionId));
-    setExamTopics(getStoredExamTopics(sessionId));
-  }, [sessionId]);
 
   useEffect(() => {
     if (!sessionId) {
@@ -565,23 +551,6 @@ export default function StudyWorkspace() {
     setQuizSubmitted(false);
     setQuizQuestionIndex(0);
   }, [artifacts.quizzes]);
-
-  const handleModeChange = (mode: StudyLearningMode) => {
-    setLearningMode(mode);
-    if (sessionId) setStoredStudyMode(sessionId, mode);
-    if (mode === "exam") setShowExamTopicsModal(true);
-  };
-
-  const applyExamTopics = (topics: string[]) => {
-    setExamTopics(topics);
-    if (sessionId) setStoredExamTopics(sessionId, topics);
-    setShowExamTopicsModal(false);
-    toast.success(
-      topics.length > 0
-        ? `Exam focus set (${topics.length} topics)`
-        : "Exam mode enabled — add topics anytime",
-    );
-  };
 
   useEffect(() => {
     if (!sessionId || typeof window === "undefined") return;
@@ -783,35 +752,16 @@ export default function StudyWorkspace() {
     }
   };
 
-  const runGeneration = async (
-    type: StudyArtifactType,
-    options?: { mode?: StudyLearningMode; forceExamTopics?: boolean },
-  ) => {
+  const runGeneration = async (type: StudyArtifactType) => {
     if (!sessionId) {
       toast.error("Session is still loading. Please wait.");
       return;
     }
-    const mode = options?.mode ?? learningMode;
-    let topics = examTopics;
-    if (
-      mode === "exam" &&
-      topics.length === 0 &&
-      (type === "notes" || type === "quizzes")
-    ) {
-      if (options?.forceExamTopics !== false) {
-        setShowExamTopicsModal(true);
-        toast("Pick exam topics first for focused results");
-        return;
-      }
-    }
-    if (mode === "quiz" && type === "notes") {
-      topics = [];
-    }
     setIsLoading(true);
     try {
       const result = await generateStudyArtifact(sessionId, type, {
-        mode: type === "summary" || type === "flashcards" ? mode : mode,
-        examTopics: topics,
+        mode: STUDY_MODE,
+        examTopics: [],
       });
       setArtifacts((prev) => ({
         ...prev,
@@ -823,7 +773,7 @@ export default function StudyWorkspace() {
         flashcards: "Flashcards",
         quizzes: "Quiz",
       };
-      toast.success(`${labels[type]} ready (${mode} mode)`);
+      toast.success(`${labels[type]} ready`);
     } catch (error) {
       console.error(`Failed to generate ${type}`, error);
       toast.error(`Failed to generate ${type}`);
@@ -833,13 +783,7 @@ export default function StudyWorkspace() {
   };
 
   const requestGenerate = (type: StudyArtifactType) => {
-    const mode =
-      type === "quizzes" || type === "flashcards"
-        ? learningMode === "exam"
-          ? "exam"
-          : "quiz"
-        : learningMode;
-    void runGeneration(type, { mode });
+    void runGeneration(type);
   };
 
   const clearPendingAttachment = () => {
@@ -947,20 +891,9 @@ export default function StudyWorkspace() {
     }
 
     const intent = detectStudyChatIntent(message);
-    const suggestedMode = intentSuggestedMode(intent);
-    let tutorMode = learningMode;
-    if (suggestedMode) {
-      tutorMode = suggestedMode;
-      setLearningMode(suggestedMode);
-      setStoredStudyMode(sessionId, suggestedMode);
-    }
     const targetTab = intentTargetTab(intent);
     if (targetTab) {
       setActiveTab(targetTab);
-      if (suggestedMode === "exam") setShowExamTopicsModal(true);
-      if (intent.type === "exam_notes") {
-        toast("Opening exam-focused notes — pick topics if prompted, then generate in AI Notes.");
-      }
       if (intent.type === "generate_quiz" || intent.type === "generate_questions") {
         toast("Use Generate in the Quizzes tab for practice questions.");
       }
@@ -1006,7 +939,7 @@ export default function StudyWorkspace() {
         sessionId,
         message,
         attachments,
-        { mode: tutorMode, examTopics },
+        { mode: STUDY_MODE, examTopics: [] },
         {
         onChunk: (chunk) => {
           streamedText += chunk;
@@ -1180,12 +1113,6 @@ export default function StudyWorkspace() {
           }`}
         >
           <div className="shrink-0 border-b border-[#e3e7ff] bg-gradient-to-r from-[#f4f6ff] to-[#eef1ff] px-3 py-2 rounded-tr-[15px] rounded-tl-[15px]">
-            <StudyLearningModeBar
-              mode={learningMode}
-              examTopicCount={examTopics.length}
-              onModeChange={handleModeChange}
-              onConfigureExamTopics={() => setShowExamTopicsModal(true)}
-            />
             <div className="flex flex-wrap gap-1">
               {TABS.map((tab) => (
                 <button
@@ -1492,12 +1419,23 @@ export default function StudyWorkspace() {
               >
                 {summaryContent.short || summaryContent.detailed ? (
                   <div className="mt-5 space-y-3 text-left">
-                    <p className="rounded-lg border border-[#e3e4f3] p-3 text-sm text-[#40435d]">
-                      {decodeHtmlEntities(summaryContent.short ?? "")}
-                    </p>
-                    <p className="rounded-lg border border-[#e3e4f3] p-3 text-sm text-[#40435d]">
-                      {decodeHtmlEntities(summaryContent.detailed ?? "")}
-                    </p>
+                    {summaryContent.short ? (
+                      <div className="rounded-lg border border-[#c9d1ff] bg-[#f5f7ff] p-3">
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-[#5f70ff]">
+                          TL;DR
+                        </p>
+                        <p className="mt-1 text-sm text-[#40435d]">
+                          {decodeHtmlEntities(summaryContent.short)}
+                        </p>
+                      </div>
+                    ) : null}
+                    {summaryContent.detailed ? (
+                      <div className="rounded-lg border border-[#e3e4f3] p-4">
+                        <StudyTutorMarkdown
+                          content={decodeHtmlEntities(summaryContent.detailed)}
+                        />
+                      </div>
+                    ) : null}
                   </div>
                 ) : null}
               </TabCard>
@@ -1905,14 +1843,6 @@ export default function StudyWorkspace() {
           }
         }
       `}</style>
-      {showExamTopicsModal && sessionId ? (
-        <ExamTopicsModal
-          sessionId={sessionId}
-          initialSelected={examTopics}
-          onClose={() => setShowExamTopicsModal(false)}
-          onConfirm={applyExamTopics}
-        />
-      ) : null}
     </section>
   );
 }

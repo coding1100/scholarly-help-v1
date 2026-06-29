@@ -33,6 +33,53 @@ export function chunkText(input: string, maxChars = 700): string[] {
   return chunks.length > 0 ? chunks : [normalizeText(input)];
 }
 
+export function countWords(input: string): number {
+  const normalized = normalizeText(input);
+  if (!normalized) return 0;
+  return normalized.split(" ").filter(Boolean).length;
+}
+
+/**
+ * Target length (in words) for an AI summary, scaled to the source length.
+ *
+ * Baseline is ~10% of the source. Long, redundant documents compress harder
+ * (down to ~5% at 50+ pages); short documents need a higher ratio to be useful
+ * (up to ~20% under 10 pages). A minimum floor guarantees that even very short
+ * inputs produce a real, multi-sentence summary rather than a single line.
+ *
+ * Pages are estimated from word count (~500 words/page) since the source is
+ * plain extracted text, not paginated.
+ */
+export function summaryTargetWordCount(sourceWordCount: number): {
+  target: number;
+  ratio: number;
+  estimatedPages: number;
+} {
+  const WORDS_PER_PAGE = 500;
+  const MIN_WORDS = 120;
+
+  const words = Math.max(sourceWordCount, 0);
+  const estimatedPages = words / WORDS_PER_PAGE;
+
+  // Piecewise ratio: 20% under 10 pages, easing to 10% baseline by ~20 pages,
+  // then down to 5% at 50+ pages. Linear interpolation between the anchors.
+  let ratio: number;
+  if (estimatedPages <= 10) {
+    ratio = 0.2;
+  } else if (estimatedPages <= 20) {
+    // 10pp → 20%, 20pp → 10%
+    ratio = 0.2 - ((estimatedPages - 10) / 10) * 0.1;
+  } else if (estimatedPages <= 50) {
+    // 20pp → 10%, 50pp → 5%
+    ratio = 0.1 - ((estimatedPages - 20) / 30) * 0.05;
+  } else {
+    ratio = 0.05;
+  }
+
+  const target = Math.max(MIN_WORDS, Math.round(words * ratio));
+  return { target, ratio, estimatedPages };
+}
+
 export function topChunksByQuery(chunks: string[], query: string, limit = 3) {
   const qTokens = normalizeText(query)
     .toLowerCase()
