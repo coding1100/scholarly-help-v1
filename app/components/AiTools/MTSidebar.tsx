@@ -18,6 +18,7 @@ import { FiTool, FiPlus } from "react-icons/fi";
 import AccountPopover from "./AccountPopover";
 import UsageAndPricing from "./UsageAndPricing";
 import PromptModal from "./PromptModal";
+import StudySessionsNav from "./Dashboard/StudySessionsNav";
 import axios from "axios";
 import {
   createDocument,
@@ -626,6 +627,10 @@ const MTSidebar = ({
               </div>
             );
           })}
+          {/* Study Workspace: "+ New Study Session" and full "Recent Sessions"
+              history. Self-contained and route-scoped — renders only on the
+              workspace and stays hidden until the first session exists. */}
+          <StudySessionsNav onNavigate={onToggle} />
           {showHowToUse && (
             <button
               type="button"
