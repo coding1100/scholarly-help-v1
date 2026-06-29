@@ -35,8 +35,18 @@ function toPlainTextFromHtml(html: string) {
 // shell, which would otherwise be saved as a useless source.
 const MIN_USABLE_URL_TEXT = 200;
 
-const BLOCKED_SITE_MESSAGE =
-  "This link couldn't be imported — the site blocks automated access or loads its content with JavaScript. Try downloading the page and uploading the file, or paste the text directly.";
+// A stable marker the POST handler uses to map these failures to a 400 and to
+// tell, at a glance, that the URL simply can't be parsed (vs. a server error).
+const SITE_RESTRICTED_TAG = "[site-restricted]";
+
+/**
+ * The site actively prevents automated reading (bot wall, login wall, rate
+ * limit) or renders its content with JavaScript so there's nothing to extract.
+ * Names the host so the user knows exactly which link was rejected.
+ */
+function siteRestrictedMessage(host: string): string {
+  return `${SITE_RESTRICTED_TAG} We can't read content from ${host} — this site restricts automated access (or loads its content with JavaScript), so its data can't be parsed. Please open the page, copy the text, and paste it using the "Text" option instead — or upload the file directly.`;
+}
 
 async function fetchUrlText(url: string) {
   let parsedUrl: URL;
@@ -49,6 +59,7 @@ async function fetchUrlText(url: string) {
     throw new Error("Only http/https URLs are supported");
   }
 
+  const host = parsedUrl.hostname;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 15000);
   try {
@@ -65,11 +76,14 @@ async function fetchUrlText(url: string) {
       redirect: "follow",
       cache: "no-store",
     });
+    // 401/403/429 = the site is deliberately refusing automated access.
     if (res.status === 403 || res.status === 401 || res.status === 429) {
-      throw new Error(BLOCKED_SITE_MESSAGE);
+      throw new Error(siteRestrictedMessage(host));
     }
     if (!res.ok) {
-      throw new Error(`Could not fetch URL content (HTTP ${res.status})`);
+      throw new Error(
+        `We couldn't reach ${host} (the site returned HTTP ${res.status}). Check the link and try again.`,
+      );
     }
 
     const contentType = (res.headers.get("content-type") || "").toLowerCase();
@@ -84,7 +98,7 @@ async function fetchUrlText(url: string) {
       const text = await parsePdfBuffer(Buffer.from(arrayBuffer));
       if (text.length < MIN_USABLE_URL_TEXT) {
         throw new Error(
-          "We fetched the PDF but couldn't extract readable text (it may be scanned images). Try uploading a text-based PDF.",
+          `We fetched the PDF from ${host} but couldn't extract readable text (it may be a scanned/image-only PDF). Try uploading a text-based PDF instead.`,
         );
       }
       return text;
@@ -92,7 +106,7 @@ async function fetchUrlText(url: string) {
 
     const body = await res.text();
     if (!body.trim()) {
-      throw new Error(BLOCKED_SITE_MESSAGE);
+      throw new Error(siteRestrictedMessage(host));
     }
 
     if (
@@ -102,7 +116,7 @@ async function fetchUrlText(url: string) {
       const text = toPlainTextFromHtml(body);
       if (text.length < MIN_USABLE_URL_TEXT) {
         // A near-empty extraction means a client-rendered SPA or a bot wall.
-        throw new Error(BLOCKED_SITE_MESSAGE);
+        throw new Error(siteRestrictedMessage(host));
       }
       return text;
     }
@@ -110,7 +124,9 @@ async function fetchUrlText(url: string) {
     return body.trim();
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
-      throw new Error("URL fetch timed out. The site took too long to respond.");
+      throw new Error(
+        `${host} took too long to respond, so the import timed out. Try again, or paste the text directly.`,
+      );
     }
     throw error;
   } finally {
@@ -181,21 +197,26 @@ export async function POST(
     return ok(source, 201);
   } catch (error) {
     console.error("study.source.POST", error);
-    const message =
+    const rawMessage =
       error instanceof Error ? error.message : "Failed to add source";
-    // User-actionable problems (bad file, unreachable/blocked URL) return 400 so
-    // the workspace surfaces the specific guidance instead of a generic 500.
+    // The internal site-restricted tag is for our own classification only —
+    // never show it to the user.
+    const isSiteRestricted = rawMessage.includes(SITE_RESTRICTED_TAG);
+    const message = rawMessage.replace(SITE_RESTRICTED_TAG, "").trim();
+
+    // User-actionable problems (bad file, unreachable/blocked/unparseable URL)
+    // return 400 so the workspace surfaces the specific guidance instead of a
+    // generic 500.
     if (
+      isSiteRestricted ||
       message.includes("Unsupported file type") ||
       message.includes("too large") ||
       message.includes("Maximum size") ||
       message.includes("Invalid URL") ||
       message.includes("Only http/https") ||
-      message === BLOCKED_SITE_MESSAGE ||
-      message.includes("couldn't be imported") ||
       message.includes("couldn't extract readable text") ||
-      message.includes("fetch timed out") ||
-      message.includes("Could not fetch URL content")
+      message.includes("took too long to respond") ||
+      message.includes("We couldn't reach")
     ) {
       return fail(message, 400);
     }

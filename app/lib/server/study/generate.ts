@@ -173,9 +173,23 @@ export async function generateArtifact(
     const prioritized = prepareSource(sourceText, mode, examTopics);
     const fallbackSentences = splitSentences(prioritized);
     if (type === "summary") {
+      // Keep the fallback formatted (headings + bullets) so the UI still renders
+      // a prettified summary even when the LLM call fails.
+      const keyPoints = fallbackSentences.slice(0, 6);
+      const detailParts = [
+        "## Overview",
+        fallbackSentences.slice(0, 2).join(" ") || "Summary unavailable.",
+      ];
+      if (keyPoints.length > 0) {
+        detailParts.push(
+          "",
+          "## Key Points",
+          ...keyPoints.map((sentence) => `- ${sentence}`),
+        );
+      }
       return {
-        short: fallbackSentences.slice(0, 3).join(" "),
-        detailed: fallbackSentences.slice(0, 8).join(" "),
+        short: fallbackSentences.slice(0, 2).join(" "),
+        detailed: detailParts.join("\n"),
       };
     }
     if (type === "notes") {

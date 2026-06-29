@@ -19,11 +19,11 @@ type SessionListItem = Pick<StudySessionDto, "_id" | "title">;
 
 /**
  * Sidebar navigation for the AI Study Workspace: a "+ New Study Session" action
- * and the guest's full "Recent Sessions" history.
+ * and the user's full "Recent Sessions" history.
  *
- * Both stay hidden until the user has created their first session, and the whole
- * block only renders on the study-workspace route (MTSidebar is shared across
- * all tools). Session list state is kept in sync with the workspace via the same
+ * Only shown to signed-in users (hidden for guests), on the study-workspace
+ * route (MTSidebar is shared across all tools), once at least one session
+ * exists. Session list state is kept in sync with the workspace via the same
  * window events the workspace already dispatches.
  */
 export default function StudySessionsNav({ onNavigate }: { onNavigate?: () => void }) {
@@ -36,6 +36,14 @@ export default function StudySessionsNav({ onNavigate }: { onNavigate?: () => vo
   const [isCreating, setIsCreating] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  // Resolved on the client only — isGuest() reads localStorage, so calling it
+  // during render would risk an SSR/hydration mismatch. Defaults to true so the
+  // block stays hidden until we confirm the user is signed in.
+  const [isGuestUser, setIsGuestUser] = useState(true);
+
+  useEffect(() => {
+    setIsGuestUser(isGuest());
+  }, []);
 
   const normalizedRoute = useMemo(
     () => (pathname?.endsWith("/") ? pathname.slice(0, -1) : pathname),
@@ -137,7 +145,11 @@ export default function StudySessionsNav({ onNavigate }: { onNavigate?: () => vo
   );
 
   // Hidden until the user has their first session, and only on the workspace.
-  if (!isStudyWorkspaceRoute || sessions.length === 0) return null;
+  // Guests don't get the New Session / Recent Sessions block — it's only for
+  // signed-in users (whose sessions persist across devices).
+  if (isGuestUser || !isStudyWorkspaceRoute || sessions.length === 0) {
+    return null;
+  }
 
   return (
     <div className="mt-3">
