@@ -16,6 +16,7 @@ import {
 import {
   claimGuestStudyData,
   createStudySession,
+  deleteStudySession,
   getActiveStudySessionId,
   getStudySessionDetails,
   listStudySessions,
@@ -42,10 +43,14 @@ export default function StudyWorkspacePageContent() {
   const [gateOpen, setGateOpen] = useState(false);
   const [gateReason, setGateReason] = useState<"query" | "session">("session");
 
-  // "Back to start": the toolbar can send the user back to the creation/welcome
-  // view without deleting the session. We force the onboarding view until they
-  // add content again or switch/create a session.
+  // "Back to start": returns the user to the creation/welcome view. Because
+  // re-adding content to the SAME session would append to the existing data,
+  // confirming "Back" wipes the current session (delete + fresh session) so the
+  // user genuinely starts over. `forceStart` shows onboarding for the brief
+  // window before navigation completes.
   const [forceStart, setForceStart] = useState(false);
+  const [backConfirmOpen, setBackConfirmOpen] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   // No upfront sign-in gate: guests may use the workspace. The email/password
   // gate appears later — on the 4th tutor query or a 2nd session creation.
@@ -63,9 +68,10 @@ export default function StudyWorkspacePageContent() {
     return () => window.removeEventListener("study:auth-gate", onAuthGate);
   }, []);
 
-  // "Back to start" from the in-workspace toolbar reveals the creation view.
+  // "Back to start" from the in-workspace toolbar asks for confirmation first —
+  // going back discards the current session's data.
   useEffect(() => {
-    const onBackToStart = () => setForceStart(true);
+    const onBackToStart = () => setBackConfirmOpen(true);
     window.addEventListener("study-back-to-start", onBackToStart);
     return () => window.removeEventListener("study-back-to-start", onBackToStart);
   }, []);
@@ -147,6 +153,60 @@ export default function StudyWorkspacePageContent() {
       active = false;
     };
   }, [pathname, router, searchParams, ensureGuestMigration]);
+
+  // Confirmed "Back to start": discard the current session entirely and open a
+  // fresh, empty one so new uploads don't append to the old data.
+  const confirmBackToStart = useCallback(async () => {
+    setIsResetting(true);
+    try {
+      const previousSessionId = sessionId;
+      const created = await createStudySession("My Study Session");
+      if (isGuest()) incrementGuestSessionCount();
+
+      // Best-effort delete of the old session + its client-only state. A failure
+      // here must not block starting fresh, so it's swallowed.
+      if (previousSessionId) {
+        try {
+          await deleteStudySession(previousSessionId);
+        } catch (error) {
+          console.error("Failed to delete previous session on reset", error);
+        }
+        if (typeof window !== "undefined") {
+          window.localStorage.removeItem(
+            `study_saved_recordings_${previousSessionId}`,
+          );
+          window.localStorage.removeItem(
+            `study_workspace_state_${previousSessionId}`,
+          );
+        }
+      }
+
+      setActiveStudySessionId(created._id);
+      setForceStart(true);
+      setHasSessionContent(false);
+      setBackConfirmOpen(false);
+
+      const nextParams = new URLSearchParams(searchParams.toString());
+      nextParams.set("sessionId", created._id);
+      router.replace(
+        appendQueryString(
+          pathname || "/tools/study-workspace",
+          nextParams.toString(),
+        ),
+      );
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("study-session-changed", {
+            detail: { sessionId: created._id },
+          }),
+        );
+      }
+    } catch (error) {
+      console.error("Failed to start a fresh session", error);
+    } finally {
+      setIsResetting(false);
+    }
+  }, [pathname, router, searchParams, sessionId]);
 
   const refreshSessionContentState = useCallback(async (targetSessionId: string) => {
     try {
@@ -268,6 +328,47 @@ export default function StudyWorkspacePageContent() {
             }`}
             onClose={() => setGateOpen(false)}
           />
+        ) : null}
+
+        {backConfirmOpen ? (
+          <div
+            className="fixed inset-0 z-[70] flex items-center justify-center bg-[#0f1020]/55 p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="back-confirm-title"
+          >
+            <div className="w-full max-w-sm rounded-2xl border border-[#e2e5ff] bg-white p-5 shadow-2xl">
+              <p
+                id="back-confirm-title"
+                className="text-base font-semibold text-[#1f2342]"
+              >
+                Start over?
+              </p>
+              <p className="mt-2 text-sm text-[#656b91]">
+                Going back will clear this session. Your uploaded content and any
+                generated notes, summaries, flashcards, or quizzes will be lost.
+                This can&apos;t be undone.
+              </p>
+              <div className="mt-4 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setBackConfirmOpen(false)}
+                  disabled={isResetting}
+                  className="rounded-md border border-[#cfd5ff] px-3 py-1.5 text-sm text-[#4f577d] transition hover:bg-[#f3f5ff] disabled:opacity-60"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmBackToStart}
+                  disabled={isResetting}
+                  className="rounded-md bg-[#d84848] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#c93d3d] disabled:opacity-60"
+                >
+                  {isResetting ? "Clearing…" : "Yes, start over"}
+                </button>
+              </div>
+            </div>
+          </div>
         ) : null}
       </>
     </ToolsLayout>
