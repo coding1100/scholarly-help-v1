@@ -42,10 +42,10 @@ export function countWords(input: string): number {
 /**
  * Target length (in words) for an AI summary, scaled to the source length.
  *
- * Baseline is ~10% of the source. Long, redundant documents compress harder
- * (down to ~5% at 50+ pages); short documents need a higher ratio to be useful
- * (up to ~20% under 10 pages). A minimum floor guarantees that even very short
- * inputs produce a real, multi-sentence summary rather than a single line.
+ * Short content uses a higher ratio (up to ~20% under 10 pages) because it
+ * needs more detail to be useful; long, redundant documents compress harder
+ * (down to ~5% at 50+ pages). A minimum floor of 80 words guarantees that even
+ * very short inputs produce a real, multi-sentence summary — never below it.
  *
  * Pages are estimated from word count (~500 words/page) since the source is
  * plain extracted text, not paginated.
@@ -56,7 +56,8 @@ export function summaryTargetWordCount(sourceWordCount: number): {
   estimatedPages: number;
 } {
   const WORDS_PER_PAGE = 500;
-  const MIN_WORDS = 120;
+  // Never produce a summary shorter than this, regardless of the % (per spec).
+  const MIN_WORDS = 80;
 
   const words = Math.max(sourceWordCount, 0);
   const estimatedPages = words / WORDS_PER_PAGE;
