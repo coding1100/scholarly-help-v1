@@ -18,6 +18,7 @@ interface HeroFormProps {
   textAreaRows?: number;
   formBackImg2?: StaticImageData;
   showStickyOnMobile?: boolean;
+  variant?: "default" | "modal";
 }
 
 type SubjectLabel = (typeof SUBJECTS)[number]["label"];
@@ -314,22 +315,36 @@ const HeroForm: FC<HeroFormProps> = ({
   textAreaRows = 4,
   formBackImg2,
   showStickyOnMobile = true,
+  variant = "default",
 }) => {
   const data = usePageData();
   const getQuote = data?.getQuote;
   const currentPage = usePathname();
   const normalizedPage = normalizePathname(currentPage);
+  const isModalVariant = variant === "modal";
   const isTakeMyClass2Route = normalizedPage === "/take-my-class-2";
   const [switchAuthForm, setSwitchAuthForm] = useState<"signin" | "signup">(
     "signin",
   );
 
+  const isToolsOrResearchPage =
+    normalizedPage === "/tools" || normalizedPage === "/academic-research";
+
   const shouldShowPriceHeader = useMemo(() => {
+    if (isToolsOrResearchPage) return false;
+    if (isModalVariant) return true;
     return (
       PRICE_HEADER_ROUTES.has(normalizedPage) ||
       PRICE_HEADER_PREFIXES.some((p) => normalizedPage.startsWith(p))
     );
-  }, [normalizedPage]);
+  }, [isModalVariant, isToolsOrResearchPage, normalizedPage]);
+
+  const quoteTypeLabel = isModalVariant
+    ? "Class"
+    : getQuoteTypeLabelFromPath(currentPage);
+  const isToolsAuthPage =
+    !isModalVariant &&
+    (normalizedPage === "/tools" || normalizedPage === "/tools/");
   const router = useRouter();
 
   // Check if we're on the multi-step form route
@@ -752,12 +767,14 @@ const HeroForm: FC<HeroFormProps> = ({
   // Original form render for all other routes
   return (
     <div className="relative">
-      <BackgroundIllustration
-        image={formBackImg2}
-        isTakeMyClass2Route={isTakeMyClass2Route}
-        variant="default"
-      />
-      {currentPage === "/tools/" ? (
+      {!isModalVariant && (
+        <BackgroundIllustration
+          image={formBackImg2}
+          isTakeMyClass2Route={isTakeMyClass2Route}
+          variant="default"
+        />
+      )}
+      {isToolsAuthPage ? (
         <>
           {switchAuthForm === "signin" ? (
             <SignInCard
@@ -777,7 +794,7 @@ const HeroForm: FC<HeroFormProps> = ({
             <div className="w-full bg-[#263238] rounded-t-lg px-2 sm:py-3 py-2">
               <p className="text-white text-center lg:text-[28px] md:text-2xl sm:text-xl text-lg font-semibold">
                 Check{" "}
-                {currentPage.includes("exam")
+                {isModalVariant || currentPage.includes("exam")
                   ? "Your "
                   : currentPage.includes("class")
                     ? "Your "
@@ -785,7 +802,7 @@ const HeroForm: FC<HeroFormProps> = ({
                       ? "Your "
                       : ""}{" "}
                 <span className="bg-[#F56200] rounded-full px-4 -rotate-3 inline-block">
-                  {getQuoteTypeLabelFromPath(currentPage)}
+                  {quoteTypeLabel}
                 </span>{" "}
                 Price
               </p>
@@ -794,8 +811,12 @@ const HeroForm: FC<HeroFormProps> = ({
           <form
             ref={formRef}
             onSubmit={handleSubmit}
-            className="bg-white max-[768px]:bg-transparent max-[768px]:shadow-none max-[768px]:p-0 rounded-lg shadow-sm p-6 flex flex-col gap-4 -z-[999]"
-            id="quote-form"
+            className={`bg-white rounded-lg shadow-sm p-6 flex flex-col gap-4 -z-[999] ${
+              isModalVariant
+                ? ""
+                : "max-[768px]:bg-transparent max-[768px]:shadow-none max-[768px]:p-0"
+            }`}
+            id={isModalVariant ? "quote-form-modal" : "quote-form"}
           >
             {/* Email Field */}
             <IconInput
