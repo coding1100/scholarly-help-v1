@@ -42,6 +42,11 @@ export default function StudyWorkspacePageContent() {
   const [gateOpen, setGateOpen] = useState(false);
   const [gateReason, setGateReason] = useState<"query" | "session">("session");
 
+  // "Back to start": the toolbar can send the user back to the creation/welcome
+  // view without deleting the session. We force the onboarding view until they
+  // add content again or switch/create a session.
+  const [forceStart, setForceStart] = useState(false);
+
   // No upfront sign-in gate: guests may use the workspace. The email/password
   // gate appears later — on the 4th tutor query or a 2nd session creation.
 
@@ -57,6 +62,20 @@ export default function StudyWorkspacePageContent() {
     window.addEventListener("study:auth-gate", onAuthGate);
     return () => window.removeEventListener("study:auth-gate", onAuthGate);
   }, []);
+
+  // "Back to start" from the in-workspace toolbar reveals the creation view.
+  useEffect(() => {
+    const onBackToStart = () => setForceStart(true);
+    window.addEventListener("study-back-to-start", onBackToStart);
+    return () => window.removeEventListener("study-back-to-start", onBackToStart);
+  }, []);
+
+  // Leaving "start" again whenever the active session changes (switch/create),
+  // so navigating to another session always lands on its workspace, not the
+  // forced welcome view.
+  useEffect(() => {
+    setForceStart(false);
+  }, [sessionId]);
 
   // After returning signed in, migrate the guest's work onto the new account.
   // Run exactly once and expose the promise so bootstrap can await it BEFORE
@@ -199,7 +218,9 @@ export default function StudyWorkspacePageContent() {
   }, [refreshSessionContentState, sessionId]);
 
   const isBootstrapping = !sessionId || hasSessionContent === null;
-  const showWorkspace = hasSessionContent === true || isRecording;
+  // A live recording always keeps the workspace visible (its controls live
+  // there); "back to start" only applies when nothing is being recorded.
+  const showWorkspace = isRecording || (!forceStart && hasSessionContent === true);
   const showOnboarding = !isBootstrapping && !showWorkspace;
 
   return (
@@ -210,9 +231,10 @@ export default function StudyWorkspacePageContent() {
       <>
         <main
           className={`bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 ${
-            showOnboarding
-              ? "flex h-[calc(100vh-8vh)] min-h-0 flex-col overflow-hidden"
-              : "h-[90vh] overflow-y-auto"
+            // Onboarding now also renders the Explore Tools grid below the
+            // welcome card, so the view must scroll instead of clipping at the
+            // fold. Both states share a scrolling main.
+            "h-[90vh] overflow-y-auto"
           }`}
         >
         {isBootstrapping ? (
@@ -223,10 +245,16 @@ export default function StudyWorkspacePageContent() {
           <>
             <StudySourceIngestion
               variant={showOnboarding ? "onboarding" : "toolbar"}
-              onContentReady={() => setHasSessionContent(true)}
+              onContentReady={() => {
+                setForceStart(false);
+                setHasSessionContent(true);
+              }}
             />
             {showWorkspace ? <StudyWorkspace /> : null}
-            {showWorkspace ? <ToolGrid /> : null}
+            {/* Explore Tools grid is shown both before a session has content
+                (creation page) and inside the workspace, so guests can discover
+                other tools at either step. */}
+            <ToolGrid />
           </>
         )}
         </main>
