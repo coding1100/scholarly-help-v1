@@ -4,8 +4,10 @@
  * Client-side guest limits for the AI Study Workspace.
  *
  * A logged-out ("guest") user gets a small free allowance:
- *   - 1 study session
- *   - 3 tutor queries (questions asked against their sources)
+ *   - unlimited study sessions (the email barrier was removed from session
+ *     creation; sessions are still counted for analytics/migration)
+ *   - 3 tutor queries (questions asked against their sources). The 4th query
+ *     opens the email gate.
  *
  * Counts are LIFETIME (never reset) and stored in localStorage. This is an
  * intentionally temporary, client-only scheme — it does not survive the user
@@ -14,7 +16,6 @@
  * the app only depends on this module's public API.
  */
 
-export const GUEST_SESSION_LIMIT = 1;
 export const GUEST_QUERY_LIMIT = 3;
 
 const QUERY_KEY = "guest_study_query_count";
@@ -64,11 +65,6 @@ export function incrementGuestSessionCount(): number {
 /** True when a guest has already used all free queries (gate the next one). */
 export function hasReachedGuestQueryLimit(): boolean {
   return isGuest() && getGuestQueryCount() >= GUEST_QUERY_LIMIT;
-}
-
-/** True when a guest has already created their one free session. */
-export function hasReachedGuestSessionLimit(): boolean {
-  return isGuest() && getGuestSessionCount() >= GUEST_SESSION_LIMIT;
 }
 
 /** Clear guest counters after a successful sign-up/login. */

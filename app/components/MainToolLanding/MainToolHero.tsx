@@ -99,7 +99,7 @@ const MainToolHero: FC = () => {
                     />
                 </div>
                 <div className="flex flex-col sm:flex-row justify-center items-stretch sm:items-center gap-3 sm:gap-4 px-2 sm:px-0">
-                    {btn1IsHashLink ? (
+                    {/* {btn1IsHashLink ? ( */}
                         <button
                             type="button"
                             onClick={() => scrollToSection(btn1Url)}
@@ -107,14 +107,14 @@ const MainToolHero: FC = () => {
                         >
                             {hero.btn1}
                         </button>
-                    ) : (
+                    {/* ) : (
                         <Link
                             href={btn1Url}
                             className="bg-[#565ADD] text-base sm:text-xl text-white px-6 sm:px-9 py-3 rounded-[4px] text-center"
                         >
                             {hero.btn1}
                         </Link>
-                    )}
+                    )} */}
                     <button
                         type="button"
                         onClick={openExpertQuoteModal}

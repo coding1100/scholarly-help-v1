@@ -1,41 +1,24 @@
 "use client";
 
-import { ComponentType, TouchEvent, useEffect, useMemo, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { ComponentType, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import {
-  FiCheck,
-  FiChevronDown,
-  FiChevronLeft,
-  FiChevronRight,
-  FiEdit2,
+  FiArrowLeft,
   FiFolderPlus,
   FiLink,
   FiLoader,
   FiMic,
   FiMonitor,
-  FiSend,
-  FiTrash2,
-  FiX,
 } from "react-icons/fi";
 import {
   addStudySource,
   addStudySourceFile,
-  createStudySession,
-  deleteStudySession,
-  listStudySessions,
-  setActiveStudySessionId,
   StudySourceKind,
   updateStudySessionTitle,
 } from "@/app/utils/studyApiClient";
 import { startStudyRecording } from "@/app/lib/client/studyRecording";
 import { validateStudyUploadFileClient } from "@/app/lib/studyUploadConstraints";
-import {
-  hasReachedGuestQueryLimit,
-  hasReachedGuestSessionLimit,
-  incrementGuestSessionCount,
-  isGuest,
-} from "@/app/lib/client/guestStudyLimits";
 
 type UploadMode = "file" | "url" | "text" | "record";
 type InlineTone = "success" | "error" | "info";
@@ -54,6 +37,24 @@ const UPLOAD_OPTIONS: Array<{
   // remains below but is not offered as a source option.
 ];
 
+/**
+ * Build a unique source name for an uploaded file. Keeps the original base name
+ * for readability and appends a short unique token (timestamp + random) so two
+ * uploads with the same filename never collide.
+ */
+function uniqueFileSourceName(fileName?: string): string {
+  const fallback = "Uploaded File";
+  const raw = (fileName || "").trim();
+  const dot = raw.lastIndexOf(".");
+  const hasExt = dot > 0;
+  const base = (hasExt ? raw.slice(0, dot) : raw).trim() || fallback;
+  const ext = hasExt ? raw.slice(dot) : "";
+  const token = `${Date.now().toString(36)}-${Math.random()
+    .toString(36)
+    .slice(2, 6)}`;
+  return `${base} (${token})${ext}`;
+}
+
 type StudySourceIngestionProps = {
   variant?: "toolbar" | "onboarding";
   onContentReady?: () => void;
@@ -64,34 +65,23 @@ export default function StudySourceIngestion({
   onContentReady,
 }: StudySourceIngestionProps) {
   const searchParams = useSearchParams();
-  const pathname = usePathname();
-  const router = useRouter();
   const sessionId = searchParams.get("sessionId");
-  const [sessions, setSessions] = useState<Array<{ _id: string; title: string }>>(
-    [],
-  );
 
   const [mode, setMode] = useState<UploadMode>("file");
   const [kind, setKind] = useState<StudySourceKind>("file");
   const [name, setName] = useState("");
+  // "Name your session" (onboarding only). Applied to the active session the
+  // first time the guest adds a source, so naming happens once at creation.
+  const [sessionName, setSessionName] = useState("");
   const [text, setText] = useState("");
   const [urlValue, setUrlValue] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [recordType, setRecordType] = useState<"microphone" | "browser-tab">(
     "microphone",
   );
-  const [assistantInput, setAssistantInput] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isStartingRecording, setIsStartingRecording] = useState(false);
-  const [isSessionCreating, setIsSessionCreating] = useState(false);
-  const [isSessionListLoading, setIsSessionListLoading] = useState(false);
-  const [isRenamingSession, setIsRenamingSession] = useState(false);
-  const [isDeletingSession, setIsDeletingSession] = useState(false);
-  const [isEditingSessionTitle, setIsEditingSessionTitle] = useState(false);
-  const [sessionTitleInput, setSessionTitleInput] = useState("");
-  const [touchStartX, setTouchStartX] = useState<number | null>(null);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [statusByMode, setStatusByMode] = useState<Record<UploadMode, InlineStatus | null>>({
     file: null,
     url: null,
@@ -99,7 +89,7 @@ export default function StudySourceIngestion({
     record: null,
   });
 
-  const textLength = useMemo(() => text.trim().length, [text, mode]);
+  const textLength = useMemo(() => text.trim().length, [text]);
 
   const isSourceLoading = isSubmitting || isStartingRecording;
 
@@ -107,180 +97,31 @@ export default function StudySourceIngestion({
     setStatusByMode((prev) => ({ ...prev, [targetMode]: status }));
   };
 
-  const clearAllModeStatus = () => {
-    setStatusByMode({
-      file: null,
-      url: null,
-      text: null,
-      record: null,
-    });
-  };
-
-  const refreshSessions = async () => {
-    setIsSessionListLoading(true);
-    try {
-      const list = await listStudySessions();
-      setSessions(list.map((item) => ({ _id: item._id, title: item.title })));
-    } catch {
-      // ignore list refresh errors for now
-    } finally {
-      setIsSessionListLoading(false);
-    }
-  };
-
-  const switchSession = (nextSessionId: string) => {
-    if (!nextSessionId) return;
-    const nextParams = new URLSearchParams(searchParams.toString());
-    nextParams.set("sessionId", nextSessionId);
-    setActiveStudySessionId(nextSessionId);
-    router.replace(`${pathname}?${nextParams.toString()}`);
+  // Return to the creation/welcome view without destroying the current session.
+  // The page owns the onboarding-vs-workspace decision, so we signal it via an
+  // event rather than mutating session content here.
+  const goBackToStart = () => {
     if (typeof window !== "undefined") {
-      window.dispatchEvent(
-        new CustomEvent("study-session-changed", {
-          detail: { sessionId: nextSessionId },
-        }),
-      );
+      window.dispatchEvent(new CustomEvent("study-back-to-start"));
     }
   };
 
-  const createAndOpenNewSession = async () => {
-    // The email gate lives on this button: a guest who already used their one
-    // free session must sign up before a second one is created. Open the gate
-    // (handled by the page) instead of creating, and do not count the attempt.
-    if (hasReachedGuestSessionLimit()) {
-      window.dispatchEvent(
-        new CustomEvent("study:auth-gate", { detail: { reason: "session" } }),
-      );
-      return;
-    }
-
-    setIsSessionCreating(true);
+  // Apply the onboarding "Name your session" value to the active session. Runs
+  // once, when the guest adds their first source. Best-effort: a naming failure
+  // must never block the source from being saved, so errors are swallowed.
+  const applySessionNameIfProvided = async () => {
+    const nextTitle = sessionName.trim();
+    if (!nextTitle || !sessionId) return;
     try {
-      const session = await createStudySession("My Study Session");
-      if (isGuest()) incrementGuestSessionCount();
-      await refreshSessions();
-      switchSession(session._id);
-      clearAllModeStatus();
-    } catch (error) {
-      console.error("Failed to create study session", error);
-      toast.error("Could not create new study session");
-    } finally {
-      setIsSessionCreating(false);
-    }
-  };
-
-  const saveSessionTitle = async () => {
-    if (!sessionId) {
-      toast.error("Session is still loading. Please wait.");
-      return;
-    }
-    const nextTitle = sessionTitleInput.trim();
-    if (!nextTitle) {
-      toast.error("Session title cannot be empty.");
-      return;
-    }
-    if (nextTitle.length > 80) {
-      toast.error("Session title must be 80 characters or fewer.");
-      return;
-    }
-
-    setIsRenamingSession(true);
-    try {
-      await updateStudySessionTitle(sessionId, nextTitle);
-      await refreshSessions();
-      setIsEditingSessionTitle(false);
-      toast.success("Session name updated");
+      await updateStudySessionTitle(sessionId, nextTitle.slice(0, 80));
       if (typeof window !== "undefined") {
         window.dispatchEvent(
           new CustomEvent("study-session-changed", { detail: { sessionId } }),
         );
       }
     } catch (error) {
-      console.error("Failed to rename session", error);
-      toast.error("Could not update session name");
-    } finally {
-      setIsRenamingSession(false);
+      console.error("Failed to apply session name", error);
     }
-  };
-
-  const cancelSessionTitleEdit = () => {
-    const activeSession = sessions.find((session) => session._id === sessionId);
-    setSessionTitleInput(activeSession?.title || "");
-    setIsEditingSessionTitle(false);
-  };
-
-  const confirmDeleteSession = async () => {
-    if (!sessionId) {
-      setShowDeleteConfirm(false);
-      return;
-    }
-    setIsDeletingSession(true);
-    const deletedSessionId = sessionId;
-    try {
-      await deleteStudySession(deletedSessionId);
-      // Purge this session's client-only state so saved recordings / workspace
-      // state can never leak into another session (or reappear after delete).
-      if (typeof window !== "undefined") {
-        window.localStorage.removeItem(
-          `study_saved_recordings_${deletedSessionId}`,
-        );
-        window.localStorage.removeItem(
-          `study_workspace_state_${deletedSessionId}`,
-        );
-      }
-      const list = await listStudySessions();
-      if (list.length > 0) {
-        const nextSessionId = list[0]._id;
-        setSessions(list.map((item) => ({ _id: item._id, title: item.title })));
-        switchSession(nextSessionId);
-      } else {
-        const created = await createStudySession("My Study Session");
-        setSessions([{ _id: created._id, title: created.title }]);
-        switchSession(created._id);
-      }
-      setIsEditingSessionTitle(false);
-      setShowDeleteConfirm(false);
-      toast.success("Session deleted");
-    } catch (error) {
-      console.error("Failed to delete session", error);
-      toast.error("Could not delete session");
-    } finally {
-      setIsDeletingSession(false);
-    }
-  };
-
-  // Onboarding "Ask AI assistant" chat: hand the question to the real tutor.
-  // The StudyWorkspace tutor only mounts once the workspace is visible, so we
-  // stash the question (keyed by session) and reveal the workspace via
-  // onContentReady — the workspace picks the question up on mount and sends it.
-  const submitAssistantQuestion = () => {
-    const input = assistantInput.trim();
-    if (!input) return;
-    if (!sessionId) {
-      toast.error("Session is still loading. Please wait.");
-      return;
-    }
-    // Same guest gate as the in-workspace tutor: 4th question opens the email gate.
-    if (hasReachedGuestQueryLimit()) {
-      window.dispatchEvent(
-        new CustomEvent("study:auth-gate", { detail: { reason: "query" } }),
-      );
-      return;
-    }
-    if (typeof window !== "undefined") {
-      window.sessionStorage.setItem(
-        `study_pending_tutor_question_${sessionId}`,
-        input,
-      );
-    }
-    setAssistantInput("");
-    // Reveal the workspace (mounts StudyWorkspace, which consumes the question).
-    onContentReady?.();
-    window.dispatchEvent(
-      new CustomEvent("study-tutor-question", {
-        detail: { sessionId, question: input },
-      }),
-    );
   };
 
   const startRecordingFlow = async () => {
@@ -327,42 +168,6 @@ export default function StudySourceIngestion({
     }
   };
 
-  const activeSessionIndex = sessions.findIndex((item) => item._id === sessionId);
-
-  const navigateSessionByOffset = (offset: number) => {
-    if (activeSessionIndex < 0) return;
-    const nextIndex = activeSessionIndex + offset;
-    if (nextIndex < 0 || nextIndex >= sessions.length) return;
-    switchSession(sessions[nextIndex]._id);
-  };
-
-  const onSavedSessionsTouchStart = (event: TouchEvent<HTMLDivElement>) => {
-    setTouchStartX(event.changedTouches[0]?.clientX ?? null);
-  };
-
-  const onSavedSessionsTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
-    if (touchStartX === null) return;
-    const endX = event.changedTouches[0]?.clientX;
-    if (typeof endX !== "number") {
-      setTouchStartX(null);
-      return;
-    }
-    const deltaX = endX - touchStartX;
-    const swipeThreshold = 36;
-    if (Math.abs(deltaX) >= swipeThreshold) {
-      if (deltaX > 0) {
-        navigateSessionByOffset(-1);
-      } else {
-        navigateSessionByOffset(1);
-      }
-    }
-    setTouchStartX(null);
-  };
-
-  useEffect(() => {
-    void refreshSessions();
-  }, []);
-
   useEffect(() => {
     const rawName =
       typeof window !== "undefined" ? localStorage.getItem("user_name") : null;
@@ -372,16 +177,6 @@ export default function StudySourceIngestion({
     }
     setDisplayName(rawName.charAt(0).toUpperCase() + rawName.slice(1));
   }, []);
-
-  useEffect(() => {
-    if (!sessionId) {
-      setSessionTitleInput("");
-      return;
-    }
-    const activeSession = sessions.find((session) => session._id === sessionId);
-    setSessionTitleInput(activeSession?.title || "");
-    setIsEditingSessionTitle(false);
-  }, [sessionId, sessions]);
 
   const onSubmit = async (payloadOverride?: {
     nextKind?: StudySourceKind;
@@ -435,10 +230,14 @@ export default function StudySourceIngestion({
       return;
     }
 
+    // The per-file title field was removed from the creation page, so files are
+    // named automatically. Give every file a UNIQUE name by suffixing the base
+    // filename with a short timestamp/random token, so re-uploading the same
+    // file (or two files sharing a name) never collides.
     const resolvedName =
       trimmedName ||
       (nextKind === "file"
-        ? nextFile?.name || "Uploaded File"
+        ? uniqueFileSourceName(nextFile?.name)
         : nextKind === "text"
           ? "Pasted Text"
           : nextKind === "url"
@@ -467,12 +266,13 @@ export default function StudySourceIngestion({
         tone: "success",
         message: `Saved "${source.name}" successfully (${source.chunkCount} chunks indexed).`,
       });
+      // Name the session once, at creation, before revealing the workspace.
+      await applySessionNameIfProvided();
       if (typeof window !== "undefined") {
         window.dispatchEvent(
           new CustomEvent("study-source-added", { detail: { sessionId } }),
         );
       }
-      await refreshSessions();
       onContentReady?.();
     } catch (error) {
       console.error("Failed to add source", error);
@@ -494,6 +294,24 @@ export default function StudySourceIngestion({
 
   const uploadForm = (
     <div className={`mx-auto ${isCompact ? "" : "rounded-[16px] bg-white p-4 sm:p-5"}`}>
+      {isCompact ? (
+        <div className="mb-3">
+          <label
+            htmlFor="study-session-name"
+            className="mb-1 block text-sm font-semibold text-[#38405f]"
+          >
+            Name your session
+          </label>
+          <input
+            id="study-session-name"
+            value={sessionName}
+            onChange={(e) => setSessionName(e.target.value)}
+            maxLength={80}
+            placeholder="e.g. Biology Ch. 7 — Cellular Respiration"
+            className="w-full rounded-lg border border-[#d6d9f8] bg-white px-3 py-2 text-sm text-[#1d2435] outline-none transition focus:border-[#6572ff] focus:ring-2 focus:ring-[#c9cffb] placeholder:text-[#a2a7bc]"
+          />
+        </div>
+      ) : null}
       <p className={`text-center text-[#38405f] ${isCompact ? "text-sm" : "text-base"}`}>
         Select Option
       </p>
@@ -563,14 +381,6 @@ export default function StudySourceIngestion({
         ) : null}
         {mode === "file" ? (
           <div className={isCompact ? "space-y-1.5" : "space-y-2"}>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="File title (e.g. World War II Notes)"
-              className={`w-full rounded-lg border border-[#d6d9f8] bg-white px-3 outline-none focus:border-[#6572ff] ${
-                isCompact ? "py-1.5 text-sm" : "rounded-xl py-2 text-sm"
-              }`}
-            />
             <label
               className={`flex w-full items-center justify-between gap-2 rounded-lg border border-[#d6d9f8] bg-white ${
                 isCompact ? "px-2 py-1.5" : "gap-3 rounded-xl px-3 py-2"
@@ -836,310 +646,32 @@ export default function StudySourceIngestion({
         ) : null}
       </div>
 
-      <p
-        className={`text-center font-medium text-[#454b66] ${
-          isCompact ? "mt-1.5 text-xs" : "mt-3 text-md"
-        }`}
-      >
-        or ask your new AI tutor!
-      </p>
-
-      <div
-        className={`rounded-[14px] border-[#6376ff] bg-white ${
-          isCompact ? "mt-1.5 border-2 p-2" : "mt-2 rounded-[18px] border-[3px] p-2.5"
-        }`}
-      >
-        {isCompact ? (
-          <div className="flex items-center gap-2">
-            <input
-              value={assistantInput}
-              onChange={(e) => setAssistantInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  submitAssistantQuestion();
-                }
-              }}
-              placeholder="Ask AI assistant..."
-              className="min-w-0 flex-1 text-sm text-[#1d2435] outline-none placeholder:text-[#a2a7bc]"
-            />
-            <button type="button" className="shrink-0 text-[#4d5468]">
-              <FiMic className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              onClick={submitAssistantQuestion}
-              aria-label="Send question to AI tutor"
-              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#5f70ff] text-white"
-            >
-              <FiSend className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        ) : (
-          <>
-            <input
-              value={assistantInput}
-              onChange={(e) => setAssistantInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  submitAssistantQuestion();
-                }
-              }}
-              placeholder="Ask AI assistant..."
-              className="w-full text-md text-[#1d2435] outline-none placeholder:text-[#a2a7bc]"
-            />
-            <div className="mt-3 flex items-center justify-between">
-              <button
-                type="button"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#d8dcf7] text-[#7683d5]"
-              >
-                <FiFolderPlus className="h-4 w-4" />
-              </button>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-1.5 rounded-full border border-[#7480ff] px-4 py-1.5 text-base font-semibold text-[#6676ff]"
-                >
-                  <FiChevronDown className="h-4 w-4" />
-                  Default
-                </button>
-                <button type="button" className="text-[#4d5468]">
-                  <FiMic className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={submitAssistantQuestion}
-                  aria-label="Send question to AI tutor"
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#5f70ff] text-white"
-                >
-                  <FiSend className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
     </div>
   );
 
-  const sessionToolbarCompact = (
-    <section className="w-full shrink-0 px-2 pt-1 sm:px-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div
-          className="inline-flex items-center gap-1.5 text-xs text-[#4f5474] sm:text-sm"
-          onTouchStart={onSavedSessionsTouchStart}
-          onTouchEnd={onSavedSessionsTouchEnd}
-        >
-          <span className="font-semibold">Saved Sessions:</span>
-          <button
-            type="button"
-            onClick={() => navigateSessionByOffset(-1)}
-            disabled={
-              isSessionListLoading || isSessionCreating || activeSessionIndex <= 0
-            }
-            aria-label="Go to previous session"
-            className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-[#ccd2ff] bg-white text-[#5f70ff] transition hover:bg-[#f3f5ff] disabled:opacity-50"
-          >
-            <FiChevronLeft className="h-3.5 w-3.5" />
-          </button>
-          <select
-            value={sessionId || ""}
-            onChange={(e) => switchSession(e.target.value)}
-            disabled={isSessionListLoading || isSessionCreating}
-            className="max-w-[180px] rounded-md border border-[#ccd2ff] bg-white px-2 py-1 text-xs outline-none focus:border-[#5f70ff] sm:max-w-none sm:px-[10px] sm:py-[5px] sm:text-sm"
-          >
-            {sessions.length === 0 ? <option value="">No sessions</option> : null}
-            {sessions.map((session) => (
-              <option key={session._id} value={session._id}>
-                {session.title || "Untitled Session"}
-              </option>
-            ))}
-          </select>
-          <button
-            type="button"
-            onClick={() => navigateSessionByOffset(1)}
-            disabled={
-              isSessionListLoading ||
-              isSessionCreating ||
-              activeSessionIndex < 0 ||
-              activeSessionIndex >= sessions.length - 1
-            }
-            aria-label="Go to next session"
-            className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-[#ccd2ff] bg-white text-[#5f70ff] transition hover:bg-[#f3f5ff] disabled:opacity-50"
-          >
-            <FiChevronRight className="h-3.5 w-3.5" />
-          </button>
-          {/* Delete is also available here so empty sessions (which only ever
-              show the onboarding view) can be removed. */}
-          <button
-            type="button"
-            onClick={() => setShowDeleteConfirm(true)}
-            disabled={!sessionId || isSessionListLoading || isDeletingSession}
-            aria-label="Delete session"
-            className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-[#ffd1d1] bg-white text-[#d75757] transition hover:bg-[#fff1f1] disabled:opacity-50"
-          >
-            <FiTrash2 className="h-3.5 w-3.5" />
-          </button>
-        </div>
-        <button
-          type="button"
-          onClick={createAndOpenNewSession}
-          disabled={isSessionCreating}
-          className="rounded-lg bg-[#5f70ff] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#5363ec] sm:px-4 sm:py-2 sm:text-sm"
-        >
-          {isSessionCreating ? "Creating..." : "+ New Study Session"}
-        </button>
-      </div>
-    </section>
-  );
-
+  // Top toolbar is intentionally minimal: a single "Back to start" control.
+  // Session naming happens once at creation, and switching/creating sessions
+  // lives in the sidebar — so the in-workspace header stays uncluttered.
   const sessionToolbar = (
     <section className="w-full px-3 pt-3 sm:px-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div
-            className="inline-flex items-center gap-2 text-sm text-[#4f5474]"
-            onTouchStart={onSavedSessionsTouchStart}
-            onTouchEnd={onSavedSessionsTouchEnd}
-          >
-            <span className="font-semibold">Saved Sessions:</span>
-            <button
-              type="button"
-              onClick={() => navigateSessionByOffset(-1)}
-              disabled={
-                isSessionListLoading || isSessionCreating || activeSessionIndex <= 0
-              }
-              aria-label="Go to previous session"
-              className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#ccd2ff] bg-white text-[#5f70ff] transition hover:bg-[#f3f5ff] disabled:opacity-50"
-            >
-              <FiChevronLeft className="h-4 w-4" />
-            </button>
-            <select
-              value={sessionId || ""}
-              onChange={(e) => switchSession(e.target.value)}
-              disabled={isSessionListLoading || isSessionCreating}
-              className="rounded-md border border-[#ccd2ff] bg-white px-[10px] py-[6px] text-sm outline-none focus:border-[#5f70ff]"
-            >
-              {sessions.length === 0 ? <option value="">No sessions</option> : null}
-              {sessions.map((session) => (
-                <option key={session._id} value={session._id}>
-                  {session.title || "Untitled Session"}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              onClick={() => navigateSessionByOffset(1)}
-              disabled={
-                isSessionListLoading ||
-                isSessionCreating ||
-                activeSessionIndex < 0 ||
-                activeSessionIndex >= sessions.length - 1
-              }
-              aria-label="Go to next session"
-              className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#ccd2ff] bg-white text-[#5f70ff] transition hover:bg-[#f3f5ff] disabled:opacity-50"
-            >
-              <FiChevronRight className="h-4 w-4" />
-            </button>
-          </div>
-          <div className="flex flex-1 items-center justify-end gap-2">
-            <div className="relative min-w-[260px]">
-              <input
-                value={sessionTitleInput}
-                onChange={(e) => setSessionTitleInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && isEditingSessionTitle) {
-                    e.preventDefault();
-                    void saveSessionTitle();
-                  }
-                  if (e.key === "Escape" && isEditingSessionTitle) {
-                    e.preventDefault();
-                    cancelSessionTitleEdit();
-                  }
-                }}
-                readOnly={!isEditingSessionTitle}
-                disabled={!sessionId || isSessionListLoading || isRenamingSession}
-                placeholder="Session name"
-                className="w-full rounded-md border border-[#ccd2ff] bg-white px-3 py-2 pr-24 text-sm outline-none focus:border-[#5f70ff] disabled:opacity-60"
-              />
-              <div className="absolute inset-y-0 right-2 flex items-center gap-1.5">
-                {isEditingSessionTitle ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={saveSessionTitle}
-                      disabled={!sessionId || isSessionListLoading || isRenamingSession}
-                      aria-label="Save session name"
-                      className="inline-flex h-6 w-6 items-center justify-center rounded border border-[#7b89ff] text-[#4e5ee9] transition hover:bg-[#eff2ff] disabled:opacity-60"
-                    >
-                      {isRenamingSession ? (
-                        <span className="h-3 w-3 animate-spin rounded-full border border-[#c7d0ff] border-t-[#4e5ee9]" />
-                      ) : (
-                        <FiCheck className="h-3 w-3" />
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={cancelSessionTitleEdit}
-                      disabled={isRenamingSession}
-                      aria-label="Cancel session rename"
-                      className="inline-flex h-6 w-6 items-center justify-center rounded border border-[#ccd2ff] text-[#7a80a8] transition hover:bg-[#f3f5ff] disabled:opacity-60"
-                    >
-                      <FiX className="h-3 w-3" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowDeleteConfirm(true)}
-                      disabled={!sessionId || isDeletingSession || isRenamingSession}
-                      aria-label="Delete session"
-                      className="inline-flex h-6 w-6 items-center justify-center rounded border border-[#ffd1d1] text-[#d75757] transition hover:bg-[#fff1f1] disabled:opacity-60"
-                    >
-                      <FiTrash2 className="h-3 w-3" />
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => setIsEditingSessionTitle(true)}
-                      disabled={!sessionId || isSessionListLoading || isDeletingSession}
-                      aria-label="Edit session name"
-                      className="inline-flex h-6 w-6 items-center justify-center rounded border border-[#7b89ff] text-[#4e5ee9] transition hover:bg-[#eff2ff] disabled:opacity-60"
-                    >
-                      <FiEdit2 className="h-3 w-3" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowDeleteConfirm(true)}
-                      disabled={!sessionId || isSessionListLoading || isDeletingSession}
-                      aria-label="Delete session"
-                      className="inline-flex h-6 w-6 items-center justify-center rounded border border-[#ffd1d1] text-[#d75757] transition hover:bg-[#fff1f1] disabled:opacity-60"
-                    >
-                      <FiTrash2 className="h-3 w-3" />
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={createAndOpenNewSession}
-            disabled={isSessionCreating}
-            className="rounded-lg bg-[#5f70ff] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#5363ec]"
-          >
-            {isSessionCreating ? "Creating..." : "+ New Study Session"}
-          </button>
-        </div>
+      <div className="flex items-center">
+        <button
+          type="button"
+          onClick={goBackToStart}
+          className="inline-flex items-center gap-2 rounded-lg border border-[#d6dbff] bg-white px-3 py-2 text-sm font-semibold text-[#4b57b8] transition hover:bg-[#f3f5ff] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c9cffb]"
+        >
+          <FiArrowLeft className="h-4 w-4" />
+          Back to start
+        </button>
+      </div>
     </section>
   );
 
   if (variant === "onboarding") {
     return (
       <>
-        <section className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 py-2 sm:px-4">
-          {sessionToolbarCompact}
-          <div className="flex min-h-0 flex-1 items-center justify-center py-1">
+        <section className="flex w-full flex-col px-2 py-6 sm:px-4 sm:py-10">
+          <div className="flex w-full items-center justify-center">
             <div className="w-full max-w-[640px]">
               <div className="mb-3 px-2 text-center sm:mb-4">
                 <h1 className="text-[22px] font-bold leading-tight tracking-tight text-[#1a2033] sm:text-[28px] lg:text-[32px]">
@@ -1157,74 +689,9 @@ export default function StudySourceIngestion({
             </div>
           </div>
         </section>
-
-        {showDeleteConfirm ? (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0f1020]/55 p-4">
-          <div className="w-full max-w-sm rounded-2xl border border-[#e2e5ff] bg-white p-5 shadow-2xl">
-            <p className="text-base font-semibold text-[#1f2342]">
-              Are you sure to delete this session?
-            </p>
-            <p className="mt-2 text-sm text-[#656b91]">
-              This action cannot be undone and all related content will be removed.
-            </p>
-            <div className="mt-4 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setShowDeleteConfirm(false)}
-                disabled={isDeletingSession}
-                className="rounded-md border border-[#cfd5ff] px-3 py-1.5 text-sm text-[#4f577d] transition hover:bg-[#f3f5ff] disabled:opacity-60"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={confirmDeleteSession}
-                disabled={isDeletingSession}
-                className="rounded-md bg-[#d84848] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#c93d3d] disabled:opacity-60"
-              >
-                {isDeletingSession ? "Deleting..." : "Delete Session"}
-              </button>
-            </div>
-          </div>
-        </div>
-        ) : null}
       </>
     );
   }
 
-  return (
-    <>
-      {sessionToolbar}
-      {showDeleteConfirm ? (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0f1020]/55 p-4">
-          <div className="w-full max-w-sm rounded-2xl border border-[#e2e5ff] bg-white p-5 shadow-2xl">
-            <p className="text-base font-semibold text-[#1f2342]">
-              Are you sure to delete this session?
-            </p>
-            <p className="mt-2 text-sm text-[#656b91]">
-              This action cannot be undone and all related content will be removed.
-            </p>
-            <div className="mt-4 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setShowDeleteConfirm(false)}
-                disabled={isDeletingSession}
-                className="rounded-md border border-[#cfd5ff] px-3 py-1.5 text-sm text-[#4f577d] transition hover:bg-[#f3f5ff] disabled:opacity-60"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={confirmDeleteSession}
-                disabled={isDeletingSession}
-                className="rounded-md bg-[#d84848] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#c93d3d] disabled:opacity-60"
-              >
-                {isDeletingSession ? "Deleting..." : "Delete Session"}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
-    </>
-  );
+  return <>{sessionToolbar}</>;
 }
