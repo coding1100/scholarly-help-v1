@@ -60,6 +60,12 @@ export function mergeAcademicResearchContent(
     heroSection: {
       ...defaultAcademicResearchContent.heroSection,
       ...pageData.heroSection,
+      btn1Url:
+        pageData.heroSection?.btn1Url?.trim() ||
+        defaultAcademicResearchContent.heroSection.btn1Url,
+      btn2Url:
+        pageData.heroSection?.btn2Url?.trim() ||
+        defaultAcademicResearchContent.heroSection.btn2Url,
       specs: mergeArray(
         defaultAcademicResearchContent.heroSection.specs,
         pageData.heroSection?.specs,
