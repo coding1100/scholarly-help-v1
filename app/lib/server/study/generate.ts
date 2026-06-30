@@ -1,4 +1,5 @@
 import {
+  chunkText,
   countWords,
   splitSentences,
   summaryTargetWordCount,
@@ -6,10 +7,13 @@ import {
 import {
   flashcardsSystemInstruction,
   flashcardsUserPrompt,
+  mapChunkSystemInstruction,
+  mapChunkUserPrompt,
   notesSystemInstruction,
   notesUserPrompt,
   quizSystemInstruction,
   quizUserPrompt,
+  reduceSummaryUserPrompt,
   summarySystemInstruction,
   summaryUserPrompt,
 } from "@/app/lib/server/study/prompts";
@@ -43,17 +47,93 @@ function prepareSource(
   return prioritizeSourceText(sourceText, mode, examTopics);
 }
 
-async function buildSummary(sourceText: string, mode: StudyLearningMode) {
-  const prepared = prepareSource(sourceText, mode, []);
-  // Scale length to the ORIGINAL source, not the prioritized/truncated slice, so
-  // the ratio reflects what the student actually uploaded.
-  const { target } = summaryTargetWordCount(countWords(sourceText));
+// Above this many characters, a single LLM call can't see the whole document,
+// so we switch to map-reduce. Below it, one pass is cheaper and just as good.
+const SUMMARY_SINGLE_PASS_CHAR_LIMIT = 12000;
+// Each map chunk is large to minimize the number of LLM calls (fewer, bigger
+// reads) while still fitting comfortably in context.
+const MAP_CHUNK_CHARS = 6000;
+// Run map calls in parallel, but in bounded batches so a huge doc doesn't fire
+// hundreds of simultaneous requests (rate limits / memory).
+const MAP_CONCURRENCY = 6;
+
+function summaryOutputTokenBudget(target: number): number {
   // ~1.4 tokens per word, plus headroom for Markdown/JSON syntax. Clamp so a
-  // huge source can still produce its (capped) 5% summary without overrunning.
-  const maxOutputTokens = Math.min(8192, Math.max(700, Math.round(target * 2) + 400));
+  // huge source can still produce its (capped) summary without overrunning.
+  return Math.min(8192, Math.max(700, Math.round(target * 2) + 400));
+}
+
+/** Run async tasks with a bounded concurrency, preserving input order. */
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  limit: number,
+  task: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let cursor = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (cursor < items.length) {
+      const current = cursor;
+      cursor += 1;
+      results[current] = await task(items[current], current);
+    }
+  });
+  await Promise.all(workers);
+  return results;
+}
+
+async function buildSummary(sourceText: string, mode: StudyLearningMode) {
+  // Length scales with the ORIGINAL source so the % ratio + word floor reflect
+  // what the student actually uploaded (unchanged behavior).
+  const { target } = summaryTargetWordCount(countWords(sourceText));
+  const maxOutputTokens = summaryOutputTokenBudget(target);
+  const normalized = sourceText.trim();
+
+  // Small documents: a single pass already sees everything.
+  if (normalized.length <= SUMMARY_SINGLE_PASS_CHAR_LIMIT) {
+    const raw = await generateGeminiText({
+      systemInstruction: summarySystemInstruction(mode),
+      userPrompt: summaryUserPrompt(normalized, mode, target),
+      temperature: 0.3,
+      maxOutputTokens,
+    });
+    return parseJson<{ short: string; detailed: string }>(raw);
+  }
+
+  // Large documents: MAP each chunk into compact notes (parallel, batched), then
+  // REDUCE all notes into the final summary — so it reflects the WHOLE document.
+  const chunks = chunkText(normalized, MAP_CHUNK_CHARS);
+  const notes = await mapWithConcurrency(chunks, MAP_CONCURRENCY, async (chunk, i) => {
+    try {
+      const note = await generateGeminiText({
+        systemInstruction: mapChunkSystemInstruction(),
+        userPrompt: mapChunkUserPrompt(chunk, i + 1, chunks.length),
+        temperature: 0.2,
+        maxOutputTokens: 700,
+      });
+      return note.trim();
+    } catch (error) {
+      console.error("study.summary.map_chunk_failed", { index: i, error });
+      return ""; // a failed chunk is skipped, not fatal.
+    }
+  });
+
+  const aggregatedNotes = notes.filter(Boolean).join("\n\n");
+  if (!aggregatedNotes) {
+    // Every map call failed — fall back to a single pass over a prioritized slice.
+    const prepared = prepareSource(sourceText, mode, []);
+    const raw = await generateGeminiText({
+      systemInstruction: summarySystemInstruction(mode),
+      userPrompt: summaryUserPrompt(prepared, mode, target),
+      temperature: 0.3,
+      maxOutputTokens,
+    });
+    return parseJson<{ short: string; detailed: string }>(raw);
+  }
+
   const raw = await generateGeminiText({
     systemInstruction: summarySystemInstruction(mode),
-    userPrompt: summaryUserPrompt(prepared, mode, target),
+    userPrompt: reduceSummaryUserPrompt(aggregatedNotes, mode, target),
     temperature: 0.3,
     maxOutputTokens,
   });

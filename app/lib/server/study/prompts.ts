@@ -153,6 +153,52 @@ export function summarySystemInstruction(mode: StudyLearningMode): string {
   ].join(" ");
 }
 
+// --- Map-reduce summarization (for long documents) -------------------------
+// "Map" each chunk into compact factual notes; the "reduce" step then folds all
+// notes into the final summary, so the result reflects the WHOLE document.
+
+export function mapChunkSystemInstruction(): string {
+  return [
+    STUDENT_TUTOR_VOICE,
+    "You extract the key points from ONE excerpt of a longer document.",
+    "Return plain text only: a short bullet list. No preamble, no headings.",
+  ].join(" ");
+}
+
+export function mapChunkUserPrompt(
+  chunkText: string,
+  part: number,
+  total: number,
+): string {
+  return [
+    `This is part ${part} of ${total} of a longer document.`,
+    "Extract ONLY the important facts, definitions, and ideas from THIS excerpt.",
+    "Rules:",
+    "- 3 to 8 concise bullets (use '- '); one idea per bullet.",
+    "- Keep key terms and numbers; drop filler and repetition.",
+    "- Do not add anything not present in the excerpt.",
+    "",
+    "EXCERPT:",
+    chunkText,
+  ].join("\n");
+}
+
+/**
+ * Reduce step: fold the per-chunk notes into the final summary JSON at the
+ * target length. Reuses the same output contract/formatting rules as the
+ * single-pass summary, but its input is the aggregated notes (whole document).
+ */
+export function reduceSummaryUserPrompt(
+  aggregatedNotes: string,
+  mode: StudyLearningMode,
+  targetWordCount: number,
+): string {
+  return summaryUserPrompt(aggregatedNotes, mode, targetWordCount).replace(
+    "SOURCE TEXT:",
+    "These are condensed notes covering the ENTIRE document. Summarize across ALL of them (do not focus on just the first ones).\n\nSOURCE NOTES:",
+  );
+}
+
 export function summaryUserPrompt(
   sourceText: string,
   mode: StudyLearningMode,

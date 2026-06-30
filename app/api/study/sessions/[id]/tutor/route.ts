@@ -5,6 +5,7 @@ import {
   getSessionSourceText,
   saveTutorMessage,
 } from "@/app/lib/server/study/repo";
+import { retrieveStudyContext } from "@/app/lib/server/study/studyRag";
 import { fail, getAuthenticatedUserId, ok } from "@/app/lib/server/study/http";
 import {
   generateGeminiMultimodalText,
@@ -127,9 +128,21 @@ export async function POST(
       return fail("message is required");
     }
 
-    const { chunks } = await getSessionSourceText(params.id);
+    // Hybrid RAG retrieval (vector + keyword), with an automatic keyword-only
+    // fallback when embeddings aren't ready yet — so latency/behavior stay
+    // stable right after upload. If RAG fails entirely, fall back to the legacy
+    // keyword ranker over the stored chunks so the tutor never breaks.
     const chunkLimit = learningMode === "exam" ? 5 : 3;
-    const ranked = topChunksByQuery(chunks, message, chunkLimit);
+    let ranked: Array<{ index: number; chunk: string; score: number }> = [];
+    try {
+      ranked = await retrieveStudyContext(params.id, message, chunkLimit);
+    } catch (error) {
+      console.error("study.tutor.retrieve_failed", error);
+    }
+    if (ranked.length === 0) {
+      const { chunks } = await getSessionSourceText(params.id);
+      ranked = topChunksByQuery(chunks, message, chunkLimit);
+    }
     const citations = ranked.map((item) => item.index);
     const hasRelevantContext = ranked.some((item) => item.score > 0);
     const context = ranked.map((item) => `[${item.index}] ${item.chunk}`).join("\n\n");

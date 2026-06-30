@@ -1666,8 +1666,6 @@ export default function StudyWorkspace() {
                   setQuizSubmitted={setQuizSubmitted}
                   answeredCount={answeredCount}
                   quizScore={quizScore}
-                  isLoading={isLoading}
-                  onGenerate={() => requestGenerate("quizzes")}
                 />
               </div>
             ) : null}

@@ -70,9 +70,12 @@ export default function StudySourceIngestion({
   const [mode, setMode] = useState<UploadMode>("file");
   const [kind, setKind] = useState<StudySourceKind>("file");
   const [name, setName] = useState("");
-  // "Name your session" (onboarding only). Applied to the active session the
-  // first time the guest adds a source, so naming happens once at creation.
+  // "Name your session" (onboarding only). Required before the first source can
+  // be added; applied to the active session so naming happens once at creation.
   const [sessionName, setSessionName] = useState("");
+  const [sessionNameError, setSessionNameError] = useState<string | null>(null);
+  // Onboarding (creation page) vs the in-workspace toolbar variant.
+  const isCompact = variant === "onboarding";
   const [text, setText] = useState("");
   const [urlValue, setUrlValue] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -196,6 +199,12 @@ export default function StudySourceIngestion({
       });
       return;
     }
+    // Naming is required on the creation page (where the field is shown).
+    if (isCompact && !sessionName.trim()) {
+      setSessionNameError("Please name your session to continue.");
+      toast.error("Please name your session to continue.");
+      return;
+    }
 
     const nextNameRaw = payloadOverride?.nextName ?? name;
     const nextTextRaw = payloadOverride?.nextText ?? text;
@@ -290,8 +299,6 @@ export default function StudySourceIngestion({
     }
   };
 
-  const isCompact = variant === "onboarding";
-
   const uploadForm = (
     <div className={`mx-auto ${isCompact ? "" : "rounded-[16px] bg-white p-4 sm:p-5"}`}>
       {isCompact ? (
@@ -300,16 +307,29 @@ export default function StudySourceIngestion({
             htmlFor="study-session-name"
             className="mb-1 block text-sm font-semibold text-[#38405f]"
           >
-            Name your session
+            Name your session <span className="text-[#e1495b]">*</span>
           </label>
           <input
             id="study-session-name"
             value={sessionName}
-            onChange={(e) => setSessionName(e.target.value)}
+            onChange={(e) => {
+              setSessionName(e.target.value);
+              if (sessionNameError) setSessionNameError(null);
+            }}
             maxLength={80}
+            required
+            aria-required="true"
+            aria-invalid={!!sessionNameError}
             placeholder="e.g. Biology Ch. 7 — Cellular Respiration"
-            className="w-full rounded-lg border border-[#d6d9f8] bg-white px-3 py-2 text-sm text-[#1d2435] outline-none transition focus:border-[#6572ff] focus:ring-2 focus:ring-[#c9cffb] placeholder:text-[#a2a7bc]"
+            className={`w-full rounded-lg border bg-white px-3 py-2 text-sm text-[#1d2435] outline-none transition focus:ring-2 placeholder:text-[#a2a7bc] ${
+              sessionNameError
+                ? "border-[#e1495b] focus:border-[#e1495b] focus:ring-[#f5c2c9]"
+                : "border-[#d6d9f8] focus:border-[#6572ff] focus:ring-[#c9cffb]"
+            }`}
           />
+          {sessionNameError ? (
+            <p className="mt-1 text-xs text-[#e1495b]">{sessionNameError}</p>
+          ) : null}
         </div>
       ) : null}
       <p className={`text-center text-[#38405f] ${isCompact ? "text-sm" : "text-base"}`}>
