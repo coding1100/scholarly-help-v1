@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { Menu, X, ChevronDown, MessageSquare } from "lucide-react";
+import { Menu, X, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import megaMenuImage from "@/app/assets/Images/mega-menu-image.webp";
@@ -414,26 +414,14 @@ export default function Header() {
         {/* Phone Number - Shown for special routes (take-my-class, take-my-exam): always show number on mobile */}
 
         {isSpecialRoute && (
-          <div className="flex items-center sm:gap-3 shrink-0">
-            {/* Text Us (SMS) — shown on all breakpoints. Purple pill on mobile,
-                white-bg purple text on desktop. */}
-            <a
-              href={`sms:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER || "17167081869"}`}
-              aria-label="Text us"
-              className="flex items-center justify-center sm:text-[#565add] text-white transition sm:bg-white bg-[#9F92EC] sm:rounded-none rounded-full sm:px-0 px-3 sm:py-0 py-1.5 sm:text-base text-sm whitespace-nowrap"
-            >
-              <span className="flex items-center justify-center w-5 sm:w-6 mr-1 sm:text-[#565add] text-white">
-                <MessageSquare className="w-[18px] h-[18px] sm:w-[22px] sm:h-[22px]" aria-hidden="true" />
-              </span>
-              <span>Text Us</span>
-            </a>
-            {/* Phone number CTA — desktop only, matching the / route navbar. */}
+          <div>
+            {/* Exact copy of the / page CTA: phone number on desktop, "Text Us"
+                on mobile (single tel: link). */}
             <a
               href={`tel:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER || "17167081869"}`}
-              aria-label="Call us"
-              className="hidden sm:flex items-center text-[#565add] transition"
+              className="flex items-center sm:text-primary-400 sm:text-[#565add] transition sm:bg-white bg-[#9F92EC] sm:rounded-none rounded-full sm:px-0 px-4 sm:py-0 py-1"
             >
-              <span className="w-6 mr-1 text-primary-400">
+              <span className="w-6 mr-1 text-primary-400 sm:block hidden">
                 <Image
                   src={Phone}
                   alt="Phone"
@@ -442,7 +430,8 @@ export default function Header() {
                   fetchPriority="high"
                 />
               </span>
-              <span>+1 646 480 6092</span>
+              <span className="sm:block hidden">+1 646 480 6092</span>
+              <span className="sm:hidden block text-white">Text Us</span>
             </a>
           </div>
         )}
