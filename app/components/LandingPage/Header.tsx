@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { Menu, X, ChevronDown, MessageSquare, Phone as PhoneIcon } from "lucide-react";
+import { Menu, X, ChevronDown, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import megaMenuImage from "@/app/assets/Images/mega-menu-image.webp";
@@ -414,8 +414,8 @@ export default function Header() {
         {/* Phone Number - Shown for special routes (take-my-class, take-my-exam): always show number on mobile */}
 
         {isSpecialRoute && (
-          <div className="flex items-center sm:gap-2 gap-1.5 shrink-0">
-            {/* Text Us CTA (SMS) */}
+          <div className="flex items-center shrink-0">
+            {/* Text Us CTA (SMS) — call option removed per product request */}
             <a
               href={`sms:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER || "17167081869"}`}
               aria-label="Text us"
@@ -425,18 +425,6 @@ export default function Header() {
                 <MessageSquare className="w-[18px] h-[18px] sm:w-[22px] sm:h-[22px]" aria-hidden="true" />
               </span>
               <span>Text Us</span>
-            </a>
-            {/* Phone Number CTA (call): number is hidden on the smallest screens
-                so two pills + logo fit; shown from sm up. */}
-            <a
-              href={`tel:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER || "17167081869"}`}
-              aria-label="Call us"
-              className="flex items-center justify-center sm:text-[#565add] text-white transition sm:bg-white bg-[#9F92EC] sm:rounded-none rounded-full sm:px-0 px-3 sm:py-0 py-1.5 sm:text-base text-sm whitespace-nowrap"
-            >
-              <span className="flex items-center justify-center w-5 sm:w-6 sm:mr-1 sm:text-[#565add] text-white">
-                <PhoneIcon className="w-[18px] h-[18px] sm:w-[22px] sm:h-[22px]" aria-hidden="true" />
-              </span>
-              <span className="hidden sm:inline">+1 646 480 6092</span>
             </a>
           </div>
         )}
