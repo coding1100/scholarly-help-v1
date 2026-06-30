@@ -8,6 +8,10 @@ import {
   TutorMessageImageAttachment,
 } from "@/app/lib/server/study/types";
 import { chunkText, normalizeText } from "@/app/lib/server/study/text";
+import {
+  indexStudySourceInBackground,
+  removeStudySessionFromIndex,
+} from "@/app/lib/server/study/studyRag";
 
 const COLLECTIONS = {
   sessions: "study_sessions",
@@ -233,6 +237,7 @@ export async function deleteSession(sessionId: string) {
         memoryStore.tutorMessages.delete(messageId);
       }
     }
+    await removeStudySessionFromIndex(sessionId);
     return true;
   }
 
@@ -242,6 +247,7 @@ export async function deleteSession(sessionId: string) {
     db.collection(COLLECTIONS.sources).deleteMany({ sessionId: objectId }),
     db.collection(COLLECTIONS.artifacts).deleteMany({ sessionId: objectId }),
     db.collection(COLLECTIONS.tutorMessages).deleteMany({ sessionId: objectId }),
+    removeStudySessionFromIndex(sessionId),
   ]);
 
   return sessionDelete.deletedCount > 0;
@@ -292,6 +298,8 @@ export async function addSource(
         memoryStore.tutorMessages.delete(messageId);
       }
     }
+    // Background RAG indexing — does not block the upload response.
+    indexStudySourceInBackground(sessionId, _id, normalizedText, payload.name);
     return {
       _id,
       sessionId,
@@ -312,6 +320,14 @@ export async function addSource(
       .collection(COLLECTIONS.tutorMessages)
       .deleteMany({ sessionId: toObjectId(sessionId) }),
   ]);
+
+  // Background RAG indexing — does not block the upload response.
+  indexStudySourceInBackground(
+    sessionId,
+    result.insertedId.toString(),
+    normalizedText,
+    payload.name,
+  );
 
   return {
     _id: result.insertedId.toString(),

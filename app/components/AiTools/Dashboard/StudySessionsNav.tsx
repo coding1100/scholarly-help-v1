@@ -144,24 +144,26 @@ export default function StudySessionsNav({ onNavigate }: { onNavigate?: () => vo
     [activeSessionId, openSession],
   );
 
-  // Hidden until the user has their first session, and only on the workspace.
-  // Guests don't get the New Session / Recent Sessions block — it's only for
-  // signed-in users (whose sessions persist across devices).
-  if (isGuestUser || !isStudyWorkspaceRoute || sessions.length === 0) {
+  // Shown on the workspace once at least one session exists. Recent Sessions is
+  // visible to everyone (guests included); the "+ New Study Session" button is
+  // for signed-in users only.
+  if (!isStudyWorkspaceRoute || sessions.length === 0) {
     return null;
   }
 
   return (
     <div className="mt-3">
-      <button
-        type="button"
-        onClick={handleCreate}
-        disabled={isCreating}
-        className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm font-semibold text-indigo-600 transition-colors hover:bg-indigo-50 disabled:opacity-60 dark:text-indigo-400 dark:hover:bg-indigo-900/30"
-      >
-        <FiPlus className="h-4 w-4 shrink-0" />
-        <span>{isCreating ? "Creating…" : "New Study Session"}</span>
-      </button>
+      {!isGuestUser ? (
+        <button
+          type="button"
+          onClick={handleCreate}
+          disabled={isCreating}
+          className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm font-semibold text-indigo-600 transition-colors hover:bg-indigo-50 disabled:opacity-60 dark:text-indigo-400 dark:hover:bg-indigo-900/30"
+        >
+          <FiPlus className="h-4 w-4 shrink-0" />
+          <span>{isCreating ? "Creating…" : "New Study Session"}</span>
+        </button>
+      ) : null}
 
       <p className="mt-3 px-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
         Recent Sessions

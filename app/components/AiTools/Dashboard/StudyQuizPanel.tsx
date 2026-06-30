@@ -152,8 +152,6 @@ export default function StudyQuizPanel({
   setQuizSubmitted,
   answeredCount,
   quizScore,
-  isLoading,
-  onGenerate,
 }: {
   quizzes: QuizItem[];
   quizQuestionIndex: number;
@@ -164,24 +162,17 @@ export default function StudyQuizPanel({
   setQuizSubmitted: Dispatch<SetStateAction<boolean>>;
   answeredCount: number;
   quizScore: number;
-  isLoading: boolean;
-  onGenerate: () => void;
 }) {
   const activeQuiz = quizzes.length > 0 ? quizzes[quizQuestionIndex] : null;
   const decode = decodeText;
 
   if (quizzes.length === 0) {
+    // The "Create Quiz" action lives in the tab header above this panel, so the
+    // empty state only shows guidance (no duplicate generate button here).
     return (
       <div className="rounded-md bg-[#f4f5fc] py-3 text-center text-sm text-[#797da0]">
-        No quizzes yet. Generate practice questions from your source.
-        <button
-          type="button"
-          onClick={onGenerate}
-          disabled={isLoading}
-          className="mx-auto mt-3 block rounded-md bg-[#5f70ff] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-        >
-          {isLoading ? "Creating..." : "Generate quiz"}
-        </button>
+        No quizzes yet. Use “Create Quiz” above to generate practice questions
+        from your source.
       </div>
     );
   }
