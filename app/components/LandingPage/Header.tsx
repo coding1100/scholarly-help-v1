@@ -415,16 +415,34 @@ export default function Header() {
 
         {isSpecialRoute && (
           <div className="flex items-center shrink-0">
-            {/* Text Us CTA (SMS) — call option removed per product request */}
+            {/* Mobile (< sm): the "Text Us" SMS pill, unchanged. Hidden on
+                desktop, where the phone number (reused from the / navbar) shows. */}
             <a
               href={`sms:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER || "17167081869"}`}
               aria-label="Text us"
-              className="flex items-center justify-center sm:text-[#565add] text-white transition sm:bg-white bg-[#9F92EC] sm:rounded-none rounded-full sm:px-4 px-3 sm:py-0 py-1.5 sm:text-base text-sm whitespace-nowrap"
+              className="flex items-center justify-center text-white transition bg-[#9F92EC] rounded-full px-3 py-1.5 text-sm whitespace-nowrap sm:hidden"
             >
-              <span className="flex items-center justify-center w-5 sm:w-6 mr-1 sm:text-[#565add] text-white">
-                <MessageSquare className="w-[18px] h-[18px] sm:w-[22px] sm:h-[22px]" aria-hidden="true" />
+              <span className="flex items-center justify-center w-5 mr-1 text-white">
+                <MessageSquare className="w-[18px] h-[18px]" aria-hidden="true" />
               </span>
               <span>Text Us</span>
+            </a>
+            {/* Desktop (>= sm): phone number CTA, matching the / route navbar. */}
+            <a
+              href={`tel:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER || "17167081869"}`}
+              aria-label="Call us"
+              className="hidden sm:flex items-center text-[#565add] transition"
+            >
+              <span className="w-6 mr-1 text-primary-400">
+                <Image
+                  src={Phone}
+                  alt="Phone"
+                  width={22}
+                  height={22}
+                  fetchPriority="high"
+                />
+              </span>
+              <span>+1 646 480 6092</span>
             </a>
           </div>
         )}
