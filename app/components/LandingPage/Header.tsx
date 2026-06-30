@@ -414,20 +414,20 @@ export default function Header() {
         {/* Phone Number - Shown for special routes (take-my-class, take-my-exam): always show number on mobile */}
 
         {isSpecialRoute && (
-          <div className="flex items-center shrink-0">
-            {/* Mobile (< sm): the "Text Us" SMS pill, unchanged. Hidden on
-                desktop, where the phone number (reused from the / navbar) shows. */}
+          <div className="flex items-center sm:gap-3 shrink-0">
+            {/* Text Us (SMS) — shown on all breakpoints. Purple pill on mobile,
+                white-bg purple text on desktop. */}
             <a
               href={`sms:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER || "17167081869"}`}
               aria-label="Text us"
-              className="flex items-center justify-center text-white transition bg-[#9F92EC] rounded-full px-3 py-1.5 text-sm whitespace-nowrap sm:hidden"
+              className="flex items-center justify-center sm:text-[#565add] text-white transition sm:bg-white bg-[#9F92EC] sm:rounded-none rounded-full sm:px-0 px-3 sm:py-0 py-1.5 sm:text-base text-sm whitespace-nowrap"
             >
-              <span className="flex items-center justify-center w-5 mr-1 text-white">
-                <MessageSquare className="w-[18px] h-[18px]" aria-hidden="true" />
+              <span className="flex items-center justify-center w-5 sm:w-6 mr-1 sm:text-[#565add] text-white">
+                <MessageSquare className="w-[18px] h-[18px] sm:w-[22px] sm:h-[22px]" aria-hidden="true" />
               </span>
               <span>Text Us</span>
             </a>
-            {/* Desktop (>= sm): phone number CTA, matching the / route navbar. */}
+            {/* Phone number CTA — desktop only, matching the / route navbar. */}
             <a
               href={`tel:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER || "17167081869"}`}
               aria-label="Call us"
