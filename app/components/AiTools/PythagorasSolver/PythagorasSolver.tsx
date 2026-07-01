@@ -6,6 +6,8 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
+import { useGuestGate } from "@/app/lib/client/useGuestGate";
+import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 import StemSolver from "./StemSolver";
 
 interface PythagorasSolverProps {
@@ -42,6 +44,7 @@ const PythagorasSolver: FC<PythagorasSolverProps> = ({ setFlag }) => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [result, setResult] = useState<SolverResponse | null>(null);
   const [error, setError] = useState<string>("");
+  const { gateOpen, closeGate, guardAiClick } = useGuestGate();
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -69,82 +72,85 @@ const PythagorasSolver: FC<PythagorasSolverProps> = ({ setFlag }) => {
       return;
     }
 
-    trackToolGenerate({ toolName: "Pythagoras Equation Solver" });
-    setIsSubmitting(true);
-    setError("");
-    setResult(null);
+    // Validate and build the payload BEFORE consuming a guest AI click, so
+    // invalid input never counts against the guest's allowance.
+    const payload: {
+      a?: number;
+      b?: number;
+      c?: number;
+    } = {};
 
-    try {
-      const payload: {
-        a?: number;
-        b?: number;
-        c?: number;
-      } = {};
-
-      if (sideA.trim()) {
-        const aValue = parseFloat(sideA.trim());
-        if (isNaN(aValue) || aValue <= 0) {
-          setError("Side 'a' must be a positive number.");
-          toast.error("Side 'a' must be a positive number.");
-          setIsSubmitting(false);
-          return;
-        }
-        payload.a = aValue;
+    if (sideA.trim()) {
+      const aValue = parseFloat(sideA.trim());
+      if (isNaN(aValue) || aValue <= 0) {
+        setError("Side 'a' must be a positive number.");
+        toast.error("Side 'a' must be a positive number.");
+        return;
       }
-      if (sideB.trim()) {
-        const bValue = parseFloat(sideB.trim());
-        if (isNaN(bValue) || bValue <= 0) {
-          setError("Side 'b' must be a positive number.");
-          toast.error("Side 'b' must be a positive number.");
-          setIsSubmitting(false);
-          return;
-        }
-        payload.b = bValue;
-      }
-      if (sideC.trim()) {
-        const cValue = parseFloat(sideC.trim());
-        if (isNaN(cValue) || cValue <= 0) {
-          setError("Side 'c' must be a positive number.");
-          toast.error("Side 'c' must be a positive number.");
-          setIsSubmitting(false);
-          return;
-        }
-        payload.c = cValue;
-      }
-
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/pythagoras-equation-solver`,
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        },
-      );
-
-      // Backend wraps responses as { success, message, data }
-      const responsePayload = response.data?.data ?? response.data;
-
-      if (responsePayload?.status === "success") {
-        setResult(responsePayload);
-        setFlag(true);
-        toast.success("Triangle solved successfully!");
-      } else {
-        setError("Failed to solve the triangle. Please try again.");
-        toast.error("Failed to solve the triangle.");
-      }
-    } catch (error: any) {
-      console.error("Error solving triangle:", error);
-      const errorMessage =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong. Please try again.";
-      setError(errorMessage);
-      toast.error(errorMessage);
-    } finally {
-      setIsSubmitting(false);
+      payload.a = aValue;
     }
+    if (sideB.trim()) {
+      const bValue = parseFloat(sideB.trim());
+      if (isNaN(bValue) || bValue <= 0) {
+        setError("Side 'b' must be a positive number.");
+        toast.error("Side 'b' must be a positive number.");
+        return;
+      }
+      payload.b = bValue;
+    }
+    if (sideC.trim()) {
+      const cValue = parseFloat(sideC.trim());
+      if (isNaN(cValue) || cValue <= 0) {
+        setError("Side 'c' must be a positive number.");
+        toast.error("Side 'c' must be a positive number.");
+        return;
+      }
+      payload.c = cValue;
+    }
+
+    // Guests get a small number of free AI actions across all tools; the gate
+    // opens instead of calling the AI once the allowance is used up.
+    guardAiClick(async () => {
+      trackToolGenerate({ toolName: "Pythagoras Equation Solver" });
+      setIsSubmitting(true);
+      setError("");
+      setResult(null);
+
+      try {
+        const response = await axios.post(
+          `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/pythagoras-equation-solver`,
+          payload,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          },
+        );
+
+        // Backend wraps responses as { success, message, data }
+        const responsePayload = response.data?.data ?? response.data;
+
+        if (responsePayload?.status === "success") {
+          setResult(responsePayload);
+          setFlag(true);
+          toast.success("Triangle solved successfully!");
+        } else {
+          setError("Failed to solve the triangle. Please try again.");
+          toast.error("Failed to solve the triangle.");
+        }
+      } catch (error: any) {
+        console.error("Error solving triangle:", error);
+        const errorMessage =
+          error?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong. Please try again.";
+        setError(errorMessage);
+        toast.error(errorMessage);
+      } finally {
+        setIsSubmitting(false);
+      }
+    });
   };
 
   const handleCopyResult = async (text: string) => {
@@ -517,6 +523,7 @@ const PythagorasSolver: FC<PythagorasSolverProps> = ({ setFlag }) => {
           triangle problems.
         </q>
       </div>
+      <GuestAuthGateModal open={gateOpen} onClose={closeGate} />
     </div>
   );
 };

@@ -7,9 +7,11 @@ import { useHomeData } from "@/app/(pages)/HomeDataProvider";
 import { useTakeMyClassData } from "@/app/(pages)/TakeMyClassDataProvider";
 import { useTakeMyExamData } from "@/app/(pages)/TakeMyExamDataProvider";
 import { useTakeMyProctoredExamData } from "@/app/(pages)/TakeMyProctoredExamDataProvider";
+import { useTakeMyTeasExamData } from "@/app/(pages)/TakeMyTeasExamDataProvider";
+import { useTakeMyHesiExamData } from "@/app/(pages)/TakeMyHesiExamDataProvider";
 
 /**
- * Generic hook that tries to get data from assignment, exam, homework, online-class, essay-writing, home, take-my-class, take-my-exam, and take-my-proctored-exam contexts
+ * Generic hook that tries to get data from assignment, exam, homework, online-class, essay-writing, home, take-my-class, take-my-exam, take-my-proctored-exam, take-my-teas-exam, and take-my-hesi-exam contexts
  * This allows components to work with all page types
  */
 export function usePageData() {
@@ -22,8 +24,10 @@ export function usePageData() {
   const takeMyClassData = useTakeMyClassData();
   const takeMyExamData = useTakeMyExamData();
   const takeMyProctoredExamData = useTakeMyProctoredExamData();
-  
+  const takeMyTeasExamData = useTakeMyTeasExamData();
+  const takeMyHesiExamData = useTakeMyHesiExamData();
+
   // Return whichever context has data, or null if none have data
-  return assignmentData || examData || homeworkData || onlineClassData || essayWritingData || homeData || takeMyClassData || takeMyExamData || takeMyProctoredExamData;
+  return assignmentData || examData || homeworkData || onlineClassData || essayWritingData || homeData || takeMyClassData || takeMyExamData || takeMyProctoredExamData || takeMyTeasExamData || takeMyHesiExamData;
 }
 

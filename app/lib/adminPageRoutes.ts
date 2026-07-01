@@ -59,6 +59,8 @@ export const ADMIN_PAGE_ROUTES: AdminPageRouteConfig[] = [
   { adminPath: "/admin/take-my-class", parentNav: "pages", collection: "pages", defaultPageId: "take-my-class", multiPage: false, parentLabel: "Pages — Take My Class" },
   { adminPath: "/admin/take-my-exam", parentNav: "pages", collection: "pages", defaultPageId: "take-my-exam", multiPage: false, parentLabel: "Pages — Take My Exam" },
   { adminPath: "/admin/take-my-proctored-exam-for-me", parentNav: "pages", collection: "pages", defaultPageId: "take-my-proctored-exam-for-me", multiPage: false, parentLabel: "Pages — Proctored Exam" },
+  { adminPath: "/admin/take-my-teas-exam", parentNav: "pages", collection: "pages", defaultPageId: "take-my-teas-exam", multiPage: false, parentLabel: "Pages — Take My TEAS Exam" },
+  { adminPath: "/admin/take-my-hesi-exam", parentNav: "pages", collection: "pages", defaultPageId: "take-my-hesi-exam", multiPage: false, parentLabel: "Pages — Take My HESI Exam" },
   { adminPath: "/admin/faq", parentNav: "pages", collection: "pages", defaultPageId: "faq", multiPage: false, parentLabel: "Pages — FAQ" },
 ];
 

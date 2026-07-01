@@ -9,6 +9,8 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
+import { useGuestGate } from "@/app/lib/client/useGuestGate";
+import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 
 interface AIParaphraserProp {
   setFlag: (value: boolean) => void;
@@ -23,6 +25,7 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag }) => {
   const [isSubmitting, setSubmitting] = useState<boolean>(false);
   const [file, setFile] = useState<File | null>(null);
   const [wordLimitExceeded, setWordLimitExceeded] = useState(false);
+  const { gateOpen, closeGate, guardAiClick } = useGuestGate();
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -145,8 +148,12 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag }) => {
       toast.error("Please add custom tone instructions.");
       return;
     }
-    trackToolGenerate({ toolName: "Paraphraser Tool" });
-    await processinput();
+    // Guests get a small number of free AI actions across all tools; the gate
+    // opens instead of calling the AI once the allowance is used up.
+    guardAiClick(async () => {
+      trackToolGenerate({ toolName: "Paraphraser Tool" });
+      await processinput();
+    });
   };
 
   return (
@@ -253,6 +260,7 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag }) => {
           express your thoughts more clearly and confidently.{" "}
         </q>
       </div>
+      <GuestAuthGateModal open={gateOpen} onClose={closeGate} />
     </div>
   );
 };

@@ -9,6 +9,8 @@ import "katex/dist/katex.min.css";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import { sanitizeHtml } from "@/app/utils/sanitizeHtml";
+import { useGuestGate } from "@/app/lib/client/useGuestGate";
+import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 
 type Subject = "math" | "physics" | "chemistry" | "general";
 type InputMode = "image" | "text";
@@ -359,6 +361,7 @@ const StemSolver: FC<{ setFlag: (v: boolean) => void }> = ({ setFlag }) => {
   const [error, setError] = useState<string>("");
   const [showKeyboard, setShowKeyboard] = useState<boolean>(false);
   const [keyboardTab, setKeyboardTab] = useState<string>("basic");
+  const { gateOpen, closeGate, guardAiClick } = useGuestGate();
   const resultRef = useRef<HTMLDivElement>(null);
   const problemRef = useRef<HTMLTextAreaElement>(null);
 
@@ -448,56 +451,60 @@ const StemSolver: FC<{ setFlag: (v: boolean) => void }> = ({ setFlag }) => {
       return;
     }
 
-    trackToolGenerate({ toolName: "STEM Solver" });
-    setIsSubmitting(true);
-    setError("");
-    setResult(null);
+    // Guests get a small number of free AI actions across all tools; the gate
+    // opens instead of calling the AI once the allowance is used up.
+    guardAiClick(async () => {
+      trackToolGenerate({ toolName: "STEM Solver" });
+      setIsSubmitting(true);
+      setError("");
+      setResult(null);
 
-    try {
-      let responsePayload: StemResponse;
-      if (inputMode === "image") {
-        const form = new FormData();
-        form.append("image", imageFile as File);
-        if (problem.trim()) form.append("problem", problem.trim());
-        form.append("subject", subject);
-        const res = await axios.post(`${apiBase}/tools/stem-solver/image`, form, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        responsePayload = res.data?.data ?? res.data;
-      } else {
-        const res = await axios.post(
-          `${apiBase}/tools/stem-solver/text`,
-          { problem: problem.trim(), subject },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
+      try {
+        let responsePayload: StemResponse;
+        if (inputMode === "image") {
+          const form = new FormData();
+          form.append("image", imageFile as File);
+          if (problem.trim()) form.append("problem", problem.trim());
+          form.append("subject", subject);
+          const res = await axios.post(`${apiBase}/tools/stem-solver/image`, form, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          responsePayload = res.data?.data ?? res.data;
+        } else {
+          const res = await axios.post(
+            `${apiBase}/tools/stem-solver/text`,
+            { problem: problem.trim(), subject },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
             },
-          },
-        );
-        responsePayload = res.data?.data ?? res.data;
-      }
+          );
+          responsePayload = res.data?.data ?? res.data;
+        }
 
-      if (responsePayload?.status === "success" && responsePayload.solution) {
-        setResult(responsePayload.solution);
-        setFlag(true);
-        toast.success("Solved!");
-      } else {
-        setError("Could not solve this problem. Please try again.");
-        toast.error("Could not solve this problem.");
+        if (responsePayload?.status === "success" && responsePayload.solution) {
+          setResult(responsePayload.solution);
+          setFlag(true);
+          toast.success("Solved!");
+        } else {
+          setError("Could not solve this problem. Please try again.");
+          toast.error("Could not solve this problem.");
+        }
+      } catch (err: any) {
+        const msg =
+          err?.response?.data?.message ||
+          (Array.isArray(err?.response?.data?.message)
+            ? err.response.data.message.join(", ")
+            : err?.message) ||
+          "Something went wrong. Please try again.";
+        setError(msg);
+        toast.error(msg);
+      } finally {
+        setIsSubmitting(false);
       }
-    } catch (err: any) {
-      const msg =
-        err?.response?.data?.message ||
-        (Array.isArray(err?.response?.data?.message)
-          ? err.response.data.message.join(", ")
-          : err?.message) ||
-        "Something went wrong. Please try again.";
-      setError(msg);
-      toast.error(msg);
-    } finally {
-      setIsSubmitting(false);
-    }
+    });
   };
 
   const handleCopy = async (text: string) => {
@@ -949,6 +956,7 @@ const StemSolver: FC<{ setFlag: (v: boolean) => void }> = ({ setFlag }) => {
           )}
         </div>
       )}
+      <GuestAuthGateModal open={gateOpen} onClose={closeGate} />
     </div>
   );
 };

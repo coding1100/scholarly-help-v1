@@ -179,7 +179,7 @@ export default function StudyQuizPanel({
 
   if (quizSubmitted) {
     return (
-      <div className="max-h-[60vh] space-y-3 overflow-y-auto">
+      <div className="space-y-4">
         <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[#dfe4ff] bg-[#f9faff] px-3 py-2 text-xs text-[#5a5f7d]">
           <span className="inline-flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full bg-[#10b981]" />
@@ -191,11 +191,11 @@ export default function StudyQuizPanel({
           </span>
         </div>
         {quizzes.map((quiz, qIndex) => (
-          <div key={quiz.id} className="rounded-lg border border-[#e8e9f6] p-3">
-            <p className="text-sm font-semibold text-[#292a40]">
+          <div key={quiz.id} className="rounded-lg border border-[#e8e9f6] p-4">
+            <p className="text-sm font-semibold leading-relaxed text-[#292a40]">
               {qIndex + 1}. {decode(quiz.question)}
             </p>
-            <div className="mt-2">
+            <div className="mt-3">
               <QuizOptions
                 quiz={quiz}
                 selectedIndex={quizSelections[quiz.id]}
@@ -203,14 +203,16 @@ export default function StudyQuizPanel({
                 decode={decode}
               />
             </div>
-            <p className="mt-2 rounded-md bg-[#f4f5fc] px-2.5 py-2 text-xs text-[#4f5373]">
+            <p className="mt-3 rounded-md bg-[#f4f5fc] px-3 py-2 text-xs leading-relaxed text-[#4f5373]">
               {decode(quiz.explanation)}
             </p>
           </div>
         ))}
-        <p className="text-center text-sm font-semibold text-[#5f70ff]">
-          Score: {quizScore}/{quizzes.length}
-        </p>
+        <div className="rounded-lg border border-[#dfe4ff] bg-[#f5f7ff] py-3 text-center">
+          <p className="text-sm font-semibold text-[#5f70ff]">
+            Score: {quizScore}/{quizzes.length}
+          </p>
+        </div>
         <button
           type="button"
           onClick={() => {

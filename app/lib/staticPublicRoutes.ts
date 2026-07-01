@@ -64,6 +64,8 @@ export const STATIC_TOP_LEVEL_SEGMENTS = new Set([
   "take-my-class-saving-your-future",
   "take-my-exam",
   "take-my-proctored-exam-for-me",
+  "take-my-teas-exam",
+  "take-my-hesi-exam",
   "terms-and-conditions",
   "thank-you",
   "thank-you-2",

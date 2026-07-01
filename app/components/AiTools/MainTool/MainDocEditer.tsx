@@ -35,6 +35,8 @@ import {
   type OutlineMode,
 } from "./outlineGeneration";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
+import { useGuestGate } from "@/app/lib/client/useGuestGate";
+import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 // import ParagraphToolbar from "../../Paragraph-tool/ParagraphToolbar";
 
 // Custom backspace behavior
@@ -67,6 +69,7 @@ const MainDocEditor: React.FC<MainDocEditorProps> = ({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const router = useRouter();
   const pathname = usePathname();
+  const { gateOpen, closeGate, guardAiClick } = useGuestGate();
   const { title, setTitle } = useContext(TitleContext);
   const { setEditor: setEditorContext } = useContext(EditorContext);
   const { citationStyle, setCitationStyle } = useContext(
@@ -255,7 +258,8 @@ const MainDocEditor: React.FC<MainDocEditorProps> = ({
     const docTitle = titleFromPrompt(prompt);
     const mode = selectedOutline as OutlineMode;
 
-    // Standard / none are deterministic — no AI call, no spinner needed.
+    // Standard / none are deterministic — no AI call, no spinner needed, and
+    // NOT counted against the guest click allowance.
     if (mode === "standard" || mode === "none") {
       const sections = mode === "standard" ? standardOutline(prompt) : [];
       setOutlineResponse(sections);
@@ -267,35 +271,38 @@ const MainDocEditor: React.FC<MainDocEditorProps> = ({
       return;
     }
 
-    setIsGenerating(true);
-    try {
-      const { sections, usedFallback } = await generateOutline(mode, prompt);
-      if (usedFallback) {
-        toast("Couldn’t build a custom outline — used a standard structure.", {
-          id: "outline-fallback",
-        });
-      }
+    // A custom AI outline is an AI-triggering click — gate it for guests.
+    guardAiClick(async () => {
+      setIsGenerating(true);
+      try {
+        const { sections, usedFallback } = await generateOutline(mode, prompt);
+        if (usedFallback) {
+          toast("Couldn’t build a custom outline — used a standard structure.", {
+            id: "outline-fallback",
+          });
+        }
 
-      setOutlineResponse(sections);
-      if (!title.trim()) setTitle(docTitle);
-      await startPersistedDocument(outlineToHtml(sections), docTitle);
-    } catch (error) {
-      // Never strand the user on an empty page: fall back to the deterministic
-      // skeleton instead of a blank draft.
-      const sections = standardOutline(prompt);
-      toast(
-        getAcademicErrorMessage(
-          error,
-          "Couldn’t reach the outline service — used a standard structure.",
-        ),
-        { id: "outline-fallback" },
-      );
-      setOutlineResponse(sections);
-      if (!title.trim()) setTitle(docTitle);
-      await startPersistedDocument(outlineToHtml(sections), docTitle);
-    } finally {
-      setIsGenerating(false);
-    }
+        setOutlineResponse(sections);
+        if (!title.trim()) setTitle(docTitle);
+        await startPersistedDocument(outlineToHtml(sections), docTitle);
+      } catch (error) {
+        // Never strand the user on an empty page: fall back to the deterministic
+        // skeleton instead of a blank draft.
+        const sections = standardOutline(prompt);
+        toast(
+          getAcademicErrorMessage(
+            error,
+            "Couldn’t reach the outline service — used a standard structure.",
+          ),
+          { id: "outline-fallback" },
+        );
+        setOutlineResponse(sections);
+        if (!title.trim()) setTitle(docTitle);
+        await startPersistedDocument(outlineToHtml(sections), docTitle);
+      } finally {
+        setIsGenerating(false);
+      }
+    });
   };
 
   const handleImportFile = async (file: File) => {
@@ -580,6 +587,7 @@ const MainDocEditor: React.FC<MainDocEditorProps> = ({
         onStartWriting={onStartWriting}
         setOutlineResponse={setOutlineResponse}
       />
+      <GuestAuthGateModal open={gateOpen} onClose={closeGate} />
     </div>
   );
 };

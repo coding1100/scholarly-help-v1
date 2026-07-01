@@ -81,6 +81,37 @@ export function summaryTargetWordCount(sourceWordCount: number): {
   return { target, ratio, estimatedPages };
 }
 
+/**
+ * Target number of quiz questions for a source, scaled to its length.
+ *
+ * Product rule: a quiz covers ~20% of the uploaded content, drawn from the most
+ * relevant/important material. Pages are estimated from word count
+ * (~500 words/page). We map "20% of the pages" to one question per covered
+ * page, so a 100-page source (~50k words) → 20 pages → 20 questions. A hard
+ * floor of 10 questions guarantees a usable quiz even for short sources; a cap
+ * keeps generation bounded for very large inputs.
+ */
+export function quizTargetQuestionCount(sourceWordCount: number): {
+  target: number;
+  estimatedPages: number;
+  coveredPages: number;
+} {
+  const WORDS_PER_PAGE = 500;
+  const COVERAGE_RATIO = 0.2; // 20% of the content
+  const MIN_QUESTIONS = 10;
+  const MAX_QUESTIONS = 40;
+
+  const words = Math.max(sourceWordCount, 0);
+  const estimatedPages = words / WORDS_PER_PAGE;
+  const coveredPages = estimatedPages * COVERAGE_RATIO;
+
+  // One question per covered page, floored at the minimum and capped.
+  const raw = Math.round(coveredPages);
+  const target = Math.min(MAX_QUESTIONS, Math.max(MIN_QUESTIONS, raw));
+
+  return { target, estimatedPages, coveredPages };
+}
+
 export function topChunksByQuery(chunks: string[], query: string, limit = 3) {
   const qTokens = normalizeText(query)
     .toLowerCase()
