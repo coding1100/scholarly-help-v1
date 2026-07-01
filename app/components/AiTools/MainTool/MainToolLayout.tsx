@@ -160,20 +160,14 @@ const MainToolLayout: React.FC<MainToolLayoutProps> = ({
   const handleStartTour = () => setTourRestartNonce((n) => n + 1);
 
   useEffect(() => {
+    // Guests may use the Academic Research Assistant. We read the token if
+    // present (so signed-in features work) but never redirect guests away — the
+    // per-AI-action click gate enforces the free allowance instead.
     const t =
       typeof window !== "undefined"
         ? localStorage.getItem("access_token")
         : null;
-    if (!t) {
-      const signInBase = currentQs ? `/sign-in?${currentQs}` : "/sign-in";
-      const signInHref = appendQueryString(
-        signInBase,
-        `returnUrl=${encodeURIComponent(pathname || "/tools/main-tool")}`,
-      );
-      router.push(signInHref);
-    } else {
-      setToken(t);
-    }
+    setToken(t);
     setChecked(true);
   }, [currentQs, router, pathname]);
 
@@ -192,7 +186,7 @@ const MainToolLayout: React.FC<MainToolLayoutProps> = ({
     );
   }
 
-  if (!token) return null;
+  // Guests are allowed — render the editor even without a token.
 
   return (
     <TitleContext.Provider value={{ title, setTitle }}>

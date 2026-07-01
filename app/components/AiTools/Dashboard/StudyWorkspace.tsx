@@ -35,11 +35,7 @@ import {
   TutorAttachmentInput,
   TutorMessageDto,
 } from "@/app/utils/studyApiClient";
-import {
-  hasReachedGuestQueryLimit,
-  incrementGuestQueryCount,
-  isGuest,
-} from "@/app/lib/client/guestStudyLimits";
+import { tryConsumeGuestClick } from "@/app/lib/client/guestClickLimits";
 import {
   getStudyRecordingSnapshot,
   onStudyRecordingChange,
@@ -868,6 +864,15 @@ export default function StudyWorkspace() {
       toast.error("Session is still loading. Please wait.");
       return;
     }
+    // Every generate/regenerate is an AI-triggering click. Guests get a small
+    // global allowance shared across all tools; once used up, open the auth gate
+    // instead of calling the AI.
+    if (!tryConsumeGuestClick()) {
+      window.dispatchEvent(
+        new CustomEvent("study:auth-gate", { detail: { reason: "query" } }),
+      );
+      return;
+    }
     setIsLoading(true);
     try {
       const result = await generateStudyArtifact(sessionId, type, {
@@ -993,8 +998,9 @@ export default function StudyWorkspace() {
     const message = (explicitMessage ?? tutorInput).trim();
     if (!message) return;
 
-    // Guests get 3 free questions; the 4th opens the email gate instead of sending.
-    if (hasReachedGuestQueryLimit()) {
+    // Asking the tutor is an AI-triggering click. Consume one from the guest's
+    // global allowance; once exhausted, open the auth gate instead of sending.
+    if (!tryConsumeGuestClick()) {
       window.dispatchEvent(
         new CustomEvent("study:auth-gate", { detail: { reason: "query" } }),
       );
@@ -1077,8 +1083,6 @@ export default function StudyWorkspace() {
           );
         },
         onDone: ({ citations, provenance }) => {
-          // Count successful guest questions toward the free allowance.
-          if (isGuest()) incrementGuestQueryCount();
           setTutorMessages((prev) =>
             prev.map((item) =>
               item._id === assistantMessageId
@@ -1477,6 +1481,7 @@ export default function StudyWorkspace() {
                 subtitle="Generate detailed notes covering the important information in your original content"
                 onGenerate={() => requestGenerate("notes")}
                 isLoading={isLoading}
+                hasContent={Boolean(notesContent.sections?.length)}
               >
                 {notesContent.sections?.length ? (
                   <div className="mt-5 space-y-3 text-left">
@@ -1527,6 +1532,7 @@ export default function StudyWorkspace() {
                 subtitle="Create a clear and easy-to-understand summary of your content"
                 onGenerate={() => requestGenerate("summary")}
                 isLoading={isLoading}
+                hasContent={Boolean(summaryContent.short || summaryContent.detailed)}
               >
                 {summaryContent.short || summaryContent.detailed ? (
                   <div className="mt-6 space-y-4 text-left">
@@ -1556,9 +1562,15 @@ export default function StudyWorkspace() {
               <div className="rounded-xl border border-[#e3e4f3] bg-white p-4 text-center">
                 {activeFlashcard ? (
                   <>
-                    <h3 className="text-3xl font-semibold tracking-tight text-[#1f2033]">
-                      AI Flashcards
-                    </h3>
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <h3 className="text-3xl font-semibold tracking-tight text-[#1f2033]">
+                        AI Flashcards
+                      </h3>
+                      <RegenerateButton
+                        onClick={() => requestGenerate("flashcards")}
+                        isLoading={isLoading}
+                      />
+                    </div>
                     <div className="flashcard-scene mx-auto mt-4 max-w-xl">
                       <button
                         type="button"
@@ -1634,40 +1646,38 @@ export default function StudyWorkspace() {
             ) : null}
 
             {!isSessionHydrating && activeTab === "quizzes" ? (
-              <div className="rounded-xl border border-[#e3e4f3] bg-white p-3">
-                <div className="mb-3 flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-[#1e1f32]">Your Quizzes</h3>
-                  {quizzesContent.length > 0 ? (
-                    <button
-                      type="button"
-                      onClick={() => setQuizSubmitted((prev) => !prev)}
-                      className="rounded-md bg-[#5f70ff] px-3 py-1.5 text-xs font-semibold text-white"
-                    >
-                      {quizSubmitted ? "Back to practice" : "View all answers"}
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
+              quizzesContent.length > 0 ? (
+                <div className="rounded-xl border border-[#e3e4f3] bg-white p-5 sm:p-6">
+                  <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="text-lg font-semibold text-[#1f2138]">
+                      AI Quizzes
+                    </h3>
+                    <RegenerateButton
                       onClick={() => requestGenerate("quizzes")}
-                      className="rounded-md bg-[#5f70ff] px-3 py-1.5 text-xs font-semibold text-white"
-                    >
-                      {isLoading ? "Creating..." : "Create Quiz"}
-                    </button>
-                  )}
-                </div>
+                      isLoading={isLoading}
+                    />
+                  </div>
 
-                <StudyQuizPanel
-                  quizzes={quizzesContent}
-                  quizQuestionIndex={quizQuestionIndex}
-                  setQuizQuestionIndex={setQuizQuestionIndex}
-                  quizSelections={quizSelections}
-                  setQuizSelections={setQuizSelections}
-                  quizSubmitted={quizSubmitted}
-                  setQuizSubmitted={setQuizSubmitted}
-                  answeredCount={answeredCount}
-                  quizScore={quizScore}
+                  <StudyQuizPanel
+                    quizzes={quizzesContent}
+                    quizQuestionIndex={quizQuestionIndex}
+                    setQuizQuestionIndex={setQuizQuestionIndex}
+                    quizSelections={quizSelections}
+                    setQuizSelections={setQuizSelections}
+                    quizSubmitted={quizSubmitted}
+                    setQuizSubmitted={setQuizSubmitted}
+                    answeredCount={answeredCount}
+                    quizScore={quizScore}
+                  />
+                </div>
+              ) : (
+                <TabCard
+                  title="AI Quizzes"
+                  subtitle="Generate practice questions to test your understanding of your content"
+                  onGenerate={() => requestGenerate("quizzes")}
+                  isLoading={isLoading}
                 />
-              </div>
+              )
             ) : null}
           </div>
         </div>
@@ -1961,35 +1971,76 @@ function TabCard({
   subtitle,
   onGenerate,
   isLoading,
+  hasContent = false,
   children,
 }: {
   title: string;
   subtitle: string;
   onGenerate: () => void;
   isLoading: boolean;
+  hasContent?: boolean;
   children?: ReactNode;
 }) {
+  // Once content exists the primary action becomes "Regenerate"; before that
+  // it's "Generate". The loading label matches the active action so the button
+  // reads correctly whether generating for the first time or regenerating.
+  const idleLabel = hasContent ? "Regenerate" : "Generate";
+  const loadingLabel = hasContent ? "Regenerating..." : "Generating...";
+
   return (
-    <div className="rounded-xl border border-[#e3e4f3] bg-white p-5 text-center shadow-[inset_0_0_0_1px_rgba(95,112,255,0.04)]">
-      <p className="text-[34px] font-semibold tracking-tight text-[#1f2138]">{title}</p>
-      <p className="mx-auto mt-3 max-w-xl text-sm text-[#6d7191]">{subtitle}</p>
-      {!children ? (
-        <div className="mt-6 inline-flex items-center gap-1 rounded-full bg-[#f2f4ff] px-3 py-1 text-[11px] text-[#6d7191]">
-          <FiZap className="h-3 w-3 text-[#6070ff]" />
-          AI generation uses your imported source only
-        </div>
-      ) : null}
-      <button
-        type="button"
-        onClick={onGenerate}
-        disabled={isLoading}
-        className="mt-4 inline-flex items-center gap-2 rounded-md bg-gradient-to-r from-[#6070ff] to-[#6e5cff] px-5 py-2 text-sm font-semibold text-white transition hover:brightness-95 disabled:opacity-60"
-      >
-        {isLoading ? "Generating..." : "Generate"}
-        <FiArrowRight className="h-3.5 w-3.5" />
-      </button>
+    <div className="rounded-xl border border-[#e3e4f3] bg-white p-6 text-center shadow-[inset_0_0_0_1px_rgba(95,112,255,0.04)] sm:p-8">
+      <p className="text-2xl font-semibold tracking-tight text-[#1f2138] sm:text-3xl">
+        {title}
+      </p>
+      <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-[#6d7191]">
+        {subtitle}
+      </p>
+      {/* Stack the note + action button as centered rows with clear spacing,
+          so they never crowd onto the same line. */}
+      <div className="mt-6 flex flex-col items-center gap-4">
+        {!children ? (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#f2f4ff] px-3 py-1 text-[11px] text-[#6d7191]">
+            <FiZap className="h-3 w-3 text-[#6070ff]" />
+            AI generation uses your imported source only
+          </span>
+        ) : null}
+        <button
+          type="button"
+          onClick={onGenerate}
+          disabled={isLoading}
+          className="inline-flex items-center gap-2 rounded-md bg-gradient-to-r from-[#6070ff] to-[#6e5cff] px-6 py-2.5 text-sm font-semibold text-white transition hover:brightness-95 disabled:opacity-60"
+        >
+          {isLoading ? loadingLabel : idleLabel}
+          {isLoading ? null : <FiArrowRight className="h-3.5 w-3.5" />}
+        </button>
+      </div>
       {children}
-      
     </div>
+  );
+}
+
+/**
+ * Compact, reusable "Regenerate" control shown in the header of the flashcards
+ * and quizzes views (which render their own content UI instead of TabCard).
+ * Matches the primary generate button styling so all four artifacts share one
+ * consistent regenerate affordance.
+ */
+function RegenerateButton({
+  onClick,
+  isLoading,
+}: {
+  onClick: () => void;
+  isLoading: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={isLoading}
+      className="inline-flex items-center gap-2 rounded-md bg-gradient-to-r from-[#6070ff] to-[#6e5cff] px-4 py-2 text-xs font-semibold text-white transition hover:brightness-95 disabled:opacity-60"
+    >
+      {isLoading ? "Regenerating..." : "Regenerate"}
+      {isLoading ? null : <FiArrowRight className="h-3.5 w-3.5" />}
+    </button>
   );
 }

@@ -6,6 +6,8 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
+import { useGuestGate } from "@/app/lib/client/useGuestGate";
+import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 
 interface ResearchQuestionProps {
   setFlag: (value: boolean) => void;
@@ -71,6 +73,8 @@ const ResearchQuestion: FC<ResearchQuestionProps> = ({ setFlag }) => {
   const [questions, setQuestions] = useState<string[]>([]);
   const [error, setError] = useState<string>("");
 
+  const { gateOpen, closeGate, guardAiClick } = useGuestGate();
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       setToken(localStorage.getItem("access_token"));
@@ -96,12 +100,15 @@ const ResearchQuestion: FC<ResearchQuestionProps> = ({ setFlag }) => {
       return;
     }
 
-    trackToolGenerate({ toolName: "Research Question Generator" });
-    setIsSubmitting(true);
-    setError("");
-    setQuestions([]);
+    // Guests get a small number of free AI actions across all tools; the gate
+    // opens instead of calling the AI once the allowance is used up.
+    guardAiClick(async () => {
+      trackToolGenerate({ toolName: "Research Question Generator" });
+      setIsSubmitting(true);
+      setError("");
+      setQuestions([]);
 
-    try {
+      try {
       const payload: {
         topic?: string;
         keywords?: string;
@@ -162,11 +169,12 @@ const ResearchQuestion: FC<ResearchQuestionProps> = ({ setFlag }) => {
         error?.response?.data?.message ||
         error?.message ||
         "Something went wrong. Please try again.";
-      setError(errorMessage);
-      toast.error(errorMessage);
-    } finally {
-      setIsSubmitting(false);
-    }
+        setError(errorMessage);
+        toast.error(errorMessage);
+      } finally {
+        setIsSubmitting(false);
+      }
+    });
   };
 
   const handleCopyQuestion = async (question: string) => {
@@ -434,12 +442,13 @@ const ResearchQuestion: FC<ResearchQuestionProps> = ({ setFlag }) => {
       <div className="text-sm font-serif text-center pt-8 text-gray-500 dark:text-gray-400 transition-colors duration-300">
         <q>
           Need well-structured research questions for your academic project?
-          ScholarlyHelp's AI-powered Research Question Generator creates
+          ScholarlyHelp&apos;s AI-powered Research Question Generator creates
           methodologically sound questions tailored to qualitative,
           quantitative, or mixed methods research—helping you build a strong
           foundation for your study.
         </q>
       </div>
+      <GuestAuthGateModal open={gateOpen} onClose={closeGate} />
     </div>
   );
 };

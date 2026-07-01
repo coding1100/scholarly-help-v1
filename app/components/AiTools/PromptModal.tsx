@@ -11,6 +11,8 @@ import {
   standardOutline,
   type OutlineMode,
 } from "./MainTool/outlineGeneration";
+import { useGuestGate } from "@/app/lib/client/useGuestGate";
+import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 
 interface PromptModalProps {
   isOpen: boolean;
@@ -26,6 +28,7 @@ const PromptModal: React.FC<PromptModalProps> = ({
   setOutlineResponse,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const { gateOpen, closeGate, guardAiClick } = useGuestGate();
   const [selectedOutline, setSelectedOutline] = useState("standard");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [input, setInput] = useState("");
@@ -54,7 +57,7 @@ const PromptModal: React.FC<PromptModalProps> = ({
     setSelectedOutline(value);
   };
 
-  const handleStartWritingButtonClick = async () => {
+  const runOutlineGeneration = async () => {
     const prompt = input.trim();
     const mode = selectedOutline as OutlineMode;
     setIsLoading(true);
@@ -87,6 +90,19 @@ const PromptModal: React.FC<PromptModalProps> = ({
       onStartWriting();
       setIsLoading(false);
     }
+  };
+
+  const handleStartWritingButtonClick = async () => {
+    const prompt = input.trim();
+    const mode = selectedOutline as OutlineMode;
+    // Only the "smart" outline with a prompt hits the AI backend — gate that as
+    // a guest click. Deterministic (standard/none/empty) paths run freely.
+    const usesAi = mode === "smart" && Boolean(prompt);
+    if (usesAi) {
+      guardAiClick(() => runOutlineGeneration());
+      return;
+    }
+    await runOutlineGeneration();
   };
   const handleToggleSettings = () => {
     setIsSettingsOpen((prev) => !prev);
@@ -223,10 +239,13 @@ const PromptModal: React.FC<PromptModalProps> = ({
   );
 
   return (
-    <PopModal isOpen={isOpen} onClose={onClose}>
-      {renderModalContent()}
-      {renderModalFooter()}
-    </PopModal>
+    <>
+      <PopModal isOpen={isOpen} onClose={onClose}>
+        {renderModalContent()}
+        {renderModalFooter()}
+      </PopModal>
+      <GuestAuthGateModal open={gateOpen} onClose={closeGate} />
+    </>
   );
 };
 

@@ -10,6 +10,8 @@ import ResultDisplay from "@/app/components/AiTools/ResultDisplay";
 import { countWords } from "@/app/utils/text";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
+import { useGuestGate } from "@/app/lib/client/useGuestGate";
+import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 
 type HumanizerTone = "natural" | "simple" | "polished" | "academic" | "custom";
 type RewriteIntensity = "normal" | "moderate" | "full";
@@ -237,6 +239,8 @@ const HumanizerTool: React.FC = () => {
     "score",
   );
 
+  const { gateOpen, closeGate, guardAiClick } = useGuestGate();
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       setToken(localStorage.getItem("access_token"));
@@ -272,8 +276,6 @@ const HumanizerTool: React.FC = () => {
     setResult(null);
     setResultView("humanized");
     try {
-      if (!token) throw new Error("Access token not found");
-
       const formData = new FormData();
       formData.append("file", file);
 
@@ -327,19 +329,22 @@ const HumanizerTool: React.FC = () => {
       return;
     }
 
-    setLoading(true);
-    setResult(null);
-    setResultView("humanized");
-    setAiDetection(null);
-    setActivePanel("humanized");
-    trackToolGenerate({ toolName: "Humanizer Tool" });
+    // Guests get a small number of free AI actions across all tools; the gate
+    // opens instead of calling the AI once the allowance is used up.
+    guardAiClick(async () => {
+      setLoading(true);
+      setResult(null);
+      setResultView("humanized");
+      setAiDetection(null);
+      setActivePanel("humanized");
+      trackToolGenerate({ toolName: "Humanizer Tool" });
 
-    try {
-      if (!token) throw new Error("Access token not found");
-
-      const response = await axios.post<
-        HumanizerResponse | { data?: HumanizerResponse }
-      >(
+      try {
+        // Guests (no token) are allowed; the backend accepts guest requests and
+        // the click gate above enforces the free allowance.
+        const response = await axios.post<
+          HumanizerResponse | { data?: HumanizerResponse }
+        >(
         `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/humanizer`,
         {
           text,
@@ -372,20 +377,21 @@ const HumanizerTool: React.FC = () => {
         err?.message ||
         "Failed to humanize text.";
 
-      if (status === 401) {
-        toast.error("Session expired. Please sign in again.");
-      } else if (status === 403) {
-        toast.error(
-          "You don’t have enough token balance, or the input exceeds limits.",
-        );
-      } else {
-        toast.error(
-          Array.isArray(message) ? message.join(", ") : String(message),
-        );
+        if (status === 401) {
+          toast.error("Session expired. Please sign in again.");
+        } else if (status === 403) {
+          toast.error(
+            "You don’t have enough token balance, or the input exceeds limits.",
+          );
+        } else {
+          toast.error(
+            Array.isArray(message) ? message.join(", ") : String(message),
+          );
+        }
+      } finally {
+        setLoading(false);
       }
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
   const handleCheckAi = async () => {
@@ -721,6 +727,7 @@ const HumanizerTool: React.FC = () => {
           )}
         </div>
       </div>
+      <GuestAuthGateModal open={gateOpen} onClose={closeGate} />
     </div>
   );
 };

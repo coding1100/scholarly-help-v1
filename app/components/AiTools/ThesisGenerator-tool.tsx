@@ -8,6 +8,8 @@ import toast from "react-hot-toast";
 import { FaRegCopy } from "react-icons/fa";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
+import { useGuestGate } from "@/app/lib/client/useGuestGate";
+import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 
 type ThesisEntry = { type: string; thesis: string };
 
@@ -63,6 +65,7 @@ const ThesisGenerator = () => {
   const [token, setToken] = useState<string | null>(null);
   const [theses, setTheses] = useState<ThesisEntry[]>([]);
   const [isSubmitting, setSubmitting] = useState<boolean>(false);
+  const { gateOpen, closeGate, guardAiClick } = useGuestGate();
   const [formData, setFormData] = useState({
     topic: "",
     mainIdea: "",
@@ -87,42 +90,46 @@ const ThesisGenerator = () => {
       return;
     }
 
-    trackToolGenerate({ toolName: "AI Thesis Statement Generator" });
-    setSubmitting(true);
-    setTheses([]);
+    // Guests get a small number of free AI actions across all tools; the gate
+    // opens instead of calling the AI once the allowance is used up.
+    guardAiClick(async () => {
+      trackToolGenerate({ toolName: "AI Thesis Statement Generator" });
+      setSubmitting(true);
+      setTheses([]);
 
-    try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/generate-thesis`,
-        {
-          topic: formData.topic.trim(),
-          main_idea: formData.mainIdea.trim() || undefined,
-          supporting_reason: formData.supportingReason.trim() || undefined,
-          audience: formData.audience.trim() || undefined,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+      try {
+        const response = await axios.post(
+          `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/generate-thesis`,
+          {
+            topic: formData.topic.trim(),
+            main_idea: formData.mainIdea.trim() || undefined,
+            supporting_reason: formData.supportingReason.trim() || undefined,
+            audience: formData.audience.trim() || undefined,
           },
-        },
-      );
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
 
-      // Backend wraps responses as { success, message, data }
-      const data = response.data?.data ?? response.data;
-      if (Array.isArray(data?.theses) && data.theses.length > 0) {
-        setTheses(data.theses);
-        toast.success("Thesis statements generated successfully!");
-      } else {
-        toast.error("No thesis statements returned. Please try again.");
+        // Backend wraps responses as { success, message, data }
+        const data = response.data?.data ?? response.data;
+        if (Array.isArray(data?.theses) && data.theses.length > 0) {
+          setTheses(data.theses);
+          toast.success("Thesis statements generated successfully!");
+        } else {
+          toast.error("No thesis statements returned. Please try again.");
+        }
+      } catch (error: any) {
+        toast.error(
+          error?.response?.data?.message || "Something went wrong. Please try again.",
+        );
+      } finally {
+        setSubmitting(false);
       }
-    } catch (error: any) {
-      toast.error(
-        error?.response?.data?.message || "Something went wrong. Please try again.",
-      );
-    } finally {
-      setSubmitting(false);
-    }
+    });
   };
 
   return (
@@ -177,6 +184,8 @@ const ThesisGenerator = () => {
           express your thoughts more clearly and confidently.
         </q>
       </div>
+
+      <GuestAuthGateModal open={gateOpen} onClose={closeGate} />
     </div>
   );
 };

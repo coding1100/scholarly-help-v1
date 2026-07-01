@@ -1,6 +1,7 @@
 import {
   chunkText,
   countWords,
+  quizTargetQuestionCount,
   splitSentences,
   summaryTargetWordCount,
 } from "@/app/lib/server/study/text";
@@ -24,6 +25,24 @@ import {
   StudyLearningMode,
 } from "@/app/lib/server/study/types";
 import { generateGeminiText } from "@/app/lib/server/ai/gemini";
+
+/**
+ * A short, unique directive appended to generation prompts so that pressing
+ * "Regenerate" yields genuinely different content instead of a near-identical
+ * repeat. Each call gets a fresh nonce; the model is told to vary its angle and
+ * wording from any previous attempt. (Kept terse so it doesn't skew output.)
+ */
+function variationHint(): string {
+  const nonce =
+    Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+  return [
+    "",
+    `Variation seed: ${nonce}.`,
+    "If you have generated for this source before, produce a fresh take: vary the",
+    "wording, ordering, examples, and (where reasonable) which points you emphasize,",
+    "while staying accurate to the SOURCE TEXT.",
+  ].join("\n");
+}
 
 function extractJsonBlock(raw: string) {
   const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
@@ -93,8 +112,8 @@ async function buildSummary(sourceText: string, mode: StudyLearningMode) {
   if (normalized.length <= SUMMARY_SINGLE_PASS_CHAR_LIMIT) {
     const raw = await generateGeminiText({
       systemInstruction: summarySystemInstruction(mode),
-      userPrompt: summaryUserPrompt(normalized, mode, target),
-      temperature: 0.3,
+      userPrompt: summaryUserPrompt(normalized, mode, target) + variationHint(),
+      temperature: 0.45,
       maxOutputTokens,
     });
     return parseJson<{ short: string; detailed: string }>(raw);
@@ -124,8 +143,8 @@ async function buildSummary(sourceText: string, mode: StudyLearningMode) {
     const prepared = prepareSource(sourceText, mode, []);
     const raw = await generateGeminiText({
       systemInstruction: summarySystemInstruction(mode),
-      userPrompt: summaryUserPrompt(prepared, mode, target),
-      temperature: 0.3,
+      userPrompt: summaryUserPrompt(prepared, mode, target) + variationHint(),
+      temperature: 0.45,
       maxOutputTokens,
     });
     return parseJson<{ short: string; detailed: string }>(raw);
@@ -133,8 +152,9 @@ async function buildSummary(sourceText: string, mode: StudyLearningMode) {
 
   const raw = await generateGeminiText({
     systemInstruction: summarySystemInstruction(mode),
-    userPrompt: reduceSummaryUserPrompt(aggregatedNotes, mode, target),
-    temperature: 0.3,
+    userPrompt:
+      reduceSummaryUserPrompt(aggregatedNotes, mode, target) + variationHint(),
+    temperature: 0.45,
     maxOutputTokens,
   });
   return parseJson<{ short: string; detailed: string }>(raw);
@@ -148,8 +168,8 @@ async function buildNotes(
   const prepared = prepareSource(sourceText, mode, examTopics);
   const raw = await generateGeminiText({
     systemInstruction: notesSystemInstruction(mode),
-    userPrompt: notesUserPrompt(prepared, mode, examTopics),
-    temperature: 0.35,
+    userPrompt: notesUserPrompt(prepared, mode, examTopics) + variationHint(),
+    temperature: 0.5,
     maxOutputTokens: 4096,
   });
   return parseJson<{
@@ -168,8 +188,8 @@ async function buildFlashcards(sourceText: string, mode: StudyLearningMode) {
   const prepared = prepareSource(sourceText, mode, []);
   const raw = await generateGeminiText({
     systemInstruction: flashcardsSystemInstruction(),
-    userPrompt: flashcardsUserPrompt(prepared, mode),
-    temperature: 0.35,
+    userPrompt: flashcardsUserPrompt(prepared, mode) + variationHint(),
+    temperature: 0.5,
     maxOutputTokens: 4096,
   });
   const cards = parseJson<Array<{ id: string; front: string; back: string }>>(raw);
@@ -180,17 +200,42 @@ async function buildFlashcards(sourceText: string, mode: StudyLearningMode) {
   }));
 }
 
+function quizOutputTokenBudget(targetQuestions: number): number {
+  // ~180 tokens per MCQ item (question + 4 options + explanation + JSON syntax),
+  // plus headroom. Clamp so large quizzes aren't truncated mid-array.
+  return Math.min(16384, Math.max(4096, Math.round(targetQuestions * 220) + 600));
+}
+
 async function buildQuiz(
   sourceText: string,
   mode: StudyLearningMode,
   examTopics: string[],
 ) {
-  const prepared = prepareSource(sourceText, mode, examTopics);
+  // Quiz size scales to ~20% of the source (min 10 questions). Scale off the
+  // ORIGINAL source length so the ratio reflects what the student uploaded, not
+  // the prioritized slice we actually send to the model.
+  const { target: targetQuestions } = quizTargetQuestionCount(
+    countWords(sourceText),
+  );
+  // Give the model enough of the MOST-RELEVANT source to write that many
+  // distinct questions: ~900 chars of prioritized content per target question,
+  // bounded so a huge source stays within a sane context/token budget.
+  const quizCharCap = Math.min(
+    60000,
+    Math.max(16000, targetQuestions * 900),
+  );
+  const prepared = prioritizeSourceText(sourceText, mode, examTopics, {
+    charCap: quizCharCap,
+    // Allow more ranked chunks through for large quizzes (each ~650 chars).
+    chunkLimit: Math.max(24, Math.ceil(quizCharCap / 650)),
+  });
   const raw = await generateGeminiText({
     systemInstruction: quizSystemInstruction(),
-    userPrompt: quizUserPrompt(prepared, mode, examTopics),
-    temperature: 0.4,
-    maxOutputTokens: 4096,
+    userPrompt:
+      quizUserPrompt(prepared, mode, examTopics, targetQuestions) +
+      variationHint(),
+    temperature: 0.55,
+    maxOutputTokens: quizOutputTokenBudget(targetQuestions),
   });
   const quizzes = parseJson<
     Array<{
@@ -203,28 +248,35 @@ async function buildQuiz(
       questionType?: string;
     }>
   >(raw);
-  return quizzes.map((quiz, index) => ({
-    id: quiz.id || `quiz-${index + 1}`,
-    question: String(quiz.question || "").trim(),
-    options:
-      Array.isArray(quiz.options) && quiz.options.length === 4
-        ? quiz.options.map((option) => String(option))
-        : [
-            "Option A",
-            "Option B",
-            "Option C",
-            "Option D",
-          ],
-    correctAnswerIndex:
-      typeof quiz.correctAnswerIndex === "number" &&
-      quiz.correctAnswerIndex >= 0 &&
-      quiz.correctAnswerIndex <= 3
-        ? quiz.correctAnswerIndex
-        : 0,
-    explanation: String(quiz.explanation || "").trim(),
-    difficulty: quiz.difficulty || "medium",
-    questionType: quiz.questionType || "recall",
-  }));
+  // Drop malformed/blank and near-duplicate questions before re-id'ing so the
+  // final quiz is clean and (with the min floor honored by the prompt) usable.
+  const seen = new Set<string>();
+  const cleaned = quizzes
+    .map((quiz) => ({
+      question: String(quiz.question || "").trim(),
+      options:
+        Array.isArray(quiz.options) && quiz.options.length === 4
+          ? quiz.options.map((option) => String(option))
+          : ["Option A", "Option B", "Option C", "Option D"],
+      correctAnswerIndex:
+        typeof quiz.correctAnswerIndex === "number" &&
+        quiz.correctAnswerIndex >= 0 &&
+        quiz.correctAnswerIndex <= 3
+          ? quiz.correctAnswerIndex
+          : 0,
+      explanation: String(quiz.explanation || "").trim(),
+      difficulty: quiz.difficulty || "medium",
+      questionType: quiz.questionType || "recall",
+    }))
+    .filter((quiz) => {
+      if (!quiz.question) return false;
+      const key = quiz.question.toLowerCase().replace(/\s+/g, " ");
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+  return cleaned.map((quiz, index) => ({ id: `quiz-${index + 1}`, ...quiz }));
 }
 
 export async function generateArtifact(
@@ -253,19 +305,30 @@ export async function generateArtifact(
     const prioritized = prepareSource(sourceText, mode, examTopics);
     const fallbackSentences = splitSentences(prioritized);
     if (type === "summary") {
-      // Keep the fallback formatted (headings + bullets) so the UI still renders
-      // a prettified summary even when the LLM call fails.
+      // Keep the fallback formatted (headings + CATEGORIZED bullets) so the UI
+      // still renders a prettified summary even when the LLM call fails. Key
+      // Points are split into simple categorized sub-sections to match the
+      // normal (LLM) output contract.
       const keyPoints = fallbackSentences.slice(0, 6);
       const detailParts = [
         "## Overview",
         fallbackSentences.slice(0, 2).join(" ") || "Summary unavailable.",
       ];
       if (keyPoints.length > 0) {
+        detailParts.push("", "## Key Points");
+        const primary = keyPoints.slice(0, Math.ceil(keyPoints.length / 2));
+        const secondary = keyPoints.slice(Math.ceil(keyPoints.length / 2));
         detailParts.push(
-          "",
-          "## Key Points",
-          ...keyPoints.map((sentence) => `- ${sentence}`),
+          "### Main Ideas",
+          ...primary.map((sentence) => `- ${sentence}`),
         );
+        if (secondary.length > 0) {
+          detailParts.push(
+            "",
+            "### Supporting Details",
+            ...secondary.map((sentence) => `- ${sentence}`),
+          );
+        }
       }
       return {
         short: fallbackSentences.slice(0, 2).join(" "),

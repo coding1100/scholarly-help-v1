@@ -7,47 +7,46 @@ import SignUpCard from "@/app/components/Auth/SignUpCard";
 import SignInCard from "@/app/components/Auth/SignInCard";
 import { stashGuestMigrationId } from "@/app/lib/client/guestStudyLimits";
 
-type StudyAuthGateModalProps = {
+type GuestAuthGateModalProps = {
   open: boolean;
-  /** "query" => hit the free AI-action allowance; "session" => 2nd session. */
-  reason: "query" | "session";
-  /** Where to return after auth completes (the current session URL). */
-  returnUrl: string;
+  /** Where to return after auth completes (defaults to the current URL). */
+  returnUrl?: string;
+  /** Optional custom heading for the sign-up call to action. */
+  heading?: string;
   onClose: () => void;
 };
 
 type AuthMode = "signup" | "signin";
 
-const HEADINGS: Record<StudyAuthGateModalProps["reason"], string> = {
-  query:
-    "You've used your free actions. Create a free account to keep going.",
-  session:
-    "Create a free account to start another study session.",
-};
-
-const SIGNIN_HEADING = "Sign in to keep your study work.";
+const DEFAULT_SIGNUP_HEADING =
+  "You've used your free actions. Create a free account to keep going.";
+const SIGNIN_HEADING = "Sign in to keep going.";
 
 /**
- * Email-gate shown to guests on the AI Study Workspace. Reuses the platform's
- * standard sign-up form (email + password → email verification) and the same
- * Google button used on the login/sign-up page. Both flows carry a returnUrl
- * back to the user's current session so they land right where they left off;
- * the guest id is stashed first so their work migrates onto the new account.
+ * Global email/password gate shown to guests once they exhaust their free
+ * click allowance on ANY tool. Reuses the platform's standard sign-up and
+ * sign-in forms (including the Google button). Both flows carry a returnUrl so
+ * the user lands back on the tool they were using; the guest id is stashed
+ * first so any Study Workspace work migrates onto the new account.
  */
-const StudyAuthGateModal: FC<StudyAuthGateModalProps> = ({
+const GuestAuthGateModal: FC<GuestAuthGateModalProps> = ({
   open,
-  reason,
   returnUrl,
+  heading,
   onClose,
 }) => {
-  // The modal swaps between the sign-up and sign-in forms in place — pressing
-  // "Sign in Here" / "Sign up Here" toggles this rather than navigating away.
   const [mode, setMode] = useState<AuthMode>("signup");
+  const [resolvedReturnUrl, setResolvedReturnUrl] = useState<string>("/tools");
 
   useEffect(() => {
     if (!open) return;
-    // Always open on the sign-up form (the gate's default call to action).
     setMode("signup");
+    // Default the return target to wherever the user currently is.
+    if (typeof window !== "undefined") {
+      setResolvedReturnUrl(
+        returnUrl || `${window.location.pathname}${window.location.search}`,
+      );
+    }
     // Remember which guest's work to migrate once they come back signed in.
     stashGuestMigrationId();
     const onKey = (e: KeyboardEvent) => {
@@ -55,9 +54,9 @@ const StudyAuthGateModal: FC<StudyAuthGateModalProps> = ({
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  }, [open, onClose, returnUrl]);
 
-  if (!open) return null;
+  if (!open || typeof document === "undefined") return null;
 
   return createPortal(
     <div
@@ -70,7 +69,7 @@ const StudyAuthGateModal: FC<StudyAuthGateModalProps> = ({
       >
         <div className="mb-4 flex items-start justify-between gap-3">
           <h2 className="text-lg font-semibold text-[#2B1C50]">
-            {mode === "signin" ? SIGNIN_HEADING : HEADINGS[reason]}
+            {mode === "signin" ? SIGNIN_HEADING : heading || DEFAULT_SIGNUP_HEADING}
           </h2>
           <button
             type="button"
@@ -90,13 +89,13 @@ const StudyAuthGateModal: FC<StudyAuthGateModalProps> = ({
           <SignInCard
             switchAuthForm="signin"
             setSwitchAuthForm={setMode}
-            returnUrl={returnUrl}
+            returnUrl={resolvedReturnUrl}
           />
         ) : (
           <SignUpCard
             switchAuthForm="signup"
             setSwitchAuthForm={setMode}
-            returnUrl={returnUrl}
+            returnUrl={resolvedReturnUrl}
           />
         )}
       </div>
@@ -105,4 +104,4 @@ const StudyAuthGateModal: FC<StudyAuthGateModalProps> = ({
   );
 };
 
-export default StudyAuthGateModal;
+export default GuestAuthGateModal;

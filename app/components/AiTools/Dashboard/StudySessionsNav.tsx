@@ -40,9 +40,22 @@ export default function StudySessionsNav({ onNavigate }: { onNavigate?: () => vo
   // during render would risk an SSR/hydration mismatch. Defaults to true so the
   // block stays hidden until we confirm the user is signed in.
   const [isGuestUser, setIsGuestUser] = useState(true);
+  // The Recent Sessions nav must be hidden on the welcome/creation screen. The
+  // page broadcasts the current view; default to true (hidden) until told.
+  const [isOnboardingView, setIsOnboardingView] = useState(true);
 
   useEffect(() => {
     setIsGuestUser(isGuest());
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onViewChanged = (event: Event) => {
+      const detail = (event as CustomEvent<{ onboarding?: boolean }>).detail;
+      setIsOnboardingView(Boolean(detail?.onboarding));
+    };
+    window.addEventListener("study-view-changed", onViewChanged);
+    return () => window.removeEventListener("study-view-changed", onViewChanged);
   }, []);
 
   const normalizedRoute = useMemo(
@@ -144,10 +157,10 @@ export default function StudySessionsNav({ onNavigate }: { onNavigate?: () => vo
     [activeSessionId, openSession],
   );
 
-  // Shown on the workspace once at least one session exists. Recent Sessions is
-  // visible to everyone (guests included); the "+ New Study Session" button is
-  // for signed-in users only.
-  if (!isStudyWorkspaceRoute || sessions.length === 0) {
+  // Shown on the workspace once at least one session exists — but NOT on the
+  // welcome/creation screen. Recent Sessions is visible to everyone (guests
+  // included); the "+ New Study Session" button is for signed-in users only.
+  if (isOnboardingView || !isStudyWorkspaceRoute || sessions.length === 0) {
     return null;
   }
 

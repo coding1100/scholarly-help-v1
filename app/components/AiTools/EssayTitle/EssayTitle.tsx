@@ -6,6 +6,8 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
+import { useGuestGate } from "@/app/lib/client/useGuestGate";
+import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 
 interface EssayTitleProps {
   setFlag: (value: boolean) => void;
@@ -72,6 +74,7 @@ const EssayTitle: FC<EssayTitleProps> = ({ setFlag }) => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [titles, setTitles] = useState<string[]>([]);
   const [error, setError] = useState<string>("");
+  const { gateOpen, closeGate, guardAiClick } = useGuestGate();
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -104,76 +107,80 @@ const EssayTitle: FC<EssayTitleProps> = ({ setFlag }) => {
       return;
     }
 
-    trackToolGenerate({ toolName: "Essay Title Generator" });
-    setIsSubmitting(true);
-    setError("");
-    setTitles([]);
+    // Guests get a small number of free AI actions across all tools; the gate
+    // opens instead of calling the AI once the allowance is used up.
+    guardAiClick(async () => {
+      trackToolGenerate({ toolName: "Essay Title Generator" });
+      setIsSubmitting(true);
+      setError("");
+      setTitles([]);
 
-    try {
-      const payload: {
-        topic?: string;
-        keywords?: string;
-        tone?: string;
-        style_engagement?: string;
-        academic_level?: string;
-        custom_tone_instructions?: string;
-        count?: number;
-      } = {};
+      try {
+        const payload: {
+          topic?: string;
+          keywords?: string;
+          tone?: string;
+          style_engagement?: string;
+          academic_level?: string;
+          custom_tone_instructions?: string;
+          count?: number;
+        } = {};
 
-      if (topic.trim()) {
-        payload.topic = topic.trim();
-      }
-      if (keywords.trim()) {
-        payload.keywords = keywords.trim();
-      }
-      if (tone) {
-        payload.tone = tone;
-      }
-      if (tone === "custom") {
-        payload.custom_tone_instructions = customToneInstructions.trim();
-      }
-      if (styleEngagement) {
-        payload.style_engagement = styleEngagement;
-      }
-      if (academicLevel) {
-        payload.academic_level = academicLevel;
-      }
-      if (count) {
-        payload.count = count;
-      }
+        if (topic.trim()) {
+          payload.topic = topic.trim();
+        }
+        if (keywords.trim()) {
+          payload.keywords = keywords.trim();
+        }
+        if (tone) {
+          payload.tone = tone;
+        }
+        if (tone === "custom") {
+          payload.custom_tone_instructions = customToneInstructions.trim();
+        }
+        if (styleEngagement) {
+          payload.style_engagement = styleEngagement;
+        }
+        if (academicLevel) {
+          payload.academic_level = academicLevel;
+        }
+        if (count) {
+          payload.count = count;
+        }
 
-      const baseUrl =
-        process.env.NEXT_PUBLIC_NGROX_URL ||
-        process.env.NEXT_PUBLIC_BASE_URL ||
-        "";
-      const endpoint = `${baseUrl}/tools/essay-title-generator`;
+        const baseUrl =
+          process.env.NEXT_PUBLIC_NGROX_URL ||
+          process.env.NEXT_PUBLIC_BASE_URL ||
+          "";
+        const endpoint = `${baseUrl}/tools/essay-title-generator`;
 
-      const response = await axios.post<TitleResponse>(endpoint, payload, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+        const response = await axios.post<TitleResponse>(endpoint, payload, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
 
-      const titles = response.data?.data?.titles;
-      if (response.data?.success && Array.isArray(titles) && titles.length > 0) {
-        setTitles(titles);
-        setFlag(true);
-        toast.success(response.data?.message || "Titles generated successfully!");
-      } else {
-        setError("Failed to generate titles. Please try again.");
-        toast.error("Failed to generate titles.");
+        const titles = response.data?.data?.titles;
+        if (response.data?.success && Array.isArray(titles) && titles.length > 0) {
+          setTitles(titles);
+          setFlag(true);
+          toast.success(response.data?.message || "Titles generated successfully!");
+        } else {
+          setError("Failed to generate titles. Please try again.");
+          toast.error("Failed to generate titles.");
+        }
+      } catch (error: any) {
+        const errorMessage =
+          error?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong. Please try again.";
+        setError(errorMessage);
+        toast.error(errorMessage);
+      } finally {
+        setIsSubmitting(false);
       }
-    } catch (error: any) {
-      const errorMessage =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong. Please try again.";
-      setError(errorMessage);
-      toast.error(errorMessage);
-    } finally {
-      setIsSubmitting(false);
-    }
+    });
   };
 
   const handleCopyTitle = async (title: string) => {
@@ -470,6 +477,8 @@ const EssayTitle: FC<EssayTitleProps> = ({ setFlag }) => {
           start.
         </q>
       </div>
+
+      <GuestAuthGateModal open={gateOpen} onClose={closeGate} />
     </div>
   );
 };
