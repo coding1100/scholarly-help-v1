@@ -22,6 +22,8 @@ import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import SummarizerChat from "@/app/components/AiTools/SummarizerChat/SummarizerChat";
 import { sanitizeHtml } from "@/app/utils/sanitizeHtml";
+import { useGuestGate } from "@/app/lib/client/useGuestGate";
+import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 
 type OutputType = "text_summary" | "flashcards" | "slide_deck" | "audio_summary";
 
@@ -387,6 +389,7 @@ const SummarizerTool: React.FC = () => {
   const [editingSlides, setEditingSlides] = useState<EditableSlide[] | null>(null);
   const [isSavingDocument, setIsSavingDocument] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const { gateOpen, closeGate, guardAiClick } = useGuestGate();
   const editorRef = useRef<HTMLDivElement | null>(null);
   // Tracks the job currently being polled. A new submit or unmount changes this
   // so stale polls stop updating state / clobbering newer results.
@@ -589,11 +592,8 @@ const SummarizerTool: React.FC = () => {
   };
 
   const handleFileUpload = async (nextFile: File) => {
-    if (!token) {
-      toast.error("Access token not found.");
-      return;
-    }
-
+    // Guests may upload a document to summarize; parsing is guest-allowed on the
+    // backend and the summarize action itself is gated by the click limit.
     const formData = new FormData();
     formData.append("file", nextFile);
 
@@ -667,10 +667,8 @@ const SummarizerTool: React.FC = () => {
   };
 
   const handleSummarize = async () => {
-    if (!token) {
-      toast.error("Access token not found.");
-      return;
-    }
+    // Guests (no token) are allowed — the backend accepts guest requests and
+    // the click gate below enforces the free allowance. Do NOT block on token.
     if (!currentInputText.trim()) {
       toast.error("Please enter text to summarize.");
       return;
@@ -682,65 +680,69 @@ const SummarizerTool: React.FC = () => {
       return;
     }
 
-    trackToolGenerate({ toolName: "Summarizer Tool" });
-    // Invalidate any previous in-flight poll so it can't clobber this run.
-    activeJobRef.current = null;
-    setIsLoading(true);
-    setResult(null);
-    setJobMessage("");
+    // Guests get a small number of free AI actions across all tools; the gate
+    // opens instead of calling the AI once the allowance is used up.
+    guardAiClick(async () => {
+      trackToolGenerate({ toolName: "Summarizer Tool" });
+      // Invalidate any previous in-flight poll so it can't clobber this run.
+      activeJobRef.current = null;
+      setIsLoading(true);
+      setResult(null);
+      setJobMessage("");
 
-    try {
-      const commonPayload = {
-        format: summaryStyle,
-        detail_level: detailLevel,
-        outputs,
-        save_to_document: saveToDocument,
-        ...(selectedFolderId ? { folder_id: selectedFolderId } : {}),
-      };
+      try {
+        const commonPayload = {
+          format: summaryStyle,
+          detail_level: detailLevel,
+          outputs,
+          save_to_document: saveToDocument,
+          ...(selectedFolderId ? { folder_id: selectedFolderId } : {}),
+        };
 
-      if (currentInputText.length < 14000) {
-        const response = await axios.post(
-          `${baseUrl}/tools/summarizer`,
-          { text: currentInputText, ...commonPayload },
-          {
-            headers: {
-              ...authHeaders,
-              "Content-Type": "application/json",
+        if (currentInputText.length < 14000) {
+          const response = await axios.post(
+            `${baseUrl}/tools/summarizer`,
+            { text: currentInputText, ...commonPayload },
+            {
+              headers: {
+                ...authHeaders,
+                "Content-Type": "application/json",
+              },
             },
-          },
-        );
-        const data = response.data?.data;
-        setResult(data);
-        if (data?.saved_document_id && !isAudioOnlyResult(data)) {
-          await fetchDocuments();
-          setIsFolderPanelOpen(true);
+          );
+          const data = response.data?.data;
+          setResult(data);
+          if (data?.saved_document_id && !isAudioOnlyResult(data)) {
+            await fetchDocuments();
+            setIsFolderPanelOpen(true);
+          }
+          toast.success(response.data?.message || "Summary generated successfully!");
+          return;
         }
-        toast.success(response.data?.message || "Summary generated successfully!");
-        return;
+
+        const formData = new FormData();
+        formData.append("source_type", "text");
+        formData.append("format", summaryStyle);
+        formData.append("detail_level", detailLevel);
+        formData.append("outputs", outputs.join(","));
+        formData.append("save_to_document", String(saveToDocument));
+        if (selectedFolderId) formData.append("folder_id", selectedFolderId);
+        formData.append("text", currentInputText);
+
+        const response = await axios.post(`${baseUrl}/tools/summarizer/jobs`, formData, {
+          headers: {
+            ...authHeaders,
+            "Content-Type": "multipart/form-data",
+          },
+        });
+        await pollJob(response.data?.data?.id);
+      } catch (error: any) {
+        const msg = error?.response?.data?.message || error?.message || "Failed to summarize.";
+        toast.error(msg);
+      } finally {
+        setIsLoading(false);
       }
-
-      const formData = new FormData();
-      formData.append("source_type", "text");
-      formData.append("format", summaryStyle);
-      formData.append("detail_level", detailLevel);
-      formData.append("outputs", outputs.join(","));
-      formData.append("save_to_document", String(saveToDocument));
-      if (selectedFolderId) formData.append("folder_id", selectedFolderId);
-      formData.append("text", currentInputText);
-
-      const response = await axios.post(`${baseUrl}/tools/summarizer/jobs`, formData, {
-        headers: {
-          ...authHeaders,
-          "Content-Type": "multipart/form-data",
-        },
-      });
-      await pollJob(response.data?.data?.id);
-    } catch (error: any) {
-      const msg = error?.response?.data?.message || error?.message || "Failed to summarize.";
-      toast.error(msg);
-    } finally {
-      setIsLoading(false);
-    }
+    });
   };
 
   const handleClearAllInputs = () => {
@@ -1277,6 +1279,8 @@ const SummarizerTool: React.FC = () => {
       {/* NotebookLM-style assistant: answers strictly from the pasted content.
           Hidden until the user has entered content to ground against. */}
       <SummarizerChat context={currentInputText} />
+
+      <GuestAuthGateModal open={gateOpen} onClose={closeGate} />
     </div>
   );
 };

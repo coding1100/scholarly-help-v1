@@ -22,41 +22,11 @@ function maybeRewriteDynamicLanding(
   return NextResponse.rewrite(rewriteUrl);
 }
 
-/**
- * Tool routes that guests may use without signing in. These tools enforce
- * their own in-app gate (e.g. the Study Workspace shows an email gate after a
- * free allowance) instead of the blanket middleware redirect.
- */
-const GUEST_ALLOWED_TOOL_PATHS = ["/tools/study-workspace"];
-
-function isGuestAllowedToolPath(pathname: string): boolean {
-  return GUEST_ALLOWED_TOOL_PATHS.some(
-    (base) => pathname === base || pathname.startsWith(`${base}/`),
-  );
-}
-
 export async function middleware(request: NextRequest) {
-  const pathname = request.nextUrl.pathname;
-
-  if (
-    pathname.startsWith("/tools/") &&
-    pathname !== "/tools" &&
-    pathname !== "/tools/" &&
-    !isGuestAllowedToolPath(pathname)
-  ) {
-    const token = request.cookies.get("access_token")?.value;
-
-    if (!token) {
-      const signInUrl = new URL("/sign-in", request.url);
-      request.nextUrl.searchParams.forEach((value, key) => {
-        signInUrl.searchParams.set(key, value);
-      });
-      const returnUrl = `${request.nextUrl.pathname}${request.nextUrl.search}`;
-      signInUrl.searchParams.set("returnUrl", returnUrl);
-      return NextResponse.redirect(signInUrl);
-    }
-  }
-
+  // All AI tools are now usable by guests. Guest usage is bounded per-visitor by
+  // a global client-side click allowance (see guestClickLimits) that opens an
+  // in-app sign-in / sign-up gate on the 5th AI action — so there is no longer a
+  // blanket middleware auth redirect for /tools/* routes.
   const landingRewrite = maybeRewriteDynamicLanding(request);
   if (landingRewrite) return landingRewrite;
 

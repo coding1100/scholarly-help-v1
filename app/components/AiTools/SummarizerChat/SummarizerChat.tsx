@@ -5,6 +5,8 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import ReactMarkdown from "react-markdown";
 import { FaCommentDots, FaTimes } from "react-icons/fa";
+import { useGuestGate } from "@/app/lib/client/useGuestGate";
+import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 
 type ChatRole = "user" | "assistant";
 type ChatMessage = { role: ChatRole; content: string };
@@ -24,6 +26,7 @@ export default function SummarizerChat({ context }: SummarizerChatProps) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { gateOpen, closeGate, ensureGuestClick } = useGuestGate();
 
   const hasContext = context.trim().length > 0;
 
@@ -38,14 +41,16 @@ export default function SummarizerChat({ context }: SummarizerChatProps) {
     const question = input.trim();
     if (!question || loading) return;
 
+    // Each assistant message is an AI-triggering click for guests. Signed-in
+    // users pass through; guests consume from their global allowance and hit
+    // the gate once it's used up. The token (null for guests) is sent as-is —
+    // the backend accepts guest requests.
+    if (!ensureGuestClick()) return;
+
     const token =
       typeof window !== "undefined"
         ? localStorage.getItem("access_token")
         : null;
-    if (!token) {
-      toast.error("Please sign in to use the assistant.");
-      return;
-    }
 
     const nextMessages: ChatMessage[] = [
       ...messages,
@@ -215,6 +220,7 @@ export default function SummarizerChat({ context }: SummarizerChatProps) {
           Send
         </button>
       </div>
+      <GuestAuthGateModal open={gateOpen} onClose={closeGate} />
     </div>
   );
 }
