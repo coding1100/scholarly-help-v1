@@ -19,14 +19,22 @@ export default function TakeMyExamAdmin() {
 
   const pathname = usePathname();
   const normalizedAdminPath = (pathname || "").replace(/\/+$/, "") || "/";
-  const adminSlug =
-    normalizedAdminPath === "/admin/take-my-proctored-exam-for-me"
-      ? "take-my-proctored-exam-for-me"
-      : "take-my-exam";
-  const pageLabel =
-    adminSlug === "take-my-proctored-exam-for-me"
-      ? "Take My Proctored Exam For Me"
-      : "Take My Exam";
+  // This editor is shared by several "take my ... exam" pages that all use the
+  // same rich content schema. Derive the target slug from the admin path so the
+  // correct /api/admin/<slug> record is loaded/saved. Falls back to take-my-exam.
+  const KNOWN_ADMIN_SLUGS: Record<string, string> = {
+    "/admin/take-my-proctored-exam-for-me": "take-my-proctored-exam-for-me",
+    "/admin/take-my-teas-exam": "take-my-teas-exam",
+    "/admin/take-my-hesi-exam": "take-my-hesi-exam",
+  };
+  const adminSlug = KNOWN_ADMIN_SLUGS[normalizedAdminPath] || "take-my-exam";
+  const PAGE_LABELS: Record<string, string> = {
+    "take-my-proctored-exam-for-me": "Take My Proctored Exam For Me",
+    "take-my-teas-exam": "Take My TEAS Exam",
+    "take-my-hesi-exam": "Take My HESI Exam",
+    "take-my-exam": "Take My Exam",
+  };
+  const pageLabel = PAGE_LABELS[adminSlug] || "Take My Exam";
   const pageApiUrl = useAdminPageApiUrl(`/api/admin/${adminSlug}`);
 
   const [pageData, setPageData] = useState<any>(null);
@@ -252,7 +260,7 @@ export default function TakeMyExamAdmin() {
       }
     };
     loadTakeMyExamPage();
-  }, [pageApiUrl]);
+  }, [pageApiUrl, adminSlug]);
 
   const updatePageData = (path: string, value: any) => {
     const keys = path.split(".");

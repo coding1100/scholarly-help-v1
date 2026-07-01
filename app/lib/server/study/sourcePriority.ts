@@ -40,25 +40,28 @@ export function prioritizeSourceText(
   sourceText: string,
   mode: StudyLearningMode,
   examTopics: string[] = [],
+  options: { charCap?: number; chunkLimit?: number } = {},
 ): string {
   const normalized = sourceText.trim();
   if (!normalized) return "";
 
+  const cap = options.charCap ?? (mode === "research" ? 20000 : 16000);
+
   const chunks = chunkText(normalized, 650);
-  if (chunks.length <= 1) return normalized.slice(0, 20000);
+  if (chunks.length <= 1) return normalized.slice(0, cap);
 
   const ranked = chunks
     .map((chunk, index) => ({ index, chunk, score: scoreChunk(chunk, examTopics) }))
     .sort((a, b) => b.score - a.score);
 
   const limit =
-    mode === "exam" ? 22 : mode === "quiz" ? 18 : chunks.length;
+    options.chunkLimit ??
+    (mode === "exam" ? 22 : mode === "quiz" ? 18 : chunks.length);
 
   const selected = ranked.slice(0, Math.min(limit, ranked.length));
   selected.sort((a, b) => a.index - b.index);
 
   const merged = selected.map((s) => s.chunk).join("\n\n");
-  const cap = mode === "research" ? 20000 : 16000;
   return merged.slice(0, cap);
 }
 

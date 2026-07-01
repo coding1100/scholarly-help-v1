@@ -17,6 +17,8 @@ import toast from "react-hot-toast";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import DOMPurify from "dompurify";
+import { useGuestGate } from "@/app/lib/client/useGuestGate";
+import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 
 // Citations only ever contain italic markup for titles. Restrict the allowed
 // tags tightly so nothing executable can be injected even if upstream changes.
@@ -199,6 +201,8 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
   // ── Save to Dashboard ──
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [savedDocId, setSavedDocId] = useState<string | null>(null);
+
+  const { gateOpen, closeGate, guardAiClick } = useGuestGate();
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -443,13 +447,16 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
       return;
     }
 
-    trackToolGenerate({ toolName: "Citation Tool" });
-    setIsSubmitting(true);
-    setError("");
-    setResult(null);
-    setSavedDocId(null);
+    // Guests get a small number of free AI actions across all tools; the gate
+    // opens instead of calling the AI once the allowance is used up.
+    guardAiClick(async () => {
+      trackToolGenerate({ toolName: "Citation Tool" });
+      setIsSubmitting(true);
+      setError("");
+      setResult(null);
+      setSavedDocId(null);
 
-    try {
+      try {
       const cleanAuthors = authors
         .map((a) => ({ last: a.last.trim(), first: a.first.trim() }))
         .filter((a) => a.last || a.first);
@@ -532,11 +539,12 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
           ? err.response.data.message.join(", ")
           : err?.message) ||
         "Something went wrong. Please try again.";
-      setError(errorMessage);
-      toast.error(errorMessage);
-    } finally {
-      setIsSubmitting(false);
-    }
+        setError(errorMessage);
+        toast.error(errorMessage);
+      } finally {
+        setIsSubmitting(false);
+      }
+    });
   };
 
   // The engine wraps italic titles in <i></i>; strip tags for the plain-text fallback.
@@ -1547,6 +1555,7 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
           articles—all with in-text citation support.
         </q>
       </div>
+      <GuestAuthGateModal open={gateOpen} onClose={closeGate} />
     </div>
   );
 };

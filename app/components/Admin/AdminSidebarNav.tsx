@@ -32,6 +32,8 @@ const pagesNavigation = [
   { name: "Take My Class (Saving Your Future)", href: "/admin/take-my-class-saving-your-future" },
   { name: "Take My Exam", href: "/admin/take-my-exam" },
   { name: "Take My Proctored Exam", href: "/admin/take-my-proctored-exam-for-me" },
+  { name: "Take My TEAS Exam", href: "/admin/take-my-teas-exam" },
+  { name: "Take My HESI Exam", href: "/admin/take-my-hesi-exam" },
 ];
 
 function PagesNavDot({ active }: { active?: boolean }) {

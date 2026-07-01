@@ -675,6 +675,20 @@ export const MetaData = {
       "Looking to pay someone to do your exam? Need to hire someone to take your online exam? Look no further! We provide expert online exam help to ensure good grades. Contact us now for reliable assistance and achieve your desired results.",
     url: "take-my-proctored-exam-for-me/",
   },
+  // MetaData for Take My TEAS Exam Page
+  takeMyTeasExam: {
+    title: "Take My TEAS Exam For Me - Online TEAS Exam Help - Scholarly Help",
+    description:
+      "Need someone to take your TEAS exam? We provide expert TEAS exam help to secure the score you need for nursing school admission. Contact us now for reliable, confidential assistance and achieve your desired results.",
+    url: "take-my-teas-exam/",
+  },
+  // MetaData for Take My HESI Exam Page
+  takeMyHesiExam: {
+    title: "Take My HESI Exam For Me - Online HESI Exam Help - Scholarly Help",
+    description:
+      "Looking to pay someone to take your HESI exam? We provide expert HESI exam help to ensure strong scores for your nursing program. Contact us now for reliable, confidential assistance and achieve your desired results.",
+    url: "take-my-hesi-exam/",
+  },
   // MetaData for Term and Conditions Page
   termsAndConditions: {
     title: "Terms & Conditions | Scholarly Help Policies and Guidelines",

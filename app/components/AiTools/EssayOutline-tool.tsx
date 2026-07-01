@@ -14,6 +14,8 @@ import {
 import toast from "react-hot-toast";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
+import { useGuestGate } from "@/app/lib/client/useGuestGate";
+import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 
 type OutlineItem = {
   section: string;
@@ -52,6 +54,7 @@ const EssayOutlinetool = () => {
   const [lastFormData, setLastFormData] = useState<OutlineFormData | null>(null);
   const [documents, setDocuments] = useState<SavedDocument[]>([]);
   const [isFetchingDocuments, setIsFetchingDocuments] = useState(false);
+  const { gateOpen, closeGate, guardAiClick } = useGuestGate();
   const baseUrl =
     process.env.NEXT_PUBLIC_NGROX_URL || process.env.NEXT_PUBLIC_BASE_URL || "";
 
@@ -253,7 +256,11 @@ const EssayOutlinetool = () => {
   const handleSubmit = async (formData: OutlineFormData) => {
     setLastFormData(formData);
     setSavedDocumentId("");
-    await submitOutlineRequest(formData);
+    // Guests get a small number of free AI actions across all tools; the gate
+    // opens instead of calling the AI once the allowance is used up.
+    guardAiClick(async () => {
+      await submitOutlineRequest(formData);
+    });
   };
 
   const handleSaveToFolder = async () => {
@@ -501,6 +508,7 @@ const EssayOutlinetool = () => {
           </div>
         </div>
       </div>
+      <GuestAuthGateModal open={gateOpen} onClose={closeGate} />
     </div>
   );
 };

@@ -222,17 +222,22 @@ export function summaryUserPrompt(
     examNote,
     `detailed: a well-formatted Markdown summary of about ${targetWordCount} words (acceptable range ${lower}-${upper}).`,
     "detailed MUST be structured Markdown, NEVER one flat paragraph:",
-    "- Start with at least TWO ## section headings (more for longer summaries), each grouping a distinct theme.",
-    "- Optionally open with a one-line ## Overview, then themed sections.",
-    "- Under each heading use a bullet list (- ) for the key facts/points — one idea per bullet.",
+    "- Optionally open with a one-line ## Overview.",
+    "- Then a ## Key Points section. Key Points MUST be CATEGORIZED: do NOT put a single flat bullet list under it.",
+    "  Instead, group the key points into 2 or more themed sub-sections, each introduced by a ### sub-heading",
+    "  that names the theme/topic (derive the sub-heading names from the actual content — e.g. ### Core Concepts,",
+    "  ### Key Terms, ### Processes, ### Causes & Effects, etc.). Under EACH ### sub-heading put a bullet list (- )",
+    "  of that category's points — one idea per bullet.",
+    "- You may add further ## themed sections after Key Points if the content warrants it, each with bullets.",
     "- Use **bold** for the key terms a student must remember.",
     "- Keep any prose to 1-2 short sentences; prefer bullets over paragraphs.",
     "- Separate every heading, paragraph, and list with a real newline (use \\n in the JSON string).",
-    "Scale depth to the length: more sections/bullets for long sources, fewer for short — but ALWAYS keep headings + bullets.",
+    "Scale depth to the length: more categories/bullets for long sources, fewer for short — but ALWAYS keep the",
+    "Key Points section split into ### categorized sub-sections with bullets (never one flat list).",
     "Use only SOURCE TEXT facts. Do not invent content to hit the word count.",
     "",
     "Example of the detailed value (shape only, not content):",
-    '"## Overview\\n- Main idea in one line\\n\\n## Key Concepts\\n- **Term**: explanation\\n- **Term**: explanation\\n\\n## Why It Matters\\n- Point one\\n- Point two"',
+    '"## Overview\\n- Main idea in one line\\n\\n## Key Points\\n### Core Concepts\\n- **Term**: explanation\\n- **Term**: explanation\\n\\n### Key Processes\\n- Step one\\n- Step two\\n\\n### Why It Matters\\n- Point one\\n- Point two"',
     "",
     "SOURCE TEXT:",
     sourceText,
@@ -268,20 +273,29 @@ export function quizUserPrompt(
   sourceText: string,
   mode: StudyLearningMode,
   examTopics: string[],
+  targetQuestionCount: number,
 ): string {
   const topicsBlock =
     examTopics.length > 0
       ? `Focus on: ${examTopics.join(", ")}`
       : "";
 
+  // Ask for exactly the computed target (≈20% coverage of the source, min 10),
+  // with a small band so the model can land naturally without padding.
+  const target = Math.max(10, Math.round(targetQuestionCount));
+  const lower = Math.max(10, target - 1);
+  const upper = target + 2;
+
   return [
-    "JSON array of 6 to 10 items:",
+    `JSON array of ${lower} to ${upper} items (aim for ${target}):`,
     '{ "id": "quiz-1", "question": "string", "options": ["A","B","C","D"], "correctAnswerIndex": 0, "explanation": "string", "difficulty": "easy" | "medium" | "hard", "questionType": "recall" | "application" | "analysis" }',
     "Rules:",
+    `- Generate ${target} questions drawn from the MOST IMPORTANT and relevant ~20% of the material (core concepts, definitions, and high-yield facts) — never at least 10.`,
     "- Exactly 4 options each; correctAnswerIndex 0-3",
     "- Mix recall, application, and at least one 'which is NOT true' style question",
     "- Student-friendly wording; explanations teach why the answer is right",
     "- Vary difficulty across easy/medium/hard",
+    "- No duplicate or near-duplicate questions",
     "- Source-grounded only",
     topicsBlock,
   mode === "exam" ? "- Exam-ready: testable facts students must know" : "",

@@ -53,6 +53,8 @@ import {
   sendResearchChat,
   updateDocumentContent,
 } from "./academicResearchApi";
+import { useGuestGate } from "@/app/lib/client/useGuestGate";
+import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 
 const MIN_CHARS_BEFORE_CURSOR = 10;
 const PARAGRAPH_SUGGESTION_DEBOUNCE_MS = 2200;
@@ -606,6 +608,8 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
   const { autoComplete, showAutocompleteButtons, citationStyle } = useContext(
     EditorPreferencesContext,
   );
+  const { gateOpen, closeGate, ensureGuestClick, isGuestOutOfAllowance } =
+    useGuestGate();
   const editorShellRef = useRef<HTMLDivElement | null>(null);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const referencesSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
@@ -1001,6 +1005,15 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
           return;
         }
 
+        // Inline autocomplete is an automatic (non-click) AI feature. A guest
+        // who has used up their free allowance stops receiving suggestions
+        // rather than getting unlimited free AI here; it fails silently (no gate
+        // popup) since the user didn't explicitly click anything.
+        if (isGuestOutOfAllowance()) {
+          clearSuggestion();
+          return;
+        }
+
         const requestId = suggestionRequestIdRef.current + 1;
         suggestionRequestIdRef.current = requestId;
 
@@ -1069,6 +1082,7 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
     clearSuggestionLoading,
     showSuggestionLoading,
     updateSuggestionButtonPosition,
+    isGuestOutOfAllowance,
   ]);
 
   // Share editor instance with context for FooterBar undo/redo
@@ -1215,6 +1229,8 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
 
   const handleTryAgain = useCallback(async () => {
     if (!editor) return;
+    // "Try again" is an explicit AI-triggering click for guests.
+    if (!ensureGuestClick()) return;
     trackToolGenerate({ toolName: "Main Tool" });
     const pos = editor.state.selection.from;
 
@@ -1276,6 +1292,7 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
     showSuggestionLoading,
     clearSuggestionLoading,
     updateSuggestionButtonPosition,
+    ensureGuestClick,
   ]);
 
   // Ctrl+/ (or Cmd+/) — manually trigger an AI suggestion even when autocomplete is off
@@ -1536,6 +1553,9 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
         return;
       }
 
+      // Each rewrite is an AI-triggering click for guests.
+      if (!ensureGuestClick()) return;
+
       pendingRangeRef.current = { from, to };
       setRewriteKind(kind);
       setRewriteOriginal(selectedText);
@@ -1543,13 +1563,15 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
       setRewriteOpen(true);
       void requestRewrite(kind, selectedText);
     },
-    [editor, requestRewrite],
+    [editor, requestRewrite, ensureGuestClick],
   );
 
   const handleRewriteTryAgain = useCallback(() => {
     if (!rewriteKind || !rewriteOriginal) return;
+    // A "try again" is another AI call — counts as a click for guests.
+    if (!ensureGuestClick()) return;
     void requestRewrite(rewriteKind, rewriteOriginal);
-  }, [rewriteKind, rewriteOriginal, requestRewrite]);
+  }, [rewriteKind, rewriteOriginal, requestRewrite, ensureGuestClick]);
 
   // List conversions are pure editor commands — instant and undoable, no AI.
   const handleConvertList = useCallback(
@@ -1756,6 +1778,9 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
       return;
     }
 
+    // Humanizing is an AI-triggering click for guests.
+    if (!ensureGuestClick()) return;
+
     try {
       const res = await humanizeText({ text: selectedText, tone: "natural" });
       const next = String(res?.humanized_text || "").trim();
@@ -1800,12 +1825,15 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
         duration: 5200,
       });
     }
-  }, [editor]);
+  }, [editor, ensureGuestClick]);
 
   const handleSendSelectionChat = useCallback(async () => {
     if (selectionChatLoading) return;
     const message = selectionChatInput.trim();
     if (!message) return;
+
+    // Each research-chat send is an AI-triggering click for guests.
+    if (!ensureGuestClick()) return;
 
     const style = normalizeCitationStyle(citationStyle);
     const nextMessages: InlineChatMessage[] = [
@@ -1867,6 +1895,7 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
     selectionChatLoading,
     selectionChatMessages,
     selectionChatText,
+    ensureGuestClick,
   ]);
 
   // Handle keyboard shortcut for Accept (Shift + →)
@@ -2236,6 +2265,7 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
           </ol>
         </div>
       )}
+      <GuestAuthGateModal open={gateOpen} onClose={closeGate} />
     </div>
   );
 };

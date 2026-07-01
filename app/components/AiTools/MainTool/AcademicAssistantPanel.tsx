@@ -24,6 +24,8 @@ import {
   uploadSource,
   type SourceRecord,
 } from "./academicResearchApi";
+import { useGuestGate } from "@/app/lib/client/useGuestGate";
+import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 
 export type AssistantPanel = "documents" | "library" | "chat" | "review";
 
@@ -105,6 +107,7 @@ const AcademicAssistantPanel: React.FC<AcademicAssistantPanelProps> = ({
   const [reviewLoading, setReviewLoading] = useState(false);
   const [sourcesLoading, setSourcesLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const { gateOpen, closeGate, ensureGuestClick } = useGuestGate();
 
   const documentText = getDocumentText(editor);
   const wordCount = useMemo(
@@ -166,6 +169,9 @@ const AcademicAssistantPanel: React.FC<AcademicAssistantPanelProps> = ({
     const message = chatInput.trim();
     if (!message || chatLoading) return;
 
+    // Each chat send is an AI-triggering click for guests.
+    if (!ensureGuestClick()) return;
+
     const nextMessages: ChatMessage[] = [
       ...chatMessages,
       { id: `${Date.now()}-user`, role: "user", content: message },
@@ -202,6 +208,9 @@ const AcademicAssistantPanel: React.FC<AcademicAssistantPanelProps> = ({
       toast.error("Add content to the document before running review.");
       return;
     }
+
+    // Running a research review is an AI-triggering click for guests.
+    if (!ensureGuestClick()) return;
 
     setReviewLoading(true);
     try {
@@ -400,6 +409,7 @@ const AcademicAssistantPanel: React.FC<AcademicAssistantPanelProps> = ({
           </div>
         </>
       )}
+      <GuestAuthGateModal open={gateOpen} onClose={closeGate} />
     </aside>
   );
 };

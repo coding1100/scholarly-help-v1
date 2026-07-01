@@ -283,6 +283,19 @@ export default function StudyWorkspacePageContent() {
   const showWorkspace = isRecording || (!forceStart && hasSessionContent === true);
   const showOnboarding = !isBootstrapping && !showWorkspace;
 
+  // Broadcast the current view so the sidebar (a sibling, not a child) can hide
+  // the Recent Sessions nav unless the full workspace is showing. We key off
+  // showWorkspace (not showOnboarding) so the nav stays hidden during the
+  // bootstrap/welcome phases and only appears in the real workspace view.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.dispatchEvent(
+      new CustomEvent("study-view-changed", {
+        detail: { onboarding: !showWorkspace },
+      }),
+    );
+  }, [showWorkspace]);
+
   return (
     <ToolsLayout setFlag={setFlag} flag={flag}>
       {/* ToolsLayout clones its single child element to inject `token`, so the
