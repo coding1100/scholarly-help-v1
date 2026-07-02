@@ -5,6 +5,7 @@ import {
   parsePdfBuffer,
   parseUploadedStudyFile,
 } from "@/app/lib/server/study/fileParsing";
+import { extractReadableTextFromHtml } from "@/app/lib/server/study/htmlExtract";
 import { StudySourceKind } from "@/app/lib/server/study/types";
 
 export const dynamic = "force-dynamic";
@@ -16,91 +17,6 @@ const ALLOWED_SOURCE_KINDS = new Set<StudySourceKind>([
   "youtube",
 ]);
 
-// Non-content elements whose TEXT should be dropped entirely (not just the
-// tags) — navigation, chrome, menus, forms, media captions, etc.
-const BOILERPLATE_TAGS =
-  "script|style|noscript|nav|header|footer|aside|form|button|select|option|figure|figcaption|svg|iframe|template";
-
-// class/id substrings that mark a container as boilerplate (nav bars, sidebars,
-// tables of contents, cookie banners, comments, etc.).
-const BOILERPLATE_ATTR =
-  /(^|[\s_-])(nav|navbar|menu|sidebar|side-bar|toc|table-of-contents|breadcrumb|footer|header|masthead|banner|cookie|consent|comment|related|recirc|promo|advert|ad-|social|share|subscribe|newsletter|pagination|skip-link|sr-only|screen-reader|infobox|metadata|references|reflist|catlinks|noprint|mw-jump|mw-editsection|vector-)/i;
-
-function decodeBasicEntities(text: string): string {
-  return text
-    .replace(/&nbsp;/gi, " ")
-    .replace(/&#160;/g, " ")
-    .replace(/&amp;/gi, "&")
-    .replace(/&lt;/gi, "<")
-    .replace(/&gt;/gi, ">")
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;|&apos;/gi, "'")
-    .replace(/&mdash;/gi, "—")
-    .replace(/&ndash;/gi, "–");
-}
-
-/** True for a line that is navigation/ToC residue rather than real prose. */
-function isBoilerplateLine(line: string): boolean {
-  const t = line.trim();
-  if (!t) return true;
-  // Reader-mode / wiki chrome.
-  if (/^(toggle|jump to|edit|\[edit\]|view source|contents|main menu|navigation|from wikipedia)\b/i.test(t))
-    return true;
-  // Dotted leaders from a printed ToC ("Abstract .......... 11").
-  if (/\.{4,}\s*\d*\s*$/.test(t)) return true;
-  // A line made mostly of "N.N Title" numbered ToC entries with no sentence.
-  const tocEntries = t.match(/\b\d+(\.\d+)*\s+[A-Z][^.!?]*/g);
-  if (tocEntries && tocEntries.length >= 3 && !/[.!?]\s/.test(t)) return true;
-  // Very short fragments that are almost certainly a link/menu label, not prose.
-  if (t.length < 3) return true;
-  return false;
-}
-
-function toPlainTextFromHtml(html: string): string {
-  let doc = html;
-
-  // 1) Prefer the main content region when the page marks one, so we never even
-  //    look at surrounding chrome.
-  const mainMatch =
-    doc.match(/<main\b[^>]*>([\s\S]*?)<\/main>/i) ||
-    doc.match(/<article\b[^>]*>([\s\S]*?)<\/article>/i) ||
-    doc.match(/<[^>]*\brole=["']?main["']?[^>]*>([\s\S]*?)<\/[a-z]+>/i);
-  if (mainMatch?.[1] && mainMatch[1].length > 500) {
-    doc = mainMatch[1];
-  }
-
-  // 2) Remove boilerplate elements together with their inner text.
-  doc = doc.replace(
-    new RegExp(`<(${BOILERPLATE_TAGS})\\b[^>]*>[\\s\\S]*?<\\/\\1>`, "gi"),
-    " ",
-  );
-
-  // 3) Drop any element whose class/id looks like boilerplate (open tag → close).
-  //    Best-effort, non-nested: covers the common single-level nav/sidebar div.
-  doc = doc.replace(
-    /<(div|section|ul|ol|span|table|tr|td)\b[^>]*(?:class|id)=["'][^"']*["'][^>]*>[\s\S]*?<\/\1>/gi,
-    (match) => {
-      const attr = match.match(/(?:class|id)=["']([^"']*)["']/i)?.[1] || "";
-      return BOILERPLATE_ATTR.test(attr) ? " " : match;
-    },
-  );
-
-  // 4) Turn block boundaries into newlines so we can filter line-by-line.
-  doc = doc
-    .replace(/<\/(p|div|li|h[1-6]|section|article|br|tr)>/gi, "\n")
-    .replace(/<br\s*\/?>/gi, "\n");
-
-  // 5) Strip remaining tags + decode entities.
-  const text = decodeBasicEntities(doc.replace(/<[^>]+>/g, " "));
-
-  // 6) Line-level filtering to remove ToC/nav residue, then collapse whitespace.
-  const lines = text
-    .split(/\n+/)
-    .map((l) => l.replace(/[ \t ]+/g, " ").trim())
-    .filter((l) => l && !isBoilerplateLine(l));
-
-  return lines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
-}
 
 // Minimum extracted characters before we treat a fetched page as "real"
 // content. JS-heavy SPAs and bot walls typically strip down to a near-empty
@@ -185,7 +101,7 @@ async function fetchUrlText(url: string) {
       contentType.includes("text/html") ||
       contentType.includes("application/xhtml")
     ) {
-      const text = toPlainTextFromHtml(body);
+      const text = extractReadableTextFromHtml(body);
       if (text.length < MIN_USABLE_URL_TEXT) {
         // A near-empty extraction means a client-rendered SPA or a bot wall.
         throw new Error(siteRestrictedMessage(host));
