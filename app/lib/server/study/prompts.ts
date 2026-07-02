@@ -160,7 +160,9 @@ export function summarySystemInstruction(mode: StudyLearningMode): string {
 export function mapChunkSystemInstruction(): string {
   return [
     STUDENT_TUTOR_VOICE,
-    "You extract the key points from ONE excerpt of a longer document.",
+    "You read ONE excerpt of a longer document and write down what it TEACHES —",
+    "the actual ideas, arguments, findings, and explanations — in your own words.",
+    "You are NOT a table-of-contents extractor.",
     "Return plain text only: a short bullet list. No preamble, no headings.",
   ].join(" ");
 }
@@ -172,11 +174,18 @@ export function mapChunkUserPrompt(
 ): string {
   return [
     `This is part ${part} of ${total} of a longer document.`,
-    "Extract ONLY the important facts, definitions, and ideas from THIS excerpt.",
+    "Write concise notes on the SUBSTANCE of this excerpt — the concepts and",
+    "information it actually explains — as if teaching it to a student.",
     "Rules:",
-    "- 3 to 8 concise bullets (use '- '); one idea per bullet.",
-    "- Keep key terms and numbers; drop filler and repetition.",
-    "- Do not add anything not present in the excerpt.",
+    "- 3 to 8 bullets (use '- '); one idea per bullet; paraphrase in plain English.",
+    "- IGNORE and DO NOT reproduce navigational/front-matter: tables of contents,",
+    "  lists of section titles, page numbers, dotted leaders (……), headers/footers,",
+    "  cover-page metadata (course code, session, campus, word count).",
+    "- If this excerpt is ONLY such front-matter with no real content, reply with",
+    "  exactly: (no substantive content)",
+    "- Explain what each section SAYS, don't just name the section.",
+    "- Keep important terms, numbers, and findings; drop filler and repetition.",
+    "- Do not invent anything not present in the excerpt.",
     "",
     "EXCERPT:",
     chunkText,
@@ -234,6 +243,10 @@ export function summaryUserPrompt(
     "- Separate every heading, paragraph, and list with a real newline (use \\n in the JSON string).",
     "Scale depth to the length: more categories/bullets for long sources, fewer for short — but ALWAYS keep the",
     "Key Points section split into ### categorized sub-sections with bullets (never one flat list).",
+    "CRITICAL: Summarize the SUBSTANCE — the ideas, arguments, and findings the document actually explains.",
+    "Do NOT reproduce the table of contents or a list of section titles. Never output lines like",
+    '"1. Introduction 2 1.1 Rationale 3…", page numbers, dotted leaders (……), or cover-page metadata',
+    "(course code, session, campus, word count). Explain what the sections SAY, not their names.",
     "Use only SOURCE TEXT facts. Do not invent content to hit the word count.",
     "",
     "Example of the detailed value (shape only, not content):",

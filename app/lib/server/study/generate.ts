@@ -126,8 +126,8 @@ async function buildSummary(sourceText: string, mode: StudyLearningMode) {
     try {
       const note = await generateGeminiText({
         systemInstruction: mapChunkSystemInstruction(),
-        userPrompt: mapChunkUserPrompt(chunk, i + 1, chunks.length),
-        temperature: 0.2,
+        userPrompt: mapChunkUserPrompt(chunk, i + 1, chunks.length) + variationHint(),
+        temperature: 0.4,
         maxOutputTokens: 700,
       });
       return note.trim();
@@ -137,7 +137,12 @@ async function buildSummary(sourceText: string, mode: StudyLearningMode) {
     }
   });
 
-  const aggregatedNotes = notes.filter(Boolean).join("\n\n");
+  // Drop chunks that were pure front-matter/ToC (the map step flags these) so the
+  // reduce step never sees "1. Introduction 2 1.1 Rationale…" style noise.
+  const aggregatedNotes = notes
+    .map((n) => n.trim())
+    .filter((n) => n && !/^\(no substantive content\)$/i.test(n))
+    .join("\n\n");
   if (!aggregatedNotes) {
     // Every map call failed — fall back to a single pass over a prioritized slice.
     const prepared = prepareSource(sourceText, mode, []);
