@@ -47,6 +47,11 @@ export function stripDocumentBoilerplate(input: string): string {
   if (!input) return input;
   let text = input.replace(/\r/g, "");
 
+  // Leaders come in two flavours depending on the exporter: runs of ASCII dots
+  // ("......") or runs of Unicode ellipsis chars ("………", U+2026). Normalise the
+  // ellipsis form to dots FIRST so every later pattern only deals with dots.
+  text = text.replace(/…/g, "...");
+
   // 1) Kill dotted leaders, together with the entry title that precedes them
   //    ("10.3 Draft Questionnaire Structure ....... 16" → removed). Handling the
   //    title here prevents an orphaned, page-number-less entry surviving later.

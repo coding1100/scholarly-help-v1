@@ -6,6 +6,7 @@ import {
   upsertArtifact,
 } from "@/app/lib/server/study/repo";
 import { fail, getAuthenticatedUserId, ok } from "@/app/lib/server/study/http";
+import { cleanSourceText } from "@/app/lib/server/study/documentClean";
 import {
   StudyArtifactType,
   StudyLearningMode,
@@ -42,7 +43,11 @@ export async function POST(
       return fail("Unsupported generation type");
     }
 
-    const { mergedText } = await getSessionSourceText(params.id);
+    const { mergedText: storedText } = await getSessionSourceText(params.id);
+    // Defense in depth: sources ingested before the shared cleaner existed (or
+    // via any legacy path) may still hold ToC/cover boilerplate — clean again at
+    // generation time so regenerating an OLD session also produces clean output.
+    const mergedText = cleanSourceText(storedText);
     if (!mergedText.trim()) {
       return fail("No source text found for this session");
     }
