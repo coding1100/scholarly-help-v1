@@ -43,6 +43,17 @@ export async function parseUploadedStudyFile(file: File): Promise<string> {
     throw new Error("Unsupported file type. Allowed: .pdf, .txt, .doc, .docx");
   }
 
+  // Returns the raw extracted text. Boilerplate/ToC cleanup is applied centrally
+  // by cleanSourceText() at the ingestion choke point, so every source type
+  // (file, URL, pasted text) is cleaned identically.
+  return extractRawTextByType(buffer, ext, mimeType);
+}
+
+async function extractRawTextByType(
+  buffer: Buffer,
+  ext: string,
+  mimeType: string,
+): Promise<string> {
   if (ext === "txt" || mimeType === "text/plain") {
     return buffer.toString("utf-8").trim();
   }

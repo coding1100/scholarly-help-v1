@@ -6,6 +6,7 @@ import {
   parseUploadedStudyFile,
 } from "@/app/lib/server/study/fileParsing";
 import { extractReadableTextFromHtml } from "@/app/lib/server/study/htmlExtract";
+import { cleanSourceText } from "@/app/lib/server/study/documentClean";
 import { StudySourceKind } from "@/app/lib/server/study/types";
 
 export const dynamic = "force-dynamic";
@@ -179,6 +180,13 @@ export async function POST(
     }
     if (!text) {
       return fail("text is required");
+    }
+
+    // Single shared cleaning step for ALL source types (file, URL, pasted text)
+    // so their stored/summarized output is consistent and boilerplate-free.
+    text = cleanSourceText(text);
+    if (!text) {
+      return fail("No readable content found after cleaning the source.");
     }
 
     const source = await addSource(params.id, kind, name, text);
