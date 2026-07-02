@@ -216,10 +216,13 @@ export default function StudyQuizPanel({
         <button
           type="button"
           onClick={() => {
-            setQuizSubmitted(false);
+            // Reset the attempt: clear answers so the user genuinely starts over
+            // (without this, every question stays answered and "practice" is a no-op).
+            setQuizSelections({});
             setQuizQuestionIndex(() => 0);
+            setQuizSubmitted(false);
           }}
-          className="w-full rounded-md border border-[#ced1ef] py-2 text-sm font-semibold text-[#5f70ff]"
+          className="w-full rounded-md border border-[#ced1ef] py-2 text-sm font-semibold text-[#5f70ff] transition hover:bg-[#f3f5ff]"
         >
           Practice again
         </button>
