@@ -72,6 +72,14 @@ async function callGeminiGenerate(input: {
   parts: Array<GeminiPart | GeminiInlinePart>;
   temperature?: number;
   maxOutputTokens?: number;
+  /**
+   * Optional sampler seed. Gemini is otherwise near-deterministic on structured
+   * JSON tasks even at temperature > 0, so callers that need genuinely different
+   * output across identical prompts (e.g. "Regenerate") must vary this.
+   */
+  seed?: number;
+  /** Sampling nucleus. Raise alongside temperature to widen token choice. */
+  topP?: number;
 }) {
   const apiKey = getApiKey();
   const model = getModelName();
@@ -99,6 +107,8 @@ async function callGeminiGenerate(input: {
           generationConfig: {
             temperature: input.temperature ?? 0.3,
             maxOutputTokens: input.maxOutputTokens ?? 1400,
+            ...(typeof input.seed === "number" ? { seed: input.seed } : {}),
+            ...(typeof input.topP === "number" ? { topP: input.topP } : {}),
           },
         }),
       },
@@ -128,12 +138,16 @@ export async function generateGeminiText(input: {
   userPrompt: string;
   temperature?: number;
   maxOutputTokens?: number;
+  seed?: number;
+  topP?: number;
 }) {
   return callGeminiGenerate({
     systemInstruction: input.systemInstruction,
     parts: [{ text: input.userPrompt }],
     temperature: input.temperature,
     maxOutputTokens: input.maxOutputTokens,
+    seed: input.seed,
+    topP: input.topP,
   });
 }
 

@@ -44,6 +44,41 @@ function variationHint(): string {
   ].join("\n");
 }
 
+/**
+ * A fresh integer sampler seed for each generation call. Gemini is
+ * near-deterministic on structured JSON even at temperature > 0, so a text
+ * "variation seed" alone is a weak lever — passing a DIFFERENT numeric seed to
+ * `generationConfig.seed` is what actually makes the sampler take a different
+ * path. `undefined` on first generation keeps that output stable/reproducible.
+ */
+function samplingSeed(isRegeneration: boolean): number | undefined {
+  if (!isRegeneration) return undefined;
+  // Cryptographically-unnecessary; just needs to differ per click and fit in a
+  // 32-bit signed int (Gemini rejects out-of-range seeds).
+  return Math.floor(Math.random() * 2_147_483_646) + 1;
+}
+
+/**
+ * Distinct framing lenses rotated across regenerations. Telling the model to
+ * simply "be different" is weak; anchoring it to a concrete, different ORGANIZING
+ * PRINCIPLE each time forces real structural variation. Picked at random so
+ * consecutive regenerations rarely repeat a lens.
+ */
+const REGENERATION_LENSES = [
+  "Organize it around the KEY QUESTIONS a student would ask about this material, answering each.",
+  "Organize it as a CAUSE-AND-EFFECT / how-it-works walkthrough of the core processes.",
+  "Organize it by COMPARING AND CONTRASTING the main concepts, terms, or approaches.",
+  "Organize it from FOUNDATIONS → ADVANCED, building each idea on the previous one.",
+  "Organize it around COMMON MISCONCEPTIONS and what's actually true, with the correct explanation.",
+  "Organize it by REAL-WORLD RELEVANCE: for each idea, lead with why it matters and where it applies.",
+  "Organize it as a set of THEMED CLUSTERS you derive from the content, different from an obvious outline.",
+];
+
+function pickRegenerationLens(): string {
+  const index = Math.floor(Math.random() * REGENERATION_LENSES.length);
+  return REGENERATION_LENSES[index];
+}
+
 // How much of the previous artifact to show the model as a "don't repeat this"
 // reference. Enough to fingerprint it, small enough not to crowd the prompt.
 const PREVIOUS_CONTENT_CHAR_CAP = 3000;
@@ -54,30 +89,88 @@ const PREVIOUS_CONTENT_CHAR_CAP = 3000;
  * version — a random seed alone only nudges wording. Returns "" on first
  * generation (no previous artifact).
  */
-function avoidPreviousBlock(previousContent: unknown): string {
+function serializePrevious(previousContent: unknown): string {
   if (previousContent === undefined || previousContent === null) return "";
-  let serialized: string;
   try {
-    serialized =
+    const serialized =
       typeof previousContent === "string"
         ? previousContent
         : JSON.stringify(previousContent);
+    return serialized && serialized.trim() ? serialized : "";
   } catch {
     return "";
   }
-  if (!serialized || !serialized.trim()) return "";
+}
+
+function avoidPreviousBlock(
+  previousContent: unknown,
+  options: { lens?: string; insist?: boolean } = {},
+): string {
+  const serialized = serializePrevious(previousContent);
+  if (!serialized) return "";
   const clipped = serialized.slice(0, PREVIOUS_CONTENT_CHAR_CAP);
+  const lens = options.lens ?? pickRegenerationLens();
   return [
     "",
     "REGENERATION REQUEST — the user saw the version below and asked for a NEW one.",
-    "Your output MUST be substantially different from it while staying accurate to the source:",
-    "- Use a different structure/organization and different headings or groupings.",
+    options.insist
+      ? "Your PREVIOUS attempt was too similar to it and was REJECTED. This time you MUST change the structure and wording substantially — do not repeat yourself."
+      : "Your output MUST be substantially different from it while staying accurate to the source:",
+    `- NEW ANGLE FOR THIS VERSION: ${lens}`,
+    "- Use a different structure/organization and different headings or groupings than the previous version.",
     "- Reword everything; do not reuse its sentences or bullet phrasings.",
     "- Shift emphasis: cover angles, details, or examples the previous version skipped;",
     "  drop or shorten what it dwelled on.",
     "Do NOT copy from it. PREVIOUS VERSION (for reference only):",
     clipped,
   ].join("\n");
+}
+
+/**
+ * How close two generations may be before we treat the "new" one as a failed
+ * regeneration. Jaccard similarity over word 3-grams (shingles) is robust to
+ * light reordering/paraphrase while still catching near-verbatim repeats.
+ */
+const REGENERATION_MAX_SIMILARITY = 0.6;
+
+function shingleSet(text: string): Set<string> {
+  const words = text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+  const shingles = new Set<string>();
+  for (let i = 0; i + 2 < words.length; i += 1) {
+    shingles.add(`${words[i]} ${words[i + 1]} ${words[i + 2]}`);
+  }
+  // Fall back to single words for very short texts so similarity is still defined.
+  if (shingles.size === 0) words.forEach((w) => shingles.add(w));
+  return shingles;
+}
+
+/** Jaccard similarity (0..1) of two texts' word-trigram sets. */
+function textSimilarity(a: string, b: string): number {
+  const setA = shingleSet(a);
+  const setB = shingleSet(b);
+  if (setA.size === 0 || setB.size === 0) return 0;
+  let intersection = 0;
+  for (const shingle of setA) if (setB.has(shingle)) intersection += 1;
+  const union = setA.size + setB.size - intersection;
+  return union === 0 ? 0 : intersection / union;
+}
+
+/**
+ * True when `candidate` is too close to `previousContent` to count as a genuine
+ * regeneration. Only meaningful when there IS a previous version.
+ */
+function isTooSimilarToPrevious(
+  candidate: unknown,
+  previousContent: unknown,
+): boolean {
+  const prev = serializePrevious(previousContent);
+  const next = serializePrevious(candidate);
+  if (!prev || !next) return false;
+  return textSimilarity(prev, next) >= REGENERATION_MAX_SIMILARITY;
 }
 
 /** Regeneration runs hotter so sampling itself also diversifies the output. */
@@ -123,6 +216,66 @@ function summaryOutputTokenBudget(target: number): number {
   return Math.min(8192, Math.max(700, Math.round(target * 2) + 400));
 }
 
+/**
+ * Runs a single generation and, when regenerating, enforces that the result is
+ * genuinely different from the previous artifact. Each builder supplies a
+ * `run(attempt)` that produces + parses one candidate; `attempt` carries the
+ * escalating levers (a fresh sampler seed, a rotating framing lens, a hotter
+ * temperature, and an "insist" flag that hardens the avoid-previous wording).
+ *
+ * On first generation (no previous content) it runs exactly once. On a
+ * regeneration whose output is still too similar, it retries ONCE with the
+ * escalated attempt — a bounded backstop so the user never sees byte-identical
+ * output, without unbounded retry loops or extra cost in the common case.
+ */
+export type RegenAttempt = {
+  seed?: number;
+  lens: string;
+  temperature: number;
+  topP: number;
+  insist: boolean;
+};
+
+async function generateWithRegenerationRetry<T>(
+  previousContent: unknown,
+  baseTemperature: number,
+  run: (attempt: RegenAttempt) => Promise<T>,
+): Promise<T> {
+  const isRegeneration = serializePrevious(previousContent) !== "";
+  const lens = pickRegenerationLens();
+  const first: RegenAttempt = {
+    seed: samplingSeed(isRegeneration),
+    lens,
+    temperature: generationTemperature(baseTemperature, isRegeneration),
+    topP: isRegeneration ? 0.95 : 0.9,
+    insist: false,
+  };
+  const firstResult = await run(first);
+  if (!isRegeneration || !isTooSimilarToPrevious(firstResult, previousContent)) {
+    return firstResult;
+  }
+
+  console.warn("study.regenerate.too_similar_retrying");
+  const retry: RegenAttempt = {
+    // A brand-new seed and a different lens so the retry doesn't retrace the
+    // first attempt's path.
+    seed: samplingSeed(true),
+    lens: pickRegenerationLens(),
+    temperature: Math.min(0.98, first.temperature + 0.15),
+    topP: 1,
+    insist: true,
+  };
+  const retryResult = await run(retry);
+  // Keep whichever attempt diverged more from the previous version.
+  if (isTooSimilarToPrevious(retryResult, previousContent)) {
+    const prev = serializePrevious(previousContent);
+    const firstSim = textSimilarity(prev, serializePrevious(firstResult));
+    const retrySim = textSimilarity(prev, serializePrevious(retryResult));
+    return retrySim <= firstSim ? retryResult : firstResult;
+  }
+  return retryResult;
+}
+
 /** Run async tasks with a bounded concurrency, preserving input order. */
 async function mapWithConcurrency<T, R>(
   items: T[],
@@ -152,19 +305,37 @@ async function buildSummary(
   const { target } = summaryTargetWordCount(countWords(sourceText));
   const maxOutputTokens = summaryOutputTokenBudget(target);
   const normalized = sourceText.trim();
-  const avoidBlock = avoidPreviousBlock(previousContent);
-  const temperature = generationTemperature(0.45, avoidBlock !== "");
+
+  // Single-pass (small docs) and reduce-fallback both synthesize the final
+  // summary from a body of text; only the input differs. Regeneration variation
+  // (seed + lens + temperature + similarity-retry) is enforced on that final
+  // synthesizing call via generateWithRegenerationRetry.
+  const synthesize = (body: string) =>
+    generateWithRegenerationRetry(
+      previousContent,
+      0.45,
+      async (attempt) => {
+        const raw = await generateGeminiText({
+          systemInstruction: summarySystemInstruction(mode),
+          userPrompt:
+            summaryUserPrompt(body, mode, target) +
+            variationHint() +
+            avoidPreviousBlock(previousContent, {
+              lens: attempt.lens,
+              insist: attempt.insist,
+            }),
+          temperature: attempt.temperature,
+          topP: attempt.topP,
+          seed: attempt.seed,
+          maxOutputTokens,
+        });
+        return parseJson<{ short: string; detailed: string }>(raw);
+      },
+    );
 
   // Small documents: a single pass already sees everything.
   if (normalized.length <= SUMMARY_SINGLE_PASS_CHAR_LIMIT) {
-    const raw = await generateGeminiText({
-      systemInstruction: summarySystemInstruction(mode),
-      userPrompt:
-        summaryUserPrompt(normalized, mode, target) + variationHint() + avoidBlock,
-      temperature,
-      maxOutputTokens,
-    });
-    return parseJson<{ short: string; detailed: string }>(raw);
+    return synthesize(normalized);
   }
 
   // Large documents: MAP each chunk into compact notes (parallel, batched), then
@@ -193,27 +364,33 @@ async function buildSummary(
     .join("\n\n");
   if (!aggregatedNotes) {
     // Every map call failed — fall back to a single pass over a prioritized slice.
-    const prepared = prepareSource(sourceText, mode, []);
-    const raw = await generateGeminiText({
-      systemInstruction: summarySystemInstruction(mode),
-      userPrompt:
-        summaryUserPrompt(prepared, mode, target) + variationHint() + avoidBlock,
-      temperature,
-      maxOutputTokens,
-    });
-    return parseJson<{ short: string; detailed: string }>(raw);
+    return synthesize(prepareSource(sourceText, mode, []));
   }
 
-  const raw = await generateGeminiText({
-    systemInstruction: summarySystemInstruction(mode),
-    userPrompt:
-      reduceSummaryUserPrompt(aggregatedNotes, mode, target) +
-      variationHint() +
-      avoidBlock,
-    temperature,
-    maxOutputTokens,
-  });
-  return parseJson<{ short: string; detailed: string }>(raw);
+  // Reduce: fold the per-chunk notes into the final summary. Same synthesizing
+  // contract as the single pass, only the "SOURCE TEXT:" label differs, so we
+  // reuse the retry helper directly with the reduce prompt.
+  return generateWithRegenerationRetry(
+    previousContent,
+    0.45,
+    async (attempt) => {
+      const raw = await generateGeminiText({
+        systemInstruction: summarySystemInstruction(mode),
+        userPrompt:
+          reduceSummaryUserPrompt(aggregatedNotes, mode, target) +
+          variationHint() +
+          avoidPreviousBlock(previousContent, {
+            lens: attempt.lens,
+            insist: attempt.insist,
+          }),
+        temperature: attempt.temperature,
+        topP: attempt.topP,
+        seed: attempt.seed,
+        maxOutputTokens,
+      });
+      return parseJson<{ short: string; detailed: string }>(raw);
+    },
+  );
 }
 
 async function buildNotes(
@@ -223,24 +400,32 @@ async function buildNotes(
   previousContent?: unknown,
 ) {
   const prepared = prepareSource(sourceText, mode, examTopics);
-  const avoidBlock = avoidPreviousBlock(previousContent);
-  const raw = await generateGeminiText({
-    systemInstruction: notesSystemInstruction(mode),
-    userPrompt:
-      notesUserPrompt(prepared, mode, examTopics) + variationHint() + avoidBlock,
-    temperature: generationTemperature(0.5, avoidBlock !== ""),
-    maxOutputTokens: 4096,
+  return generateWithRegenerationRetry(previousContent, 0.5, async (attempt) => {
+    const raw = await generateGeminiText({
+      systemInstruction: notesSystemInstruction(mode),
+      userPrompt:
+        notesUserPrompt(prepared, mode, examTopics) +
+        variationHint() +
+        avoidPreviousBlock(previousContent, {
+          lens: attempt.lens,
+          insist: attempt.insist,
+        }),
+      temperature: attempt.temperature,
+      topP: attempt.topP,
+      seed: attempt.seed,
+      maxOutputTokens: 4096,
+    });
+    return parseJson<{
+      title: string;
+      mode?: string;
+      examTips?: string[];
+      sections: Array<{
+        heading: string;
+        priority?: string;
+        bullets: string[];
+      }>;
+    }>(raw);
   });
-  return parseJson<{
-    title: string;
-    mode?: string;
-    examTips?: string[];
-    sections: Array<{
-      heading: string;
-      priority?: string;
-      bullets: string[];
-    }>;
-  }>(raw);
 }
 
 async function buildFlashcards(
@@ -249,19 +434,28 @@ async function buildFlashcards(
   previousContent?: unknown,
 ) {
   const prepared = prepareSource(sourceText, mode, []);
-  const avoidBlock = avoidPreviousBlock(previousContent);
-  const raw = await generateGeminiText({
-    systemInstruction: flashcardsSystemInstruction(),
-    userPrompt: flashcardsUserPrompt(prepared, mode) + variationHint() + avoidBlock,
-    temperature: generationTemperature(0.5, avoidBlock !== ""),
-    maxOutputTokens: 4096,
+  return generateWithRegenerationRetry(previousContent, 0.5, async (attempt) => {
+    const raw = await generateGeminiText({
+      systemInstruction: flashcardsSystemInstruction(),
+      userPrompt:
+        flashcardsUserPrompt(prepared, mode) +
+        variationHint() +
+        avoidPreviousBlock(previousContent, {
+          lens: attempt.lens,
+          insist: attempt.insist,
+        }),
+      temperature: attempt.temperature,
+      topP: attempt.topP,
+      seed: attempt.seed,
+      maxOutputTokens: 4096,
+    });
+    const cards = parseJson<Array<{ id: string; front: string; back: string }>>(raw);
+    return cards.map((card, index) => ({
+      id: card.id || `card-${index + 1}`,
+      front: String(card.front || "").trim(),
+      back: String(card.back || "").trim(),
+    }));
   });
-  const cards = parseJson<Array<{ id: string; front: string; back: string }>>(raw);
-  return cards.map((card, index) => ({
-    id: card.id || `card-${index + 1}`,
-    front: String(card.front || "").trim(),
-    back: String(card.back || "").trim(),
-  }));
 }
 
 function quizOutputTokenBudget(targetQuestions: number): number {
@@ -294,56 +488,62 @@ async function buildQuiz(
     // Allow more ranked chunks through for large quizzes (each ~650 chars).
     chunkLimit: Math.max(24, Math.ceil(quizCharCap / 650)),
   });
-  const avoidBlock = avoidPreviousBlock(previousContent);
-  const raw = await generateGeminiText({
-    systemInstruction: quizSystemInstruction(),
-    userPrompt:
-      quizUserPrompt(prepared, mode, examTopics, targetQuestions) +
-      variationHint() +
-      avoidBlock,
-    temperature: generationTemperature(0.55, avoidBlock !== ""),
-    maxOutputTokens: quizOutputTokenBudget(targetQuestions),
-  });
-  const quizzes = parseJson<
-    Array<{
-      id: string;
-      question: string;
-      options: string[];
-      correctAnswerIndex: number;
-      explanation: string;
-      difficulty?: string;
-      questionType?: string;
-    }>
-  >(raw);
-  // Drop malformed/blank and near-duplicate questions before re-id'ing so the
-  // final quiz is clean and (with the min floor honored by the prompt) usable.
-  const seen = new Set<string>();
-  const cleaned = quizzes
-    .map((quiz) => ({
-      question: String(quiz.question || "").trim(),
-      options:
-        Array.isArray(quiz.options) && quiz.options.length === 4
-          ? quiz.options.map((option) => String(option))
-          : ["Option A", "Option B", "Option C", "Option D"],
-      correctAnswerIndex:
-        typeof quiz.correctAnswerIndex === "number" &&
-        quiz.correctAnswerIndex >= 0 &&
-        quiz.correctAnswerIndex <= 3
-          ? quiz.correctAnswerIndex
-          : 0,
-      explanation: String(quiz.explanation || "").trim(),
-      difficulty: quiz.difficulty || "medium",
-      questionType: quiz.questionType || "recall",
-    }))
-    .filter((quiz) => {
-      if (!quiz.question) return false;
-      const key = quiz.question.toLowerCase().replace(/\s+/g, " ");
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
+  return generateWithRegenerationRetry(previousContent, 0.55, async (attempt) => {
+    const raw = await generateGeminiText({
+      systemInstruction: quizSystemInstruction(),
+      userPrompt:
+        quizUserPrompt(prepared, mode, examTopics, targetQuestions) +
+        variationHint() +
+        avoidPreviousBlock(previousContent, {
+          lens: attempt.lens,
+          insist: attempt.insist,
+        }),
+      temperature: attempt.temperature,
+      topP: attempt.topP,
+      seed: attempt.seed,
+      maxOutputTokens: quizOutputTokenBudget(targetQuestions),
     });
+    const quizzes = parseJson<
+      Array<{
+        id: string;
+        question: string;
+        options: string[];
+        correctAnswerIndex: number;
+        explanation: string;
+        difficulty?: string;
+        questionType?: string;
+      }>
+    >(raw);
+    // Drop malformed/blank and near-duplicate questions before re-id'ing so the
+    // final quiz is clean and (with the min floor honored by the prompt) usable.
+    const seen = new Set<string>();
+    const cleaned = quizzes
+      .map((quiz) => ({
+        question: String(quiz.question || "").trim(),
+        options:
+          Array.isArray(quiz.options) && quiz.options.length === 4
+            ? quiz.options.map((option) => String(option))
+            : ["Option A", "Option B", "Option C", "Option D"],
+        correctAnswerIndex:
+          typeof quiz.correctAnswerIndex === "number" &&
+          quiz.correctAnswerIndex >= 0 &&
+          quiz.correctAnswerIndex <= 3
+            ? quiz.correctAnswerIndex
+            : 0,
+        explanation: String(quiz.explanation || "").trim(),
+        difficulty: quiz.difficulty || "medium",
+        questionType: quiz.questionType || "recall",
+      }))
+      .filter((quiz) => {
+        if (!quiz.question) return false;
+        const key = quiz.question.toLowerCase().replace(/\s+/g, " ");
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
 
-  return cleaned.map((quiz, index) => ({ id: `quiz-${index + 1}`, ...quiz }));
+    return cleaned.map((quiz, index) => ({ id: `quiz-${index + 1}`, ...quiz }));
+  });
 }
 
 export async function generateArtifact(
