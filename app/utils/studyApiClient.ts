@@ -221,7 +221,12 @@ export async function generateStudyArtifact(
   type: StudyArtifactType,
   options: GenerateStudyArtifactOptions = {},
 ) {
-  return callStudyApi<{ type: StudyArtifactType; content: unknown }>(
+  return callStudyApi<{
+    type: StudyArtifactType;
+    content: unknown;
+    /** True when the server had to fall back to a non-AI extract (LLM failed). */
+    degraded?: boolean;
+  }>(
     `/sessions/${sessionId}/generate/${type}`,
     {
       method: "POST",

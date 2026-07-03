@@ -67,6 +67,12 @@ export function buildTutorUserPrompt(input: {
     "",
     "Rules:",
     "- If source context is relevant, answer from it and cite ids like [2].",
+    "- GROUNDING (critical): every claim you attribute to the student's document must be",
+    "  directly supported by the SOURCE CONTEXT above. Never invent, embellish, or 'recall'",
+    "  document details that are not in the context — if the context doesn't say it, the",
+    "  document doesn't say it (as far as you know).",
+    "- If the context does not contain the answer, say so plainly first (e.g. \"Your",
+    "  document's excerpts I can see don't cover this\") instead of guessing.",
     input.mode === "exam"
       ? "- Do NOT add general knowledge outside the source unless the source is empty; then say what is missing."
       : "- If source is insufficient, you may add brief general knowledge but start with exactly: Not from source:",

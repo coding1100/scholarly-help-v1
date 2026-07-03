@@ -90,6 +90,8 @@ export function createMongoVectorStore(): VectorStore {
 
     async upsertDocument(namespace, documentId, chunks): Promise<void> {
       const col = await ensureCollection();
+      // Chunks WITHOUT embeddings are stored too (embedding: []): they still
+      // power BM25 keyword retrieval and citations. Vector paths skip them.
       if (!col) {
         // Memory fallback: drop existing doc chunks, then insert.
         for (const [key, value] of memoryStore.entries()) {
@@ -98,14 +100,13 @@ export function createMongoVectorStore(): VectorStore {
           }
         }
         for (const chunk of chunks) {
-          if (!chunk.embedding) continue;
           memoryStore.set(chunk.id, {
             _id: chunk.id,
             namespace,
             documentId,
             ordinal: chunk.ordinal,
             text: chunk.text,
-            embedding: chunk.embedding,
+            embedding: chunk.embedding ?? [],
             metadata: chunk.metadata,
           });
         }
@@ -113,17 +114,15 @@ export function createMongoVectorStore(): VectorStore {
       }
 
       await col.deleteMany({ namespace, documentId });
-      const docs: StoredChunk[] = chunks
-        .filter((c) => Array.isArray(c.embedding) && c.embedding.length > 0)
-        .map((c) => ({
-          _id: c.id,
-          namespace,
-          documentId,
-          ordinal: c.ordinal,
-          text: c.text,
-          embedding: c.embedding as number[],
-          metadata: c.metadata,
-        }));
+      const docs: StoredChunk[] = chunks.map((c) => ({
+        _id: c.id,
+        namespace,
+        documentId,
+        ordinal: c.ordinal,
+        text: c.text,
+        embedding: Array.isArray(c.embedding) ? c.embedding : [],
+        metadata: c.metadata,
+      }));
       if (docs.length > 0) {
         await col.insertMany(docs, { ordered: false });
       }

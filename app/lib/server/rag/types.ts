@@ -55,6 +55,13 @@ export interface RetrieveOptions {
    * Default true — this is what keeps response time/behavior stable.
    */
   keywordFallback?: boolean;
+  /**
+   * Also return each hit's neighboring chunks (ordinal ±n in the same
+   * document). Small chunks retrieved in isolation often lack the surrounding
+   * sentences that make them answerable; neighbors give the LLM coherent
+   * context windows instead of fragments. Default 0 (off).
+   */
+  expandNeighbors?: number;
 }
 
 /** Pluggable embedding provider — swap Gemini for a local model later. */

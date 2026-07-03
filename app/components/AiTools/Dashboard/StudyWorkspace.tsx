@@ -879,17 +879,32 @@ export default function StudyWorkspace() {
         mode: STUDY_MODE,
         examTopics: [],
       });
-      setArtifacts((prev) => ({
-        ...prev,
-        [type]: result.content,
-      }));
       const labels: Record<StudyArtifactType, string> = {
         notes: "Study notes",
         summary: "Summary",
         flashcards: "Flashcards",
         quizzes: "Quiz",
       };
-      toast.success(`${labels[type]} ready`);
+      if (result.degraded) {
+        // The server fell back to a non-AI extract (LLM unreachable). Keep any
+        // existing REAL artifact on screen (the server also kept it in the DB)
+        // and tell the user — never silently replace good content with a stub.
+        setArtifacts((prev) =>
+          prev[type] ? prev : { ...prev, [type]: result.content },
+        );
+        toast(
+          `AI is temporarily unavailable — ${labels[
+            type
+          ].toLowerCase()} could not be regenerated. Please try again in a moment.`,
+          { icon: "⚠️", duration: 6000 },
+        );
+      } else {
+        setArtifacts((prev) => ({
+          ...prev,
+          [type]: result.content,
+        }));
+        toast.success(`${labels[type]} ready`);
+      }
     } catch (error) {
       console.error(`Failed to generate ${type}`, error);
       toast.error(`Failed to generate ${type}`);
