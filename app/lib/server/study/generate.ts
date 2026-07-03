@@ -44,6 +44,47 @@ function variationHint(): string {
   ].join("\n");
 }
 
+// How much of the previous artifact to show the model as a "don't repeat this"
+// reference. Enough to fingerprint it, small enough not to crowd the prompt.
+const PREVIOUS_CONTENT_CHAR_CAP = 3000;
+
+/**
+ * On "Regenerate", the strongest lever for real variation is showing the model
+ * the exact output the user rejected and demanding a substantially different
+ * version — a random seed alone only nudges wording. Returns "" on first
+ * generation (no previous artifact).
+ */
+function avoidPreviousBlock(previousContent: unknown): string {
+  if (previousContent === undefined || previousContent === null) return "";
+  let serialized: string;
+  try {
+    serialized =
+      typeof previousContent === "string"
+        ? previousContent
+        : JSON.stringify(previousContent);
+  } catch {
+    return "";
+  }
+  if (!serialized || !serialized.trim()) return "";
+  const clipped = serialized.slice(0, PREVIOUS_CONTENT_CHAR_CAP);
+  return [
+    "",
+    "REGENERATION REQUEST — the user saw the version below and asked for a NEW one.",
+    "Your output MUST be substantially different from it while staying accurate to the source:",
+    "- Use a different structure/organization and different headings or groupings.",
+    "- Reword everything; do not reuse its sentences or bullet phrasings.",
+    "- Shift emphasis: cover angles, details, or examples the previous version skipped;",
+    "  drop or shorten what it dwelled on.",
+    "Do NOT copy from it. PREVIOUS VERSION (for reference only):",
+    clipped,
+  ].join("\n");
+}
+
+/** Regeneration runs hotter so sampling itself also diversifies the output. */
+function generationTemperature(base: number, isRegeneration: boolean): number {
+  return isRegeneration ? Math.min(0.95, base + 0.3) : base;
+}
+
 function extractJsonBlock(raw: string) {
   const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
   if (fenced?.[1]) return fenced[1].trim();
@@ -101,19 +142,26 @@ async function mapWithConcurrency<T, R>(
   return results;
 }
 
-async function buildSummary(sourceText: string, mode: StudyLearningMode) {
+async function buildSummary(
+  sourceText: string,
+  mode: StudyLearningMode,
+  previousContent?: unknown,
+) {
   // Length scales with the ORIGINAL source so the % ratio + word floor reflect
   // what the student actually uploaded (unchanged behavior).
   const { target } = summaryTargetWordCount(countWords(sourceText));
   const maxOutputTokens = summaryOutputTokenBudget(target);
   const normalized = sourceText.trim();
+  const avoidBlock = avoidPreviousBlock(previousContent);
+  const temperature = generationTemperature(0.45, avoidBlock !== "");
 
   // Small documents: a single pass already sees everything.
   if (normalized.length <= SUMMARY_SINGLE_PASS_CHAR_LIMIT) {
     const raw = await generateGeminiText({
       systemInstruction: summarySystemInstruction(mode),
-      userPrompt: summaryUserPrompt(normalized, mode, target) + variationHint(),
-      temperature: 0.45,
+      userPrompt:
+        summaryUserPrompt(normalized, mode, target) + variationHint() + avoidBlock,
+      temperature,
       maxOutputTokens,
     });
     return parseJson<{ short: string; detailed: string }>(raw);
@@ -148,8 +196,9 @@ async function buildSummary(sourceText: string, mode: StudyLearningMode) {
     const prepared = prepareSource(sourceText, mode, []);
     const raw = await generateGeminiText({
       systemInstruction: summarySystemInstruction(mode),
-      userPrompt: summaryUserPrompt(prepared, mode, target) + variationHint(),
-      temperature: 0.45,
+      userPrompt:
+        summaryUserPrompt(prepared, mode, target) + variationHint() + avoidBlock,
+      temperature,
       maxOutputTokens,
     });
     return parseJson<{ short: string; detailed: string }>(raw);
@@ -158,8 +207,10 @@ async function buildSummary(sourceText: string, mode: StudyLearningMode) {
   const raw = await generateGeminiText({
     systemInstruction: summarySystemInstruction(mode),
     userPrompt:
-      reduceSummaryUserPrompt(aggregatedNotes, mode, target) + variationHint(),
-    temperature: 0.45,
+      reduceSummaryUserPrompt(aggregatedNotes, mode, target) +
+      variationHint() +
+      avoidBlock,
+    temperature,
     maxOutputTokens,
   });
   return parseJson<{ short: string; detailed: string }>(raw);
@@ -169,12 +220,15 @@ async function buildNotes(
   sourceText: string,
   mode: StudyLearningMode,
   examTopics: string[],
+  previousContent?: unknown,
 ) {
   const prepared = prepareSource(sourceText, mode, examTopics);
+  const avoidBlock = avoidPreviousBlock(previousContent);
   const raw = await generateGeminiText({
     systemInstruction: notesSystemInstruction(mode),
-    userPrompt: notesUserPrompt(prepared, mode, examTopics) + variationHint(),
-    temperature: 0.5,
+    userPrompt:
+      notesUserPrompt(prepared, mode, examTopics) + variationHint() + avoidBlock,
+    temperature: generationTemperature(0.5, avoidBlock !== ""),
     maxOutputTokens: 4096,
   });
   return parseJson<{
@@ -189,12 +243,17 @@ async function buildNotes(
   }>(raw);
 }
 
-async function buildFlashcards(sourceText: string, mode: StudyLearningMode) {
+async function buildFlashcards(
+  sourceText: string,
+  mode: StudyLearningMode,
+  previousContent?: unknown,
+) {
   const prepared = prepareSource(sourceText, mode, []);
+  const avoidBlock = avoidPreviousBlock(previousContent);
   const raw = await generateGeminiText({
     systemInstruction: flashcardsSystemInstruction(),
-    userPrompt: flashcardsUserPrompt(prepared, mode) + variationHint(),
-    temperature: 0.5,
+    userPrompt: flashcardsUserPrompt(prepared, mode) + variationHint() + avoidBlock,
+    temperature: generationTemperature(0.5, avoidBlock !== ""),
     maxOutputTokens: 4096,
   });
   const cards = parseJson<Array<{ id: string; front: string; back: string }>>(raw);
@@ -215,6 +274,7 @@ async function buildQuiz(
   sourceText: string,
   mode: StudyLearningMode,
   examTopics: string[],
+  previousContent?: unknown,
 ) {
   // Quiz size scales to ~20% of the source (min 10 questions). Scale off the
   // ORIGINAL source length so the ratio reflects what the student uploaded, not
@@ -234,12 +294,14 @@ async function buildQuiz(
     // Allow more ranked chunks through for large quizzes (each ~650 chars).
     chunkLimit: Math.max(24, Math.ceil(quizCharCap / 650)),
   });
+  const avoidBlock = avoidPreviousBlock(previousContent);
   const raw = await generateGeminiText({
     systemInstruction: quizSystemInstruction(),
     userPrompt:
       quizUserPrompt(prepared, mode, examTopics, targetQuestions) +
-      variationHint(),
-    temperature: 0.55,
+      variationHint() +
+      avoidBlock,
+    temperature: generationTemperature(0.55, avoidBlock !== ""),
     maxOutputTokens: quizOutputTokenBudget(targetQuestions),
   });
   const quizzes = parseJson<
@@ -292,16 +354,18 @@ export async function generateArtifact(
   const mode = resolveMode(options.mode);
   const examTopics = (options.examTopics || []).map((t) => t.trim()).filter(Boolean);
 
+  const previousContent = options.previousContent;
+
   try {
     switch (type) {
       case "summary":
-        return await buildSummary(sourceText, mode);
+        return await buildSummary(sourceText, mode, previousContent);
       case "notes":
-        return await buildNotes(sourceText, mode, examTopics);
+        return await buildNotes(sourceText, mode, examTopics, previousContent);
       case "flashcards":
-        return await buildFlashcards(sourceText, mode);
+        return await buildFlashcards(sourceText, mode, previousContent);
       case "quizzes":
-        return await buildQuiz(sourceText, mode, examTopics);
+        return await buildQuiz(sourceText, mode, examTopics, previousContent);
       default:
         return { message: "Unsupported generation type." };
     }
