@@ -132,8 +132,19 @@ export async function POST(
     // fallback when embeddings aren't ready yet — so latency/behavior stay
     // stable right after upload. If RAG fails entirely, fall back to the legacy
     // keyword ranker over the stored chunks so the tutor never breaks.
-    const chunkLimit = learningMode === "exam" ? 5 : 3;
-    let ranked: Array<{ index: number; chunk: string; score: number }> = [];
+    //
+    // topK is sized for real grounding: 3 chunks (~2k chars) out of a
+    // 100-page document starved the model of context and made it answer from
+    // prior knowledge (hallucination). 8–10 hits + their neighbors is still
+    // tiny vs the model's context window, but enough to actually answer from.
+    const chunkLimit = learningMode === "exam" ? 10 : 8;
+    let ranked: Array<{
+      index: number;
+      chunk: string;
+      score: number;
+      vectorScore?: number;
+      keywordScore?: number;
+    }> = [];
     try {
       ranked = await retrieveStudyContext(params.id, message, chunkLimit);
     } catch (error) {
@@ -141,10 +152,26 @@ export async function POST(
     }
     if (ranked.length === 0) {
       const { chunks } = await getSessionSourceText(params.id);
-      ranked = topChunksByQuery(chunks, message, chunkLimit);
+      // Legacy ranker's score counts matched query tokens — a genuine keyword
+      // relevance signal, so expose it as keywordScore for the check below.
+      ranked = topChunksByQuery(chunks, message, chunkLimit).map((item) => ({
+        ...item,
+        keywordScore: item.score,
+      }));
     }
     const citations = ranked.map((item) => item.index);
-    const hasRelevantContext = ranked.some((item) => item.score > 0);
+    // "Relevant" must mean the chunks actually MATCHED the query. The fused
+    // RRF/cosine `score` is > 0 for every returned hit by construction, so the
+    // old `score > 0` check was always true — the prompt then claimed relevant
+    // context even when retrieval found nothing, and the model confidently
+    // "cited" unrelated chunks (hallucination). Require a real signal: a BM25
+    // keyword match, or a cosine similarity high enough to indicate topical fit.
+    const MIN_VECTOR_RELEVANCE = 0.55;
+    const hasRelevantContext = ranked.some(
+      (item) =>
+        (item.keywordScore ?? 0) > 0 ||
+        (item.vectorScore ?? 0) >= MIN_VECTOR_RELEVANCE,
+    );
     const context = ranked.map((item) => `[${item.index}] ${item.chunk}`).join("\n\n");
     const hasImages = imageAttachments.length > 0;
     const provenance: TutorProvenance = hasImages

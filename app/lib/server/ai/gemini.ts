@@ -82,7 +82,30 @@ function extractText(payload: GeminiGenerateResponse) {
     .trim();
 }
 
-async function callGeminiGenerate(input: {
+/**
+ * gemini-2.5-flash THINKS by default, and thought tokens count against
+ * maxOutputTokens. Structured-output calls with tight budgets (700–5000 tokens)
+ * can therefore burn the whole budget on thinking and return EMPTY or truncated
+ * JSON — which upstream code treats as a failure and silently replaces with a
+ * deterministic fallback. Disabling thinking for these calls makes the output
+ * budget mean what callers think it means. Only 2.5-flash variants accept
+ * thinkingBudget: 0 (2.5-pro has a floor; 2.0 models reject thinkingConfig).
+ */
+function thinkingConfigFor(model: string): { thinkingBudget: number } | null {
+  return /2\.5.*flash/i.test(model) ? { thinkingBudget: 0 } : null;
+}
+
+function isRetryableStatus(status: number): boolean {
+  return status === 429 || status === 500 || status === 502 || status === 503;
+}
+
+/** Key-related failures only; a 400 from e.g. a bad generationConfig is NOT one. */
+function isKeyRejection(status: number, raw: string): boolean {
+  if (status === 401 || status === 403) return true;
+  return status === 400 && /API[_ ]?KEY|API key/i.test(raw);
+}
+
+type GenerateInput = {
   systemInstruction: string;
   parts: Array<GeminiPart | GeminiInlinePart>;
   temperature?: number;
@@ -95,9 +118,18 @@ async function callGeminiGenerate(input: {
   seed?: number;
   /** Sampling nucleus. Raise alongside temperature to widen token choice. */
   topP?: number;
-}) {
+  /**
+   * Ask the API for a JSON response (responseMimeType application/json). Use
+   * for every call whose output is parsed with JSON.parse — it eliminates
+   * markdown fences and drastically reduces malformed-JSON failures.
+   */
+  responseJson?: boolean;
+};
+
+async function callGeminiGenerateOnce(input: GenerateInput): Promise<string> {
   const apiKey = getApiKey();
   const model = getModelName();
+  const thinkingConfig = thinkingConfigFor(model);
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 90000);
   try {
@@ -124,30 +156,36 @@ async function callGeminiGenerate(input: {
             maxOutputTokens: input.maxOutputTokens ?? 1400,
             ...(typeof input.seed === "number" ? { seed: input.seed } : {}),
             ...(typeof input.topP === "number" ? { topP: input.topP } : {}),
+            ...(input.responseJson
+              ? { responseMimeType: "application/json" }
+              : {}),
+            ...(thinkingConfig ? { thinkingConfig } : {}),
           },
         }),
       },
     );
     if (!response.ok) {
       const raw = await response.text();
-      // 400 (API_KEY_INVALID), 401, 403 (PERMISSION_DENIED) mean the key is
-      // present but wrong/unauthorized — a config problem, not a transient
+      // A missing/wrong/unauthorized key is a config problem, not a transient
       // model hiccup. Surface it as such so it isn't hidden behind a fallback.
-      if (
-        response.status === 400 ||
-        response.status === 401 ||
-        response.status === 403
-      ) {
+      if (isKeyRejection(response.status, raw)) {
         throw new GeminiConfigError(
           `Gemini rejected the API key (${response.status}): ${raw.slice(0, 200)}`,
         );
       }
-      throw new Error(`Gemini API error (${response.status}): ${raw.slice(0, 300)}`);
+      const error = new Error(
+        `Gemini API error (${response.status}): ${raw.slice(0, 300)}`,
+      ) as Error & { status?: number };
+      error.status = response.status;
+      throw error;
     }
     const payload = (await response.json()) as GeminiGenerateResponse;
     const text = extractText(payload);
     if (!text) {
-      throw new Error("Gemini returned an empty response.");
+      const finishReason = getCandidateFinishReason(payload);
+      throw new Error(
+        `Gemini returned an empty response${finishReason ? ` (finishReason: ${finishReason})` : ""}.`,
+      );
     }
     return text;
   } catch (error) {
@@ -160,6 +198,32 @@ async function callGeminiGenerate(input: {
   }
 }
 
+/**
+ * Generate with bounded retries on transient failures (429 rate limits and
+ * 5xx). The study map-reduce path fires several concurrent calls, so brief
+ * rate-limit bursts are normal — without retries they cascaded into the
+ * deterministic offline fallback. Config errors never retry.
+ */
+async function callGeminiGenerate(input: GenerateInput): Promise<string> {
+  const MAX_ATTEMPTS = 3;
+  let lastError: unknown;
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
+    try {
+      return await callGeminiGenerateOnce(input);
+    } catch (error) {
+      lastError = error;
+      if (error instanceof GeminiConfigError) throw error;
+      const status = (error as Error & { status?: number }).status;
+      const retryable =
+        (typeof status === "number" && isRetryableStatus(status)) ||
+        (error instanceof Error && /timed out|empty response/i.test(error.message));
+      if (!retryable || attempt === MAX_ATTEMPTS - 1) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 700 * (attempt + 1)));
+    }
+  }
+  throw lastError;
+}
+
 export async function generateGeminiText(input: {
   systemInstruction: string;
   userPrompt: string;
@@ -167,6 +231,7 @@ export async function generateGeminiText(input: {
   maxOutputTokens?: number;
   seed?: number;
   topP?: number;
+  responseJson?: boolean;
 }) {
   return callGeminiGenerate({
     systemInstruction: input.systemInstruction,
@@ -175,6 +240,7 @@ export async function generateGeminiText(input: {
     maxOutputTokens: input.maxOutputTokens,
     seed: input.seed,
     topP: input.topP,
+    responseJson: input.responseJson,
   });
 }
 
@@ -233,6 +299,11 @@ export async function* streamGeminiText(input: {
           generationConfig: {
             temperature: input.temperature ?? 0.25,
             maxOutputTokens: input.maxOutputTokens ?? 4096,
+            // Same rationale as generateContent: don't let silent thinking
+            // consume the visible-output budget (and add latency) on flash.
+            ...(thinkingConfigFor(getModelName())
+              ? { thinkingConfig: thinkingConfigFor(getModelName()) }
+              : {}),
           },
         }),
       },

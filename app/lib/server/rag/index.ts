@@ -72,8 +72,21 @@ export async function indexDocument(
       ? options.chunks
       : chunkText(normalized, CHUNK_CHARS);
 
-  const embedder = getEmbedder();
-  const embeddings = await embedder.embed(pieces);
+  // Embedding failure must NOT lose the document: chunks stored without
+  // vectors still power BM25 keyword retrieval (and citations). Previously a
+  // failed embed threw the whole index away, leaving retrieval with nothing —
+  // the tutor then answered a 100-page PDF from 3 weakly-matched chunks.
+  let embeddings: number[][] = [];
+  try {
+    const embedder = getEmbedder();
+    embeddings = await embedder.embed(pieces);
+  } catch (error) {
+    console.error("rag.index.embed_failed_storing_keyword_only", {
+      namespace,
+      documentId,
+      error,
+    });
+  }
 
   const chunks: RagChunk[] = pieces.map((piece, ordinal) => ({
     id: buildChunkId(namespace, documentId, ordinal),
@@ -129,6 +142,48 @@ function fuse(
 }
 
 /**
+ * Expand hits with their neighboring chunks (ordinal ±n within the same
+ * document). Chunks are only ~700 chars; a lone fragment often lacks the
+ * sentences that make it answerable, which pushes the LLM to fill gaps from
+ * prior knowledge (hallucination). Neighbors inherit a discounted score and no
+ * vector/keyword scores, so relevance detection still reflects real matches.
+ */
+function expandWithNeighbors(
+  hits: RagHit[],
+  corpus: RagChunk[],
+  radius: number,
+): RagHit[] {
+  if (radius <= 0 || hits.length === 0) return hits;
+  const byDocOrdinal = new Map<string, RagChunk>();
+  for (const chunk of corpus) {
+    byDocOrdinal.set(`${chunk.documentId}::${chunk.ordinal}`, chunk);
+  }
+  const included = new Set(hits.map((h) => `${h.documentId}::${h.ordinal}`));
+  const out: RagHit[] = [];
+  for (const hit of hits) {
+    out.push(hit);
+    for (let delta = 1; delta <= radius; delta += 1) {
+      for (const ordinal of [hit.ordinal - delta, hit.ordinal + delta]) {
+        const key = `${hit.documentId}::${ordinal}`;
+        if (included.has(key)) continue;
+        const neighbor = byDocOrdinal.get(key);
+        if (!neighbor) continue;
+        included.add(key);
+        out.push({
+          id: neighbor.id,
+          documentId: neighbor.documentId,
+          ordinal: neighbor.ordinal,
+          text: neighbor.text,
+          score: hit.score * 0.5,
+          metadata: neighbor.metadata,
+        });
+      }
+    }
+  }
+  return out;
+}
+
+/**
  * Hybrid retrieval. Returns the most relevant chunks for a query, fusing vector
  * and keyword rankings. Degrades to keyword-only when vectors are unavailable.
  */
@@ -141,6 +196,7 @@ export async function retrieve(
   const vectorWeight = options.vectorWeight ?? 1;
   const keywordWeight = options.keywordWeight ?? 1;
   const allowFallback = options.keywordFallback ?? true;
+  const neighborRadius = options.expandNeighbors ?? 0;
 
   // Keyword search always runs (cheap, no external dependency) and doubles as
   // the fallback. Fetch the corpus once and reuse for keyword scoring.
@@ -159,10 +215,11 @@ export async function retrieve(
     }
   }
 
-  if (vectorHits.length === 0) {
-    // Keyword-only (either by design, not-yet-indexed, or vector failure).
-    return keywordHits.slice(0, topK);
-  }
+  const top =
+    vectorHits.length === 0
+      ? // Keyword-only (either by design, not-yet-indexed, or vector failure).
+        keywordHits.slice(0, topK)
+      : fuse(vectorHits, keywordHits, vectorWeight, keywordWeight).slice(0, topK);
 
-  return fuse(vectorHits, keywordHits, vectorWeight, keywordWeight).slice(0, topK);
+  return expandWithNeighbors(top, chunks, neighborRadius);
 }

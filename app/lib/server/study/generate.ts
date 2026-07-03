@@ -48,14 +48,14 @@ function variationHint(): string {
 }
 
 /**
- * A fresh integer sampler seed for each generation call. Gemini is
+ * A fresh integer sampler seed for EVERY generation call. Gemini is
  * near-deterministic on structured JSON even at temperature > 0, so a text
  * "variation seed" alone is a weak lever — passing a DIFFERENT numeric seed to
  * `generationConfig.seed` is what actually makes the sampler take a different
- * path. `undefined` on first generation keeps that output stable/reproducible.
+ * path. First generations get a fresh seed too: users perceive "same document →
+ * byte-identical summary, even in a new session" as a bug, not stability.
  */
-function samplingSeed(isRegeneration: boolean): number | undefined {
-  if (!isRegeneration) return undefined;
+function samplingSeed(): number {
   // Cryptographically-unnecessary; just needs to differ per click and fit in a
   // 32-bit signed int (Gemini rejects out-of-range seeds).
   return Math.floor(Math.random() * 2_147_483_646) + 1;
@@ -247,28 +247,47 @@ async function generateWithRegenerationRetry<T>(
   const isRegeneration = serializePrevious(previousContent) !== "";
   const lens = pickRegenerationLens();
   const first: RegenAttempt = {
-    seed: samplingSeed(isRegeneration),
+    seed: samplingSeed(),
     lens,
     temperature: generationTemperature(baseTemperature, isRegeneration),
     topP: isRegeneration ? 0.95 : 0.9,
     insist: false,
   };
-  const firstResult = await run(first);
-  if (!isRegeneration || !isTooSimilarToPrevious(firstResult, previousContent)) {
-    return firstResult;
-  }
-
-  console.warn("study.regenerate.too_similar_retrying");
   const retry: RegenAttempt = {
     // A brand-new seed and a different lens so the retry doesn't retrace the
     // first attempt's path.
-    seed: samplingSeed(true),
+    seed: samplingSeed(),
     lens: pickRegenerationLens(),
     temperature: Math.min(0.98, first.temperature + 0.15),
     topP: 1,
     insist: true,
   };
-  const retryResult = await run(retry);
+
+  // A single attempt can fail for reasons the HTTP-level retry can't fix
+  // (e.g. malformed JSON that slipped past response constraints). One more
+  // attempt with a fresh seed usually recovers; only then bubble the error up
+  // to the caller's degraded fallback.
+  let firstResult: T;
+  try {
+    firstResult = await run(first);
+  } catch (error) {
+    console.error("study.generate.first_attempt_failed_retrying", error);
+    return run(retry);
+  }
+  if (!isRegeneration || !isTooSimilarToPrevious(firstResult, previousContent)) {
+    return firstResult;
+  }
+
+  console.warn("study.regenerate.too_similar_retrying");
+  let retryResult: T;
+  try {
+    retryResult = await run(retry);
+  } catch (error) {
+    // The first attempt succeeded but was too similar; a failed escalation
+    // should not throw away a usable result.
+    console.error("study.regenerate.retry_failed_keeping_first", error);
+    return firstResult;
+  }
   // Keep whichever attempt diverged more from the previous version.
   if (isTooSimilarToPrevious(retryResult, previousContent)) {
     const prev = serializePrevious(previousContent);
@@ -331,6 +350,7 @@ async function buildSummary(
           topP: attempt.topP,
           seed: attempt.seed,
           maxOutputTokens,
+          responseJson: true,
         });
         return parseJson<{ short: string; detailed: string }>(raw);
       },
@@ -390,6 +410,7 @@ async function buildSummary(
         topP: attempt.topP,
         seed: attempt.seed,
         maxOutputTokens,
+        responseJson: true,
       });
       return parseJson<{ short: string; detailed: string }>(raw);
     },
@@ -417,6 +438,7 @@ async function buildNotes(
       topP: attempt.topP,
       seed: attempt.seed,
       maxOutputTokens: 4096,
+      responseJson: true,
     });
     return parseJson<{
       title: string;
@@ -451,6 +473,7 @@ async function buildFlashcards(
       topP: attempt.topP,
       seed: attempt.seed,
       maxOutputTokens: 4096,
+      responseJson: true,
     });
     const cards = parseJson<Array<{ id: string; front: string; back: string }>>(raw);
     return cards.map((card, index) => ({
@@ -505,6 +528,7 @@ async function buildQuiz(
       topP: attempt.topP,
       seed: attempt.seed,
       maxOutputTokens: quizOutputTokenBudget(targetQuestions),
+      responseJson: true,
     });
     const quizzes = parseJson<
       Array<{
@@ -549,11 +573,23 @@ async function buildQuiz(
   });
 }
 
+export interface GeneratedArtifact {
+  content: unknown;
+  /**
+   * True when the LLM could not be reached/parsed and the content is the
+   * deterministic offline extract instead of a real AI artifact. The route
+   * forwards this so the UI can warn the user rather than presenting the stub
+   * as a genuine AI result (which made outages look like "the AI always
+   * returns the same summary").
+   */
+  degraded: boolean;
+}
+
 export async function generateArtifact(
   type: StudyArtifactType,
   sourceText: string,
   options: GenerateArtifactOptions = {},
-) {
+): Promise<GeneratedArtifact> {
   const mode = resolveMode(options.mode);
   const examTopics = (options.examTopics || []).map((t) => t.trim()).filter(Boolean);
 
@@ -562,15 +598,27 @@ export async function generateArtifact(
   try {
     switch (type) {
       case "summary":
-        return await buildSummary(sourceText, mode, previousContent);
+        return {
+          content: await buildSummary(sourceText, mode, previousContent),
+          degraded: false,
+        };
       case "notes":
-        return await buildNotes(sourceText, mode, examTopics, previousContent);
+        return {
+          content: await buildNotes(sourceText, mode, examTopics, previousContent),
+          degraded: false,
+        };
       case "flashcards":
-        return await buildFlashcards(sourceText, mode, previousContent);
+        return {
+          content: await buildFlashcards(sourceText, mode, previousContent),
+          degraded: false,
+        };
       case "quizzes":
-        return await buildQuiz(sourceText, mode, examTopics, previousContent);
+        return {
+          content: await buildQuiz(sourceText, mode, examTopics, previousContent),
+          degraded: false,
+        };
       default:
-        return { message: "Unsupported generation type." };
+        return { content: { message: "Unsupported generation type." }, degraded: false };
     }
   } catch (error) {
     console.error("study.generateArtifact.llm", error);
@@ -611,53 +659,65 @@ export async function generateArtifact(
         }
       }
       return {
-        short: fallbackSentences.slice(0, 2).join(" "),
-        detailed: detailParts.join("\n"),
+        content: {
+          short: fallbackSentences.slice(0, 2).join(" "),
+          detailed: detailParts.join("\n"),
+        },
+        degraded: true,
       };
     }
     if (type === "notes") {
       return {
-        title: mode === "exam" ? "Exam Study Guide" : "Study Notes",
-        mode,
-        examTips:
-          mode === "exam"
-            ? ["Review headings and repeated terms in your source.", "Focus on definitions marked as important."]
-            : undefined,
-        sections: [
-          { heading: "Key Ideas", priority: "must-know", bullets: fallbackSentences.slice(0, 6) },
-          { heading: "Details to Review", bullets: fallbackSentences.slice(6, 12) },
-        ].filter((section) => section.bullets.length > 0),
+        content: {
+          title: mode === "exam" ? "Exam Study Guide" : "Study Notes",
+          mode,
+          examTips:
+            mode === "exam"
+              ? ["Review headings and repeated terms in your source.", "Focus on definitions marked as important."]
+              : undefined,
+          sections: [
+            { heading: "Key Ideas", priority: "must-know", bullets: fallbackSentences.slice(0, 6) },
+            { heading: "Details to Review", bullets: fallbackSentences.slice(6, 12) },
+          ].filter((section) => section.bullets.length > 0),
+        },
+        degraded: true,
       };
     }
     if (type === "flashcards") {
-      return [
-        {
-          id: "card-1",
-          front: "What is the main idea in your uploaded source?",
-          back:
-            fallbackSentences[0] ||
-            "Upload richer source text to generate stronger flashcards.",
-        },
-      ];
+      return {
+        content: [
+          {
+            id: "card-1",
+            front: "What is the main idea in your uploaded source?",
+            back:
+              fallbackSentences[0] ||
+              "Upload richer source text to generate stronger flashcards.",
+          },
+        ],
+        degraded: true,
+      };
     }
     if (type === "quizzes") {
-      return [
-        {
-          id: "quiz-1",
-          question: "Which statement best reflects your source?",
-          options: [
-            fallbackSentences[0] || "Not enough source text.",
-            "A statement that contradicts the source.",
-            "An unrelated fact.",
-            "None of the above.",
-          ],
-          correctAnswerIndex: 0,
-          explanation: "This matches your uploaded source material.",
-          difficulty: "easy",
-          questionType: "recall",
-        },
-      ];
+      return {
+        content: [
+          {
+            id: "quiz-1",
+            question: "Which statement best reflects your source?",
+            options: [
+              fallbackSentences[0] || "Not enough source text.",
+              "A statement that contradicts the source.",
+              "An unrelated fact.",
+              "None of the above.",
+            ],
+            correctAnswerIndex: 0,
+            explanation: "This matches your uploaded source material.",
+            difficulty: "easy",
+            questionType: "recall",
+          },
+        ],
+        degraded: true,
+      };
     }
-    return { message: "Unsupported generation type." };
+    return { content: { message: "Unsupported generation type." }, degraded: true };
   }
 }

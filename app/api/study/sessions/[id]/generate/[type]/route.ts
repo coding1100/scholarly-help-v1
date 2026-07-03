@@ -89,14 +89,18 @@ export async function POST(
       console.error("study.generate.previous_lookup_failed", error);
     }
 
-    const content = await generateArtifact(type, mergedText, {
+    const { content, degraded } = await generateArtifact(type, mergedText, {
       mode,
       examTopics,
       previousContent,
     });
-    await upsertArtifact(params.id, type, content);
+    // Don't overwrite a real AI artifact with a degraded offline stub — a
+    // failed REgeneration should keep the previous good content in the DB.
+    if (!degraded || previousContent === undefined) {
+      await upsertArtifact(params.id, type, content);
+    }
 
-    return ok({ type, content });
+    return ok({ type, content, degraded });
   } catch (error) {
     console.error("study.generate.POST", error);
     // A missing/rejected Gemini key is a server misconfiguration; report it
