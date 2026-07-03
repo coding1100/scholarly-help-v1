@@ -8,6 +8,7 @@ import {
 } from "@/app/lib/server/study/repo";
 import { fail, getAuthenticatedUserId, ok } from "@/app/lib/server/study/http";
 import { cleanSourceText } from "@/app/lib/server/study/documentClean";
+import { GeminiConfigError } from "@/app/lib/server/ai/gemini";
 import {
   StudyArtifactType,
   StudyLearningMode,
@@ -98,6 +99,15 @@ export async function POST(
     return ok({ type, content });
   } catch (error) {
     console.error("study.generate.POST", error);
+    // A missing/rejected Gemini key is a server misconfiguration; report it
+    // distinctly (503) so it isn't confused with a transient generation error
+    // and so the deploy gets fixed instead of silently serving stale output.
+    if (error instanceof GeminiConfigError) {
+      return fail(
+        "AI is not configured on the server (missing or invalid GEMINI_API_KEY). Please set it and restart the app.",
+        503,
+      );
+    }
     return fail("Failed to generate artifact", 500);
   }
 }

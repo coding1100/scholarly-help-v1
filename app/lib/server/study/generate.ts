@@ -24,7 +24,10 @@ import {
   StudyArtifactType,
   StudyLearningMode,
 } from "@/app/lib/server/study/types";
-import { generateGeminiText } from "@/app/lib/server/ai/gemini";
+import {
+  generateGeminiText,
+  GeminiConfigError,
+} from "@/app/lib/server/ai/gemini";
 
 /**
  * A short, unique directive appended to generation prompts so that pressing
@@ -571,6 +574,14 @@ export async function generateArtifact(
     }
   } catch (error) {
     console.error("study.generateArtifact.llm", error);
+    // A misconfigured/rejected API key is a PERMANENT server error, not a
+    // transient blip. Falling back to the deterministic sentence-slicer here is
+    // exactly what made a broken deploy look like a working feature that just
+    // "always returns the same summary". Re-throw so the route returns a real
+    // 5xx the user can see, instead of silently serving an offline stub.
+    if (error instanceof GeminiConfigError) {
+      throw error;
+    }
     const prioritized = prepareSource(sourceText, mode, examTopics);
     const fallbackSentences = splitSentences(prioritized);
     if (type === "summary") {
