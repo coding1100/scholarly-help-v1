@@ -51,12 +51,27 @@ function getModelName() {
   return process.env.GEMINI_MODEL_ID || process.env.GEMINI_MODEL || DEFAULT_MODEL;
 }
 
+/**
+ * Thrown when the Gemini API key is missing/blank. This is a SERVER
+ * MISCONFIGURATION, not a transient model failure — callers must not silently
+ * swallow it into a deterministic fallback (that makes a broken deploy look like
+ * a working, if repetitive, feature). Surface it so the deploy gets fixed.
+ */
+export class GeminiConfigError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "GeminiConfigError";
+  }
+}
+
 function getApiKey() {
   const key = process.env.GEMINI_API_KEY;
-  if (!key) {
-    throw new Error("GEMINI_API_KEY is not configured on the server.");
+  if (!key || !key.trim()) {
+    throw new GeminiConfigError(
+      "GEMINI_API_KEY is not configured on the server.",
+    );
   }
-  return key;
+  return key.trim();
 }
 
 function extractText(payload: GeminiGenerateResponse) {
@@ -115,6 +130,18 @@ async function callGeminiGenerate(input: {
     );
     if (!response.ok) {
       const raw = await response.text();
+      // 400 (API_KEY_INVALID), 401, 403 (PERMISSION_DENIED) mean the key is
+      // present but wrong/unauthorized — a config problem, not a transient
+      // model hiccup. Surface it as such so it isn't hidden behind a fallback.
+      if (
+        response.status === 400 ||
+        response.status === 401 ||
+        response.status === 403
+      ) {
+        throw new GeminiConfigError(
+          `Gemini rejected the API key (${response.status}): ${raw.slice(0, 200)}`,
+        );
+      }
       throw new Error(`Gemini API error (${response.status}): ${raw.slice(0, 300)}`);
     }
     const payload = (await response.json()) as GeminiGenerateResponse;
