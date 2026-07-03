@@ -56,4 +56,10 @@ export interface TutorMessage {
 export interface GenerateArtifactOptions {
   mode?: StudyLearningMode;
   examTopics?: string[];
+  /**
+   * The artifact content from the previous generation of the same type, if any.
+   * When present, the user pressed "Regenerate" because they didn't like it —
+   * generation must produce a substantially different version, not a repeat.
+   */
+  previousContent?: unknown;
 }

@@ -3,6 +3,7 @@ import { generateArtifact } from "@/app/lib/server/study/generate";
 import {
   getSession,
   getSessionSourceText,
+  listArtifacts,
   upsertArtifact,
 } from "@/app/lib/server/study/repo";
 import { fail, getAuthenticatedUserId, ok } from "@/app/lib/server/study/http";
@@ -70,7 +71,28 @@ export async function POST(
       ? body.examTopics.map((t) => String(t).trim()).filter(Boolean).slice(0, 12)
       : [];
 
-    const content = await generateArtifact(type, mergedText, { mode, examTopics });
+    // If an artifact of this type already exists, the user is REGENERATING —
+    // pass the previous content so generation produces a substantially
+    // different version instead of a near-identical repeat. Best-effort: a
+    // lookup failure must not block generation.
+    let previousContent: unknown;
+    try {
+      // The repo returns raw documents whose static type only guarantees ids;
+      // artifacts always carry `type` + `content` (see upsertArtifact).
+      const artifacts = (await listArtifacts(params.id)) as Array<{
+        type?: StudyArtifactType;
+        content?: unknown;
+      }>;
+      previousContent = artifacts.find((a) => a.type === type)?.content;
+    } catch (error) {
+      console.error("study.generate.previous_lookup_failed", error);
+    }
+
+    const content = await generateArtifact(type, mergedText, {
+      mode,
+      examTopics,
+      previousContent,
+    });
     await upsertArtifact(params.id, type, content);
 
     return ok({ type, content });
