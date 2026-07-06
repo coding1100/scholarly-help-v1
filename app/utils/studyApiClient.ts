@@ -17,6 +17,12 @@ export interface CreateSourceInput {
   text: string;
 }
 
+export type StudySourceIndexStatus =
+  | "pending"
+  | "indexed"
+  | "keyword_only"
+  | "failed";
+
 export interface StudySourceDto {
   _id: string;
   sessionId: string;
@@ -24,6 +30,9 @@ export interface StudySourceDto {
   name: string;
   chunkCount: number;
   createdAt: string;
+  /** Durable RAG index status; "pending" right after upload until it finishes. */
+  indexStatus?: StudySourceIndexStatus;
+  indexedAt?: string;
 }
 
 export type StudyArtifactType = "notes" | "summary" | "flashcards" | "quizzes";
@@ -311,12 +320,21 @@ export async function streamStudyTutor(
     const eventName = eventLine?.replace("event:", "").trim() || "message";
     const jsonRaw = dataLines.join("\n").trim();
     if (!jsonRaw) return;
-    const payload = JSON.parse(jsonRaw) as {
+    let payload: {
       text?: string;
       citations?: number[];
       message?: string;
       provenance?: "source" | "general" | "image";
     };
+    try {
+      payload = JSON.parse(jsonRaw);
+    } catch {
+      // A truncated final event (connection cut mid-write) would otherwise throw
+      // out of the whole stream and REPLACE an already-delivered answer with an
+      // error. Skip the unparseable block instead — the text streamed so far
+      // stays intact.
+      return;
+    }
     if (eventName === "chunk" && payload.text) {
       receivedAnyChunk = true;
       handlers.onChunk(payload.text);

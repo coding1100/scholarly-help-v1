@@ -9,6 +9,17 @@ export type StudyLearningMode = "research" | "quiz" | "exam";
 
 export type StudySourceKind = "text" | "url" | "file" | "youtube";
 
+/**
+ * Durable RAG indexing status persisted per source. Lets retrieval quality be
+ * observed and recovered instead of silently degrading to keyword-only forever
+ * when embedding fails or the process stops mid-index.
+ */
+export type StudySourceIndexStatus =
+  | "pending"
+  | "indexed"
+  | "keyword_only"
+  | "failed";
+
 export interface StudySession {
   _id?: string;
   userId: string;
@@ -25,6 +36,12 @@ export interface StudySource {
   text: string;
   chunks: string[];
   createdAt: Date;
+  /** Durable RAG indexing status (see StudySourceIndexStatus). */
+  indexStatus?: StudySourceIndexStatus;
+  /** When the last (re)index attempt completed. */
+  indexedAt?: Date;
+  /** Embedder used when vectors were produced (detect model drift). */
+  embedderId?: string;
 }
 
 export interface StudyArtifact {
