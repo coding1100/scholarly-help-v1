@@ -309,7 +309,7 @@ export function quizUserPrompt(
     `JSON array of ${lower} to ${upper} items (aim for ${target}):`,
     '{ "id": "quiz-1", "question": "string", "options": ["A","B","C","D"], "correctAnswerIndex": 0, "explanation": "string", "difficulty": "easy" | "medium" | "hard", "questionType": "recall" | "application" | "analysis" }',
     "Rules:",
-    `- Generate ${target} questions drawn from the MOST IMPORTANT and relevant ~20% of the material (core concepts, definitions, and high-yield facts) — never at least 10.`,
+    `- Generate ${target} questions drawn from the MOST IMPORTANT and relevant ~20% of the material (core concepts, definitions, and high-yield facts) — never fewer than 10.`,
     "- Exactly 4 options each; correctAnswerIndex 0-3",
     "- Mix recall, application, and at least one 'which is NOT true' style question",
     "- Student-friendly wording; explanations teach why the answer is right",

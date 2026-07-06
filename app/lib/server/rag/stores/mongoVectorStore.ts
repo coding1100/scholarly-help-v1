@@ -20,7 +20,15 @@ type StoredChunk = {
 const globalRagStore = global as typeof globalThis & {
   __ragMemoryStore?: Map<string, StoredChunk>;
   __ragVectorSearchSupported?: boolean | null;
+  // Epoch (ms) the support flag was last resolved, so it can be re-checked
+  // instead of latching for the whole process lifetime.
+  __ragVectorSearchCheckedAt?: number;
 };
+
+// How long a resolved support decision is trusted before we re-probe. Bounds the
+// window in which a freshly-created Atlas index stays unused, and lets a
+// transient failure heal without a process restart.
+const VECTOR_SUPPORT_TTL_MS = 5 * 60 * 1000;
 const memoryStore =
   globalRagStore.__ragMemoryStore ||
   (globalRagStore.__ragMemoryStore = new Map<string, StoredChunk>());
@@ -37,6 +45,17 @@ function cosineSimilarity(a: number[], b: number[]): number {
   }
   if (magA === 0 || magB === 0) return 0;
   return dot / (Math.sqrt(magA) * Math.sqrt(magB));
+}
+
+/**
+ * Map raw cosine (-1..1) to the 0..1 scale Atlas `$vectorSearch` returns for
+ * cosine (`vectorSearchScore`). Without this, the same query is "relevant"
+ * against the MIN_VECTOR_RELEVANCE=0.55 threshold on a native-index deployment
+ * but "not relevant" on a cosine-fallback one — non-deterministic behavior
+ * across environments. Normalizing here makes the threshold mean one thing.
+ */
+function normalizedCosine(a: number[], b: number[]): number {
+  return (cosineSimilarity(a, b) + 1) / 2;
 }
 
 function toHit(chunk: StoredChunk, score: number): RagHit {
@@ -60,31 +79,29 @@ async function ensureCollection() {
 export function createMongoVectorStore(): VectorStore {
   return {
     async supportsVectorSearch(): Promise<boolean> {
-      if (typeof globalRagStore.__ragVectorSearchSupported === "boolean") {
+      const cachedAt = globalRagStore.__ragVectorSearchCheckedAt ?? 0;
+      const fresh = Date.now() - cachedAt < VECTOR_SUPPORT_TTL_MS;
+      if (typeof globalRagStore.__ragVectorSearchSupported === "boolean" && fresh) {
         return globalRagStore.__ragVectorSearchSupported;
       }
+      const remember = (value: boolean) => {
+        globalRagStore.__ragVectorSearchSupported = value;
+        globalRagStore.__ragVectorSearchCheckedAt = Date.now();
+        return value;
+      };
       const col = await ensureCollection();
-      if (!col) {
-        globalRagStore.__ragVectorSearchSupported = false;
-        return false;
-      }
+      if (!col) return remember(false);
       try {
         // listSearchIndexes throws on clusters without Atlas Search; absence of
         // our named index also means we must use the cosine fallback.
         const cursor = (col as unknown as {
           listSearchIndexes?: () => { toArray: () => Promise<Array<{ name?: string }>> };
         }).listSearchIndexes?.();
-        if (!cursor) {
-          globalRagStore.__ragVectorSearchSupported = false;
-          return false;
-        }
+        if (!cursor) return remember(false);
         const indexes = await cursor.toArray();
-        const has = indexes.some((i) => i?.name === VECTOR_INDEX);
-        globalRagStore.__ragVectorSearchSupported = has;
-        return has;
+        return remember(indexes.some((i) => i?.name === VECTOR_INDEX));
       } catch {
-        globalRagStore.__ragVectorSearchSupported = false;
-        return false;
+        return remember(false);
       }
     },
 
@@ -187,15 +204,18 @@ export function createMongoVectorStore(): VectorStore {
         const chunks = await this.listChunks(namespace);
         return chunks
           .filter((c) => Array.isArray(c.embedding) && c.embedding.length > 0)
-          .map((c) => ({
-            id: c.id,
-            documentId: c.documentId,
-            ordinal: c.ordinal,
-            text: c.text,
-            metadata: c.metadata,
-            score: cosineSimilarity(queryEmbedding, c.embedding as number[]),
-            vectorScore: cosineSimilarity(queryEmbedding, c.embedding as number[]),
-          }))
+          .map((c) => {
+            const score = normalizedCosine(queryEmbedding, c.embedding as number[]);
+            return {
+              id: c.id,
+              documentId: c.documentId,
+              ordinal: c.ordinal,
+              text: c.text,
+              metadata: c.metadata,
+              score,
+              vectorScore: score,
+            };
+          })
           .sort((a, b) => b.score - a.score)
           .slice(0, topK);
       }
@@ -232,8 +252,11 @@ export function createMongoVectorStore(): VectorStore {
         );
       } catch (error) {
         // If native search fails at runtime, degrade to cosine rather than error.
+        // Mark the decision with a timestamp so the TTL lets it recover instead
+        // of latching keyword/cosine-only for the whole process lifetime.
         console.error("rag.vectorSearch.native_failed", error);
         globalRagStore.__ragVectorSearchSupported = false;
+        globalRagStore.__ragVectorSearchCheckedAt = Date.now();
         const chunks = await this.listChunks(namespace);
         return chunks
           .filter((c) => Array.isArray(c.embedding) && c.embedding.length > 0)
@@ -247,7 +270,7 @@ export function createMongoVectorStore(): VectorStore {
               embedding: c.embedding as number[],
               metadata: c.metadata,
             },
-            cosineSimilarity(queryEmbedding, c.embedding as number[]),
+            normalizedCosine(queryEmbedding, c.embedding as number[]),
           ))
           .sort((a, b) => b.score - a.score)
           .slice(0, topK);
