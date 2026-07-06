@@ -11,8 +11,36 @@ export function splitSentences(input: string): string[] {
     .filter(Boolean);
 }
 
+/**
+ * Split a single oversized "sentence" (tables, code, OCR'd text, or bullet
+ * lists with no terminal punctuation can produce one giant token stream) into
+ * word-bounded pieces no longer than `maxChars`. Without this a lone sentence
+ * blows straight past the chunk cap, handing the map step an oversized excerpt
+ * and starving the chunk-length prioritizer.
+ */
+function hardSplitLongText(text: string, maxChars: number): string[] {
+  if (text.length <= maxChars) return [text];
+  const words = text.split(/\s+/).filter(Boolean);
+  const pieces: string[] = [];
+  let current = "";
+  for (const word of words) {
+    const next = current ? `${current} ${word}` : word;
+    if (next.length > maxChars && current) {
+      pieces.push(current);
+      current = word;
+    } else {
+      current = next;
+    }
+  }
+  if (current) pieces.push(current);
+  return pieces.length > 0 ? pieces : [text.slice(0, maxChars)];
+}
+
 export function chunkText(input: string, maxChars = 700): string[] {
-  const sentences = splitSentences(input);
+  const sentences = splitSentences(input).flatMap((sentence) =>
+    // Guarantee no single unit exceeds the cap before packing.
+    hardSplitLongText(sentence, maxChars),
+  );
   const chunks: string[] = [];
   let current = "";
 

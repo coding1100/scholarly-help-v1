@@ -3,6 +3,7 @@ import { getMongoDb } from "@/app/lib/mongodb";
 import {
   StudyArtifactType,
   StudySession,
+  StudySourceIndexStatus,
   StudySourceKind,
   TutorMessage,
   TutorMessageImageAttachment,
@@ -10,7 +11,9 @@ import {
 import { chunkText, normalizeText } from "@/app/lib/server/study/text";
 import {
   indexStudySourceInBackground,
+  reindexStudySource,
   removeStudySessionFromIndex,
+  StudyIndexOutcome,
 } from "@/app/lib/server/study/studyRag";
 
 const COLLECTIONS = {
@@ -29,6 +32,9 @@ type MemorySource = {
   text: string;
   chunks: string[];
   createdAt: Date;
+  indexStatus?: StudySourceIndexStatus;
+  indexedAt?: Date;
+  embedderId?: string;
 };
 type MemoryArtifact = {
   _id: string;
@@ -253,6 +259,47 @@ export async function deleteSession(sessionId: string) {
   return sessionDelete.deletedCount > 0;
 }
 
+/**
+ * Persist the durable RAG index status for a single source. Best-effort: a
+ * failure here must never break upload or retrieval, so it swallows errors.
+ * `sourceId` is the string id returned by addSource (Mongo ObjectId hex or a
+ * memory id).
+ */
+export async function setSourceIndexStatus(
+  sourceId: string,
+  outcome: StudyIndexOutcome,
+): Promise<void> {
+  const now = new Date();
+  try {
+    const db = await getDbSafe();
+    if (!db) {
+      const existing = memoryStore.sources.get(sourceId);
+      if (existing) {
+        memoryStore.sources.set(sourceId, {
+          ...existing,
+          indexStatus: outcome.status,
+          indexedAt: now,
+          embedderId: outcome.embedderId,
+        });
+      }
+      return;
+    }
+    if (!ObjectId.isValid(sourceId)) return;
+    await db.collection(COLLECTIONS.sources).updateOne(
+      { _id: new ObjectId(sourceId) },
+      {
+        $set: {
+          indexStatus: outcome.status,
+          indexedAt: now,
+          ...(outcome.embedderId ? { embedderId: outcome.embedderId } : {}),
+        },
+      },
+    );
+  } catch (error) {
+    console.error("study.repo.set_index_status_failed", { sourceId, error });
+  }
+}
+
 export async function addSource(
   sessionId: string,
   kind: StudySourceKind,
@@ -264,6 +311,10 @@ export async function addSource(
   const normalizedText = normalizeText(text);
   const chunks = chunkText(normalizedText);
 
+  // A new source starts "pending"; invalidate any "recently clean" marker so the
+  // next tutor query re-evaluates and picks it up if its background index failed.
+  reindexCleanUntil.delete(sessionId);
+
   const payload = {
     sessionId: db ? toObjectId(sessionId) : sessionId,
     kind,
@@ -271,6 +322,8 @@ export async function addSource(
     text: normalizedText,
     chunks,
     createdAt: now,
+    // Marked pending until background indexing reports a terminal status.
+    indexStatus: "pending" as StudySourceIndexStatus,
   };
 
   if (!db) {
@@ -283,6 +336,7 @@ export async function addSource(
       text: normalizedText,
       chunks,
       createdAt: now,
+      indexStatus: "pending",
     });
     const session = memoryStore.sessions.get(sessionId);
     if (session) {
@@ -298,8 +352,15 @@ export async function addSource(
         memoryStore.tutorMessages.delete(messageId);
       }
     }
-    // Background RAG indexing — does not block the upload response.
-    indexStudySourceInBackground(sessionId, _id, normalizedText, payload.name);
+    // Background RAG indexing — does not block the upload response. The
+    // callback persists the terminal status so it can be recovered later.
+    indexStudySourceInBackground(
+      sessionId,
+      _id,
+      normalizedText,
+      payload.name,
+      (outcome) => setSourceIndexStatus(_id, outcome),
+    );
     return {
       _id,
       sessionId,
@@ -307,6 +368,7 @@ export async function addSource(
       name: payload.name,
       chunkCount: chunks.length,
       createdAt: now,
+      indexStatus: "pending" as StudySourceIndexStatus,
     };
   }
 
@@ -321,21 +383,25 @@ export async function addSource(
       .deleteMany({ sessionId: toObjectId(sessionId) }),
   ]);
 
-  // Background RAG indexing — does not block the upload response.
+  // Background RAG indexing — does not block the upload response. The callback
+  // persists the terminal status so it can be recovered later.
+  const sourceId = result.insertedId.toString();
   indexStudySourceInBackground(
     sessionId,
-    result.insertedId.toString(),
+    sourceId,
     normalizedText,
     payload.name,
+    (outcome) => setSourceIndexStatus(sourceId, outcome),
   );
 
   return {
-    _id: result.insertedId.toString(),
+    _id: sourceId,
     sessionId,
     kind,
     name: payload.name,
     chunkCount: chunks.length,
     createdAt: now,
+    indexStatus: "pending" as StudySourceIndexStatus,
   };
 }
 
@@ -364,6 +430,116 @@ export async function getSessionSourceText(sessionId: string) {
   return { mergedText, chunks };
 }
 
+/**
+ * Re-index any of a session's sources whose vectors are missing or stale.
+ *
+ * Fixes the "silent permanent vector-blindness" gap: a source that stored
+ * keyword-only (embed failed / no key at the time) or whose background index
+ * never finished (process stopped mid-embed → stuck "pending") would otherwise
+ * degrade to BM25 forever with no recovery. Called on the read path (tutor) so
+ * retrieval self-heals without a cron. Awaited but bounded, and a no-op when
+ * embeddings can't be produced (no API key) so it never blocks pointlessly.
+ *
+ * Returns the number of sources re-indexed.
+ */
+const globalReindexCooldown = global as typeof globalThis & {
+  __studyReindexCleanUntil?: Map<string, number>;
+};
+const reindexCleanUntil =
+  globalReindexCooldown.__studyReindexCleanUntil ||
+  (globalReindexCooldown.__studyReindexCleanUntil = new Map<string, number>());
+// After a sweep finds nothing to do, skip re-scanning this session for a while
+// so the common (all-indexed) case doesn't refetch sources on every tutor turn.
+const REINDEX_CLEAN_TTL_MS = 5 * 60 * 1000;
+
+export async function reindexStaleStudySources(
+  sessionId: string,
+): Promise<number> {
+  // Without an API key there are no embeddings to gain — don't churn.
+  if (!process.env.GEMINI_API_KEY) return 0;
+
+  const cleanUntil = reindexCleanUntil.get(sessionId) ?? 0;
+  if (cleanUntil > Date.now()) return 0;
+
+  const db = await getDbSafe();
+  const RECOVERABLE: StudySourceIndexStatus[] = [
+    "pending",
+    "keyword_only",
+    "failed",
+  ];
+  const currentEmbedderId = `gemini:${process.env.GEMINI_EMBED_MODEL || "text-embedding-004"}`;
+
+  type Candidate = {
+    _id: string;
+    name: string;
+    text: string;
+    indexStatus?: StudySourceIndexStatus;
+    embedderId?: string;
+  };
+
+  let candidates: Candidate[] = [];
+  if (!db) {
+    candidates = Array.from(memoryStore.sources.values())
+      .filter((s) => s.sessionId === sessionId)
+      .map((s) => ({
+        _id: s._id,
+        name: s.name,
+        text: s.text,
+        indexStatus: s.indexStatus,
+        embedderId: s.embedderId,
+      }));
+  } else {
+    const rows = await db
+      .collection(COLLECTIONS.sources)
+      .find({ sessionId: toObjectId(sessionId) })
+      .toArray();
+    candidates = rows.map((s) => ({
+      _id: s._id.toString(),
+      name: String(s.name || "Source"),
+      text: String(s.text || ""),
+      indexStatus: s.indexStatus as StudySourceIndexStatus | undefined,
+      embedderId: s.embedderId as string | undefined,
+    }));
+  }
+
+  // A source needs re-indexing when its status is recoverable, or when it was
+  // indexed with a different embedder (model drift). Legacy sources predating
+  // this field (indexStatus undefined) are left alone — they were indexed under
+  // the old path and re-checking every one on each query would be wasteful; the
+  // recoverable statuses cover everything written since.
+  const stale = candidates.filter((s) => {
+    if (!s.text.trim()) return false;
+    if (s.indexStatus && RECOVERABLE.includes(s.indexStatus)) return true;
+    if (s.indexStatus === "indexed" && s.embedderId && s.embedderId !== currentEmbedderId) {
+      return true;
+    }
+    return false;
+  });
+  if (stale.length === 0) {
+    reindexCleanUntil.set(sessionId, Date.now() + REINDEX_CLEAN_TTL_MS);
+    return 0;
+  }
+  // There is work to do — don't trust a stale "clean" marker.
+  reindexCleanUntil.delete(sessionId);
+
+  // Bounded per call so the tutor read path stays responsive even if many
+  // sources are stale; the next query picks up the remainder.
+  const MAX_PER_SWEEP = 3;
+  const batch = stale.slice(0, MAX_PER_SWEEP);
+  let reindexed = 0;
+  for (const source of batch) {
+    const outcome = await reindexStudySource(
+      sessionId,
+      source._id,
+      source.text,
+      source.name,
+    );
+    await setSourceIndexStatus(source._id, outcome);
+    if (outcome.status === "indexed") reindexed += 1;
+  }
+  return reindexed;
+}
+
 export async function listSources(sessionId: string) {
   const db = await getDbSafe();
   if (!db) {
@@ -378,6 +554,8 @@ export async function listSources(sessionId: string) {
         text: item.text,
         chunks: item.chunks,
         createdAt: item.createdAt,
+        indexStatus: item.indexStatus,
+        indexedAt: item.indexedAt,
       }));
   }
   const sources = await db
@@ -394,6 +572,8 @@ export async function listSources(sessionId: string) {
     text: item.text,
     chunks: Array.isArray(item.chunks) ? item.chunks : [],
     createdAt: item.createdAt,
+    indexStatus: item.indexStatus as StudySourceIndexStatus | undefined,
+    indexedAt: item.indexedAt as Date | undefined,
   }));
 }
 

@@ -163,6 +163,42 @@ function textSimilarity(a: string, b: string): number {
 }
 
 /**
+ * Extract only the human-visible prose from an artifact for similarity scoring.
+ * Comparing `JSON.stringify(...)` would count the structural keys ("heading",
+ * "question", "options", "id":"card-1"…) — identical across every generation —
+ * inflating the trigram overlap and firing false "too similar" retries (and
+ * poisoning the divergence tiebreak). We join only the content fields.
+ */
+function extractComparableText(content: unknown): string {
+  if (content === undefined || content === null) return "";
+  if (typeof content === "string") return content;
+
+  const parts: string[] = [];
+  const visit = (value: unknown, key?: string): void => {
+    if (value === null || value === undefined) return;
+    if (typeof value === "string") {
+      // Skip synthetic ids (card-1, quiz-3…) — they never carry meaning and are
+      // byte-identical across generations.
+      if (key === "id") return;
+      parts.push(value);
+      return;
+    }
+    if (typeof value === "number" || typeof value === "boolean") return;
+    if (Array.isArray(value)) {
+      value.forEach((item) => visit(item));
+      return;
+    }
+    if (typeof value === "object") {
+      for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+        visit(v, k);
+      }
+    }
+  };
+  visit(content);
+  return parts.join(" ");
+}
+
+/**
  * True when `candidate` is too close to `previousContent` to count as a genuine
  * regeneration. Only meaningful when there IS a previous version.
  */
@@ -170,8 +206,8 @@ function isTooSimilarToPrevious(
   candidate: unknown,
   previousContent: unknown,
 ): boolean {
-  const prev = serializePrevious(previousContent);
-  const next = serializePrevious(candidate);
+  const prev = extractComparableText(previousContent);
+  const next = extractComparableText(candidate);
   if (!prev || !next) return false;
   return textSimilarity(prev, next) >= REGENERATION_MAX_SIMILARITY;
 }
@@ -181,18 +217,95 @@ function generationTemperature(base: number, isRegeneration: boolean): number {
   return isRegeneration ? Math.min(0.95, base + 0.3) : base;
 }
 
-function extractJsonBlock(raw: string) {
-  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
-  if (fenced?.[1]) return fenced[1].trim();
-  return raw.trim();
+/**
+ * Locate the outermost JSON value in a possibly-noisy model response. With
+ * `responseJson: true` the whole body is usually valid JSON, but a stray leading
+ * token ("Here is your summary: {…}"), a code fence, or a truncated tail
+ * (finishReason MAX_TOKENS) would otherwise make JSON.parse throw and silently
+ * collapse the whole generation to the degraded stub. We try, in order:
+ *   1. the raw trimmed body,
+ *   2. the first fenced ```json block,
+ *   3. the outermost {…} / […] slice.
+ * The first candidate that parses wins. Throws only if none parse.
+ */
+function extractJsonBlock(raw: string): string {
+  const trimmed = raw.trim();
+  const candidates: string[] = [trimmed];
+
+  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  if (fenced?.[1]) candidates.push(fenced[1].trim());
+
+  // Outermost object/array slice — recovers JSON embedded in prose.
+  const firstObj = trimmed.indexOf("{");
+  const lastObj = trimmed.lastIndexOf("}");
+  if (firstObj !== -1 && lastObj > firstObj) {
+    candidates.push(trimmed.slice(firstObj, lastObj + 1));
+  }
+  const firstArr = trimmed.indexOf("[");
+  const lastArr = trimmed.lastIndexOf("]");
+  if (firstArr !== -1 && lastArr > firstArr) {
+    candidates.push(trimmed.slice(firstArr, lastArr + 1));
+  }
+
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+    try {
+      JSON.parse(candidate);
+      return candidate;
+    } catch {
+      // try the next candidate
+    }
+  }
+  // Nothing parsed — surface the (least-noisy) body so the caller's catch/retry
+  // engages deliberately instead of shipping a malformed value.
+  throw new SyntaxError("Model response did not contain valid JSON");
 }
 
 function parseJson<T>(raw: string): T {
   return JSON.parse(extractJsonBlock(raw)) as T;
 }
 
+/**
+ * Validate the parsed artifact has the shape the UI expects. A model returning
+ * `{"summary": "..."}` instead of `{short, detailed}` would otherwise flow to
+ * the DB and UI as `undefined` fields with no `degraded` flag. Throwing here
+ * makes the retry/fallback path engage just like a parse failure.
+ */
+function assertShape(ok: boolean, label: string): void {
+  if (!ok) {
+    throw new SyntaxError(`Model response has an unexpected shape for ${label}`);
+  }
+}
+
 function resolveMode(mode?: StudyLearningMode): StudyLearningMode {
   return mode === "exam" || mode === "quiz" || mode === "research" ? mode : "research";
+}
+
+/**
+ * Source text is user-uploaded and untrusted. It is concatenated into prompts,
+ * so a document containing "Ignore all previous instructions…" or a planted
+ * ```json {…} ``` block could hijack the model or (with fenced-block extraction)
+ * feed attacker-controlled JSON straight to the parser. We neutralize the two
+ * highest-leverage vectors here, at the one choke point every builder passes
+ * through: strip triple-backtick fences so no source block can masquerade as the
+ * model's own JSON output, and defang the most common instruction-override
+ * phrasings. This is defense-in-depth, not a full jailbreak filter — the prompts
+ * also frame source as data-only.
+ */
+function sanitizeSourceText(sourceText: string): string {
+  return (sourceText || "")
+    // Collapse code fences to plain markers; keeps the content, removes the
+    // fence semantics that let a source plant a parseable ```json block.
+    .replace(/```+/g, "'''")
+    // Defang the classic override preambles (case-insensitive, line-anchored).
+    .replace(
+      /(^|\n)\s*(ignore|disregard|forget)\s+(all\s+)?(previous|prior|above|earlier)\s+(instructions?|prompts?|context)/gi,
+      "$1[removed instruction-like text]",
+    )
+    .replace(
+      /(^|\n)\s*system\s*:/gi,
+      "$1(source text)",
+    );
 }
 
 function prepareSource(
@@ -253,9 +366,20 @@ async function generateWithRegenerationRetry<T>(
     topP: isRegeneration ? 0.95 : 0.9,
     insist: false,
   };
-  const retry: RegenAttempt = {
-    // A brand-new seed and a different lens so the retry doesn't retrace the
-    // first attempt's path.
+  // Retry tuned to RECOVER FROM MALFORMED/EMPTY JSON: keep temperature and topP
+  // moderate. A hotter, wider distribution makes truncated/invalid JSON MORE
+  // likely — the opposite of what a parse-failure retry needs.
+  const repairRetry: RegenAttempt = {
+    seed: samplingSeed(),
+    lens: pickRegenerationLens(),
+    temperature: Math.min(0.6, baseTemperature),
+    topP: 0.9,
+    insist: false,
+  };
+  // Retry tuned to FORCE DIVERGENCE when a regeneration came back too similar:
+  // a fresh seed, a different lens, and a hotter/wider sample so the output
+  // actually moves.
+  const divergeRetry: RegenAttempt = {
     seed: samplingSeed(),
     lens: pickRegenerationLens(),
     temperature: Math.min(0.98, first.temperature + 0.15),
@@ -265,14 +389,14 @@ async function generateWithRegenerationRetry<T>(
 
   // A single attempt can fail for reasons the HTTP-level retry can't fix
   // (e.g. malformed JSON that slipped past response constraints). One more
-  // attempt with a fresh seed usually recovers; only then bubble the error up
-  // to the caller's degraded fallback.
+  // attempt with a fresh seed (at a SAFE, JSON-friendly temperature) usually
+  // recovers; only then bubble the error up to the caller's degraded fallback.
   let firstResult: T;
   try {
     firstResult = await run(first);
   } catch (error) {
     console.error("study.generate.first_attempt_failed_retrying", error);
-    return run(retry);
+    return run(repairRetry);
   }
   if (!isRegeneration || !isTooSimilarToPrevious(firstResult, previousContent)) {
     return firstResult;
@@ -281,7 +405,7 @@ async function generateWithRegenerationRetry<T>(
   console.warn("study.regenerate.too_similar_retrying");
   let retryResult: T;
   try {
-    retryResult = await run(retry);
+    retryResult = await run(divergeRetry);
   } catch (error) {
     // The first attempt succeeded but was too similar; a failed escalation
     // should not throw away a usable result.
@@ -290,9 +414,9 @@ async function generateWithRegenerationRetry<T>(
   }
   // Keep whichever attempt diverged more from the previous version.
   if (isTooSimilarToPrevious(retryResult, previousContent)) {
-    const prev = serializePrevious(previousContent);
-    const firstSim = textSimilarity(prev, serializePrevious(firstResult));
-    const retrySim = textSimilarity(prev, serializePrevious(retryResult));
+    const prev = extractComparableText(previousContent);
+    const firstSim = textSimilarity(prev, extractComparableText(firstResult));
+    const retrySim = textSimilarity(prev, extractComparableText(retryResult));
     return retrySim <= firstSim ? retryResult : firstResult;
   }
   return retryResult;
@@ -352,7 +476,14 @@ async function buildSummary(
           maxOutputTokens,
           responseJson: true,
         });
-        return parseJson<{ short: string; detailed: string }>(raw);
+        const parsed = parseJson<{ short: string; detailed: string }>(raw);
+        assertShape(
+          typeof parsed?.short === "string" &&
+            typeof parsed?.detailed === "string" &&
+            parsed.detailed.trim().length > 0,
+          "summary",
+        );
+        return parsed;
       },
     );
 
@@ -364,6 +495,7 @@ async function buildSummary(
   // Large documents: MAP each chunk into compact notes (parallel, batched), then
   // REDUCE all notes into the final summary — so it reflects the WHOLE document.
   const chunks = chunkText(normalized, MAP_CHUNK_CHARS);
+  let failedChunks = 0;
   const notes = await mapWithConcurrency(chunks, MAP_CONCURRENCY, async (chunk, i) => {
     try {
       const note = await generateGeminiText({
@@ -375,9 +507,21 @@ async function buildSummary(
       return note.trim();
     } catch (error) {
       console.error("study.summary.map_chunk_failed", { index: i, error });
+      failedChunks += 1;
       return ""; // a failed chunk is skipped, not fatal.
     }
   });
+
+  // If a large fraction of the document failed to map, the reduce step would
+  // silently summarize only the surviving minority as if it were the whole
+  // document. Throw so the caller's retry/degraded path engages and the UI can
+  // warn, rather than presenting a confident but partial summary.
+  const MAX_FAILED_CHUNK_RATIO = 0.4;
+  if (chunks.length > 0 && failedChunks / chunks.length > MAX_FAILED_CHUNK_RATIO) {
+    throw new Error(
+      `study.summary.too_many_map_failures: ${failedChunks}/${chunks.length} chunks failed`,
+    );
+  }
 
   // Drop chunks that were pure front-matter/ToC (the map step flags these) so the
   // reduce step never sees "1. Introduction 2 1.1 Rationale…" style noise.
@@ -440,7 +584,7 @@ async function buildNotes(
       maxOutputTokens: 4096,
       responseJson: true,
     });
-    return parseJson<{
+    const parsed = parseJson<{
       title: string;
       mode?: string;
       examTips?: string[];
@@ -450,6 +594,15 @@ async function buildNotes(
         bullets: string[];
       }>;
     }>(raw);
+    assertShape(
+      Array.isArray(parsed?.sections) &&
+        parsed.sections.length > 0 &&
+        parsed.sections.some(
+          (s) => Array.isArray(s?.bullets) && s.bullets.length > 0,
+        ),
+      "notes",
+    );
+    return parsed;
   });
 }
 
@@ -476,6 +629,11 @@ async function buildFlashcards(
       responseJson: true,
     });
     const cards = parseJson<Array<{ id: string; front: string; back: string }>>(raw);
+    assertShape(
+      Array.isArray(cards) &&
+        cards.some((c) => String(c?.front || "").trim() && String(c?.back || "").trim()),
+      "flashcards",
+    );
     return cards.map((card, index) => ({
       id: card.id || `card-${index + 1}`,
       front: String(card.front || "").trim(),
@@ -541,6 +699,11 @@ async function buildQuiz(
         questionType?: string;
       }>
     >(raw);
+    assertShape(
+      Array.isArray(quizzes) &&
+        quizzes.some((q) => String(q?.question || "").trim()),
+      "quizzes",
+    );
     // Drop malformed/blank and near-duplicate questions before re-id'ing so the
     // final quiz is clean and (with the min floor honored by the prompt) usable.
     const seen = new Set<string>();
@@ -587,9 +750,10 @@ export interface GeneratedArtifact {
 
 export async function generateArtifact(
   type: StudyArtifactType,
-  sourceText: string,
+  rawSourceText: string,
   options: GenerateArtifactOptions = {},
 ): Promise<GeneratedArtifact> {
+  const sourceText = sanitizeSourceText(rawSourceText);
   const mode = resolveMode(options.mode);
   const examTopics = (options.examTopics || []).map((t) => t.trim()).filter(Boolean);
 

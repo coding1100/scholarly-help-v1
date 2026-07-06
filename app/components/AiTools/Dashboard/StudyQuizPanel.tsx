@@ -33,10 +33,8 @@ function getOptionStyle(selected: boolean, correct: boolean, showFeedback: boole
       : "border border-[#e8e9f6] bg-white text-[#4f5373] hover:border-[#c9d1ff]";
   }
 
-  if (correct && selected) {
-    return "border-2 border-[#10b981] bg-[#ecfdf5] text-[#064e3b] shadow-sm";
-  }
   if (correct) {
+    // Covers both "correct & selected" and "correct & not selected".
     return "border-2 border-[#10b981] bg-[#ecfdf5] text-[#064e3b] shadow-sm";
   }
   if (selected) {
@@ -67,7 +65,7 @@ function OptionBadge({
 
   if (correct) {
     return (
-      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-400">
+      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
         <FiCheck className="h-3 w-3" />
         Correct answer
       </span>
@@ -76,7 +74,7 @@ function OptionBadge({
 
   if (selected) {
     return (
-      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-400">
+      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
         <FiX className="h-3 w-3" />
         Your answer
       </span>
