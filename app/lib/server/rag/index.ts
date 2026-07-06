@@ -51,20 +51,38 @@ export interface IndexDocumentOptions {
 }
 
 /**
+ * Outcome of an index attempt, so callers can persist a durable status and
+ * decide whether a re-index is needed later.
+ *   - "indexed"      — every chunk got an embedding (vector retrieval ready).
+ *   - "keyword_only" — chunks stored without vectors (embed failed / no key);
+ *                      BM25 retrieval works but vector search does not.
+ *   - "empty"        — no usable text; nothing stored.
+ */
+export type IndexStatus = "indexed" | "keyword_only" | "empty";
+
+export interface IndexDocumentResult {
+  chunkCount: number;
+  status: IndexStatus;
+  /** Embedder used when vectors were produced (detect model drift on re-index). */
+  embedderId?: string;
+}
+
+/**
  * Chunk, embed, and store a document under a namespace. Replaces any existing
- * chunks for the same documentId (idempotent re-index). Throws if embedding
- * fails — callers running this in the background should catch and log.
+ * chunks for the same documentId (idempotent re-index). Never throws on embed
+ * failure — it stores keyword-only and reports the degraded status so the
+ * caller can persist it and schedule a re-index.
  */
 export async function indexDocument(
   namespace: string,
   documentId: string,
   text: string,
   options: IndexDocumentOptions = {},
-): Promise<{ chunkCount: number }> {
+): Promise<IndexDocumentResult> {
   const normalized = (text || "").trim();
   if (!normalized) {
     await store.deleteDocument(namespace, documentId);
-    return { chunkCount: 0 };
+    return { chunkCount: 0, status: "empty" };
   }
 
   const pieces =
@@ -77,10 +95,14 @@ export async function indexDocument(
   // failed embed threw the whole index away, leaving retrieval with nothing —
   // the tutor then answered a 100-page PDF from 3 weakly-matched chunks.
   let embeddings: number[][] = [];
+  let embedderId: string | undefined;
+  let embedFailed = false;
   try {
     const embedder = getEmbedder();
     embeddings = await embedder.embed(pieces);
+    embedderId = embedder.id;
   } catch (error) {
+    embedFailed = true;
     console.error("rag.index.embed_failed_storing_keyword_only", {
       namespace,
       documentId,
@@ -99,7 +121,16 @@ export async function indexDocument(
   }));
 
   await store.upsertDocument(namespace, documentId, chunks);
-  return { chunkCount: chunks.length };
+  // "indexed" only when every chunk actually carries a vector.
+  const allEmbedded =
+    !embedFailed &&
+    chunks.length > 0 &&
+    chunks.every((c) => Array.isArray(c.embedding) && c.embedding.length > 0);
+  return {
+    chunkCount: chunks.length,
+    status: allEmbedded ? "indexed" : "keyword_only",
+    embedderId: allEmbedded ? embedderId : undefined,
+  };
 }
 
 export async function deleteDocument(namespace: string, documentId: string) {
@@ -215,11 +246,25 @@ export async function retrieve(
     }
   }
 
-  const top =
+  const fused =
     vectorHits.length === 0
       ? // Keyword-only (either by design, not-yet-indexed, or vector failure).
-        keywordHits.slice(0, topK)
-      : fuse(vectorHits, keywordHits, vectorWeight, keywordWeight).slice(0, topK);
+        keywordHits
+      : fuse(vectorHits, keywordHits, vectorWeight, keywordWeight);
 
-  return expandWithNeighbors(top, chunks, neighborRadius);
+  // Take the strongest `topK` primary hits, expand each with its neighbors for
+  // coherent windows, then re-sort by score and cap the TOTAL. Expanding after a
+  // naive `slice(0, topK)` used to (a) blow past topK by up to 2*radius per hit
+  // and (b) push neighbors inline so a neighbor of hit #1 could outrank a real
+  // hit #8 — the returned array was no longer relevance-ordered, which the
+  // caller assumes. Re-sorting + a hard budget fixes both.
+  const primary = fused.slice(0, topK);
+  const expanded = expandWithNeighbors(primary, chunks, neighborRadius);
+  if (neighborRadius <= 0) return expanded;
+
+  const maxTotal = topK * (1 + 2 * neighborRadius);
+  return expanded
+    .slice()
+    .sort((a, b) => b.score - a.score)
+    .slice(0, maxTotal);
 }

@@ -3,6 +3,7 @@ import { topChunksByQuery } from "@/app/lib/server/study/text";
 import {
   getSession,
   getSessionSourceText,
+  reindexStaleStudySources,
   saveTutorMessage,
 } from "@/app/lib/server/study/repo";
 import { retrieveStudyContext } from "@/app/lib/server/study/studyRag";
@@ -138,6 +139,15 @@ export async function POST(
     // prior knowledge (hallucination). 8–10 hits + their neighbors is still
     // tiny vs the model's context window, but enough to actually answer from.
     const chunkLimit = learningMode === "exam" ? 10 : 8;
+    // Self-heal any sources whose vectors are missing/stale (embed failed at
+    // upload, process stopped mid-index, or model drift) BEFORE retrieving, so
+    // this query benefits from recovered vectors instead of silently degrading
+    // to keyword-only forever. Bounded + best-effort; never breaks the tutor.
+    try {
+      await reindexStaleStudySources(params.id);
+    } catch (error) {
+      console.error("study.tutor.reindex_stale_failed", error);
+    }
     let ranked: Array<{
       index: number;
       chunk: string;
@@ -159,7 +169,6 @@ export async function POST(
         keywordScore: item.score,
       }));
     }
-    const citations = ranked.map((item) => item.index);
     // "Relevant" must mean the chunks actually MATCHED the query. The fused
     // RRF/cosine `score` is > 0 for every returned hit by construction, so the
     // old `score > 0` check was always true — the prompt then claimed relevant
@@ -167,12 +176,23 @@ export async function POST(
     // "cited" unrelated chunks (hallucination). Require a real signal: a BM25
     // keyword match, or a cosine similarity high enough to indicate topical fit.
     const MIN_VECTOR_RELEVANCE = 0.55;
-    const hasRelevantContext = ranked.some(
-      (item) =>
-        (item.keywordScore ?? 0) > 0 ||
-        (item.vectorScore ?? 0) >= MIN_VECTOR_RELEVANCE,
-    );
-    const context = ranked.map((item) => `[${item.index}] ${item.chunk}`).join("\n\n");
+    const isRelevantHit = (item: { keywordScore?: number; vectorScore?: number }) =>
+      (item.keywordScore ?? 0) > 0 ||
+      (item.vectorScore ?? 0) >= MIN_VECTOR_RELEVANCE;
+    // When at least one hit is relevant, keep the whole retrieved window
+    // (neighbor/expansion chunks carry no per-strategy score but provide the
+    // surrounding sentences that make a hit answerable). When NOTHING is
+    // relevant, inject no context at all: feeding zero-score chunks in as
+    // "[n] …" invited the model to cite unrelated material even though
+    // hasRelevantContext was false.
+    const hasRelevantContext = ranked.some(isRelevantHit);
+    const contextChunks = hasRelevantContext ? ranked : [];
+    const context = contextChunks
+      .map((item) => `[${item.index}] ${item.chunk}`)
+      .join("\n\n");
+    // Only cite chunks we actually injected as context — otherwise the stored
+    // citation ids point at material the model never saw.
+    const citations = contextChunks.map((item) => item.index);
     const hasImages = imageAttachments.length > 0;
     const provenance: TutorProvenance = hasImages
       ? "image"

@@ -11,6 +11,7 @@ import {
   deleteDocument,
   deleteNamespace,
   indexDocument,
+  IndexStatus,
   retrieve,
 } from "@/app/lib/server/rag";
 
@@ -19,21 +20,87 @@ function namespaceFor(sessionId: string): string {
 }
 
 /**
+ * Durable per-source indexing status the repo persists so retrieval quality is
+ * observable and recoverable:
+ *   - "pending"      — queued/in-flight; embeddings not ready yet.
+ *   - "indexed"      — vector + keyword retrieval ready.
+ *   - "keyword_only" — stored without vectors (embed failed / no key); BM25 only.
+ *   - "failed"       — the index attempt threw before storing anything.
+ */
+export type StudyIndexStatus = "pending" | "indexed" | "keyword_only" | "failed";
+
+export interface StudyIndexOutcome {
+  status: StudyIndexStatus;
+  embedderId?: string;
+}
+
+function toStudyStatus(status: IndexStatus): StudyIndexStatus {
+  // "empty" means no chunks were stored; treat it as indexed (nothing to embed)
+  // so it isn't perpetually re-tried.
+  if (status === "empty") return "indexed";
+  return status;
+}
+
+/**
  * Index a single source's text for a session, in the background. Returns
- * immediately; the caller should NOT await this on the upload hot path.
+ * immediately; the caller should NOT await this on the upload hot path. When an
+ * `onStatus` callback is supplied it is invoked with the terminal outcome so the
+ * caller can persist a durable status and later re-index if needed.
  */
 export function indexStudySourceInBackground(
   sessionId: string,
   sourceId: string,
   text: string,
   sourceName?: string,
+  onStatus?: (outcome: StudyIndexOutcome) => void | Promise<void>,
 ): void {
   // Fire-and-forget: keep upload latency unchanged. Errors are logged, not thrown.
   void indexDocument(namespaceFor(sessionId), sourceId, text, {
     metadata: sourceName ? { name: sourceName } : undefined,
-  }).catch((error) => {
-    console.error("study.rag.index_failed", { sessionId, sourceId, error });
-  });
+  })
+    .then((result) => {
+      return onStatus?.({
+        status: toStudyStatus(result.status),
+        embedderId: result.embedderId,
+      });
+    })
+    .catch(async (error) => {
+      console.error("study.rag.index_failed", { sessionId, sourceId, error });
+      try {
+        await onStatus?.({ status: "failed" });
+      } catch (statusError) {
+        console.error("study.rag.index_status_persist_failed", {
+          sessionId,
+          sourceId,
+          statusError,
+        });
+      }
+    });
+}
+
+/**
+ * Re-index a source that previously failed / stored keyword-only. Awaited (used
+ * by the on-read staleness sweep, not the upload hot path). Returns the outcome
+ * so the caller can persist the new status.
+ */
+export async function reindexStudySource(
+  sessionId: string,
+  sourceId: string,
+  text: string,
+  sourceName?: string,
+): Promise<StudyIndexOutcome> {
+  try {
+    const result = await indexDocument(namespaceFor(sessionId), sourceId, text, {
+      metadata: sourceName ? { name: sourceName } : undefined,
+    });
+    return {
+      status: toStudyStatus(result.status),
+      embedderId: result.embedderId,
+    };
+  } catch (error) {
+    console.error("study.rag.reindex_failed", { sessionId, sourceId, error });
+    return { status: "failed" };
+  }
 }
 
 export async function removeStudySourceFromIndex(
@@ -89,10 +156,14 @@ export async function retrieveStudyContext(
     topK,
     expandNeighbors: 1,
   });
-  return hits.map((hit) => ({
-    // Cite by ordinal within the document; unique + stable for a single source,
-    // and matches the prior "chunk index" citation semantics closely enough.
-    index: hit.ordinal,
+  // Assign a session-global running citation id. The per-document `ordinal`
+  // resets to 0 for every source, so with ≥2 sources two different chunks both
+  // became `[4]` — the model couldn't disambiguate them and the stored
+  // citations array held duplicate, non-unique ids. A running index over the
+  // (already relevance-ordered) result set gives every returned chunk a unique,
+  // stable `[N]`.
+  return hits.map((hit, position) => ({
+    index: position + 1,
     chunk: hit.text,
     score: hit.score,
     vectorScore: hit.vectorScore,

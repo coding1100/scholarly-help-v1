@@ -32,6 +32,7 @@ import {
   getStudySessionDetails,
   streamStudyTutor,
   StudyArtifactType,
+  StudySourceIndexStatus,
   TutorAttachmentInput,
   TutorMessageDto,
 } from "@/app/utils/studyApiClient";
@@ -89,6 +90,56 @@ function formatDuration(totalSeconds: number) {
 function formatDateLabel(iso: string) {
   const date = new Date(iso);
   return date.toLocaleDateString();
+}
+
+/**
+ * Visual + copy for each RAG index status. "keyword_only"/"failed" recover
+ * automatically on the next tutor query (the read path re-indexes), so the
+ * wording reassures rather than alarms.
+ */
+const SOURCE_STATUS_META: Record<
+  StudySourceIndexStatus,
+  { label: string; className: string; title: string; pulse?: boolean }
+> = {
+  pending: {
+    label: "Indexing…",
+    className: "bg-[#eef1ff] text-[#4b57b8]",
+    title: "Building search index for this source. Answers improve once it's ready.",
+    pulse: true,
+  },
+  indexed: {
+    label: "Ready",
+    className: "bg-[#ecfdf5] text-[#047857]",
+    title: "Fully indexed — the tutor can search this source semantically.",
+  },
+  keyword_only: {
+    label: "Basic search",
+    className: "bg-[#fff7ed] text-[#b45309]",
+    title:
+      "Stored with keyword search only (semantic indexing was unavailable). It will re-index automatically the next time you ask the tutor.",
+  },
+  failed: {
+    label: "Retrying",
+    className: "bg-[#fff7ed] text-[#b45309]",
+    title:
+      "Indexing didn't finish. It will retry automatically the next time you ask the tutor.",
+  },
+};
+
+function SourceStatusBadge({ status }: { status?: StudySourceIndexStatus }) {
+  const meta = status ? SOURCE_STATUS_META[status] : null;
+  if (!meta) return null;
+  return (
+    <span
+      title={meta.title}
+      className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${meta.className}`}
+    >
+      {meta.pulse ? (
+        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current" />
+      ) : null}
+      {meta.label}
+    </span>
+  );
 }
 
 function decodeHtmlEntities(input: string): string {
@@ -482,12 +533,22 @@ export default function StudyWorkspace() {
   const sessionId = searchParams.get("sessionId");
 
   const [activeTab, setActiveTab] = useState<WorkspaceTab>("original");
-  const [isLoading, setIsLoading] = useState(false);
+  // Per-artifact loading so regenerating one tab doesn't disable/​spin the other
+  // three (they share no work). Keyed by StudyArtifactType.
+  const [loadingByType, setLoadingByType] = useState<
+    Partial<Record<StudyArtifactType, boolean>>
+  >({});
+  const isTypeLoading = (type: StudyArtifactType) => Boolean(loadingByType[type]);
   const [isSessionHydrating, setIsSessionHydrating] = useState(true);
   const [artifacts, setArtifacts] = useState<Record<string, unknown>>({});
   const [tutorMessages, setTutorMessages] = useState<TutorMessageDto[]>([]);
   const [sourceText, setSourceText] = useState("");
   const [sourceTitle, setSourceTitle] = useState("Session Source");
+  // Per-source RAG indexing status, so the user can see when a source is still
+  // being indexed (search may be weaker until it's ready) vs fully searchable.
+  const [sourceStatuses, setSourceStatuses] = useState<
+    Array<{ id: string; name: string; indexStatus?: StudySourceIndexStatus }>
+  >([]);
   const [tutorInput, setTutorInput] = useState("");
   const [flashcardIndex, setFlashcardIndex] = useState(0);
   const [flashcardFlipped, setFlashcardFlipped] = useState(false);
@@ -519,6 +580,15 @@ export default function StudyWorkspace() {
   const consumedPendingQuestionRef = useRef<string | null>(null);
   const livePreviewRef = useRef<HTMLVideoElement | null>(null);
   const tutorMessagesScrollRef = useRef<HTMLDivElement | null>(null);
+  // Monotonic counter for optimistic message ids. Date.now() collided when two
+  // sends fired in the same millisecond, producing duplicate React keys that
+  // corrupted which message a stream chunk updated.
+  const optimisticIdRef = useRef(0);
+  // Recording "processing" animation: track the pending timeout + a cancel flag
+  // so unmount / session-switch stops it instead of setting state on a dead
+  // component and stranding the progress modal.
+  const processingTimeoutRef = useRef<number | null>(null);
+  const processingCancelledRef = useRef(false);
   const tutorAttachmentInputRef = useRef<HTMLInputElement | null>(null);
   const speechRecognitionRef = useRef<SpeechRecognitionInstance | null>(null);
 
@@ -554,6 +624,13 @@ export default function StudyWorkspace() {
           setSourceTitle("Session Source");
           setSourceText("");
         }
+        setSourceStatuses(
+          details.sources.map((item) => ({
+            id: item._id,
+            name: item.name || "Source",
+            indexStatus: item.indexStatus,
+          })),
+        );
       } catch (error) {
         console.error("Failed to hydrate study session", error);
       } finally {
@@ -568,6 +645,18 @@ export default function StudyWorkspace() {
       active = false;
     };
   }, [refreshTick, sessionId]);
+
+  // While any source is still indexing (background embedding not yet finished),
+  // poll the session so the status badge flips from "Indexing…" to "Ready"
+  // without a manual refresh. Stops as soon as nothing is pending.
+  useEffect(() => {
+    const anyPending = sourceStatuses.some((s) => s.indexStatus === "pending");
+    if (!anyPending || !sessionId) return;
+    const timer = window.setTimeout(() => {
+      setRefreshTick((prev) => prev + 1);
+    }, 4000);
+    return () => window.clearTimeout(timer);
+  }, [sourceStatuses, sessionId]);
 
   useEffect(() => {
     const onSourceAdded = (event: Event) => {
@@ -725,10 +814,21 @@ export default function StudyWorkspace() {
     // which the load effect sets synchronously before any user mutation.
     const ownerSession = loadedRecordingsSessionRef.current;
     if (!ownerSession) return;
-    window.localStorage.setItem(
-      `study_saved_recordings_${ownerSession}`,
-      JSON.stringify(savedRecordings),
-    );
+    try {
+      // Blob object URLs are invalid after a page reload, so persisting them is
+      // pointless (and made the saved-recording <video> silently break). Drop
+      // the mediaUrl from the persisted copy; the transcript/metadata still
+      // restore correctly.
+      const persistable = savedRecordings.map((r) => ({ ...r, mediaUrl: null }));
+      window.localStorage.setItem(
+        `study_saved_recordings_${ownerSession}`,
+        JSON.stringify(persistable),
+      );
+    } catch (error) {
+      // QuotaExceededError (large transcripts) must not throw out of the effect
+      // and break the render.
+      console.warn("study.recordings.persist_failed", error);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [savedRecordings]);
 
@@ -789,11 +889,17 @@ export default function StudyWorkspace() {
     setIsProcessingRecording(true);
     setProcessingIndex(0);
     for (let index = 0; index < PROCESSING_STEPS.length; index += 1) {
+      // Bail if the component unmounted / session switched mid-flow so we don't
+      // keep firing setState on a torn-down component or leave the fake progress
+      // modal stuck.
+      if (processingCancelledRef.current) return;
       setProcessingIndex(index);
       await new Promise<void>((resolve) => {
-        window.setTimeout(resolve, index === 0 ? 500 : 650);
+        const id = window.setTimeout(resolve, index === 0 ? 500 : 650);
+        processingTimeoutRef.current = id;
       });
     }
+    if (processingCancelledRef.current) return;
     setIsProcessingRecording(false);
   };
 
@@ -830,7 +936,20 @@ export default function StudyWorkspace() {
         },
         ...prev.filter((item) => item.id !== result.id),
       ];
-      return next.slice(0, 10);
+      const kept = next.slice(0, 10);
+      // Revoke the object URLs of any recordings that just fell off the end so
+      // their media blobs are freed instead of pinned for the page's lifetime.
+      const keptIds = new Set(kept.map((r) => r.id));
+      next
+        .filter((r) => !keptIds.has(r.id) && r.mediaUrl?.startsWith("blob:"))
+        .forEach((r) => {
+          try {
+            URL.revokeObjectURL(r.mediaUrl as string);
+          } catch {
+            // ignore
+          }
+        });
+      return kept;
     });
     setActiveRecordingId(result.id);
     if (typeof window !== "undefined") {
@@ -873,7 +992,7 @@ export default function StudyWorkspace() {
       );
       return;
     }
-    setIsLoading(true);
+    setLoadingByType((prev) => ({ ...prev, [type]: true }));
     try {
       const result = await generateStudyArtifact(sessionId, type, {
         mode: STUDY_MODE,
@@ -909,7 +1028,7 @@ export default function StudyWorkspace() {
       console.error(`Failed to generate ${type}`, error);
       toast.error(`Failed to generate ${type}`);
     } finally {
-      setIsLoading(false);
+      setLoadingByType((prev) => ({ ...prev, [type]: false }));
     }
   };
 
@@ -1033,8 +1152,9 @@ export default function StudyWorkspace() {
 
     const attachments = pendingAttachment ? [pendingAttachment] : undefined;
 
+    const turnId = (optimisticIdRef.current += 1);
     const optimisticUser: TutorMessageDto = {
-      _id: `temp-user-${Date.now()}`,
+      _id: `temp-user-${turnId}`,
       sessionId,
       role: "user",
       message,
@@ -1054,7 +1174,7 @@ export default function StudyWorkspace() {
     setTutorInput("");
     clearPendingAttachment();
     setIsTutorResponding(true);
-    const assistantMessageId = `temp-assistant-${Date.now()}`;
+    const assistantMessageId = `temp-assistant-${turnId}`;
 
     try {
       const assistantMessage: TutorMessageDto = {
@@ -1136,6 +1256,7 @@ export default function StudyWorkspace() {
     if (handledRecordingResultIds.current.has(result.id)) return;
 
     let cancelled = false;
+    processingCancelledRef.current = false;
     const persist = async () => {
       try {
         setIsPersistingRecording(true);
@@ -1162,8 +1283,25 @@ export default function StudyWorkspace() {
   useEffect(() => {
     const container = tutorMessagesScrollRef.current;
     if (!container) return;
-    container.scrollTop = container.scrollHeight;
+    // Only auto-scroll when the user is already near the bottom. Snapping on
+    // every streamed token would yank them away from an earlier message they
+    // scrolled up to read.
+    const distanceFromBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
+    if (distanceFromBottom <= 120) {
+      container.scrollTop = container.scrollHeight;
+    }
   }, [tutorMessages]);
+
+  useEffect(() => {
+    // On unmount, cancel any in-flight processing animation and clear its timer.
+    return () => {
+      processingCancelledRef.current = true;
+      if (processingTimeoutRef.current !== null) {
+        window.clearTimeout(processingTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Consume a question typed on the onboarding "Ask AI assistant" chat. It is
   // stashed in sessionStorage because the tutor only mounts once the workspace
@@ -1290,6 +1428,36 @@ export default function StudyWorkspace() {
                 </p>
               </div>
             ) : null}
+            {!isSessionHydrating &&
+            activeTab === "original" &&
+            sourceStatuses.length > 0 ? (
+              <div className="mb-3 rounded-xl border border-[#e3e4f3] bg-white p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-[#6b73ab]">
+                    Sources
+                  </p>
+                  {sourceStatuses.some((s) => s.indexStatus === "pending") ? (
+                    <span className="text-[10px] text-[#8085a8]">
+                      Indexing in progress…
+                    </span>
+                  ) : null}
+                </div>
+                <ul className="mt-2 space-y-1.5">
+                  {sourceStatuses.map((source) => (
+                    <li
+                      key={source.id}
+                      className="flex items-center justify-between gap-3"
+                    >
+                      <span className="truncate text-sm text-[#3f4468]">
+                        {decodeHtmlEntities(source.name)}
+                      </span>
+                      <SourceStatusBadge status={source.indexStatus} />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+
             {!isSessionHydrating && activeTab === "original" ? (
               <div className="rounded-xl border border-[#e3e4f3] bg-white p-4">
                 {recordingSnapshot.status !== "idle" ? (
@@ -1495,7 +1663,7 @@ export default function StudyWorkspace() {
                 title="AI Notes"
                 subtitle="Generate detailed notes covering the important information in your original content"
                 onGenerate={() => requestGenerate("notes")}
-                isLoading={isLoading}
+                isLoading={isTypeLoading("notes")}
                 hasContent={Boolean(notesContent.sections?.length)}
               >
                 {notesContent.sections?.length ? (
@@ -1546,7 +1714,7 @@ export default function StudyWorkspace() {
                 title="AI Summary"
                 subtitle="Create a clear and easy-to-understand summary of your content"
                 onGenerate={() => requestGenerate("summary")}
-                isLoading={isLoading}
+                isLoading={isTypeLoading("summary")}
                 hasContent={Boolean(summaryContent.short || summaryContent.detailed)}
               >
                 {summaryContent.short || summaryContent.detailed ? (
@@ -1583,7 +1751,7 @@ export default function StudyWorkspace() {
                       </h3>
                       <RegenerateButton
                         onClick={() => requestGenerate("flashcards")}
-                        isLoading={isLoading}
+                        isLoading={isTypeLoading("flashcards")}
                       />
                     </div>
                     <div className="flashcard-scene mx-auto mt-4 max-w-xl">
@@ -1654,7 +1822,7 @@ export default function StudyWorkspace() {
                     title="AI Flashcards"
                     subtitle="Create active-recall flashcards from your content"
                     onGenerate={() => requestGenerate("flashcards")}
-                    isLoading={isLoading}
+                    isLoading={isTypeLoading("flashcards")}
                   />
                 )}
               </div>
@@ -1669,7 +1837,7 @@ export default function StudyWorkspace() {
                     </h3>
                     <RegenerateButton
                       onClick={() => requestGenerate("quizzes")}
-                      isLoading={isLoading}
+                      isLoading={isTypeLoading("quizzes")}
                     />
                   </div>
 
@@ -1690,7 +1858,7 @@ export default function StudyWorkspace() {
                   title="AI Quizzes"
                   subtitle="Generate practice questions to test your understanding of your content"
                   onGenerate={() => requestGenerate("quizzes")}
-                  isLoading={isLoading}
+                  isLoading={isTypeLoading("quizzes")}
                 />
               )
             ) : null}
