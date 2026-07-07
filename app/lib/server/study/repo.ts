@@ -10,6 +10,7 @@ import {
 } from "@/app/lib/server/study/types";
 import { chunkText, normalizeText } from "@/app/lib/server/study/text";
 import {
+  currentEmbedderId,
   indexStudySourceInBackground,
   reindexStudySource,
   removeStudySessionFromIndex,
@@ -467,7 +468,7 @@ export async function reindexStaleStudySources(
     "keyword_only",
     "failed",
   ];
-  const currentEmbedderId = `gemini:${process.env.GEMINI_EMBED_MODEL || "text-embedding-004"}`;
+  const embedderId = currentEmbedderId();
 
   type Candidate = {
     _id: string;
@@ -510,7 +511,7 @@ export async function reindexStaleStudySources(
   const stale = candidates.filter((s) => {
     if (!s.text.trim()) return false;
     if (s.indexStatus && RECOVERABLE.includes(s.indexStatus)) return true;
-    if (s.indexStatus === "indexed" && s.embedderId && s.embedderId !== currentEmbedderId) {
+    if (s.indexStatus === "indexed" && s.embedderId && s.embedderId !== embedderId) {
       return true;
     }
     return false;

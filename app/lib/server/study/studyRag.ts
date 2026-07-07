@@ -14,6 +14,10 @@ import {
   IndexStatus,
   retrieve,
 } from "@/app/lib/server/rag";
+import { currentEmbedderId } from "@/app/lib/server/rag/embedders/gemini";
+
+/** Re-exported so the repo's model-drift check has a single source of truth. */
+export { currentEmbedderId };
 
 function namespaceFor(sessionId: string): string {
   return `study-session:${sessionId}`;

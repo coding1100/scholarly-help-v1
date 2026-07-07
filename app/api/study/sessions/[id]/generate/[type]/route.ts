@@ -111,6 +111,13 @@ export async function POST(
         503,
       );
     }
-    return fail("Failed to generate artifact", 500);
+    // Surface the real reason (rate limit, safety block, timeout, bad JSON…)
+    // instead of a generic message — there's no offline stub anymore, so the
+    // user needs to know why it failed and whether retrying will help.
+    const detail =
+      error instanceof Error && error.message
+        ? error.message
+        : "Failed to generate artifact";
+    return fail(`Failed to generate ${params.type}: ${detail}`, 502);
   }
 }

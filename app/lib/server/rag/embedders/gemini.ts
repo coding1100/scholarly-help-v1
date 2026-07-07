@@ -1,8 +1,13 @@
 import { Embedder } from "@/app/lib/server/rag/types";
 
 const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta";
-// text-embedding-004 outputs 768-dim vectors.
-const DEFAULT_EMBED_MODEL = "text-embedding-004";
+// text-embedding-004 was shut down 2026-01-14 and now 404s. gemini-embedding-001
+// is also scheduled for shutdown (2026-07-14), so we default to the current
+// recommended model, gemini-embedding-2. Override with GEMINI_EMBED_MODEL.
+const DEFAULT_EMBED_MODEL = "gemini-embedding-2";
+// gemini-embedding-2 outputs 3072-dim vectors by default, but supports
+// Matryoshka scaling: we request 768 dims (via outputDimensionality) to stay
+// compatible with the existing vector store / Atlas index and keep costs down.
 const EMBED_DIMENSIONS = 768;
 // Gemini's batchEmbedContents accepts up to 100 requests; stay under to be safe.
 const MAX_BATCH = 96;
@@ -21,6 +26,15 @@ function getApiKey(): string {
 
 function getModel(): string {
   return process.env.GEMINI_EMBED_MODEL || DEFAULT_EMBED_MODEL;
+}
+
+/**
+ * The stable embedder id for the currently-configured model. Stored alongside
+ * vectors so callers can detect model drift (and re-index) when the embedding
+ * model changes. Single source of truth — do not hardcode this elsewhere.
+ */
+export function currentEmbedderId(): string {
+  return `gemini:${getModel()}`;
 }
 
 async function embedBatchOnce(
@@ -43,6 +57,8 @@ async function embedBatchOnce(
             model: `models/${model}`,
             content: { parts: [{ text }] },
             taskType,
+            // Scale the (default 3072-dim) output down to our store's dimension.
+            outputDimensionality: EMBED_DIMENSIONS,
           })),
         }),
       },
@@ -97,7 +113,7 @@ async function embedBatchWithRetry(
  */
 export function createGeminiEmbedder(): Embedder {
   return {
-    id: `gemini:${getModel()}`,
+    id: currentEmbedderId(),
     dimensions: EMBED_DIMENSIONS,
     async embed(texts: string[]): Promise<number[][]> {
       return embedDocuments(texts);
