@@ -84,7 +84,7 @@ jobs:
           scp -i ~/.ssh/deploy_key deploy.tar.gz $EC2_USER@$EC2_HOST:/tmp/
 
           # Execute deployment commands on EC2
-          ssh -i ~/.ssh/deploy_key $EC2_USER@$EC2_HOST "APP_DIR='$APP_DIR' GEMINI_API_KEY='$GEMINI_API_KEY' GEMINI_MODEL_ID='$GEMINI_MODEL_ID' bash -s" << 'EOF'
+          ssh -i ~/.ssh/deploy_key $EC2_USER@$EC2_HOST "APP_DIR='$APP_DIR' GEMINI_API_KEY='$GEMINI_API_KEY' GEMINI_MODEL_ID='$GEMINI_MODEL_ID' GOOGLE_CLIENT_TOOL_EMAIL='$GOOGLE_CLIENT_TOOL_EMAIL' GOOGLE_PRIVATE_TOOL_KEY='$GOOGLE_PRIVATE_TOOL_KEY' GOOGLE_SHEET_TOOL_ID='$GOOGLE_SHEET_TOOL_ID' bash -s" << 'EOF'
             # Ensure PATH includes where pm2 is installed
             export PATH=$PATH:/home/ubuntu/.nvm/versions/node/v24.12.0/bin
             
@@ -105,13 +105,21 @@ jobs:
               cp ../.env .env
             fi
 
-            # Ensure Gemini runtime keys exist for server-side API calls
+            # Ensure Gemini + Google Sheets (TOOL) runtime keys exist for
+            # server-side API calls. These are read at runtime (not NEXT_PUBLIC),
+            # so they must live in the .env that `next start` loads on the server.
             touch .env
             sed -i '/^GEMINI_API_KEY=/d' .env
             sed -i '/^GEMINI_MODEL_ID=/d' .env
+            sed -i '/^GOOGLE_CLIENT_TOOL_EMAIL=/d' .env
+            sed -i '/^GOOGLE_PRIVATE_TOOL_KEY=/d' .env
+            sed -i '/^GOOGLE_SHEET_TOOL_ID=/d' .env
             {
               echo "GEMINI_API_KEY=$GEMINI_API_KEY"
               echo "GEMINI_MODEL_ID=$GEMINI_MODEL_ID"
+              echo "GOOGLE_CLIENT_TOOL_EMAIL=$GOOGLE_CLIENT_TOOL_EMAIL"
+              echo "GOOGLE_PRIVATE_TOOL_KEY=$GOOGLE_PRIVATE_TOOL_KEY"
+              echo "GOOGLE_SHEET_TOOL_ID=$GOOGLE_SHEET_TOOL_ID"
             } >> .env
 
             # Start the application with PM2
