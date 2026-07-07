@@ -415,13 +415,12 @@ export default function Header() {
 
         {isSpecialRoute && (
           <div>
-            {/* Exact copy of the / page CTA: phone number on desktop, "Text Us"
-                on mobile (single tel: link). */}
+            {/* Desktop: phone number that opens the dialer (call). */}
             <a
-              href={`tel:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER || "17167081869"}`}
-              className="flex items-center sm:text-primary-400 sm:text-[#565add] transition sm:bg-white bg-[#9F92EC] sm:rounded-none rounded-full sm:px-0 px-4 sm:py-0 py-1"
+              href={`tel:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER || "16464806092"}`}
+              className="hidden sm:flex items-center text-primary-400 text-[#565add] transition"
             >
-              <span className="w-6 mr-1 text-primary-400 sm:block hidden">
+              <span className="w-6 mr-1 text-primary-400">
                 <Image
                   src={Phone}
                   alt="Phone"
@@ -430,8 +429,15 @@ export default function Header() {
                   fetchPriority="high"
                 />
               </span>
-              <span className="sm:block hidden">+1 646 480 6092</span>
-              <span className="sm:hidden block text-white">Text Us</span>
+              <span>+1 646 480 6092</span>
+            </a>
+            {/* Mobile: "Text Us" that opens the SMS app (sms:, not tel:). */}
+            <a
+              href={`sms:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER || "16464806092"}`}
+              aria-label="Text us"
+              className="sm:hidden flex items-center bg-[#9F92EC] rounded-full px-4 py-1 text-white transition"
+            >
+              Text Us
             </a>
           </div>
         )}
