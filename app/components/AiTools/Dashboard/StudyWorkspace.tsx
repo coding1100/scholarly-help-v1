@@ -992,41 +992,33 @@ export default function StudyWorkspace() {
       );
       return;
     }
+    const labels: Record<StudyArtifactType, string> = {
+      notes: "Study notes",
+      summary: "Summary",
+      flashcards: "Flashcards",
+      quizzes: "Quiz",
+    };
     setLoadingByType((prev) => ({ ...prev, [type]: true }));
     try {
+      // Always a live AI result now (no offline stub) — replace on success.
       const result = await generateStudyArtifact(sessionId, type, {
         mode: STUDY_MODE,
         examTopics: [],
       });
-      const labels: Record<StudyArtifactType, string> = {
-        notes: "Study notes",
-        summary: "Summary",
-        flashcards: "Flashcards",
-        quizzes: "Quiz",
-      };
-      if (result.degraded) {
-        // The server fell back to a non-AI extract (LLM unreachable). Keep any
-        // existing REAL artifact on screen (the server also kept it in the DB)
-        // and tell the user — never silently replace good content with a stub.
-        setArtifacts((prev) =>
-          prev[type] ? prev : { ...prev, [type]: result.content },
-        );
-        toast(
-          `AI is temporarily unavailable — ${labels[
-            type
-          ].toLowerCase()} could not be regenerated. Please try again in a moment.`,
-          { icon: "⚠️", duration: 6000 },
-        );
-      } else {
-        setArtifacts((prev) => ({
-          ...prev,
-          [type]: result.content,
-        }));
-        toast.success(`${labels[type]} ready`);
-      }
+      setArtifacts((prev) => ({
+        ...prev,
+        [type]: result.content,
+      }));
+      toast.success(`${labels[type]} ready`);
     } catch (error) {
+      // A genuine AI failure. Keep whatever is already on screen and show a real
+      // error — never a silent "looks generated but isn't" state.
       console.error(`Failed to generate ${type}`, error);
-      toast.error(`Failed to generate ${type}`);
+      const reason =
+        error instanceof Error && error.message
+          ? error.message
+          : `Could not generate ${labels[type].toLowerCase()}. Please try again.`;
+      toast.error(reason);
     } finally {
       setLoadingByType((prev) => ({ ...prev, [type]: false }));
     }
