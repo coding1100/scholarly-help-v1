@@ -324,9 +324,13 @@ const MAP_CHUNK_CHARS = 6000;
 const MAP_CONCURRENCY = 6;
 
 function summaryOutputTokenBudget(target: number): number {
-  // ~1.4 tokens per word, plus headroom for Markdown/JSON syntax. Clamp so a
-  // huge source can still produce its (capped) summary without overrunning.
-  return Math.min(8192, Math.max(700, Math.round(target * 2) + 400));
+  // The summary JSON holds BOTH a `short` and a full `detailed` markdown body,
+  // and JSON escaping (\n\n, headings, quotes) inflates the token count well
+  // beyond a naive words×tokens estimate. Undersizing this truncates the
+  // response mid-object (finishReason MAX_TOKENS) → unparseable JSON. Budget
+  // generously (~3 tokens/word + large fixed headroom) with a high floor and a
+  // higher ceiling so realistic summaries complete.
+  return Math.min(12000, Math.max(2048, Math.round(target * 3) + 1200));
 }
 
 /**
