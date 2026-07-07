@@ -12,6 +12,10 @@ import {
   isTakeMyClass3LandingPage,
   isTakeMyClassHeaderRoute,
 } from "@/app/lib/takeMyClassLandingRoutes";
+import {
+  handleTextUsClick,
+  rememberFbclidFromUrl,
+} from "@/app/lib/client/smsTracking";
 
 const Star: React.FC<{ className?: string }> = ({ className }) => (
   <svg
@@ -37,6 +41,16 @@ export default function Header() {
     pathname === "/take-my-exam/" || pathname === "/take-my-exam";
   const isSpecialRoute = isTakeMyClass || isTakeMyExam;
   const isSpecialRoute3 = isSpecialRoute || isTakeMyClass3;
+
+  // SMS offline-conversion tracking is scoped to exactly /take-my-class.
+  const isTakeMyClassExact =
+    pathname === "/take-my-class" || pathname === "/take-my-class/";
+
+  // Persist fbclid (cookie + sessionStorage) as early as the header mounts, so a
+  // later "Text Us" tap can recover it even if the URL query is gone.
+  useEffect(() => {
+    if (isTakeMyClassExact) rememberFbclidFromUrl();
+  }, [isTakeMyClassExact]);
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeMenu, setActiveMenu] = useState<number | null>(null);
@@ -431,10 +445,15 @@ export default function Header() {
               </span>
               <span>+1 646 480 6092</span>
             </a>
-            {/* Mobile: "Text Us" that opens the SMS app (sms:, not tel:). */}
+            {/* Mobile: "Text Us" that opens the SMS app (sms:, not tel:).
+                On /take-my-class, an fbclid tap logs a Send SMS Tracking row and
+                pre-fills the body with a Reference ID (offline-conversion match). */}
             <a
               href={`sms:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER || "16464806092"}`}
               aria-label="Text us"
+              onClick={
+                isTakeMyClassExact ? (e) => handleTextUsClick(e) : undefined
+              }
               className="sm:hidden flex items-center bg-[#9F92EC] rounded-full px-4 py-1 text-white transition"
             >
               Text Us
