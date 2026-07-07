@@ -93,8 +93,26 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error appending to Send SMS Tracking sheet:", error);
+    // No server logs available, so surface the real reason in the response.
+    // googleapis nests the useful message under response.data.error; fall back
+    // to error.message. Also report which env vars are present (names only, no
+    // values) to catch a stale/empty PM2 env quickly.
+    const err = error as {
+      message?: string;
+      response?: { data?: { error?: { message?: string }; error_description?: string } };
+    };
+    const detail =
+      err?.response?.data?.error?.message ||
+      err?.response?.data?.error_description ||
+      err?.message ||
+      String(error);
+    const envPresent = {
+      GOOGLE_CLIENT_TOOL_EMAIL: Boolean(process.env.GOOGLE_CLIENT_TOOL_EMAIL),
+      GOOGLE_PRIVATE_TOOL_KEY: Boolean(process.env.GOOGLE_PRIVATE_TOOL_KEY),
+      GOOGLE_SHEET_TOOL_ID: Boolean(process.env.GOOGLE_SHEET_TOOL_ID),
+    };
     return NextResponse.json(
-      { success: false, message: "Failed to append row" },
+      { success: false, message: "Failed to append row", detail, envPresent },
       { status: 500 },
     );
   }
