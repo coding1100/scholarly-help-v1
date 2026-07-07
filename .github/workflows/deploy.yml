@@ -122,7 +122,16 @@ jobs:
               echo "GOOGLE_SHEET_TOOL_ID=$GOOGLE_SHEET_TOOL_ID"
             } >> .env
 
-            # Start the application with PM2
+            # Start the application with PM2.
+            # `next start` does not reliably load .env at runtime, so export the
+            # runtime vars into this shell first — a fresh `pm2 start` (the app
+            # was pm2-deleted above) captures the environment of the shell that
+            # starts it, injecting these into the running process.
+            export GEMINI_API_KEY="$GEMINI_API_KEY"
+            export GEMINI_MODEL_ID="$GEMINI_MODEL_ID"
+            export GOOGLE_CLIENT_TOOL_EMAIL="$GOOGLE_CLIENT_TOOL_EMAIL"
+            export GOOGLE_PRIVATE_TOOL_KEY="$GOOGLE_PRIVATE_TOOL_KEY"
+            export GOOGLE_SHEET_TOOL_ID="$GOOGLE_SHEET_TOOL_ID"
             pm2 start npm --name "scholarly-help" -- start
             pm2 save
 
