@@ -131,14 +131,28 @@ function buildSmsBody(referenceId: string): string {
   return `Reference ID: ${referenceId}\n\nHi Scholarly Help,\n\nMessage: `;
 }
 
+/**
+ * Short 10-char reference ID (uppercase A–Z0–9). Cryptographically random when
+ * available so collisions are effectively impossible at our volume. Shown to the
+ * user in the SMS body, so kept short and unambiguous.
+ */
 function generateReferenceId(): string {
-  if (isBrowser() && typeof window.crypto?.randomUUID === "function") {
-    return window.crypto.randomUUID();
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; // 36 chars
+  const length = 10;
+  let out = "";
+  if (isBrowser() && typeof window.crypto?.getRandomValues === "function") {
+    const bytes = new Uint8Array(length);
+    window.crypto.getRandomValues(bytes);
+    for (let i = 0; i < length; i++) {
+      out += alphabet[bytes[i] % alphabet.length];
+    }
+    return out;
   }
   // Fallback: extremely rare (very old browsers).
-  return `sh-${Date.now().toString(36)}-${Math.floor(
-    Math.random() * 1e9,
-  ).toString(36)}`;
+  for (let i = 0; i < length; i++) {
+    out += alphabet[Math.floor(Math.random() * alphabet.length)];
+  }
+  return out;
 }
 
 /** Fire-and-forget append to the Send SMS Tracking sheet. Never blocks the SMS. */
