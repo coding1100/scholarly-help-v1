@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
         process.env.GEMINI_MODEL ||
         "gemini-2.5-flash (default)",
       GEMINI_EMBED_MODEL:
-        process.env.GEMINI_EMBED_MODEL || "text-embedding-004 (default)",
+        process.env.GEMINI_EMBED_MODEL || "gemini-embedding-2 (default)",
     },
   };
 
