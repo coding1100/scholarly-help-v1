@@ -2,7 +2,6 @@ import {
   chunkText,
   countWords,
   quizTargetQuestionCount,
-  splitSentences,
   summaryTargetWordCount,
 } from "@/app/lib/server/study/text";
 import {
@@ -24,10 +23,7 @@ import {
   StudyArtifactType,
   StudyLearningMode,
 } from "@/app/lib/server/study/types";
-import {
-  generateGeminiText,
-  GeminiConfigError,
-} from "@/app/lib/server/ai/gemini";
+import { generateGeminiText } from "@/app/lib/server/ai/gemini";
 
 /**
  * A short, unique directive appended to generation prompts so that pressing
@@ -221,8 +217,8 @@ function generationTemperature(base: number, isRegeneration: boolean): number {
  * Locate the outermost JSON value in a possibly-noisy model response. With
  * `responseJson: true` the whole body is usually valid JSON, but a stray leading
  * token ("Here is your summary: {…}"), a code fence, or a truncated tail
- * (finishReason MAX_TOKENS) would otherwise make JSON.parse throw and silently
- * collapse the whole generation to the degraded stub. We try, in order:
+ * (finishReason MAX_TOKENS) would otherwise make JSON.parse throw and fail the
+ * whole generation. We try, in order:
  *   1. the raw trimmed body,
  *   2. the first fenced ```json block,
  *   3. the outermost {…} / […] slice.
@@ -268,8 +264,9 @@ function parseJson<T>(raw: string): T {
 /**
  * Validate the parsed artifact has the shape the UI expects. A model returning
  * `{"summary": "..."}` instead of `{short, detailed}` would otherwise flow to
- * the DB and UI as `undefined` fields with no `degraded` flag. Throwing here
- * makes the retry/fallback path engage just like a parse failure.
+ * the DB and UI as `undefined` fields. Throwing here makes the retry path
+ * engage just like a parse failure (and, if both attempts fail, surfaces a real
+ * error to the user rather than a broken artifact).
  */
 function assertShape(ok: boolean, label: string): void {
   if (!ok) {
@@ -377,20 +374,24 @@ async function generateWithRegenerationRetry<T>(
     insist: false,
   };
   // Retry tuned to FORCE DIVERGENCE when a regeneration came back too similar:
-  // a fresh seed, a different lens, and a hotter/wider sample so the output
-  // actually moves.
+  // a fresh seed, a different lens, and a hotter sample so the output actually
+  // moves. topP stays moderate (0.9) — pushing it to 1.0 noticeably raises the
+  // odds of truncated/invalid JSON, which made the retry throw and silently fall
+  // back to the too-similar first result (the "regeneration gave identical
+  // output" bug). Temperature does the diversifying; a valid parse matters more.
   const divergeRetry: RegenAttempt = {
     seed: samplingSeed(),
     lens: pickRegenerationLens(),
-    temperature: Math.min(0.98, first.temperature + 0.15),
-    topP: 1,
+    temperature: Math.min(0.9, first.temperature + 0.15),
+    topP: 0.9,
     insist: true,
   };
 
   // A single attempt can fail for reasons the HTTP-level retry can't fix
   // (e.g. malformed JSON that slipped past response constraints). One more
   // attempt with a fresh seed (at a SAFE, JSON-friendly temperature) usually
-  // recovers; only then bubble the error up to the caller's degraded fallback.
+  // recovers; if it still fails, the error propagates so the route returns a
+  // real error to the user (there is no offline stub).
   let firstResult: T;
   try {
     firstResult = await run(first);
@@ -514,8 +515,8 @@ async function buildSummary(
 
   // If a large fraction of the document failed to map, the reduce step would
   // silently summarize only the surviving minority as if it were the whole
-  // document. Throw so the caller's retry/degraded path engages and the UI can
-  // warn, rather than presenting a confident but partial summary.
+  // document. Throw so the request fails with a real error and the user can
+  // retry, rather than presenting a confident but partial summary.
   const MAX_FAILED_CHUNK_RATIO = 0.4;
   if (chunks.length > 0 && failedChunks / chunks.length > MAX_FAILED_CHUNK_RATIO) {
     throw new Error(
@@ -738,16 +739,15 @@ async function buildQuiz(
 
 export interface GeneratedArtifact {
   content: unknown;
-  /**
-   * True when the LLM could not be reached/parsed and the content is the
-   * deterministic offline extract instead of a real AI artifact. The route
-   * forwards this so the UI can warn the user rather than presenting the stub
-   * as a genuine AI result (which made outages look like "the AI always
-   * returns the same summary").
-   */
-  degraded: boolean;
 }
 
+/**
+ * Generate an artifact with the AI. There is NO offline/deterministic fallback:
+ * every artifact is produced live by Gemini. If the model can't be
+ * reached/parsed, this throws and the caller surfaces a real error — we never
+ * fabricate a stub and present it as an AI result (that made outages look like
+ * "the AI always returns the same summary").
+ */
 export async function generateArtifact(
   type: StudyArtifactType,
   rawSourceText: string,
@@ -759,129 +759,22 @@ export async function generateArtifact(
 
   const previousContent = options.previousContent;
 
-  try {
-    switch (type) {
-      case "summary":
-        return {
-          content: await buildSummary(sourceText, mode, previousContent),
-          degraded: false,
-        };
-      case "notes":
-        return {
-          content: await buildNotes(sourceText, mode, examTopics, previousContent),
-          degraded: false,
-        };
-      case "flashcards":
-        return {
-          content: await buildFlashcards(sourceText, mode, previousContent),
-          degraded: false,
-        };
-      case "quizzes":
-        return {
-          content: await buildQuiz(sourceText, mode, examTopics, previousContent),
-          degraded: false,
-        };
-      default:
-        return { content: { message: "Unsupported generation type." }, degraded: false };
-    }
-  } catch (error) {
-    console.error("study.generateArtifact.llm", error);
-    // A misconfigured/rejected API key is a PERMANENT server error, not a
-    // transient blip. Falling back to the deterministic sentence-slicer here is
-    // exactly what made a broken deploy look like a working feature that just
-    // "always returns the same summary". Re-throw so the route returns a real
-    // 5xx the user can see, instead of silently serving an offline stub.
-    if (error instanceof GeminiConfigError) {
-      throw error;
-    }
-    const prioritized = prepareSource(sourceText, mode, examTopics);
-    const fallbackSentences = splitSentences(prioritized);
-    if (type === "summary") {
-      // Keep the fallback formatted (headings + CATEGORIZED bullets) so the UI
-      // still renders a prettified summary even when the LLM call fails. Key
-      // Points are split into simple categorized sub-sections to match the
-      // normal (LLM) output contract.
-      const keyPoints = fallbackSentences.slice(0, 6);
-      const detailParts = [
-        "## Overview",
-        fallbackSentences.slice(0, 2).join(" ") || "Summary unavailable.",
-      ];
-      if (keyPoints.length > 0) {
-        detailParts.push("", "## Key Points");
-        const primary = keyPoints.slice(0, Math.ceil(keyPoints.length / 2));
-        const secondary = keyPoints.slice(Math.ceil(keyPoints.length / 2));
-        detailParts.push(
-          "### Main Ideas",
-          ...primary.map((sentence) => `- ${sentence}`),
-        );
-        if (secondary.length > 0) {
-          detailParts.push(
-            "",
-            "### Supporting Details",
-            ...secondary.map((sentence) => `- ${sentence}`),
-          );
-        }
-      }
+  switch (type) {
+    case "summary":
+      return { content: await buildSummary(sourceText, mode, previousContent) };
+    case "notes":
       return {
-        content: {
-          short: fallbackSentences.slice(0, 2).join(" "),
-          detailed: detailParts.join("\n"),
-        },
-        degraded: true,
+        content: await buildNotes(sourceText, mode, examTopics, previousContent),
       };
-    }
-    if (type === "notes") {
+    case "flashcards":
       return {
-        content: {
-          title: mode === "exam" ? "Exam Study Guide" : "Study Notes",
-          mode,
-          examTips:
-            mode === "exam"
-              ? ["Review headings and repeated terms in your source.", "Focus on definitions marked as important."]
-              : undefined,
-          sections: [
-            { heading: "Key Ideas", priority: "must-know", bullets: fallbackSentences.slice(0, 6) },
-            { heading: "Details to Review", bullets: fallbackSentences.slice(6, 12) },
-          ].filter((section) => section.bullets.length > 0),
-        },
-        degraded: true,
+        content: await buildFlashcards(sourceText, mode, previousContent),
       };
-    }
-    if (type === "flashcards") {
+    case "quizzes":
       return {
-        content: [
-          {
-            id: "card-1",
-            front: "What is the main idea in your uploaded source?",
-            back:
-              fallbackSentences[0] ||
-              "Upload richer source text to generate stronger flashcards.",
-          },
-        ],
-        degraded: true,
+        content: await buildQuiz(sourceText, mode, examTopics, previousContent),
       };
-    }
-    if (type === "quizzes") {
-      return {
-        content: [
-          {
-            id: "quiz-1",
-            question: "Which statement best reflects your source?",
-            options: [
-              fallbackSentences[0] || "Not enough source text.",
-              "A statement that contradicts the source.",
-              "An unrelated fact.",
-              "None of the above.",
-            ],
-            correctAnswerIndex: 0,
-            explanation: "This matches your uploaded source material.",
-            difficulty: "easy",
-            questionType: "recall",
-          },
-        ],
-        degraded: true,
-      };
-    }
-    return { content: { message: "Unsupported generation type." }, degraded: true };
+    default:
+      throw new Error(`Unsupported generation type: ${type}`);
   }
 }
