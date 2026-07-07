@@ -51,10 +51,6 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL_ID: ${{ secrets.GEMINI_MODEL_ID }}
           
-          GOOGLE_CLIENT_TOOL_EMAIL: toolsheet@scholarlyhelp.iam.gserviceaccount.com
-          GOOGLE_PRIVATE_TOOL_KEY: "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDp1abIU2VaBS0c\nKIBgshwbDYg9F+qmDeiOQxikAFvMvyvaZax1kqzcsdiYwa+uVjR5VjSCWD3hlH2g\nb0VN5/FxECA8s+6XYBESwW/4LJo/NdD6RcnT4yLnEcKUiWl6OZzUlT9hytwHLrBj\nrSA7gU0x2hkb1aYvq+QwdAEee2gzUaCbwcNsqHucRESJzX9OQWSgPWWBGcDf5Uy8\nnc30PaiyA0aLyq563QARWFkTzDm7y287zEbyu1//c3UpYBjTQR/LC9k9nEoE0Ln8\nl6SVFiRtxNsCp8EJEGEH+tmAfRDncbUSTGMY+J5fq7jKjYFpeyunL/i2XTC9DV7o\nQtX6rX0lAgMBAAECggEAImjaPihnhbO1S6t6GMCc+i4nmjXmxcDONAEToy6aU6re\nHSlRE4wd++v/35rA63qsBh71YyjxEjzzr6QwIqK7GNQyqjwgJA5y9Luaan7Fw/97\nXRjf9lo6TJ6Eb6844k+QEIhV52Ietr/cHQ7g62C/p1Jc14e9CM7WqXqon3+xebuF\nRsDioklPKAKcHWhb0kwKwMTDnBZKmBA9X3IDavnU962Uhnhve+WzakWp4kQ/pove\nzFaCp/l7TOD2Q2dV2AO4xMzSPLgY4FazVY3ta2Tgn5uMv2CiuYsA/HqoO7wD7IZt\nZhRGWmqQ8Yc5h6xCtbrdgsbEE1sEoPf5Eut8veqyAQKBgQD84oUl+rbuYwm/j+at\nzEd7h83+VuqrvoyZgPBfoFn20gDfRignn1zoik7BRHymoAoBJVwTZ52qugnYh/cc\nc+2iYN3VS4oaXFhoER06xeEkv7FkJ89Mri85pEpnVL5ZgVNrBnW/GXEJphMNRMmJ\nkyB1sZyeHoYo/PDN8e+DbW/URQKBgQDstw5IoRbIVK6tUvleBQGHEd1lOx9L9nsQ\nd696gxs6fRaSfGXzyg4t03VckC7tLlmM39O3/XffyWMoWousb6LkShI4yEfDxIND\n5bYB7iaOzDn/iXmUeD7X+wFWE2xUbL7IR+RTjGf00L04jw/S1XaM0vQdRVy2GS4+\nfV8eD8BDYQKBgFKkEBEmSqvCz8e7Vg5L6LxU2Bua+dugTMBJY8RMWboQTNqqSasR\nKEKSGESOhhHJ0Rsow1tQDDVj0J3jaPzyYaEj+LqgkgQlU3rGxP+U9QuWXXk2jUco\n0SQMLYhxKDeFzOX32XjW7prRm/5FEXuVChGMNntxzDQO3P7gZn5TwCzlAoGAPHTc\nPwx1ZyDJpBbG/Y5Fv5t+cfZRnfMLpz8KID4P3DZKZ4tB9quqR2X0WXmxon3t/R7F\nUf54eT1UB+BoP9gbQDbyxHHScltkMxkeDQwn6NycC3mvBY5Yboz64GMBjeZgK4LA\n+92mR05wpVtUbUJ7jqfqFPe8H/36Y5ddja30KsECgYEAyb4IeOUV+Ltfx8lsrfM2\nTlVOssS2LKEDb5U4gVwZoS6kC2iFT3W5gbR2SHK4dvpd2cwNa+x4zuLrwMYraPXo\nwPoKin5FHuzgliIRvqM5j5k1k6dwYfCiYOkumzwi+MGz7B1g9IcDqus00Dq3M0OG\n3PB+LpZzkIlNWH44nAES38A=\n-----END PRIVATE KEY-----\n"
-          GOOGLE_SHEET_TOOL_ID: 1GObnuYilA-eTpAxEY-8nHVIuT2qFlE93ii-v4ISDNdc
-          
       - name: Create deployment package
         run: |
           mkdir -p deploy
@@ -74,6 +70,9 @@ jobs:
           APP_DIR: ${{ secrets.APP_DIR }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL_ID: ${{ secrets.GEMINI_MODEL_ID }}
+          GOOGLE_CLIENT_TOOL_EMAIL: ${{ secrets.GOOGLE_CLIENT_TOOL_EMAIL }}
+          GOOGLE_PRIVATE_TOOL_KEY: ${{ secrets.GOOGLE_PRIVATE_TOOL_KEY }}
+          GOOGLE_SHEET_TOOL_ID: ${{ secrets.GOOGLE_SHEET_TOOL_ID }}
         run: |
           # Setup SSH
           mkdir -p ~/.ssh
