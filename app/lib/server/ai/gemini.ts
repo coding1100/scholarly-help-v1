@@ -181,11 +181,21 @@ async function callGeminiGenerateOnce(input: GenerateInput): Promise<string> {
     }
     const payload = (await response.json()) as GeminiGenerateResponse;
     const text = extractText(payload);
+    const finishReason = getCandidateFinishReason(payload);
     if (!text) {
-      const finishReason = getCandidateFinishReason(payload);
       throw new Error(
         `Gemini returned an empty response${finishReason ? ` (finishReason: ${finishReason})` : ""}.`,
       );
+    }
+    // A JSON response cut off at the token limit is unparseable — surface it as a
+    // (retryable) truncation error instead of returning half an object that
+    // downstream JSON.parse would reject with a confusing "invalid JSON".
+    if (input.responseJson && finishReason === "MAX_TOKENS") {
+      const error = new Error(
+        "Gemini response was truncated at the token limit (finishReason: MAX_TOKENS).",
+      ) as Error & { truncated?: boolean };
+      error.truncated = true;
+      throw error;
     }
     return text;
   } catch (error) {
@@ -206,18 +216,29 @@ async function callGeminiGenerateOnce(input: GenerateInput): Promise<string> {
  */
 async function callGeminiGenerate(input: GenerateInput): Promise<string> {
   const MAX_ATTEMPTS = 3;
+  const ABSOLUTE_TOKEN_CAP = 16000;
   let lastError: unknown;
+  let attemptInput = input;
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
     try {
-      return await callGeminiGenerateOnce(input);
+      return await callGeminiGenerateOnce(attemptInput);
     } catch (error) {
       lastError = error;
       if (error instanceof GeminiConfigError) throw error;
       const status = (error as Error & { status?: number }).status;
+      const truncated = (error as Error & { truncated?: boolean }).truncated === true;
       const retryable =
+        truncated ||
         (typeof status === "number" && isRetryableStatus(status)) ||
         (error instanceof Error && /timed out|empty response/i.test(error.message));
       if (!retryable || attempt === MAX_ATTEMPTS - 1) throw error;
+      // On truncation, retrying with the SAME budget just truncates again — grow
+      // it (bounded) so the next attempt can actually complete the JSON.
+      if (truncated) {
+        const current = attemptInput.maxOutputTokens ?? 1400;
+        const grown = Math.min(ABSOLUTE_TOKEN_CAP, Math.round(current * 1.6));
+        attemptInput = { ...attemptInput, maxOutputTokens: grown };
+      }
       await new Promise((resolve) => setTimeout(resolve, 700 * (attempt + 1)));
     }
   }
