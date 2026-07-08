@@ -40,6 +40,17 @@ export const FORMAL_TRANSITION_PHRASES: readonly string[] = [
   "it is worth noting",
 ];
 
+/**
+ * Date this content-tell vocabulary was last reviewed (ISO yyyy-mm-dd). MIRROR of the
+ * backend CONTENT_TELLS_VERSION (T4). The overused-AI-word list decays over time, so
+ * this stamp lets tooling warn when the list is stale. Keep byte-identical to the
+ * backend value; the drift test checks it.
+ */
+export const CONTENT_TELLS_VERSION = "2026-07-08";
+
+/** Days before the content-tell list is considered stale. MIRROR of the backend. */
+export const CONTENT_TELLS_MAX_AGE_DAYS = 180;
+
 /** Content-pattern AI-tell vocabulary (machine-generated regardless of position). */
 export const CONTENT_TELL_TOKENS: readonly string[] = [
   "delve",
@@ -76,6 +87,45 @@ export const CONTENT_TELL_TOKENS: readonly string[] = [
   "plays a vital role",
   "a testament to",
   "in the realm of",
+];
+
+/**
+ * Structural AI tell: copula avoidance. MIRROR of the backend's COPULA_REPLACEMENTS
+ * (source of truth: scholarlyhelp humanizer utils/ai-tells.const.ts). The backend
+ * humanizer reverts these elevated verbs to plain copulas in its enforce pass; this
+ * copy exists so the shared rule set stays in one place and a drift test can assert
+ * the two repos agree. Not fed into countTells (see backend note): these verbs appear
+ * legitimately too often to score every occurrence.
+ */
+export const COPULA_REPLACEMENTS: Record<string, string> = {
+  "serves as": "is",
+  "serve as": "are",
+  "stands as": "is",
+  "stand as": "are",
+  "acts as": "is",
+  "act as": "are",
+  "functions as": "is",
+  "function as": "are",
+  boasts: "has",
+  boast: "have",
+};
+
+/** The copula-avoidance verbs. MIRROR of the backend COPULA_TELL_TOKENS. */
+export const COPULA_TELL_TOKENS: readonly string[] = Object.keys(COPULA_REPLACEMENTS);
+
+/**
+ * Structural AI tell: negative parallelisms ("not just X, but Y"). MIRROR of the
+ * backend NEGATIVE_PARALLELISM_MARKERS. The backend humanizer flattens the formulaic
+ * variants; kept here to keep the rule set in one place.
+ */
+export const NEGATIVE_PARALLELISM_MARKERS: readonly string[] = [
+  "it's not just",
+  "it is not just",
+  "it's not only",
+  "it is not only",
+  "not only",
+  "not merely",
+  "not simply",
 ];
 
 /**

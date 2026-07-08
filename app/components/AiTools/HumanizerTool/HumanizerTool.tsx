@@ -3,10 +3,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { FaRegCopy } from "react-icons/fa";
+import { FiCopy, FiCheck } from "react-icons/fi";
 import TextSummarizerInput from "@/app/components/AiTools/TextSummarizerInput";
 import ActionButtons from "@/app/components/AiTools/ActionButtons";
-import ResultDisplay from "@/app/components/AiTools/ResultDisplay";
 import { countWords } from "@/app/utils/text";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
@@ -226,9 +225,6 @@ const HumanizerTool: React.FC = () => {
   const [intensity, setIntensity] = useState<RewriteIntensity>("moderate");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<HumanizerResponse | null>(null);
-  const [resultView, setResultView] = useState<"humanized" | "changes">(
-    "humanized",
-  );
   const [activePanel, setActivePanel] = useState<"humanized" | "ai_detection">(
     "humanized",
   );
@@ -238,6 +234,7 @@ const HumanizerTool: React.FC = () => {
   const [aiDetectView, setAiDetectView] = useState<"score" | "highlights">(
     "score",
   );
+  const [copied, setCopied] = useState(false);
 
   const { gateOpen, closeGate, guardAiClick } = useGuestGate();
 
@@ -255,16 +252,17 @@ const HumanizerTool: React.FC = () => {
   const handleClear = () => {
     setText("");
     setResult(null);
-    setResultView("humanized");
     setAiDetection(null);
     setActivePanel("humanized");
     setAiDetectView("score");
   };
 
-  const handleCopy = async (value: string) => {
+  const handleCopy = async () => {
+    if (!rewrittenText) return;
     try {
-      await navigator.clipboard.writeText(value);
-      toast.success("Copied to clipboard!");
+      await navigator.clipboard.writeText(rewrittenText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
     } catch (e) {
       console.error(e);
       toast.error("Failed to copy.");
@@ -274,7 +272,6 @@ const HumanizerTool: React.FC = () => {
   const handleUploadDocument = async (file: File) => {
     setLoading(true);
     setResult(null);
-    setResultView("humanized");
     try {
       const formData = new FormData();
       formData.append("file", file);
@@ -334,7 +331,6 @@ const HumanizerTool: React.FC = () => {
     guardAiClick(async () => {
       setLoading(true);
       setResult(null);
-      setResultView("humanized");
       setAiDetection(null);
       setActivePanel("humanized");
       trackToolGenerate({ toolName: "Humanizer Tool" });
@@ -438,12 +434,6 @@ const HumanizerTool: React.FC = () => {
     }
   };
 
-  const handleUseThisVersion = () => {
-    if (!rewrittenText) return;
-    setText(rewrittenText);
-    toast.success("Loaded into editor.");
-  };
-
   const canCheckAi = text.trim().length > 0 && wordCount <= 1500 && !loading;
 
   const aiPercent = Math.max(
@@ -460,15 +450,14 @@ const HumanizerTool: React.FC = () => {
       : "AI detection result will appear here...";
 
   return (
-    <div className="container relative overflow-y-auto h-[calc(100vh-8vh)] mx-auto max-w-[840px] px-4 md:px-8 md:pt-8 2xl:max-w-6xl">
+    <div className="container relative overflow-y-auto h-[calc(100vh-8vh)] mx-auto max-w-[840px] px-3 py-4 sm:px-4 md:px-8 md:pt-8 2xl:max-w-6xl">
       <ToolsApiLoader show={loading} />
 
       <div
-        className="grid grid-cols-1 md:grid-cols-2"
-        style={{ alignItems: "stretch" }}
+        className="grid grid-cols-1 md:grid-cols-2 items-stretch"
       >
         {/* Input */}
-        <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 h-auto flex flex-col transition-colors duration-300">
+        <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 min-w-0 h-auto flex flex-col transition-colors duration-300">
           <TextSummarizerInput
             title="AI Humanizer"
             onTextChange={(t) => setText(t)}
@@ -539,182 +528,126 @@ const HumanizerTool: React.FC = () => {
         </div>
 
         {/* Result */}
-        <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 h-auto flex flex-col justify-between transition-colors duration-300">
-          <div className="border-b border-gray-200 dark:border-gray-700 p-3 flex items-center justify-between">
-            <div className="flex gap-2">
-              {(["humanized", "changes"] as const).map((view) => (
-                <button
-                  key={view}
-                  type="button"
-                  onClick={() => setResultView(view)}
-                  disabled={!result || activePanel !== "humanized"}
-                  className={`px-3 py-1.5 rounded-md text-sm border transition-colors duration-300 ${
-                    !result || activePanel !== "humanized"
-                      ? "border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed"
-                      : resultView === view
-                        ? "border-[#2b7fff] text-[#2b7fff] dark:border-[#51a2ff] dark:text-[#51a2ff]"
-                        : "border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                  }`}
-                >
-                  {view === "humanized" ? "Humanized" : "Changes"}
-                </button>
-              ))}
-            </div>
+        <div className="bg-white dark:bg-gray-800 border border-t-0 md:border-t md:border-l-0 border-gray-300 dark:border-gray-700 min-w-0 h-auto flex flex-col justify-between transition-colors duration-300">
+          <div className="border-b border-gray-200 dark:border-gray-700 p-3 flex items-center justify-between gap-2">
+            <h2 className="text-base font-semibold text-gray-800 dark:text-gray-100">
+              {activePanel === "ai_detection" ? "AI Detection" : "Humanized Text"}
+            </h2>
 
-            <div className="flex gap-2">
+            {activePanel === "humanized" && rewrittenText && (
               <button
                 type="button"
-                onClick={() => handleCopy(rewrittenText)}
-                disabled={!rewrittenText || activePanel !== "humanized"}
-                className={`px-3 py-2 border rounded-md flex items-center gap-2 transition-colors duration-300 ${
-                  !rewrittenText || activePanel !== "humanized"
-                    ? "bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed"
-                    : "border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-100 bg-white dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
-                }`}
+                onClick={handleCopy}
+                aria-label={copied ? "Copied" : "Copy humanized text"}
+                title={copied ? "Copied!" : "Copy"}
+                className="flex-shrink-0 p-2 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2b7fff] transition-colors duration-150"
               >
-                <FaRegCopy />
-                Copy
+                {copied ? (
+                  <FiCheck className="h-4 w-4 text-emerald-500" />
+                ) : (
+                  <FiCopy className="h-4 w-4" />
+                )}
               </button>
-              <button
-                type="button"
-                onClick={handleUseThisVersion}
-                disabled={!rewrittenText || activePanel !== "humanized"}
-                className={`px-3 py-2 rounded-md text-white transition-colors duration-300 ${
-                  !rewrittenText || activePanel !== "humanized"
-                    ? "bg-primary-400/60 cursor-not-allowed"
-                    : "bg-primary-400 hover:bg-primary-300"
-                }`}
-              >
-                Use this version
-              </button>
-            </div>
+            )}
           </div>
 
-          <ResultDisplay
-            title={
-              activePanel === "ai_detection"
-                ? "AI Detection"
-                : resultView === "changes"
-                  ? "Changes"
-                  : "Humanized Text"
-            }
-            resultText={
-              activePanel === "humanized" && resultView === "humanized"
-                ? rewrittenText
-                : ""
-            }
-            loading={loading}
-            customBody={
-              activePanel === "humanized" && resultView === "changes" ? (
-                result?.diff && result.diff.length > 0 ? (
-                  <div className="w-full whitespace-pre-wrap leading-relaxed text-gray-800 dark:text-gray-100 p-1">
-                    {result.diff.map((seg, i) => {
-                      if (seg.type === "insert") {
-                        return (
-                          <span
-                            key={i}
-                            className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 rounded-sm"
-                          >
-                            {seg.value}
-                          </span>
-                        );
-                      }
-                      if (seg.type === "delete") {
-                        return (
-                          <span
-                            key={i}
-                            className="bg-red-100 text-red-700 line-through dark:bg-red-900/40 dark:text-red-300 rounded-sm"
-                          >
-                            {seg.value}
-                          </span>
-                        );
-                      }
-                      return <span key={i}>{seg.value}</span>;
-                    })}
-                  </div>
+          <div className="flex-1 flex flex-col min-h-[12rem]">
+            {activePanel === "humanized" ? (
+              /* Humanized text */
+              <div className="flex-1 p-4 overflow-y-auto">
+                {loading ? (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    In process...
+                  </p>
+                ) : rewrittenText ? (
+                  <p className="whitespace-pre-wrap break-words leading-relaxed text-sm text-gray-800 dark:text-gray-100">
+                    {rewrittenText}
+                  </p>
                 ) : (
-                  <div className="h-full w-full flex items-center justify-center text-sm text-gray-500 dark:text-gray-400">
-                    No change tracking available for this result.
+                  <p className="text-sm text-gray-400 dark:text-gray-500">
+                    Result will appear here...
+                  </p>
+                )}
+              </div>
+            ) : (
+              /* AI Detection */
+              <div className="flex-1 flex flex-col">
+                {/* Score / Highlights toggle */}
+                {aiDetection?.success && (
+                  <div className="flex gap-2 p-3 border-b border-gray-200 dark:border-gray-700">
+                    {(["score", "highlights"] as const).map((v) => (
+                      <button
+                        key={v}
+                        type="button"
+                        onClick={() => setAiDetectView(v)}
+                        className={`flex-1 sm:flex-none px-3 py-1.5 rounded-md text-sm border transition-colors duration-300 ${
+                          aiDetectView === v
+                            ? "border-[#2b7fff] text-[#2b7fff] dark:border-[#51a2ff] dark:text-[#51a2ff]"
+                            : "border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        }`}
+                      >
+                        {v === "score" ? "Score" : "Highlights"}
+                      </button>
+                    ))}
                   </div>
-                )
-              ) : activePanel === "ai_detection" ? (
-                <div className="h-full w-full flex flex-col">
-                  {/* View toggle */}
-                  {aiDetection?.success && (
-                    <div className="flex gap-2 p-3 border-b border-gray-200 dark:border-gray-700">
-                      {(["score", "highlights"] as const).map((v) => (
-                        <button
-                          key={v}
-                          type="button"
-                          onClick={() => setAiDetectView(v)}
-                          className={`px-3 py-1.5 rounded-md text-sm border transition-colors duration-300 ${
-                            aiDetectView === v
-                              ? "border-[#2b7fff] text-[#2b7fff] dark:border-[#51a2ff] dark:text-[#51a2ff]"
-                              : "border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                          }`}
-                        >
-                          {v === "score" ? "Score" : "Highlights"}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                )}
 
-                  {/* Score view */}
-                  {aiDetectView === "score" && (
-                    <div className="flex-1 flex flex-col items-center justify-center">
-                      <div className="text-center text-gray-800 dark:text-gray-100">
-                        <div className="text-lg font-semibold">{aiHeadline}</div>
+                {/* Score view */}
+                {aiDetectView === "score" && (
+                  <div className="flex-1 flex flex-col items-center justify-center p-4">
+                    <div className="text-center text-gray-800 dark:text-gray-100">
+                      <div className="text-base sm:text-lg font-semibold text-balance">
+                        {aiHeadline}
                       </div>
-                      <div className="mt-6 mb-6">
-                        <AiGauge percent={aiPercent} />
-                      </div>
-                      <div className="w-full max-w-md space-y-2">
-                        <div className="flex items-center justify-between text-sm">
-                          <div className="flex items-center gap-2">
-                            <span className="inline-block h-3 w-3 rounded-full bg-indigo-500" />
-                            <span className="text-gray-700 dark:text-gray-200">
-                              Resembles AI text
-                            </span>
-                          </div>
+                    </div>
+                    <div className="mt-6 mb-6">
+                      <AiGauge percent={aiPercent} />
+                    </div>
+                    <div className="w-full max-w-md space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className="inline-block h-3 w-3 rounded-full bg-indigo-500" />
                           <span className="text-gray-700 dark:text-gray-200">
-                            {aiPercent}%
+                            Resembles AI text
                           </span>
                         </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <div className="flex items-center gap-2">
-                            <span className="inline-block h-3 w-3 rounded-full bg-emerald-500" />
-                            <span className="text-gray-700 dark:text-gray-200">
-                              No AI text patterns found
-                            </span>
-                          </div>
+                        <span className="text-gray-700 dark:text-gray-200">
+                          {aiPercent}%
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className="inline-block h-3 w-3 rounded-full bg-emerald-500" />
                           <span className="text-gray-700 dark:text-gray-200">
-                            {Math.max(0, 100 - aiPercent)}%
+                            No AI text patterns found
                           </span>
                         </div>
-                        {aiDetection?.reason && !aiDetection.success && (
-                          <div className="pt-2 text-xs text-gray-500 dark:text-gray-400">
-                            {aiDetection.reason}
-                          </div>
-                        )}
+                        <span className="text-gray-700 dark:text-gray-200">
+                          {Math.max(0, 100 - aiPercent)}%
+                        </span>
                       </div>
+                      {aiDetection?.reason && !aiDetection.success && (
+                        <div className="pt-2 text-xs text-gray-500 dark:text-gray-400">
+                          {aiDetection.reason}
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
+                )}
 
-                  {/* Highlights view */}
-                  {aiDetectView === "highlights" && (
-                    <div className="flex-1 flex flex-col p-4 gap-3 overflow-y-auto">
-                      {/* Legend */}
-                      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                        <span className="inline-block h-3 w-4 rounded-sm bg-yellow-300 dark:bg-yellow-400/70 flex-shrink-0" />
-                        Sentences likely written by AI are highlighted
-                      </div>
-                      <SentenceHighlightedText text={text} />
+                {/* Highlights view */}
+                {aiDetectView === "highlights" && (
+                  <div className="flex-1 flex flex-col p-4 gap-3 overflow-y-auto">
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                      <span className="inline-block h-3 w-4 rounded-sm bg-yellow-300 dark:bg-yellow-400/70 flex-shrink-0" />
+                      Sentences likely written by AI are highlighted
                     </div>
-                  )}
-                </div>
-              ) : undefined
-            }
-          />
+                    <SentenceHighlightedText text={text} />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           {result && (
             <div className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700">
