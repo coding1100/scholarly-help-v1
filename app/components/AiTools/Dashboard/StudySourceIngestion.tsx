@@ -108,6 +108,26 @@ export default function StudySourceIngestion({
 
   const isSourceLoading = isSubmitting || isStartingRecording;
 
+  // Submit buttons stay DISABLED until the user has actually supplied what the
+  // submission needs. Previously they were always clickable, so a click with an
+  // empty form ran onSubmit, failed validation, and showed an error toast — and
+  // (before the lazy-create fix) still tripped analytics. Gating the button means
+  // the create-session + add-source path can only ever start from a valid form.
+  //
+  // The session name is only required on the onboarding/creation variant, which
+  // is the only place the field is rendered (mirrors onSubmit's `isCompact` check).
+  const hasSessionName = !isCompact || sessionName.trim().length > 0;
+  // A chosen-but-invalid file (wrong type / too large) must ALSO keep the button
+  // disabled — otherwise clicking it just produces the error toast we're trying
+  // to eliminate. Surface the reason inline instead.
+  const fileError = useMemo(
+    () => (file ? validateStudyUploadFileClient(file) : null),
+    [file],
+  );
+  const canSubmitFile = hasSessionName && !!file && !fileError;
+  const canSubmitUrl = hasSessionName && urlValue.trim().length > 0;
+  const canSubmitText = hasSessionName && textLength > 0;
+
   const setModeStatus = (targetMode: UploadMode, status: InlineStatus | null) => {
     setStatusByMode((prev) => ({ ...prev, [targetMode]: status }));
   };
@@ -481,10 +501,19 @@ export default function StudySourceIngestion({
             <button
               type="button"
               onClick={() => onSubmit({ nextKind: "file", nextFile: file })}
-              disabled={isSubmitting}
+              disabled={isSubmitting || !canSubmitFile}
               aria-busy={isSubmitting}
               aria-label={isSubmitting ? "Loading" : "Upload File"}
-              className={`inline-flex w-full items-center justify-center rounded-lg bg-[#5f70ff] text-sm font-semibold text-white disabled:opacity-60 ${
+              title={
+                canSubmitFile
+                  ? undefined
+                  : fileError
+                    ? fileError
+                    : isCompact && !sessionName.trim()
+                      ? "Name your session and choose a file first"
+                      : "Choose a file first"
+              }
+              className={`inline-flex w-full items-center justify-center rounded-lg bg-[#5f70ff] text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60 ${
                 isCompact ? "min-h-[34px] py-1.5" : "min-h-[40px] py-2"
               }`}
             >
@@ -494,6 +523,11 @@ export default function StudySourceIngestion({
                 "Upload File"
               )}
             </button>
+            {fileError ? (
+              <p className="text-xs text-red-600" role="alert">
+                {fileError}
+              </p>
+            ) : null}
             {!isCompact ? (
               <div className="mt-1 flex items-center justify-between text-sm text-[#5f6588]">
                 <span>
@@ -552,10 +586,17 @@ export default function StudySourceIngestion({
                     nextText: "",
                   })
                 }
-                disabled={isSubmitting}
+                disabled={isSubmitting || !canSubmitUrl}
                 aria-busy={isSubmitting}
                 aria-label={isSubmitting ? "Loading" : "Add Link"}
-                className="inline-flex min-h-[40px] min-w-[120px] items-center justify-center rounded-lg bg-[#5f70ff] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                title={
+                  !canSubmitUrl
+                    ? isCompact && !sessionName.trim()
+                      ? "Name your session and enter a link first"
+                      : "Enter a link first"
+                    : undefined
+                }
+                className="inline-flex min-h-[40px] min-w-[120px] items-center justify-center rounded-lg bg-[#5f70ff] px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isSubmitting ? (
                   <FiLoader className="h-5 w-5 shrink-0 animate-spin" />
@@ -606,10 +647,17 @@ export default function StudySourceIngestion({
                     nextText: text,
                   })
                 }
-                disabled={isSubmitting}
+                disabled={isSubmitting || !canSubmitText}
                 aria-busy={isSubmitting}
                 aria-label={isSubmitting ? "Loading" : "Submit"}
-                className="inline-flex h-fit min-h-[40px] min-w-[88px] shrink-0 items-center justify-center self-end rounded-lg bg-[#5f70ff] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                title={
+                  !canSubmitText
+                    ? isCompact && !sessionName.trim()
+                      ? "Name your session and paste some text first"
+                      : "Paste some text first"
+                    : undefined
+                }
+                className="inline-flex h-fit min-h-[40px] min-w-[88px] shrink-0 items-center justify-center self-end rounded-lg bg-[#5f70ff] px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isSubmitting ? (
                   <FiLoader className="h-5 w-5 shrink-0 animate-spin" />
