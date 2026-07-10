@@ -145,6 +145,15 @@ export function setActiveStudySessionId(sessionId: string) {
   localStorage.setItem(ACTIVE_STUDY_SESSION_KEY, sessionId);
 }
 
+/**
+ * Forget the active session (e.g. after "Back to start" deletes it). Without
+ * this, bootstrap would keep resolving a now-deleted id from localStorage.
+ */
+export function clearActiveStudySessionId() {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(ACTIVE_STUDY_SESSION_KEY);
+}
+
 export async function listStudySessions() {
   return callStudyApi<StudySessionDto[]>("/sessions", { method: "GET" });
 }
@@ -152,15 +161,18 @@ export async function listStudySessions() {
 /**
  * Push the study-session-created event to GTM's dataLayer.
  *
- * Deliberately fired from ONE place — inside createStudySession, after the API
- * call resolves — because `callStudyApi` throws on any non-2xx / unsuccessful
- * envelope. So this runs if and only if a session was really created, never on
- * an error path. (There are 5 createStudySession call sites; tagging each one
- * would be easy to get wrong and easy to miss on the next one added.)
+ * NOT fired inside createStudySession. A session is created moments before its
+ * first source is added, and if that source add fails the session is rolled
+ * back — so firing at creation time would report sessions that never really
+ * existed for the user. The caller invokes this only once the session AND its
+ * first source are both confirmed saved (i.e. the success message is shown).
  *
  * Never let analytics break the app: no-op on the server and swallow failures.
  */
-function pushStudySessionCreatedEvent(session: StudySessionDto): void {
+export function trackStudySessionCreated(input: {
+  sessionId: string;
+  sourceKind?: string;
+}): void {
   if (typeof window === "undefined") return;
   try {
     const w = window as Window & {
@@ -169,22 +181,19 @@ function pushStudySessionCreatedEvent(session: StudySessionDto): void {
     w.dataLayer = w.dataLayer || [];
     w.dataLayer.push({
       event: "study_session_created",
-      study_session_id: session._id,
-      is_guest: Boolean(session.userId?.startsWith("guest_")),
+      study_session_id: input.sessionId,
+      ...(input.sourceKind ? { source_kind: input.sourceKind } : {}),
     });
   } catch {
-    // GTM unavailable/blocked — must not affect session creation.
+    // GTM unavailable/blocked — must not affect the study flow.
   }
 }
 
 export async function createStudySession(title: string) {
-  // Throws on failure, so nothing below runs unless the session truly exists.
-  const session = await callStudyApi<StudySessionDto>("/sessions", {
+  return callStudyApi<StudySessionDto>("/sessions", {
     method: "POST",
     body: JSON.stringify({ title }),
   });
-  pushStudySessionCreatedEvent(session);
-  return session;
 }
 
 /** Move a guest's study sessions onto the now-authenticated account. */
