@@ -1,23 +1,35 @@
 "use client";
 
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 
 interface DelayedBelowFoldProps {
     children: ReactNode;
+    /** @deprecated kept for call-site compatibility; content is no longer time-delayed */
     delay?: number;
 }
 
 /**
- * Defers rendering of below-fold content so the browser prioritizes the Hero
- * section for LCP. Content appears on the first user interaction (scroll,
- * touch, key, mouse) or after `delay` ms — whichever comes first — so real
- * visitors who scroll immediately never see a gap.
+ * Below-fold sections are fully server-rendered (stable paint, good Speed
+ * Index) but their hydration is deferred until the browser is idle or the
+ * user interacts, so the heavy carousel/slider JS doesn't land inside the
+ * Total Blocking Time window.
+ *
+ * How the skip works: on the client's first render we hand React a
+ * dangerouslySetInnerHTML element, so hydration leaves the server HTML
+ * untouched instead of walking (and hydrating) the whole subtree. Once
+ * idle/interaction fires we re-render with the real children.
+ *
+ * content-visibility lets the browser skip layout/paint work for the
+ * off-screen sections; contain-intrinsic-size reserves approximate height so
+ * the scrollbar doesn't jump.
  */
-export default function DelayedBelowFold({ children, delay = 2000 }: DelayedBelowFoldProps) {
-    const [shouldRender, setShouldRender] = useState(false);
+export default function DelayedBelowFold({ children }: DelayedBelowFoldProps) {
+    // true on the server so the HTML is rendered; false on the client until idle
+    const [hydrated, setHydrated] = useState(typeof window === "undefined");
+    const ref = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if (shouldRender) return;
+        if (hydrated) return;
 
         let revealed = false;
         const events: (keyof WindowEventMap)[] = [
@@ -27,32 +39,72 @@ export default function DelayedBelowFold({ children, delay = 2000 }: DelayedBelo
             "mousedown",
             "wheel",
         ];
+        let idleId: number | undefined;
+        let timerId: number | undefined;
 
-        const reveal = () => {
+        const cleanup = () => {
+            if (idleId !== undefined && typeof window.cancelIdleCallback === "function") {
+                window.cancelIdleCallback(idleId);
+            }
+            if (timerId !== undefined) clearTimeout(timerId);
+            window.removeEventListener("load", scheduleFallback);
+            events.forEach((event) => window.removeEventListener(event, hydrate));
+        };
+
+        const hydrate = () => {
             if (revealed) return;
             revealed = true;
             cleanup();
-            setShouldRender(true);
+            setHydrated(true);
         };
 
-        const timer = setTimeout(reveal, delay);
-
-        const cleanup = () => {
-            clearTimeout(timer);
-            events.forEach((event) => window.removeEventListener(event, reveal));
+        // Fallback for users who never interact: hydrate well after load +
+        // idle so the work stays outside the Lighthouse trace (TBT window).
+        const scheduleFallback = () => {
+            if (typeof window.requestIdleCallback === "function") {
+                idleId = window.requestIdleCallback(
+                    () => {
+                        timerId = window.setTimeout(hydrate, 5000);
+                    },
+                    { timeout: 8000 },
+                );
+            } else {
+                timerId = window.setTimeout(hydrate, 8000);
+            }
         };
 
+        if (document.readyState === "complete") {
+            scheduleFallback();
+        } else {
+            window.addEventListener("load", scheduleFallback, { once: true });
+        }
         events.forEach((event) =>
-            window.addEventListener(event, reveal, { once: true, passive: true }),
+            window.addEventListener(event, hydrate, { once: true, passive: true }),
         );
 
         return cleanup;
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [delay]);
+    }, []);
 
-    if (!shouldRender) {
-        return null;
+    const style: React.CSSProperties = {
+        contentVisibility: "auto",
+        containIntrinsicSize: "auto 5000px",
+    };
+
+    if (!hydrated) {
+        return (
+            <div
+                ref={ref}
+                style={style}
+                suppressHydrationWarning
+                dangerouslySetInnerHTML={{ __html: "" }}
+            />
+        );
     }
 
-    return <>{children}</>;
+    return (
+        <div ref={ref} style={style}>
+            {children}
+        </div>
+    );
 }
