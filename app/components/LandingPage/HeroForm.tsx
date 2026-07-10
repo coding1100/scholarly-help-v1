@@ -144,10 +144,12 @@ const BackgroundIllustration = ({
         alt="Academic success illustration"
         width={526}
         height={551}
+        priority
+        sizes="(max-width: 1025px) 1px, 450px"
         className={
           variant === "multistep"
-            ? "min-[1200px]:max-w-[450px] max-w-[450px] cus-img absolute min-[1200px]:right-[-280px] min-[1200px]:top-[-83px] -z-[1] max-[1025px]:hidden min-[1000px]:right-[-272px] min-[1000px]:top-[-83px]"
-            : "min-[1200px]:max-w-[450px] max-w-[450px] cus-img absolute min-[1200px]:right-[-280px] min-[1200px]:top-[-83px] -z-[1] max-[1025px]:hidden min-[1000px]:right-[-272px] min-[1000px]:top-[-120px]"
+            ? "h-auto min-[1200px]:max-w-[450px] max-w-[450px] cus-img absolute min-[1200px]:right-[-280px] min-[1200px]:top-[-83px] -z-[1] max-[1025px]:hidden min-[1000px]:right-[-272px] min-[1000px]:top-[-83px]"
+            : "h-auto min-[1200px]:max-w-[450px] max-w-[450px] cus-img absolute min-[1200px]:right-[-280px] min-[1200px]:top-[-83px] -z-[1] max-[1025px]:hidden min-[1000px]:right-[-272px] min-[1000px]:top-[-120px]"
         }
       />
     );
@@ -160,10 +162,12 @@ const BackgroundIllustration = ({
         alt="Academic success illustration"
         width={526}
         height={551}
+        priority
+        sizes="(max-width: 1025px) 1px, 526px"
         className={
           isTakeMyClass2Route
-            ? "cus-img absolute w-[302px] min-[1200px]:right-[-205px] -z-[1] max-[1025px]:hidden"
-            : "cus-img absolute min-[1200px]:right-[-258px] -z-[1] max-[1025px]:hidden min-[1100px]:right-[-208px] min-[1150px]:right-[-150px]"
+            ? "h-auto cus-img absolute w-[302px] min-[1200px]:right-[-205px] -z-[1] max-[1025px]:hidden"
+            : "h-auto cus-img absolute min-[1200px]:right-[-258px] -z-[1] max-[1025px]:hidden min-[1100px]:right-[-208px] min-[1150px]:right-[-150px]"
         }
       />
     );
@@ -174,7 +178,9 @@ const BackgroundIllustration = ({
       src={FormBackImg}
       alt="Academic success illustration"
       width={400}
-      className="cus-img absolute w-[400px] min-[1200px]:right-[-258px] -z-[1] max-[1025px]:hidden min-[1100px]:right-[-208px] min-[1150px]:right-[-150px]"
+      priority
+      sizes="(max-width: 1025px) 1px, 400px"
+      className="h-auto cus-img absolute w-[400px] min-[1200px]:right-[-258px] -z-[1] max-[1025px]:hidden min-[1100px]:right-[-208px] min-[1150px]:right-[-150px]"
     />
   );
 };
