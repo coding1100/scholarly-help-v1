@@ -149,11 +149,42 @@ export async function listStudySessions() {
   return callStudyApi<StudySessionDto[]>("/sessions", { method: "GET" });
 }
 
+/**
+ * Push the study-session-created event to GTM's dataLayer.
+ *
+ * Deliberately fired from ONE place — inside createStudySession, after the API
+ * call resolves — because `callStudyApi` throws on any non-2xx / unsuccessful
+ * envelope. So this runs if and only if a session was really created, never on
+ * an error path. (There are 5 createStudySession call sites; tagging each one
+ * would be easy to get wrong and easy to miss on the next one added.)
+ *
+ * Never let analytics break the app: no-op on the server and swallow failures.
+ */
+function pushStudySessionCreatedEvent(session: StudySessionDto): void {
+  if (typeof window === "undefined") return;
+  try {
+    const w = window as Window & {
+      dataLayer?: Array<Record<string, unknown>>;
+    };
+    w.dataLayer = w.dataLayer || [];
+    w.dataLayer.push({
+      event: "study_session_created",
+      study_session_id: session._id,
+      is_guest: Boolean(session.userId?.startsWith("guest_")),
+    });
+  } catch {
+    // GTM unavailable/blocked — must not affect session creation.
+  }
+}
+
 export async function createStudySession(title: string) {
-  return callStudyApi<StudySessionDto>("/sessions", {
+  // Throws on failure, so nothing below runs unless the session truly exists.
+  const session = await callStudyApi<StudySessionDto>("/sessions", {
     method: "POST",
     body: JSON.stringify({ title }),
   });
+  pushStudySessionCreatedEvent(session);
+  return session;
 }
 
 /** Move a guest's study sessions onto the now-authenticated account. */
