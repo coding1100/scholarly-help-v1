@@ -14,11 +14,16 @@ import {
 import {
   addStudySource,
   addStudySourceFile,
+  createStudySession,
+  deleteStudySession,
+  setActiveStudySessionId,
   StudySourceKind,
+  trackStudySessionCreated,
   updateStudySessionTitle,
 } from "@/app/utils/studyApiClient";
 import { startStudyRecording } from "@/app/lib/client/studyRecording";
 import { validateStudyUploadFileClient } from "@/app/lib/studyUploadConstraints";
+import { incrementGuestSessionCount, isGuest } from "@/app/lib/client/guestStudyLimits";
 
 type UploadMode = "file" | "url" | "text" | "record";
 type InlineTone = "success" | "error" | "info";
@@ -58,11 +63,18 @@ function uniqueFileSourceName(fileName?: string): string {
 type StudySourceIngestionProps = {
   variant?: "toolbar" | "onboarding";
   onContentReady?: () => void;
+  /**
+   * Called with the id of a session that was just created lazily (on the user's
+   * first successful source add) so the page can adopt it — put it in the URL,
+   * mark it active, and reveal the workspace.
+   */
+  onSessionCreated?: (sessionId: string) => void;
 };
 
 export default function StudySourceIngestion({
   variant = "toolbar",
   onContentReady,
+  onSessionCreated,
 }: StudySourceIngestionProps) {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("sessionId");
@@ -191,14 +203,9 @@ export default function StudySourceIngestion({
     const activeMode: UploadMode =
       nextKind === "url" ? "url" : nextKind === "text" ? "text" : "file";
     setModeStatus(activeMode, null);
-    if (!sessionId) {
-      toast.error("Session is still loading. Please retry in a moment.");
-      setModeStatus(activeMode, {
-        tone: "error",
-        message: "Session is still loading. Please retry in a moment.",
-      });
-      return;
-    }
+    // NOTE: a missing sessionId is NOT an error here. The session is created
+    // lazily below, only once this submission has passed validation — visiting
+    // the page must not create one.
     // Naming is required on the creation page (where the field is shown).
     if (isCompact && !sessionName.trim()) {
       setSessionNameError("Please name your session to continue.");
@@ -254,20 +261,39 @@ export default function StudySourceIngestion({
             : "Source");
 
     setIsSubmitting(true);
+    // Track a session we create in THIS submission, so a failed source add can
+    // roll it back instead of leaving an empty orphan session behind.
+    let createdSessionId: string | null = null;
     try {
+      // Create the session on first real intent (a validated source), not on
+      // page load. The name the user typed becomes the session title directly,
+      // so no follow-up rename call is needed for a fresh session.
+      let targetSessionId = sessionId;
+      if (!targetSessionId) {
+        const created = await createStudySession(
+          sessionName.trim() || "My Study Session",
+        );
+        targetSessionId = created._id;
+        createdSessionId = created._id;
+        if (isGuest()) incrementGuestSessionCount();
+        setActiveStudySessionId(created._id);
+      }
+
       const source =
         nextKind === "file" && nextFile
-          ? await addStudySourceFile(sessionId, {
+          ? await addStudySourceFile(targetSessionId, {
               kind: nextKind,
               name: resolvedName,
               file: nextFile,
             })
-          : await addStudySource(sessionId, {
+          : await addStudySource(targetSessionId, {
               kind: nextKind,
               name: resolvedName,
               text: trimmedText,
             });
 
+      // Past this point the source is genuinely saved (addStudySource* throws
+      // otherwise), so the session truly exists with content.
       toast.success(
         `Source added: ${source.name} (${source.chunkCount} chunks indexed)`,
       );
@@ -275,16 +301,45 @@ export default function StudySourceIngestion({
         tone: "success",
         message: `Saved "${source.name}" successfully (${source.chunkCount} chunks indexed).`,
       });
-      // Name the session once, at creation, before revealing the workspace.
-      await applySessionNameIfProvided();
+      // Fire the GTM event ONLY here: the session was created in this
+      // submission AND its first source saved successfully. Never on an error
+      // path, and never for a session that gets rolled back below.
+      if (createdSessionId) {
+        trackStudySessionCreated({
+          sessionId: createdSessionId,
+          sourceKind: nextKind,
+        });
+      }
+      // Only an EXISTING session needs renaming; a lazily-created one was
+      // already titled above.
+      if (!createdSessionId) {
+        await applySessionNameIfProvided();
+      }
+      // Hand a lazily-created session to the page so it lands in the URL and the
+      // workspace mounts against it.
+      if (createdSessionId) {
+        onSessionCreated?.(createdSessionId);
+      }
       if (typeof window !== "undefined") {
         window.dispatchEvent(
-          new CustomEvent("study-source-added", { detail: { sessionId } }),
+          new CustomEvent("study-source-added", {
+            detail: { sessionId: targetSessionId },
+          }),
         );
       }
       onContentReady?.();
     } catch (error) {
       console.error("Failed to add source", error);
+      // The source failed, so the session we just created for it has no content
+      // and no reason to exist. Remove it (best-effort) so the user isn't left
+      // with an empty session — and so a retry starts clean.
+      if (createdSessionId) {
+        try {
+          await deleteStudySession(createdSessionId);
+        } catch (cleanupError) {
+          console.error("Failed to roll back empty session", cleanupError);
+        }
+      }
       const message =
         error instanceof Error
           ? error.message

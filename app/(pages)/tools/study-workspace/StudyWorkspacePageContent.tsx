@@ -15,7 +15,7 @@ import {
 } from "@/app/lib/client/studyRecording";
 import {
   claimGuestStudyData,
-  createStudySession,
+  clearActiveStudySessionId,
   deleteStudySession,
   getActiveStudySessionId,
   getStudySessionDetails,
@@ -23,7 +23,6 @@ import {
   setActiveStudySessionId,
 } from "@/app/utils/studyApiClient";
 import {
-  incrementGuestSessionCount,
   isGuest,
   takePendingGuestMigrationId,
 } from "@/app/lib/client/guestStudyLimits";
@@ -31,6 +30,10 @@ import {
 export default function StudyWorkspacePageContent() {
   const [flag, setFlag] = useState<boolean>(false);
   const [hasSessionContent, setHasSessionContent] = useState<boolean | null>(null);
+  // True until bootstrap has finished looking for an EXISTING session. A
+  // first-time visitor legitimately ends with no session, so the loading state
+  // can't key off `sessionId` alone (that would spin forever).
+  const [isResolvingSession, setIsResolvingSession] = useState(true);
   const [isRecording, setIsRecording] = useState(
     () => getStudyRecordingSnapshot().status !== "idle",
   );
@@ -116,23 +119,26 @@ export default function StudyWorkspacePageContent() {
       const localSessionId = getActiveStudySessionId();
       const sessions = await listStudySessions();
 
-      let resolvedSession =
+      const resolvedSession =
         (qsSessionId && sessions.find((s) => s._id === qsSessionId)) ||
         (localSessionId && sessions.find((s) => s._id === localSessionId)) ||
         sessions[0];
 
+      if (!active) return;
+
+      // NO session is created here. Merely opening /tools/study-workspace is not
+      // intent to start studying — auto-creating produced empty throwaway
+      // sessions (and fired the "session created" analytics event) for every
+      // visitor who bounced. The session is created lazily on the first
+      // successful source add (see StudySourceIngestion.onSubmit). Until then we
+      // show onboarding with no sessionId in the URL.
       if (!resolvedSession) {
-        // Bootstrap (initial page load) is never gated — a guest always gets
-        // their first session created automatically here. The email gate lives
-        // only on the explicit "+ New Study Session" button (see
-        // StudySourceIngestion), which fires on the 2nd-session attempt. We
-        // still count this first session so that button knows the limit is hit.
-        resolvedSession = await createStudySession("My Study Session");
-        if (isGuest()) incrementGuestSessionCount();
+        setIsResolvingSession(false);
+        return;
       }
 
-      if (!active) return;
       setActiveStudySessionId(resolvedSession._id);
+      setIsResolvingSession(false);
 
       const nextParams = new URLSearchParams(searchParams.toString());
       if (nextParams.get("sessionId") !== resolvedSession._id) {
@@ -147,6 +153,7 @@ export default function StudyWorkspacePageContent() {
 
     bootstrapStudySession().catch((error) => {
       console.error("Failed to bootstrap study session", error);
+      if (active) setIsResolvingSession(false);
     });
 
     return () => {
@@ -154,14 +161,32 @@ export default function StudyWorkspacePageContent() {
     };
   }, [pathname, router, searchParams, ensureGuestMigration]);
 
+  // A session was created lazily by the ingestion form on the user's first
+  // successful source add. Adopt it: mark it active and put it in the URL so the
+  // workspace mounts against it (and a refresh reopens the same session).
+  const adoptCreatedSession = useCallback(
+    (createdSessionId: string) => {
+      setActiveStudySessionId(createdSessionId);
+      setForceStart(false);
+      setHasSessionContent(true);
+      const nextParams = new URLSearchParams(searchParams.toString());
+      nextParams.set("sessionId", createdSessionId);
+      router.replace(
+        appendQueryString(
+          pathname || "/tools/study-workspace",
+          nextParams.toString(),
+        ),
+      );
+    },
+    [pathname, router, searchParams],
+  );
+
   // Confirmed "Back to start": discard the current session entirely and open a
   // fresh, empty one so new uploads don't append to the old data.
   const confirmBackToStart = useCallback(async () => {
     setIsResetting(true);
     try {
       const previousSessionId = sessionId;
-      const created = await createStudySession("My Study Session");
-      if (isGuest()) incrementGuestSessionCount();
 
       // Best-effort delete of the old session + its client-only state. A failure
       // here must not block starting fresh, so it's swallowed.
@@ -181,26 +206,22 @@ export default function StudyWorkspacePageContent() {
         }
       }
 
-      setActiveStudySessionId(created._id);
+      // Do NOT create a replacement session here — that would recreate the
+      // empty-session problem. Drop the sessionId and return to onboarding; the
+      // next successful source add creates the new session.
+      clearActiveStudySessionId();
       setForceStart(true);
       setHasSessionContent(false);
       setBackConfirmOpen(false);
 
       const nextParams = new URLSearchParams(searchParams.toString());
-      nextParams.set("sessionId", created._id);
+      nextParams.delete("sessionId");
       router.replace(
         appendQueryString(
           pathname || "/tools/study-workspace",
           nextParams.toString(),
         ),
       );
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(
-          new CustomEvent("study-session-changed", {
-            detail: { sessionId: created._id },
-          }),
-        );
-      }
     } catch (error) {
       console.error("Failed to start a fresh session", error);
     } finally {
@@ -220,7 +241,9 @@ export default function StudyWorkspacePageContent() {
 
   useEffect(() => {
     if (!sessionId) {
-      setHasSessionContent(null);
+      // No session yet (nothing uploaded) → definitively no content, show
+      // onboarding rather than an indefinite loading spinner.
+      setHasSessionContent(false);
       return;
     }
 
@@ -277,7 +300,11 @@ export default function StudyWorkspacePageContent() {
     };
   }, [refreshSessionContentState, sessionId]);
 
-  const isBootstrapping = !sessionId || hasSessionContent === null;
+  // Loading only while we're still resolving an existing session, or while a
+  // resolved session's content is still being fetched. With no session at all
+  // (brand-new visitor) we go straight to onboarding — there is nothing to load.
+  const isBootstrapping =
+    isResolvingSession || (!!sessionId && hasSessionContent === null);
   // A live recording always keeps the workspace visible (its controls live
   // there); "back to start" only applies when nothing is being recorded.
   const showWorkspace = isRecording || (!forceStart && hasSessionContent === true);
@@ -318,6 +345,7 @@ export default function StudyWorkspacePageContent() {
           <>
             <StudySourceIngestion
               variant={showOnboarding ? "onboarding" : "toolbar"}
+              onSessionCreated={adoptCreatedSession}
               onContentReady={() => {
                 setForceStart(false);
                 setHasSessionContent(true);
