@@ -215,14 +215,18 @@ const HeroForm2: FC<ZohoForm2Props> = ({
           alt="Academic success illustration"
           width={526}
           height={551}
-          className="min-[1200px]:max-w-[450px] max-w-[450px] cus-img absolute min-[1200px]:right-[-280px] min-[1200px]:top-[-83px] -z-[1] max-[1025px]:hidden min-[1000px]:right-[-272px] min-[1000px]:top-[-120px]"
+          priority
+          sizes="(max-width: 1025px) 1px, 450px"
+          className="h-auto min-[1200px]:max-w-[450px] max-w-[450px] cus-img absolute min-[1200px]:right-[-280px] min-[1200px]:top-[-83px] -z-[1] max-[1025px]:hidden min-[1000px]:right-[-272px] min-[1000px]:top-[-120px]"
         />
       ) : (
         <Image
           src={FormBackImg}
           alt="Academic success illustration"
           width={400}
-          className={`cus-img absolute -z-[1] max-[1025px]:hidden ${isEmailOnlyFormPage ? "w-[300px] min-[1100px]:right-[-208px] min-[1150px]:right-[-150px] min-[1200px]:right-[-225px] top-[-46px]" : "w-[400px] min-[1100px]:right-[-208px] min-[1150px]:right-[-150px] min-[1200px]:right-[-258px]"}`}
+          priority
+          sizes="(max-width: 1025px) 1px, 400px"
+          className={`h-auto cus-img absolute -z-[1] max-[1025px]:hidden ${isEmailOnlyFormPage ? "w-[300px] min-[1100px]:right-[-208px] min-[1150px]:right-[-150px] min-[1200px]:right-[-225px] top-[-46px]" : "w-[400px] min-[1100px]:right-[-208px] min-[1150px]:right-[-150px] min-[1200px]:right-[-258px]"}`}
         />
       )}
       <div className="w-full mx-auto cus-div">

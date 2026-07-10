@@ -1,3 +1,4 @@
+import { cache } from "react";
 import MainLayout from "@/app/MainLayout";
 import HeroSection from "@/app/components/LandingPage/HeroSection";
 import BelowFoldLanding from "@/app/components/LandingPage/BelowFoldLanding";
@@ -7,9 +8,14 @@ import type { Metadata } from "next";
 import { getPageData } from "@/app/lib/mongodb";
 import ProductSchema from "@/app/components/ProductSchema";
 
-export const revalidate = 0;
+// ISR: serve cached HTML (fast TTFB) and re-render at most every 5 minutes.
+// Admin saves trigger revalidatePath() for instant freshness, so this TTL is
+// only a fallback for out-of-band DB edits.
+export const revalidate = 300;
 
-async function fetchTakeMyClassData() {
+// cache() dedupes the Mongo round-trip between the page render and
+// generateMetadata within a single request.
+const fetchTakeMyClassData = cache(async () => {
   try {
     const query = {
       id: "take-my-class",
@@ -19,7 +25,7 @@ async function fetchTakeMyClassData() {
     console.error("Error fetching take-my-class data:", error);
     return null;
   }
-}
+});
 
 import DelayedBelowFold from "@/app/components/LandingPage/DelayedBelowFold";
 
