@@ -12,10 +12,7 @@ import {
   isTakeMyClass3LandingPage,
   isTakeMyClassHeaderRoute,
 } from "@/app/lib/takeMyClassLandingRoutes";
-import {
-  handleTextUsClick,
-  rememberFbclidFromUrl,
-} from "@/app/lib/client/smsTracking";
+import { rememberFbclidFromUrl } from "@/app/lib/client/smsTracking";
 
 const Star: React.FC<{ className?: string }> = ({ className }) => (
   <svg
@@ -356,10 +353,20 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="bg-white z-[9999] sticky top-0 shadow-sm">
+    <header
+      className={`bg-white z-[9999] shadow-sm ${
+        isTakeMyClassExact ? "static sm:sticky sm:top-0" : "sticky top-0"
+      }`}
+    >
       {/* Header Top Bar */}
       <div
-        className={`max-w-7xl mx-auto max-[1320px]:px-3 flex items-center pt-2 min-h-[64px] ${isTakeMyClass3 ? "md:justify-between justify-center" : "justify-between"}`}
+        className={`max-w-7xl mx-auto max-[1320px]:px-3 flex items-center pt-2 min-h-[64px] ${
+          isTakeMyClassExact
+            ? "justify-center sm:justify-between"
+            : isTakeMyClass3
+              ? "md:justify-between justify-center"
+              : "justify-between"
+        }`}
       >
         {/* Menu Button - Hidden for special routes */}
         {!isSpecialRoute3 && (
@@ -447,17 +454,17 @@ export default function Header() {
             </a>
             {/* Mobile: "Text Us" that opens the SMS app (sms:, not tel:).
                 On /take-my-class, an fbclid tap logs a Send SMS Tracking row and
-                pre-fills the body with a Reference ID (offline-conversion match). */}
-            <a
-              href={`sms:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER || "16464806092"}`}
-              aria-label="Text us"
-              onClick={
-                isTakeMyClassExact ? (e) => handleTextUsClick(e) : undefined
-              }
-              className="sm:hidden flex items-center bg-[#9F92EC] rounded-full px-4 py-1 text-white transition"
-            >
-              Text Us
-            </a>
+                pre-fills the body with a Reference ID (offline-conversion match).
+                Hidden on /take-my-class mobile only (centered-logo header). */}
+            {!isTakeMyClassExact && (
+              <a
+                href={`sms:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER || "16464806092"}`}
+                aria-label="Text us"
+                className="sm:hidden flex items-center bg-[#9F92EC] rounded-full px-4 py-1 text-white transition"
+              >
+                Text Us
+              </a>
+            )}
           </div>
         )}
         {/* {isTakeMyClass3 && (
