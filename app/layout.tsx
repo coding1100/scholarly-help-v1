@@ -9,9 +9,12 @@ const ClientScripts = dynamic(() => import("./components/ClientScripts"), {
 });
 
 // Optimize font loading - next/font self-hosts fonts (NO CDN calls)
+// display "optional": if Poppins isn't ready within the block period the
+// metric-matched fallback stays for this page view (no late swap repaint).
+// The swap repaint was registering as LCP (~3.5s) on slow connections.
 const poppins = Poppins({
   subsets: ["latin"],
-  display: "swap",
+  display: "optional",
   variable: "--font-poppins",
   weight: ["400", "600", "700"],
   preload: true,
