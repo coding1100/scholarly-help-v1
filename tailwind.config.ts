@@ -2,14 +2,17 @@ import type { Config } from "tailwindcss";
 
 const config: Config = {
   darkMode: "class",
+  // Admin routes are excluded here; their utilities are generated separately
+  // into app/(admin)/admin.css (see tailwind.admin.config.ts) so the global
+  // stylesheet loaded by marketing pages stays small.
   content: [
     "./app/page.tsx",
     "./app/layout.tsx",
     "./app/MainLayout.tsx",
-    "./app/components/**/*.{tsx,jsx,ts,js}",
+    "./app/components/*.{tsx,jsx,ts,js}",
+    "./app/components/!(Admin)/**/*.{tsx,jsx,ts,js}",
     "./app/lib/**/*.{ts,tsx}",
     "./app/(pages)/**/*.{tsx,jsx,ts,js}",
-    "./app/(admin)/**/*.{tsx,jsx,ts,js}",
   ],
   safelist: ['animate-pulse'],
   blocklist: ['dark'],

@@ -1,5 +1,6 @@
 'use client';
 
+import './admin.css';
 import { useState, useEffect, useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { jwtDecode } from 'jwt-decode';
