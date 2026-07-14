@@ -1487,6 +1487,22 @@ export default function AssignmentAdmin() {
               <label className="block text-sm font-medium text-gray-700 mb-4">
                 Performance Stats (shown as Course/Experts/etc. on left side)
               </label>
+              <label className="flex items-center gap-2 mb-4 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={
+                    pageData.academicPartners?.showPerformances !== false
+                  }
+                  onChange={(e) =>
+                    updatePageData(
+                      "academicPartners.showPerformances",
+                      e.target.checked,
+                    )
+                  }
+                  className="h-4 w-4"
+                />
+                Show these stats on the page
+              </label>
               {(pageData.academicPartners?.performances || []).map(
                 (perf: any, index: number) => (
                   <div
