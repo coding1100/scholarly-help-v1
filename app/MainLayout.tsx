@@ -1,19 +1,11 @@
 "use client";
-import { FC, ReactNode, useState, useEffect } from "react";
+import { FC, ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 
 import AuthProvider from "./context/auth/AuthProvider";
 import AppNav from "./components/LandingPage/Header";
 import Footer from "./components/Footer/Footer";
-
-const ExitPopUp = dynamic(() => import("./components/PopUpModal/ExitPopup"), {
-  ssr: false,
-});
-
-const CookieBanner = dynamic(() => import("./components/CookieConsent"), {
-  ssr: false,
-});
 
 const WhatsApp = dynamic(() => import("./components/WhatsApp/WhatsApp"), {
   ssr: false,
@@ -59,47 +51,12 @@ const MainLayout: FC<MainLayoutProps> = ({ children }) => {
   const shouldHideHeaderFooter =
     hideHeaderFooterRoutes.includes(pathname || "") || isLandingStylePath;
 
-  // Defer cookie consent until after interaction so LCP is not affected
-  const [cookieBannerReady, setCookieBannerReady] = useState(false);
-
-  // Load cookie consent only after first interaction (scroll, click, touch, key) to protect LCP / CLS in lab tests
-  useEffect(() => {
-    if (cookieBannerReady) return;
-
-    const showBanner = () => {
-      setCookieBannerReady(true);
-      removeListeners();
-    };
-
-    const removeListeners = () => {
-      window.removeEventListener("scroll", showBanner);
-      window.removeEventListener("mousedown", showBanner);
-      window.removeEventListener("touchstart", showBanner);
-      window.removeEventListener("keydown", showBanner);
-    };
-
-    window.addEventListener("scroll", showBanner, { passive: true });
-    window.addEventListener("mousedown", showBanner);
-    window.addEventListener("touchstart", showBanner);
-    window.addEventListener("keydown", showBanner);
-
-    return () => {
-      removeListeners();
-    };
-  }, [cookieBannerReady]);
-
   return (
     <AuthProvider>
       <AppNav />
       {children}
       {!shouldHideHeaderFooter && <Footer />}
       <WhatsApp />
-      {/* {cookieBannerReady && <CookieBanner />} */}
-      {/* <ExitPopUp
-          open={openExitPopup}
-          handleClose={() => setOpenExitPopup(false)}
-        />
-      </div> */}
     </AuthProvider>
   );
 };

@@ -41,14 +41,18 @@ export default function DelayedBelowFold({ children }: DelayedBelowFoldProps) {
         ];
         let idleId: number | undefined;
         let timerId: number | undefined;
+        let rafId: number | undefined;
+        let interactionTimerId: number | undefined;
 
         const cleanup = () => {
             if (idleId !== undefined && typeof window.cancelIdleCallback === "function") {
                 window.cancelIdleCallback(idleId);
             }
             if (timerId !== undefined) clearTimeout(timerId);
+            if (rafId !== undefined) cancelAnimationFrame(rafId);
+            if (interactionTimerId !== undefined) clearTimeout(interactionTimerId);
             window.removeEventListener("load", scheduleFallback);
-            events.forEach((event) => window.removeEventListener(event, hydrate));
+            events.forEach((event) => window.removeEventListener(event, onInteraction));
         };
 
         const hydrate = () => {
@@ -56,6 +60,17 @@ export default function DelayedBelowFold({ children }: DelayedBelowFoldProps) {
             revealed = true;
             cleanup();
             setHydrated(true);
+        };
+
+        // Taps/keys/mouse-downs are INP-scored interactions: hydrating the
+        // whole below-fold tree inside their event handler puts a long task in
+        // the interaction window (~225ms field INP). Let the interaction's
+        // frame paint first, then hydrate in a later task.
+        const onInteraction = () => {
+            if (revealed) return;
+            rafId = window.requestAnimationFrame(() => {
+                interactionTimerId = window.setTimeout(hydrate, 0);
+            });
         };
 
         // Fallback for users who never interact: hydrate well after load +
@@ -79,7 +94,7 @@ export default function DelayedBelowFold({ children }: DelayedBelowFoldProps) {
             window.addEventListener("load", scheduleFallback, { once: true });
         }
         events.forEach((event) =>
-            window.addEventListener(event, hydrate, { once: true, passive: true }),
+            window.addEventListener(event, onInteraction, { once: true, passive: true }),
         );
 
         return cleanup;
