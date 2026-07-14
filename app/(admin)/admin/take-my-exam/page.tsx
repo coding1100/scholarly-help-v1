@@ -1822,6 +1822,22 @@ export default function TakeMyExamAdmin() {
               <label className="block text-sm font-medium text-gray-700 mb-4">
                 Performances / Stats (number, title, subtitle)
               </label>
+              <label className="flex items-center gap-2 mb-4 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={
+                    pageData.academicPartners?.showPerformances !== false
+                  }
+                  onChange={(e) =>
+                    updatePageData(
+                      "academicPartners.showPerformances",
+                      e.target.checked,
+                    )
+                  }
+                  className="h-4 w-4"
+                />
+                Show these stats on the page
+              </label>
               {(pageData.academicPartners?.performances || []).map(
                 (
                   perf: { number?: string; title?: string; subtitle?: string },

@@ -27,6 +27,11 @@ interface AcademicPartnersProps {
       description: string;
     }[];
     performances?: PerformanceItem[];
+    /**
+     * Admin-controlled toggle for the performance stats block.
+     * Defaults to shown when undefined; set to false in the admin panel to hide it.
+     */
+    showPerformances?: boolean;
     ctaButton?: {
       text: string;
     };
@@ -46,20 +51,6 @@ const AcademicPartners: FC<AcademicPartnersProps> = ({
   const pageData = usePageData();
   const currentPathname = usePathname();
   const isEssayWritingPage = currentPathname.includes("essay-writing");
-  const shouldShowPerformances =
-    currentPathname === "/" ||
-    currentPathname === "/online-class" ||
-    currentPathname === "/assignment" ||
-    currentPathname === "/homework" ||
-    currentPathname === "/exams/" ||
-    currentPathname === "/exam/" ||
-    currentPathname === "/take-my-proctored-exam-for-me/" ||
-    currentPathname.startsWith("/exams/") ||
-    currentPathname.startsWith("/exam/") ||
-    currentPathname.startsWith("/online-class/") ||
-    currentPathname.startsWith("/assignment/") ||
-    currentPathname.startsWith("/homework/") ||
-    currentPathname.startsWith("/essay-writing/");
   // Use props content if available, otherwise fallback to pageData
   const content = propsContent || pageData?.academicPartners;
 
@@ -74,6 +65,21 @@ const AcademicPartners: FC<AcademicPartnersProps> = ({
     }
     return DEFAULT_PERFORMANCES;
   }, [content?.performances]);
+
+  // Pages that must keep their exact previous look (e.g. live ad campaigns).
+  // These never showed the stats block before, so keep them hidden here.
+  const isFrozenPath =
+    currentPathname === "/take-my-class" ||
+    currentPathname === "/take-my-class/";
+
+  // Admin controls visibility of the stats block. Defaults to shown; only an
+  // explicit `false` from the admin panel hides it. Also require at least one
+  // stat so an empty configuration never renders an empty block.
+  const shouldShowPerformances =
+    !isFrozenPath &&
+    (content as { showPerformances?: boolean } | undefined)
+      ?.showPerformances !== false &&
+    performances.length > 0;
 
   const [isMobile, setIsMobile] = useState(false);
 
@@ -165,7 +171,7 @@ const AcademicPartners: FC<AcademicPartnersProps> = ({
               {performances.map((perf, index) => (
                 <React.Fragment key={index}>
                   <div className="flex items-center gap-4">
-                    <div className="text-[1.7rem] font-extrabold text-[#111827] leading-tight min-w-[64px]">
+                    <div className="text-[1.7rem] font-extrabold text-[#111827] leading-tight min-w-[92px] flex-shrink-0">
                       {perf.number || ""}
                     </div>
                     <div>

@@ -14,6 +14,10 @@ import WguImg from "@/app/assets/Images/wguImg.png";
 import { usePageData } from "@/app/components/LandingPage/usePageData";
 import { usePathname } from "next/navigation";
 
+// Pages that must keep their exact previous look (e.g. live ad campaigns).
+// The shared "slider everywhere" behavior is skipped for these paths.
+const FROZEN_PATHS = ["/take-my-class", "/take-my-class/"];
+
 const DEFAULT_MAIN_HEADING =
   "Let's Take Your Online Chemistry Exam on All Online Platforms";
 const DEFAULT_SUB_HEADING =
@@ -97,8 +101,11 @@ export default function OnlinePlatform() {
     };
   } | null;
   const adminSection = pageData?.onlinePlatform;
-  const showSlider =
-    currentPath === "/" || currentPath === "/take-my-proctored-exam-for-me/";
+  // Render the carousel on every page (previously limited to home + proctored).
+  // The static grid fallback would let long platform lists render as a tall wall
+  // of cards; the slider keeps the section compact and consistent everywhere.
+  // Frozen paths keep their original static-grid look (old behavior).
+  const showSlider = !FROZEN_PATHS.includes(currentPath);
   const { mainHeading, subHeading, platforms, useAdminPlatforms } =
     useMemo(() => {
       const mainHeading =
@@ -109,12 +116,26 @@ export default function OnlinePlatform() {
         (adminSection?.subHeading && String(adminSection.subHeading).trim()) ||
         DEFAULT_SUB_HEADING;
       const adminPlatforms = Array.isArray(adminSection?.platforms)
-        ? adminSection.platforms.filter((p: AdminPlatform) => p?.key != null)
+        ? adminSection.platforms.filter((p: AdminPlatform) => {
+            if (p?.key == null) return false;
+            // Skip empty rows: an entry only counts as a real platform if it has
+            // a name, a description, or a logo. This keeps blank/placeholder rows
+            // in the admin data from producing extra empty slides and dots.
+            const hasName = !!(p.name && String(p.name).trim());
+            const hasDescription = !!(
+              p.description && String(p.description).trim()
+            );
+            const hasLogo = !!(p.logoUrl && String(p.logoUrl).trim());
+            return hasName || hasDescription || hasLogo;
+          })
         : [];
       const useAdminPlatforms = adminPlatforms.length > 0;
       const platforms = useAdminPlatforms
-        ? adminPlatforms.map((p: AdminPlatform) => ({
-            key: String(p.key),
+        ? adminPlatforms.map((p: AdminPlatform, index: number) => ({
+            // Suffix with the index so admin data with duplicate or empty keys
+            // still yields unique React keys — duplicate keys break react-slick's
+            // slide/dot tracking (extra dots, wrong active slide).
+            key: `${String(p.key)}-${index}`,
             name: (p.name && String(p.name).trim()) || "",
             description: (p.description && String(p.description).trim()) || "",
             logoUrl: (p.logoUrl && String(p.logoUrl).trim()) || undefined,
