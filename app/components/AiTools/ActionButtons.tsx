@@ -23,12 +23,13 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
 }) => {
   const showSecondary = Boolean(secondaryButtonText && onSecondarySubmit);
   return (
-    <div className="flex text-sm justify-between space-x-4 px-2 md:px-8 py-3 bg-white dark:bg-gray-900 transition-colors duration-300">
-      {" "}
+    // Mobile: the primary button stretches to fill the row as a prominent CTA
+    // with Clear compact beside it; md+ keeps the original corner-aligned look.
+    <div className="flex text-sm items-center justify-between gap-3 md:gap-4 px-4 md:px-8 py-3 bg-white dark:bg-gray-900 transition-colors duration-300">
       <button
         onClick={onClear}
         disabled={isSubmitting || isDisabled}
-        className={`p-3 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2b7fff] focus:ring-opacity-50 transition-colors duration-300 ${
+        className={`p-3 whitespace-nowrap font-medium text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2b7fff] focus:ring-opacity-50 transition-colors duration-300 ${
           isSubmitting || isDisabled
             ? "bg-white dark:bg-gray-800 cursor-not-allowed"
             : "bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
@@ -36,12 +37,12 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
       >
         Clear Inputs
       </button>
-      <div className="flex items-center gap-3">
+      <div className="flex flex-1 md:flex-initial items-center gap-3">
         {showSecondary && (
           <button
             onClick={onSecondarySubmit}
             disabled={isSubmitting || isSecondaryDisabled}
-            className={`p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#2b7fff] focus:ring-opacity-50 transition-colors duration-300 ${
+            className={`flex-1 md:flex-initial p-3 whitespace-nowrap font-medium border rounded-md focus:outline-none focus:ring-2 focus:ring-[#2b7fff] focus:ring-opacity-50 transition-colors duration-300 ${
               isSubmitting || isSecondaryDisabled
                 ? "bg-white dark:bg-gray-800 text-gray-400 dark:text-gray-500 border-gray-200 dark:border-gray-700 cursor-not-allowed"
                 : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
@@ -53,10 +54,10 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
         <button
           onClick={onSubmit}
           disabled={isSubmitting || isDisabled}
-          className={`p-3 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-[#2b7fff] focus:ring-opacity-50 transition-colors duration-300 ${
+          className={`flex-1 md:flex-initial p-3 whitespace-nowrap font-semibold text-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2b7fff] focus:ring-opacity-50 transition-colors duration-300 ${
             isSubmitting || isDisabled
-              ? "bg-primary-400 cursor-not-allowed"
-              : "bg-primary-400 hover:bg-primary-300"
+              ? "bg-primary-400 cursor-not-allowed opacity-80"
+              : "bg-primary-400 hover:bg-primary-300 active:bg-primary-500"
           }`}
         >
           {isSubmitting ? `${submitButtonText}...` : submitButtonText}
