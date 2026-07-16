@@ -857,7 +857,9 @@ const SummarizerTool: React.FC = () => {
             onWordLimitExceeded={setInputWordsExceeded}
           />
 
-          <div className="space-y-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-900/40 p-4 transition-colors duration-300">
+          {/* On mobile the action buttons render before this block (see order
+              classes) so Summarize stays above the fold. */}
+          <div className="order-3 md:order-none space-y-4 border-t md:border-t-0 border-b border-gray-200 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-900/40 p-4 transition-colors duration-300">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <label className="text-sm font-semibold text-gray-800 dark:text-gray-100">
                 Summary Style
@@ -906,49 +908,6 @@ const SummarizerTool: React.FC = () => {
                   </label>
                 ))}
               </div>
-            </div>
-
-            <div className="rounded-md border border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700 p-3">
-              <label className="flex items-center gap-2 text-sm font-semibold text-gray-800 dark:text-gray-100">
-                <input
-                  type="checkbox"
-                  checked={saveToDocument}
-                  onChange={(e) => setSaveToDocument(e.target.checked)}
-                />
-                Save in folder
-              </label>
-              {saveToDocument && (
-                <div className="mt-3 space-y-2">
-                  <select
-                    value={selectedFolderId}
-                    onChange={(e) => setSelectedFolderId(e.target.value)}
-                    className="w-full rounded-md border border-gray-200 text-black dark:border-gray-600 p-2 dark:bg-gray-900 dark:text-gray-100"
-                  >
-                    <option value="">No folder</option>
-                    {folders.map((folder) => (
-                      <option key={folder._id} value={folder._id}>
-                        {folder.name}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="flex gap-2">
-                    <input
-                      value={newFolderName}
-                      onChange={(e) => setNewFolderName(e.target.value)}
-                      placeholder="New folder name"
-                      className="min-w-0 flex-1 rounded-md border border-gray-200 text-black dark:border-gray-600 p-2 dark:bg-gray-900 dark:text-gray-100"
-                    />
-                    <button
-                      onClick={createFolder}
-                      type="button"
-                      className="px-3 rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-100"
-                      title="Create folder"
-                    >
-                      <FaFolderPlus />
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
 
             <div className="rounded-md border border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700">
@@ -1040,15 +999,60 @@ const SummarizerTool: React.FC = () => {
                 </div>
               )}
             </div>
+
+            <div className="rounded-md border border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700 p-3">
+              <label className="flex items-center gap-2 text-sm font-semibold text-gray-800 dark:text-gray-100">
+                <input
+                  type="checkbox"
+                  checked={saveToDocument}
+                  onChange={(e) => setSaveToDocument(e.target.checked)}
+                />
+                Save in folder
+              </label>
+              {saveToDocument && (
+                <div className="mt-3 space-y-2">
+                  <select
+                    value={selectedFolderId}
+                    onChange={(e) => setSelectedFolderId(e.target.value)}
+                    className="w-full rounded-md border border-gray-200 text-black dark:border-gray-600 p-2 dark:bg-gray-900 dark:text-gray-100"
+                  >
+                    <option value="">No folder</option>
+                    {folders.map((folder) => (
+                      <option key={folder._id} value={folder._id}>
+                        {folder.name}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="flex gap-2">
+                    <input
+                      value={newFolderName}
+                      onChange={(e) => setNewFolderName(e.target.value)}
+                      placeholder="New folder name"
+                      className="min-w-0 flex-1 rounded-md border border-gray-200 text-black dark:border-gray-600 p-2 dark:bg-gray-900 dark:text-gray-100"
+                    />
+                    <button
+                      onClick={createFolder}
+                      type="button"
+                      className="px-3 rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-100"
+                      title="Create folder"
+                    >
+                      <FaFolderPlus />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
-          <ActionButtons
-            onClear={handleClearAllInputs}
-            onSubmit={handleSummarize}
-            submitButtonText="Summarize"
-            isSubmitting={isLoading}
-            isDisabled={isLoading || !currentInputText.trim() || inputWordsExceeded}
-          />
+          <div className="order-2 md:order-none">
+            <ActionButtons
+              onClear={handleClearAllInputs}
+              onSubmit={handleSummarize}
+              submitButtonText="Summarize"
+              isSubmitting={isLoading}
+              isDisabled={isLoading || !currentInputText.trim() || inputWordsExceeded}
+            />
+          </div>
         </div>
 
         <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm h-full flex flex-col overflow-hidden transition-colors duration-300">
