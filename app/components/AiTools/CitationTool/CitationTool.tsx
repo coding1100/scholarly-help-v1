@@ -19,6 +19,7 @@ import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import DOMPurify from "dompurify";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
+import SavedCitations from "./SavedCitations";
 
 // Citations only ever contain italic markup for titles. Restrict the allowed
 // tags tightly so nothing executable can be injected even if upstream changes.
@@ -198,11 +199,15 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
   const [lookupBusy, setLookupBusy] = useState<boolean>(false);
   const [searchResults, setSearchResults] = useState<SearchResultRow[]>([]);
 
-  // ── Save to Dashboard ──
+  // ── Save to library ──
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [savedDocId, setSavedDocId] = useState<string | null>(null);
 
-  const { gateOpen, closeGate, guardAiClick } = useGuestGate();
+  // ── Saved citations library ──
+  const [libraryOpen, setLibraryOpen] = useState<boolean>(false);
+  const [libraryRefreshKey, setLibraryRefreshKey] = useState<number>(0);
+
+  const { gateOpen, openGate, closeGate, guardAiClick } = useGuestGate();
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -591,15 +596,33 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
 
+  /** Open the Saved Citations panel below and bring it into view. */
+  const openLibraryAndScroll = () => {
+    setLibraryOpen(true);
+    requestAnimationFrame(() => {
+      document
+        .getElementById("saved-citations")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
+
   const handleSaveToDashboard = async () => {
     if (!result || !apiBase) return;
     if (savedDocId) {
-      toast.success("Already saved to your dashboard.");
+      toast.success("Already saved to your citation library.");
+      return;
+    }
+    if (!token) {
+      openGate();
       return;
     }
     setIsSaving(true);
     try {
-      const docTitle = `Citation — ${result.citation_style} (${result.source_type})`;
+      // Include the source title so entries stay tellable-apart in list views.
+      const srcTitle = title.trim();
+      const docTitle =
+        `Citation — ${result.citation_style} (${result.source_type})` +
+        (srcTitle ? `: ${srcTitle.slice(0, 80)}` : "");
       // full_citation/footnote contain only trusted <i> markup from the engine.
       const contentHtml =
         `<p>${result.full_citation}</p>` +
@@ -621,7 +644,8 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
       const id = response.data?.data?._id;
       if (!id) throw new Error("Could not save the citation.");
       setSavedDocId(id);
-      toast.success("Saved to your dashboard.");
+      setLibraryRefreshKey((k) => k + 1);
+      toast.success("Saved to your citation library.");
     } catch (err: any) {
       const msg =
         err?.response?.data?.message || err?.message || "Failed to save.";
@@ -1454,10 +1478,10 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
                         ? "border border-green-300 text-green-700 bg-green-50 dark:border-green-800 dark:text-green-400 dark:bg-green-900/20"
                         : "border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
                     }`}
-                    title="Save to your dashboard"
+                    title="Save to your citation library"
                   >
                     {savedDocId ? <FaCheck /> : <FaRegBookmark />}
-                    {isSaving ? "Saving..." : savedDocId ? "Saved" : "Save to Dashboard"}
+                    {isSaving ? "Saving..." : savedDocId ? "Saved" : "Save Citation"}
                   </button>
                   <button
                     onClick={() => handleCopy(result.full_citation)}
@@ -1480,14 +1504,14 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
               </div>
               {savedDocId && (
                 <p className="mt-2 text-xs text-green-700 dark:text-green-400">
-                  Saved to your{" "}
-                  <a
-                    href="/tools/dashboard"
-                    className="font-medium underline hover:text-green-800"
+                  Saved to your citation library.{" "}
+                  <button
+                    type="button"
+                    onClick={openLibraryAndScroll}
+                    className="font-medium underline hover:text-green-800 dark:hover:text-green-300"
                   >
-                    dashboard library
-                  </a>
-                  . Find it under your saved documents.
+                    View saved citations
+                  </button>
                 </p>
               )}
             </div>
@@ -1545,6 +1569,16 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
           </div>
         )}
       </div>
+
+      {/* Saved citations library */}
+      <SavedCitations
+        apiBase={apiBase}
+        token={token}
+        open={libraryOpen}
+        onToggle={() => setLibraryOpen((o) => !o)}
+        refreshKey={libraryRefreshKey}
+        onRequireSignIn={openGate}
+      />
 
       {/* Footer Quote */}
       <div className="text-sm font-serif text-center pt-8 text-gray-500 dark:text-gray-400 transition-colors duration-300">
