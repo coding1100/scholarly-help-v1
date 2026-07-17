@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import ToolsLayout from "@/app/components/AiTools/ToolsLayout";
 import CitationTool from "@/app/components/AiTools/CitationTool/CitationTool";
 import { ToolsSuspenseFallback } from "@/app/components/AiTools/ToolsApiLoader";
+import ToolWithExplore from "@/app/components/AiTools/ToolWithExplore";
 // import ThemeToggle from "@/app/components/AiLandingPage/ThemeToggle";
 
 export default function CitationPage() {
@@ -17,7 +18,9 @@ export default function CitationPage() {
     >
       {/* <ThemeToggle top="top-12" /> */}
       <ToolsLayout setFlag={setFlag} flag={flag}>
-        <CitationTool setFlag={setFlag} />
+        <ToolWithExplore>
+          <CitationTool setFlag={setFlag} />
+        </ToolWithExplore>
       </ToolsLayout>
     </Suspense>
   );

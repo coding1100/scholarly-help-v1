@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import ToolsLayout from "@/app/components/AiTools/ToolsLayout";
 import AIParaphraser from "@/app/components/AiTools/AIParaphraser-tool";
 import { ToolsSuspenseFallback } from "@/app/components/AiTools/ToolsApiLoader";
+import ToolWithExplore from "@/app/components/AiTools/ToolWithExplore";
 // import ThemeToggle from "@/app/components/AiLandingPage/ThemeToggle";
 
 export default function ParaphraserPage() {
@@ -17,7 +18,9 @@ export default function ParaphraserPage() {
     >
       {/* <ThemeToggle top="top-12" /> */}
       <ToolsLayout setFlag={setFlag} flag={flag}>
-        <AIParaphraser setFlag={setFlag} />
+        <ToolWithExplore>
+          <AIParaphraser setFlag={setFlag} />
+        </ToolWithExplore>
       </ToolsLayout>
     </Suspense>
   );
