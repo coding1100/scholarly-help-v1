@@ -6,6 +6,7 @@ import { Suspense, useState } from "react";
 import ToolsLayout from "@/app/components/AiTools/ToolsLayout";
 import AIParaphraser from "@/app/components/AiTools/AIParaphraser-tool";
 import { ToolsSuspenseFallback } from "@/app/components/AiTools/ToolsApiLoader";
+import ToolWithExplore from "@/app/components/AiTools/ToolWithExplore";
 // import ThemeToggle from "@/app/components/AiLandingPage/ThemeToggle";
 
 export default function TutorPage() {
@@ -20,9 +21,11 @@ export default function TutorPage() {
       {/* <ThemeToggle top="top-12" /> */}
       <ToolsLayout setFlag={setFlag} flag={flag}>
         <ChatProvider>
-          <div className="">
-            <TutorFlow />
-          </div>
+          <ToolWithExplore>
+            <div className="">
+              <TutorFlow />
+            </div>
+          </ToolWithExplore>
         </ChatProvider>
       </ToolsLayout>
     </Suspense>

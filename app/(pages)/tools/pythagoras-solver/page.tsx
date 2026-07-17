@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import ToolsLayout from "@/app/components/AiTools/ToolsLayout";
 import PythagorasSolver from "@/app/components/AiTools/PythagorasSolver/PythagorasSolver";
 import { ToolsSuspenseFallback } from "@/app/components/AiTools/ToolsApiLoader";
+import ToolWithExplore from "@/app/components/AiTools/ToolWithExplore";
 // import ThemeToggle from "@/app/components/AiLandingPage/ThemeToggle";
 
 export default function PythagorasSolverPage() {
@@ -17,7 +18,9 @@ export default function PythagorasSolverPage() {
     >
       {/* <ThemeToggle top="top-12" /> */}
       <ToolsLayout setFlag={setFlag} flag={flag}>
-        <PythagorasSolver setFlag={setFlag} />
+        <ToolWithExplore>
+          <PythagorasSolver setFlag={setFlag} />
+        </ToolWithExplore>
       </ToolsLayout>
     </Suspense>
   );
