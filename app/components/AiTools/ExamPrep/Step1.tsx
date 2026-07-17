@@ -138,7 +138,7 @@ export default function Step1({ onContinue }: Step1Props) {
   };
 
   return (
-    <div className="relative h-[calc(100vh-8vh)] overflow-y-auto flex justify-center p-4 bg-linear-to-br from-gray-100 to-gray-200">
+    <div className="relative flex justify-center p-4 bg-linear-to-br from-gray-100 to-gray-200">
       <ToolsApiLoader show={isLoading} />
       <div className="w-full max-w-2xl">
         {/* Glassmorphism Card */}

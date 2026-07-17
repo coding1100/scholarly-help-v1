@@ -157,7 +157,7 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag }) => {
   };
 
   return (
-    <div className="container relative overflow-y-auto h-[calc(100vh-8vh)] mx-auto max-w-[840px] px-4 md:px-8 md:pt-8 2xl:max-w-6xl">
+    <div className="container relative mx-auto max-w-[840px] px-4 md:px-8 md:pt-8 2xl:max-w-6xl">
       <ToolsApiLoader show={isSubmitting} />
       <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 overflow-hidden transition-colors duration-300">
         {/* ---------- main two‑column layout ---------- */}

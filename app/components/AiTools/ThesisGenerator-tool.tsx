@@ -133,7 +133,7 @@ const ThesisGenerator = () => {
   };
 
   return (
-    <div className="container relative overflow-y-auto h-[calc(100vh-8vh)] w-[89%] mx-auto p-4 md:px-8">
+    <div className="container relative w-[89%] mx-auto p-4 md:px-8">
       <ToolsApiLoader show={isSubmitting} />
       <div className="grid grid-cols-1 md:grid-cols-2 flex-grow border border-gray-200 dark:border-gray-700 mt-4 transition-colors duration-300">
         {/* Left — form */}

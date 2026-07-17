@@ -212,7 +212,7 @@ export default function Step3({
   const totalQuestions = questions.length;
 
   return (
-    <div className="h-[calc(100vh-8vh)] overflow-y-auto flex justify-center p-4 bg-linear-to-br from-gray-100 to-gray-200">
+    <div className="flex justify-center p-4 bg-linear-to-br from-gray-100 to-gray-200">
       <div className="w-full max-w-4xl my-8">
         {/* Header */}
         <div className="backdrop-blur-xl border border-white/20 rounded-3xl p-6 mb-6 shadow-2xl">

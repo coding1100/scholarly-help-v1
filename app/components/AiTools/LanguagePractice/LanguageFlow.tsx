@@ -75,7 +75,7 @@ function Shell() {
   }, [language, level, goals.length, onboardingComplete]);
 
   return (
-    <div className="relative h-[calc(100vh-8vh)] overflow-y-auto flex justify-center p-4 bg-linear-to-br from-gray-100 to-gray-200">
+    <div className="relative flex justify-center p-4 bg-linear-to-br from-gray-100 to-gray-200">
       <ToolsApiLoader show={isAiBusy} />
       <div className="mx-auto w-full max-w-6xl px-4 py-6">
         <header className="mb-6 flex flex-col gap-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">

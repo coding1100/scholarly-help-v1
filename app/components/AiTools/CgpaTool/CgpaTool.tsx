@@ -239,7 +239,7 @@ export default function CgpaTool(props: CgpaToolProps = {}) {
 
   return (
     <div
-      className={`container relative ${currentRoute === "/tools/cgpa-calculator/" && "overflow-y-auto h-[90vh] "} mx-auto max-w-[840px] px-4 md:px-8 md:pt-8 2xl:max-w-6xl`}
+      className="container relative mx-auto max-w-[840px] px-4 md:px-8 md:pt-8 2xl:max-w-6xl"
     >
       <ToolsApiLoader show={isSending} />
       <div className="bg-white dark:bg-gray-800 overflow-hidden transition-colors duration-300">

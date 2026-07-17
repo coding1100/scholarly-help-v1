@@ -26,7 +26,7 @@ export default function Step5({
   // Map goal keys to labels, or use custom goals as-is
   const displayGoals = goals.map((goal) => goalLabels[goal] || goal);
   return (
-    <div className="h-[calc(100vh-8vh)] overflow-y-auto flex items-center justify-center p-4 bg-white">
+    <div className="flex justify-center px-4 py-8 bg-white">
       <div className="w-full max-w-5xl">
         <div className="bg-[#F0F0F0] rounded-3xl p-10  shadow-2xl">
           {/* Checkmark Icon */}

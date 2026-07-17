@@ -450,7 +450,7 @@ const HumanizerTool: React.FC = () => {
       : "AI detection result will appear here...";
 
   return (
-    <div className="container relative overflow-y-auto h-[calc(100vh-8vh)] mx-auto max-w-[840px] px-3 py-4 sm:px-4 md:px-8 md:pt-8 2xl:max-w-6xl">
+    <div className="container relative mx-auto max-w-[840px] px-3 py-4 sm:px-4 md:px-8 md:pt-8 2xl:max-w-6xl">
       <ToolsApiLoader show={loading} />
 
       <div

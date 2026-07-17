@@ -59,7 +59,7 @@ Please provide:
   }, [duration, topic]);
 
   return (
-    <div className="relative h-[calc(100vh-8vh)] w-full overflow-y-auto overflow-x-hidden break-words flex justify-center py-4 mb-6 bg-linear-to-br from-gray-100 to-gray-200">
+    <div className="relative w-full overflow-x-hidden break-words flex justify-center py-4 mb-6 bg-linear-to-br from-gray-100 to-gray-200">
       <ToolsApiLoader show={isLoading} />
       <div className="w-full max-w-4xl mx-auto px-4 md:px-8">
         {/* Header Bar */}
