@@ -140,7 +140,7 @@ Difficulty: medium`;
 
   if (isLoading) {
     return (
-      <div className="relative h-[calc(100vh-8vh)] overflow-y-auto flex mt-10 justify-center p-4 bg-linear-to-br from-gray-100 to-gray-200">
+      <div className="relative flex mt-10 justify-center p-4 bg-linear-to-br from-gray-100 to-gray-200">
         <ToolsApiLoader show />
       </div>
     );
@@ -148,7 +148,7 @@ Difficulty: medium`;
 
   if (error) {
     return (
-      <div className="h-[calc(100vh-8vh)] overflow-y-auto flex mt-10 justify-center p-4 bg-linear-to-br from-gray-100 to-gray-200">
+      <div className="flex mt-10 justify-center p-4 bg-linear-to-br from-gray-100 to-gray-200">
         <div className="max-w-md w-full bg-[#F0F0F0] rounded-3xl p-8 text-center">
           <div className="text-[#fb2c36] text-4xl mb-4">⚠️</div>
           <h3 className="text-2xl font-bold text-[#333333] mb-2">
@@ -170,7 +170,7 @@ Difficulty: medium`;
 
   if (questions.length === 0) {
     return (
-      <div className="h-[calc(100vh-8vh)] overflow-y-auto flex mt-10 justify-center p-4 bg-linear-to-br from-gray-100 to-gray-200">
+      <div className="flex mt-10 justify-center p-4 bg-linear-to-br from-gray-100 to-gray-200">
         <div className="max-w-md w-full bg-[#F0F0F0] rounded-3xl p-8 text-center">
           <p className="text-[#666666] mb-6">No questions available.</p>
           {onBack && (
@@ -190,7 +190,7 @@ Difficulty: medium`;
   const totalQuestions = questions.length;
 
   return (
-    <div className="h-[calc(100vh-8vh)] overflow-y-auto flex mt-10 justify-center p-4 bg-linear-to-br from-gray-100 to-gray-200">
+    <div className="flex mt-10 justify-center p-4 bg-linear-to-br from-gray-100 to-gray-200">
       <div className="w-full max-w-3xl">
         {/* Quiz Card */}
         <div className="bg-[#F0F0F0] rounded-3xl p-8 md:p-12 shadow-2xl">

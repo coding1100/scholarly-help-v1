@@ -31,7 +31,7 @@ export default function Step3({ onBack, onContinue }: Step3Props) {
   }, [selected]);
 
   return (
-    <div className="h-[calc(100vh-8vh)] overflow-y-auto flex items-center justify-center p-4 bg-white">
+    <div className="flex justify-center px-4 py-8 bg-white">
       <div className="w-full max-w-5xl">
         <div className="bg-[#F0F0F0] rounded-3xl p-10 md:p-14 shadow-2xl">
           <div className="text-center">

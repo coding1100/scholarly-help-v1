@@ -362,7 +362,7 @@ export default function TutorFlow() {
   };
 
   return (
-    <div className="relative h-[calc(100vh-8vh)] overflow-y-auto flex justify-center bg-linear-to-br from-gray-100 to-gray-200">
+    <div className="relative flex justify-center bg-linear-to-br from-gray-100 to-gray-200">
       <ToolsApiLoader show={isWorkspaceLoading || isExecuting} />
       <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[minmax(0,420px)_1fr]">
         <form

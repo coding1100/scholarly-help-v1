@@ -16,7 +16,7 @@ export default function Step11({
   const scorePercentage = Math.round((correctAnswers / totalQuestions) * 100);
 
   return (
-    <div className="h-[calc(100vh-8vh)] overflow-y-auto flex mt-10 justify-center p-4 bg-linear-to-br from-gray-100 to-gray-200">
+    <div className="flex mt-10 justify-center p-4 bg-linear-to-br from-gray-100 to-gray-200">
       <div className="w-full max-w-2xl">
         {/* Results Card */}
         <div className="bg-[#F0F0F0] rounded-3xl p-8 md:p-12 shadow-2xl">

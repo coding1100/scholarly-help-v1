@@ -840,7 +840,7 @@ const SummarizerTool: React.FC = () => {
   }, [browseFolderId, documents]);
 
   return (
-    <div className="container relative overflow-y-auto scrollbar-hide h-[calc(100vh-8vh)] mx-auto max-w-[1040px] px-4 md:px-8 md:pt-8 2xl:max-w-6xl">
+    <div className="container relative mx-auto max-w-[1040px] px-4 md:px-8 md:pt-8 2xl:max-w-6xl">
       <ToolsApiLoader show={isLoading} />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
         <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm h-full flex flex-col overflow-hidden transition-colors duration-300">

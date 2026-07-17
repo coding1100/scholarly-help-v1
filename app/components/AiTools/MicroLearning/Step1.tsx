@@ -6,7 +6,7 @@ interface Step1Props {
 
 export default function Step1({ onContinue }: Step1Props) {
   return (
-    <div className="h-[calc(100vh-8vh)] overflow-y-auto flex items-center justify-center p-4">
+    <div className="flex justify-center px-4 py-8">
       {/* Main Content Card */}
       <div className="w-full max-w-2xl">
         <div className="bg-[#F0F0F0] rounded-3xl p-12 md:p-16 shadow-2xl">
