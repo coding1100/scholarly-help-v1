@@ -22,7 +22,7 @@ const ToolHeader: React.FC = () => {
     : currentPath;
 
   return (
-    <header className="relative flex h-[8vh] items-center justify-between px-4 bg-white border-b ">
+    <header className="relative flex h-[8vh] flex-shrink-0 items-center justify-between px-4 bg-white border-b ">
       <div></div>
       {/* Centered Title */}
 

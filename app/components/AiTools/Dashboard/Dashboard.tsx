@@ -6,7 +6,7 @@ import CTASection from "./CTASection";
 
 export default function Dashboard() {
   return (
-    <main className="overflow-y-auto h-[90vh] bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100">
+    <main className="overflow-y-auto h-full bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100">
       <HeroSection />
       <ToolGrid />
       <FeaturesSection />

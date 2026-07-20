@@ -334,7 +334,7 @@ export default function StudyWorkspacePageContent() {
             // Onboarding now also renders the Explore Tools grid below the
             // welcome card, so the view must scroll instead of clipping at the
             // fold. Both states share a scrolling main.
-            "h-[90vh] overflow-y-auto"
+            "h-full overflow-y-auto"
           }`}
         >
         {isBootstrapping ? (
