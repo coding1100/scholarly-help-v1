@@ -45,7 +45,7 @@ const ToolsLayout: React.FC<ToolsLayoutProps> = ({
         <BiChevronsRight className="h-5 w-5 text-gray-700 dark:text-gray-300" />
       </button>
 
-      <div className="flex flex-1 h-full">
+      <div className="flex flex-1 min-h-0">
         {/* Desktop Sidebar */}
         <div className="w-60 flex-shrink-0 bg-white dark:bg-gray-800 hidden lg:block transition-colors duration-300">
           {/* <div className="py-3 sm:px-10 px-7 flex justify-between xl:container w-full flex-wrap sm:flex-nowrap bg-gray-50 border">
@@ -93,11 +93,14 @@ const ToolsLayout: React.FC<ToolsLayoutProps> = ({
           </>
         )}
 
-        {/* Tool content */}
-        <div className="flex-1 h-screen bg-white dark:bg-gray-900 transition-colors duration-300 w-full">
+        {/* Tool content. Column fills the viewport (never exceeds it) and the
+            header is a fixed row, so the tool area below is the only scroller —
+            an h-screen column here would overflow by the header's height and
+            add a second scrollbar. */}
+        <div className="flex-1 min-w-0 min-h-0 flex flex-col bg-white dark:bg-gray-900 transition-colors duration-300">
           {/* {children} */}
           <ToolHeader />
-          {content}
+          <div className="flex-1 min-h-0">{content}</div>
         </div>
       </div>
     </div>
