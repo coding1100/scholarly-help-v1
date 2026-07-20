@@ -50,6 +50,15 @@ const defaultPickTabTools: Record<string, PickToolItem[]> = {
       buttonText: "Humanize text",
       link: "/tools/humanizer-tool",
     },
+    {
+      iconKey: "tmIcon2",
+      tag: "New",
+      heading: "AI Detector",
+      description:
+        "Check whether text reads as AI-generated, human-written, or mixed — with sentence-level highlights and clear explanations.",
+      buttonText: "Check for AI",
+      link: "/tools/ai-detector-tool",
+    },
   ],
   research: [
     {
