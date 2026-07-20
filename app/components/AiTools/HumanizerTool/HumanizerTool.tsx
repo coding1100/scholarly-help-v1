@@ -6,11 +6,17 @@ import toast from "react-hot-toast";
 import { FiCopy, FiCheck } from "react-icons/fi";
 import TextSummarizerInput from "@/app/components/AiTools/TextSummarizerInput";
 import ActionButtons from "@/app/components/AiTools/ActionButtons";
-import { countWords } from "@/app/utils/text";
+import AiGauge from "@/app/components/AiTools/shared/AiGauge";
+import { countWords, looksLikeGibberish } from "@/app/utils/text";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
+import {
+  type DetectionResponse,
+  type DetectSegment,
+  MIN_DETECT_WORDS,
+} from "@/app/components/AiTools/AiDetectorTool/types";
 
 type HumanizerTone = "natural" | "simple" | "polished" | "academic" | "custom";
 type RewriteIntensity = "normal" | "moderate" | "full";
@@ -33,19 +39,14 @@ type HumanizerResponse = {
   tokens_used: number;
 };
 
-type AiDetectionMeta = {
-  matchedTells?: string[];
-  signals?: { id: string; label: string; direction: "ai" | "human" }[];
-  details?: Record<string, unknown>;
-};
-
-type AiDetectionResponse = {
-  success: boolean;
-  aiPercent: number;
-  humanPercent: number;
-  reason?: string;
-  meta?: AiDetectionMeta;
-};
+/**
+ * Detection state for the "Check AI" panel. Scoring comes entirely from the
+ * shared backend detector (POST /tools/ai-detect) — this component renders the
+ * result and never scores locally.
+ */
+type AiDetectionState =
+  | { success: true; result: DetectionResponse }
+  | { success: false; reason: string };
 
 const INTENSITY_META: Record<
   RewriteIntensity,
@@ -58,160 +59,33 @@ const INTENSITY_META: Record<
 
 const INTENSITY_ORDER: RewriteIntensity[] = ["normal", "moderate", "full"];
 
-function AiGauge({ percent }: { percent: number }) {
-  const size = 180;
-  const stroke = 14;
-  const radius = (size - stroke) / 2;
-  const c = 2 * Math.PI * radius;
-  const clamped = Math.max(0, Math.min(100, percent));
-  const dash = (clamped / 100) * c;
-  const gap = c - dash;
-
-  return (
-    <div className="relative" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="block">
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          strokeWidth={stroke}
-          className="text-gray-200 dark:text-gray-700"
-          stroke="currentColor"
-          fill="none"
-        />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          strokeWidth={stroke}
-          strokeLinecap="round"
-          className="text-emerald-500"
-          stroke="currentColor"
-          fill="none"
-          strokeDasharray={`${dash} ${gap}`}
-          transform={`rotate(-90 ${size / 2} ${size / 2})`}
-        />
-      </svg>
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="text-4xl font-semibold text-gray-800 dark:text-gray-100">
-          {clamped}%
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Sentence-level AI scorer (client-side, no extra API call)
-// Mirrors the key signals from heuristic-detector.ts but applied per-sentence
-// relative to the full passage context so scores are calibrated.
-// ---------------------------------------------------------------------------
-const AI_TELLS = [
-  "moreover","furthermore","additionally","therefore","consequently","thus",
-  "hence","however","notably","overall","nonetheless","nevertheless",
-  "subsequently","accordingly","henceforth","in conclusion","in summary",
-  "as a result","in addition","on the other hand","it is important to note",
-  "it is worth noting","delve","tapestry","leverage","robust","seamless",
-  "cutting-edge","transformative","utilize","groundbreaking","unlock",
-  "testament","underscore","underscores","realm","vibrant","intricate",
-  "intricacies","pivotal","showcase","showcasing","interplay","landscape",
-  "foster","fostering","garner","enduring","navigate the","when it comes to",
-  "plays a crucial role","plays a vital role","a testament to","in the realm of",
-];
-
-// Heuristic check for gibberish / non-language input (e.g. random keyboard
-// mashing like "NBVGFDXZS..."). Humanizing or AI-checking such input is
-// meaningless, so we reject it up front. A token is "plausible" if it contains a
-// vowel and has no absurdly long consonant run. If too few tokens are plausible,
-// the input is treated as gibberish.
-function looksLikeGibberish(input: string): boolean {
-  const tokens = (input.toLowerCase().match(/[a-z]+/g) || []).filter(
-    (t) => t.length >= 2,
-  );
-  // Not enough alphabetic content to judge — let it through.
-  if (tokens.length < 3) return false;
-
-  const isPlausible = (t: string) => {
-    if (t.length > 18) return false; // real words are rarely this long
-    if (!/[aeiou]/.test(t)) return false; // a word with no vowel is unlikely
-    if (/[bcdfghjklmnpqrstvwxyz]{5,}/.test(t)) return false; // 5+ consonants in a row
-    return true;
-  };
-
-  const plausible = tokens.filter(isPlausible).length;
-  const ratio = plausible / tokens.length;
-  // Fewer than half the tokens look like real words → gibberish.
-  return ratio < 0.5;
-}
-
-function scoreSentenceAi(sentence: string): number {
-  const lower = sentence.toLowerCase();
-  const words = lower.match(/[a-z0-9']+/g) || [];
-  if (words.length < 4) return 0;
-
-  let score = 0;
-
-  // AI-tell vocabulary
-  for (const tell of AI_TELLS) {
-    if (lower.includes(tell)) score += 0.35;
-  }
-
-  // Long formal words
-  const longWordRatio = words.filter((w) => w.length >= 8).length / words.length;
-  if (longWordRatio > 0.28) score += 0.25;
-
-  // No contractions
-  const hasContraction = /\b\w+'\w+\b/.test(sentence);
-  if (!hasContraction) score += 0.15;
-
-  // No first person
-  const hasFirstPerson = /\b(i|me|my|we|our|us)\b/i.test(sentence);
-  if (!hasFirstPerson) score += 0.1;
-
-  // Mid-length cadence (10–28 words is typical AI range)
-  if (words.length >= 10 && words.length <= 28) score += 0.15;
-
-  return Math.min(score, 1);
-}
-
-function splitSentences(text: string): { sentence: string; gap: string }[] {
-  // Split on sentence boundaries, preserving the whitespace/newline between them
-  const parts: { sentence: string; gap: string }[] = [];
-  const re = /([^.!?\n]+[.!?]*)(\s*\n*\s*)/g;
-  let match: RegExpExecArray | null;
-  let last = 0;
-  while ((match = re.exec(text)) !== null) {
-    parts.push({ sentence: match[1], gap: match[2] });
-    last = match.index + match[0].length;
-  }
-  // Any trailing text without punctuation
-  if (last < text.length) {
-    parts.push({ sentence: text.slice(last), gap: "" });
-  }
-  return parts.filter((p) => p.sentence.trim());
-}
-
-function SentenceHighlightedText({ text }: { text: string }) {
-  const sentences = splitSentences(text);
-  // Threshold: highlight if score >= 0.4
-  const THRESHOLD = 0.4;
-
+/**
+ * Server-scored sentence highlights: renders the segments returned by the shared
+ * detector, marking AI sentences red-tinted and mixed sentences amber-tinted.
+ * (The old client-side sentence scorer was deleted — highlights and the gauge now
+ * always agree because they come from the same backend response.)
+ */
+function SentenceHighlightedText({ segments }: { segments: DetectSegment[] }) {
   return (
     <p className="leading-relaxed text-gray-800 dark:text-gray-100 text-sm whitespace-pre-wrap">
-      {sentences.map(({ sentence, gap }, i) => {
-        const score = scoreSentenceAi(sentence);
-        return score >= THRESHOLD ? (
+      {segments.map((seg, i) => {
+        const highlight =
+          seg.label === "ai"
+            ? "bg-red-100 text-gray-900 dark:bg-red-400/40 dark:text-gray-100"
+            : seg.label === "mixed"
+              ? "bg-amber-100 text-gray-900 dark:bg-amber-400/40 dark:text-gray-100"
+              : "";
+        return highlight ? (
           <span key={i}>
             <mark
-              className="bg-yellow-300 text-gray-900 dark:bg-yellow-400/70 dark:text-gray-900 rounded-sm"
-              title={`AI likelihood: ${Math.round(score * 100)}%`}
+              className={`${highlight} rounded-sm`}
+              title={`${seg.label} · ${Math.round(seg.prob_ai * 100)}% AI likelihood`}
             >
-              {sentence}
-            </mark>
-            {gap}
+              {seg.text}
+            </mark>{" "}
           </span>
         ) : (
-          <span key={i}>{sentence}{gap}</span>
+          <span key={i}>{seg.text} </span>
         );
       })}
     </p>
@@ -228,7 +102,7 @@ const HumanizerTool: React.FC = () => {
   const [activePanel, setActivePanel] = useState<"humanized" | "ai_detection">(
     "humanized",
   );
-  const [aiDetection, setAiDetection] = useState<AiDetectionResponse | null>(
+  const [aiDetection, setAiDetection] = useState<AiDetectionState | null>(
     null,
   );
   const [aiDetectView, setAiDetectView] = useState<"score" | "highlights">(
@@ -395,6 +269,12 @@ const HumanizerTool: React.FC = () => {
       toast.error("Please enter some text.");
       return;
     }
+    if (wordCount < MIN_DETECT_WORDS) {
+      toast.error(
+        `Please provide at least ${MIN_DETECT_WORDS} words — detection on very short text is unreliable.`,
+      );
+      return;
+    }
     if (wordCount > 1500) {
       toast.error("Please keep input at or under 1500 words.");
       return;
@@ -406,48 +286,54 @@ const HumanizerTool: React.FC = () => {
       return;
     }
 
-    setLoading(true);
-    setAiDetection(null);
-    setActivePanel("ai_detection");
-    setAiDetectView("score");
+    // Same guest allowance as humanizing: detection is a billed AI action now
+    // that it runs through the shared backend detector.
+    guardAiClick(async () => {
+      setLoading(true);
+      setAiDetection(null);
+      setActivePanel("ai_detection");
+      setAiDetectView("score");
 
-    try {
-      const response = await axios.post<AiDetectionResponse>("/api/ai-detect", {
-        text,
-      });
-      setAiDetection(response.data);
-    } catch (err: any) {
-      const message =
-        err?.response?.data?.error ||
-        err?.response?.data?.message ||
-        err?.message ||
-        "Failed to check AI.";
-      toast.error(Array.isArray(message) ? message.join(", ") : String(message));
-      setAiDetection({
-        success: false,
-        aiPercent: 0,
-        humanPercent: 0,
-        reason: String(message),
-      });
-    } finally {
-      setLoading(false);
-    }
+      try {
+        const response = await axios.post(
+          `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/ai-detect`,
+          {
+            text,
+            options: { include_segments: true, include_signals: true },
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          },
+        );
+        // Backend wraps responses as { success, message, data }
+        const result = (response.data?.data ?? response.data) as DetectionResponse;
+        setAiDetection({ success: true, result });
+      } catch (err: any) {
+        const message =
+          err?.response?.data?.message ||
+          err?.response?.data?.error ||
+          err?.message ||
+          "Failed to check AI.";
+        toast.error(
+          Array.isArray(message) ? message.join(", ") : String(message),
+        );
+        setAiDetection({ success: false, reason: String(message) });
+      } finally {
+        setLoading(false);
+      }
+    });
   };
 
   const canCheckAi = text.trim().length > 0 && wordCount <= 1500 && !loading;
 
-  const aiPercent = Math.max(
-    0,
-    Math.min(100, Math.round(aiDetection?.aiPercent ?? 0)),
-  );
-  const humanPercent = Math.max(
-    0,
-    Math.min(100, Math.round(aiDetection?.humanPercent ?? 0)),
-  );
-  const aiHeadline =
-    aiDetection && aiDetection.success
-      ? `${aiPercent}% of this text appears to be AI-generated`
-      : "AI detection result will appear here...";
+  const detection = aiDetection?.success ? aiDetection.result : null;
+  const aiPercent = detection ? detection.verdict.ai_percent : 0;
+  const aiHeadline = detection
+    ? `${aiPercent}% of this text appears to be AI-generated`
+    : "AI detection result will appear here...";
 
   return (
     <div className="container relative mx-auto max-w-[840px] px-3 py-4 sm:px-4 md:px-8 md:pt-8 2xl:max-w-6xl">
@@ -601,7 +487,7 @@ const HumanizerTool: React.FC = () => {
                       </div>
                     </div>
                     <div className="mt-6 mb-6">
-                      <AiGauge percent={aiPercent} />
+                      <AiGauge percent={aiPercent} colorByScore />
                     </div>
                     <div className="w-full max-w-md space-y-2">
                       <div className="flex items-center justify-between text-sm">
@@ -626,7 +512,13 @@ const HumanizerTool: React.FC = () => {
                           {Math.max(0, 100 - aiPercent)}%
                         </span>
                       </div>
-                      {aiDetection?.reason && !aiDetection.success && (
+                      {detection && (
+                        <div className="pt-2 text-xs text-gray-500 dark:text-gray-400">
+                          Likely range {detection.verdict.band[0]}–
+                          {detection.verdict.band[1]}% · {detection.trust.reason}
+                        </div>
+                      )}
+                      {aiDetection && !aiDetection.success && (
                         <div className="pt-2 text-xs text-gray-500 dark:text-gray-400">
                           {aiDetection.reason}
                         </div>
@@ -636,13 +528,15 @@ const HumanizerTool: React.FC = () => {
                 )}
 
                 {/* Highlights view */}
-                {aiDetectView === "highlights" && (
+                {aiDetectView === "highlights" && detection && (
                   <div className="flex-1 flex flex-col p-4 gap-3 overflow-y-auto">
                     <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                      <span className="inline-block h-3 w-4 rounded-sm bg-yellow-300 dark:bg-yellow-400/70 flex-shrink-0" />
-                      Sentences likely written by AI are highlighted
+                      <span className="inline-block h-3 w-4 rounded-sm bg-red-100 dark:bg-red-400/40 flex-shrink-0" />
+                      AI-likely sentences
+                      <span className="inline-block h-3 w-4 rounded-sm bg-amber-100 dark:bg-amber-400/40 flex-shrink-0" />
+                      Mixed sentences
                     </div>
-                    <SentenceHighlightedText text={text} />
+                    <SentenceHighlightedText segments={detection.segments ?? []} />
                   </div>
                 )}
               </div>

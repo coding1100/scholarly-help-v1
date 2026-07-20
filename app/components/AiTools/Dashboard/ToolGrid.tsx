@@ -126,6 +126,16 @@ const tools: ToolCardData[] = [
     category: "essay-writing",
     cta: "Humanize text",
   },
+  {
+    name: "AI Detector",
+    description:
+      "Check if text reads as AI-generated, with sentence-level highlights.",
+    href: "/tools/ai-detector-tool",
+    icon: FiSearch,
+    badge: "New",
+    category: "essay-writing",
+    cta: "Check for AI",
+  },
 
   // Research
   {
