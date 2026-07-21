@@ -122,6 +122,22 @@ const nextConfig = {
     return config;
   },
 
+  // Old Pythagoras Solver URLs — the tool is now Math Solver.
+  async redirects() {
+    return [
+      {
+        source: '/pythagoras-solver',
+        destination: '/math-solver',
+        permanent: true,
+      },
+      {
+        source: '/tools/pythagoras-solver',
+        destination: '/tools/math-solver',
+        permanent: true,
+      },
+    ];
+  },
+
   // Headers for caching static assets and enabling bfcache
   async headers() {
     const isProd = process.env.NODE_ENV === 'production';

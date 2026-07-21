@@ -71,7 +71,7 @@ const MTSidebar = ({
     // { name: "Essay Outline Tool", href: "/tools/essay-outline-tool" },
     // { name: "Essay Title Generator", href: "/tools/essay-title" },
     // { name: "Research Question Generator", href: "/tools/research-question" },
-    // { name: "Pythagoras Equation Solver", href: "/tools/pythagoras-solver" },
+    // { name: "Math Solver", href: "/tools/math-solver" },
     // { name: "Citation Tool", href: "/tools/citation-tool" },
     // { name: "Tutor Tool", href: "/tools/tutor" },
     // { name: "Micro Learning", href: "/tools/micro-learning" },
