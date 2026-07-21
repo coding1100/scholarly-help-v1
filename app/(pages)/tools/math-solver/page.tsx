@@ -2,12 +2,12 @@
 
 import { Suspense, useState } from "react";
 import ToolsLayout from "@/app/components/AiTools/ToolsLayout";
-import PythagorasSolver from "@/app/components/AiTools/PythagorasSolver/PythagorasSolver";
+import MathSolver from "@/app/components/AiTools/MathSolver/MathSolver";
 import { ToolsSuspenseFallback } from "@/app/components/AiTools/ToolsApiLoader";
 import ToolWithExplore from "@/app/components/AiTools/ToolWithExplore";
 // import ThemeToggle from "@/app/components/AiLandingPage/ThemeToggle";
 
-export default function PythagorasSolverPage() {
+export default function MathSolverPage() {
   const [flag, setFlag] = useState<boolean>(false);
 
   return (
@@ -19,7 +19,7 @@ export default function PythagorasSolverPage() {
       {/* <ThemeToggle top="top-12" /> */}
       <ToolsLayout setFlag={setFlag} flag={flag}>
         <ToolWithExplore>
-          <PythagorasSolver setFlag={setFlag} />
+          <MathSolver setFlag={setFlag} />
         </ToolWithExplore>
       </ToolsLayout>
     </Suspense>

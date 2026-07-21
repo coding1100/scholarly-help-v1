@@ -102,11 +102,11 @@ const defaultPickTabTools: Record<string, PickToolItem[]> = {
     {
       iconKey: "tmIcon1",
       tag: "Popular",
-      heading: "Pythagoras Equation Solver",
+      heading: "Math Solver",
       description:
         "Instant triangle problem solutions with step-by-step working shown. Understand the method, not just the answer.",
       buttonText: "Solve equation",
-      link: "/tools/pythagoras-solver",
+      link: "/tools/math-solver",
     },
   ],
   "study-tools": [

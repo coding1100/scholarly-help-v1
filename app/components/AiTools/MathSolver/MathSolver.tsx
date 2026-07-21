@@ -10,7 +10,7 @@ import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 import StemSolver from "./StemSolver";
 
-interface PythagorasSolverProps {
+interface MathSolverProps {
   setFlag: (value: boolean) => void;
 }
 
@@ -35,7 +35,7 @@ interface SolverResponse {
   formula: string;
 }
 
-const PythagorasSolver: FC<PythagorasSolverProps> = ({ setFlag }) => {
+const MathSolver: FC<MathSolverProps> = ({ setFlag }) => {
   const [token, setToken] = useState<string | null>(null);
   const [solverMode, setSolverMode] = useState<"triangle" | "stem">("triangle");
   const [sideA, setSideA] = useState<string>("");
@@ -111,14 +111,14 @@ const PythagorasSolver: FC<PythagorasSolverProps> = ({ setFlag }) => {
     // Guests get a small number of free AI actions across all tools; the gate
     // opens instead of calling the AI once the allowance is used up.
     guardAiClick(async () => {
-      trackToolGenerate({ toolName: "Pythagoras Equation Solver" });
+      trackToolGenerate({ toolName: "Math Solver" });
       setIsSubmitting(true);
       setError("");
       setResult(null);
 
       try {
         const response = await axios.post(
-          `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/pythagoras-equation-solver`,
+          `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/math-solver`,
           payload,
           {
             headers: {
@@ -179,7 +179,7 @@ const PythagorasSolver: FC<PythagorasSolverProps> = ({ setFlag }) => {
         <div className="pt-6">
           <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-3 transition-colors duration-300 text-center">
             {solverMode === "triangle"
-              ? "Pythagoras Equation Solver"
+              ? "Math Solver"
               : "STEM Problem Solver"}
           </h2>
         </div>
@@ -517,8 +517,8 @@ const PythagorasSolver: FC<PythagorasSolverProps> = ({ setFlag }) => {
       {/* Footer Quote */}
       <div className="text-sm font-serif text-center pt-8 text-gray-500 dark:text-gray-400 transition-colors duration-300">
         <q>
-          Master the Pythagorean theorem with ScholarlyHelp&apos;s Pythagoras
-          Equation Solver. Get instant, accurate solutions with step-by-step
+          Master the Pythagorean theorem with ScholarlyHelp&apos;s Math
+          Solver. Get instant, accurate solutions with step-by-step
           explanations and simplified radical forms for your right-angled
           triangle problems.
         </q>
@@ -528,4 +528,4 @@ const PythagorasSolver: FC<PythagorasSolverProps> = ({ setFlag }) => {
   );
 };
 
-export default PythagorasSolver;
+export default MathSolver;
