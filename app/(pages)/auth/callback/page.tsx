@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import toast from "react-hot-toast";
+import ProductSchema from "@/app/components/ProductSchema";
 
 const AuthCallbackPage = () => {
   const router = useRouter();
@@ -76,8 +77,19 @@ const AuthCallbackPage = () => {
     handleCallback();
   }, [router]);
 
+  const rawBaseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
+  const baseUrl = rawBaseUrl.endsWith("/")
+    ? rawBaseUrl.slice(0, -1)
+    : rawBaseUrl;
+
   return (
     <div className="min-h-screen flex items-center justify-center">
+      <ProductSchema
+        productTitle="Signing You In - Scholarly Help"
+        metaDescription="Completing your sign-in to Scholarly Help. Please wait while we verify your account and redirect you to your dashboard."
+        pageUrl={`${baseUrl}/auth/callback/`}
+      />
       <p className="text-sm text-gray-600">Completing sign-in...</p>
     </div>
   );

@@ -9,12 +9,23 @@ import AiFaq from "@/app/components/AiLandingPage/AiFaq";
 import ElevateWriting from "@/app/components/AiLandingPage/ElevateWriting";
 import { AiThesisContent } from "@/app/components/AiLandingPage/AiContent";
 // import ThemeToggle from "@/app/components/AiLandingPage/ThemeToggle";
+import ProductSchema from "@/app/components/ProductSchema";
 
 interface PageProps {}
 const Page: FC<PageProps> = ({}) => {
   // return <div>test</div>
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
+  const normalizedBaseUrl = baseUrl.endsWith("/")
+    ? baseUrl.slice(0, -1)
+    : baseUrl;
   return (
     <>
+      <ProductSchema
+        productTitle="AI Thesis Statement Generator | Create Strong Thesis Statements Free"
+        metaDescription="Craft focused, academic thesis statements instantly. Our AI tool analyzes your topic and perspective to build a strong foundation for your research papers and essays."
+        pageUrl={`${normalizedBaseUrl}/ai-thesis-generator`}
+      />
       {/* <ThemeToggle /> */}
 
       <AiHero

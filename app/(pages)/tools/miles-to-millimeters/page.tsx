@@ -6,6 +6,7 @@ import Hero from "@/app/components/Hero/Hero";
 import ToolsGrid from "@/app/components/ToolsGrid/ToolsGrid";
 import ToolsHero from "@/app/components/ToolsHero/ToolsHero";
 import BreadCrumbs from "@/app/components/BreadCrumbs/BreadCrumbs";
+import ProductSchema from "@/app/components/ProductSchema";
 // import Qualities from "@/app/components/Qualities/Qualities";
 // import SiteReviews from "@/app/components/SiteReviews/SiteReviews";
 // import AcademicPartner from "@/app/components/AcademicPartner/AcademicPartner";
@@ -22,9 +23,17 @@ import BreadCrumbs from "@/app/components/BreadCrumbs/BreadCrumbs";
 
 interface PageProps { }
 const Page: FC<PageProps> = ({ }) => {
+  const rawBaseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
+  const baseUrl = rawBaseUrl.endsWith('/') ? rawBaseUrl.slice(0, -1) : rawBaseUrl;
+
   // return <div>test</div>
   return (
     <MainLayout>
+      <ProductSchema
+        productTitle="Miles to Millimeters Converter | Free Academic Conversion Tool"
+        metaDescription="Convert miles to millimeters accurately with our free academic conversion tool. Quick and easy distance conversions for students and researchers."
+        pageUrl={`${baseUrl}/tools/miles-to-millimeters`}
+      />
       {/* <BreadCrumbs /> */}
       <BreadCrumbs pageName="Miles to Millimeters" />
       <ToolsHero content={content.heroContent} />

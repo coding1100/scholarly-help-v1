@@ -10,6 +10,7 @@ import WhyGuaranteeMatters from "@/app/components/OtherLandingPages/OnTimeDelive
 import WhyGuarantee from "@/app/components/OtherLandingPages/GradeGuarantee/WhyGuarantee";
 import HowGuaranteeWorks from "@/app/components/OtherLandingPages/OnTimeDelivery/HowGuaranteeWorks";
 import { getPageData } from "@/app/lib/mongodb";
+import ProductSchema from "@/app/components/ProductSchema";
 
 // Force dynamic rendering to prevent caching
 export const dynamic = 'force-dynamic';
@@ -74,8 +75,26 @@ const Home: NextPage = async () => {
   const academicPartners = pageData?.academicPartners || undefined;
   const faq = pageData?.faq || undefined;
 
+  const rawBaseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
+  const baseUrl = rawBaseUrl.endsWith("/")
+    ? rawBaseUrl.slice(0, -1)
+    : rawBaseUrl;
+  const productTitle =
+    pageData?.meta?.title || "On-Time Delivery Guarantee | Fast, Reliable Academic Support";
+  const metaDescription =
+    pageData?.meta?.description ||
+    "Receive your work on schedule with our On-Time Delivery Guarantee. We ensure fast, dependable, and stress-free academic support for every task.";
+  const pageUrl =
+    pageData?.meta?.canonicalUrl || `${baseUrl}/on-time-delivery-guarantee`;
+
   return (
     <div>
+      <ProductSchema
+        productTitle={productTitle}
+        metaDescription={metaDescription}
+        pageUrl={pageUrl}
+      />
       <MainLayout>
         <HeroSection heroContent={heroContent} />
         <WhyGuaranteeMatters content={whyGuarantee} />

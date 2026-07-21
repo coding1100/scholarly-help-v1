@@ -9,12 +9,23 @@ import AiFaq from "@/app/components/AiLandingPage/AiFaq";
 import ElevateWriting from "@/app/components/AiLandingPage/ElevateWriting";
 // import ThemeToggle from "@/app/components/AiLandingPage/ThemeToggle";
 import { ResearchQuestionContent } from "@/app/components/AiLandingPage/AiContent";
+import ProductSchema from "@/app/components/ProductSchema";
 
 interface PageProps {}
 const Page: FC<PageProps> = ({}) => {
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
+  const normalizedBaseUrl = baseUrl.endsWith("/")
+    ? baseUrl.slice(0, -1)
+    : baseUrl;
   // return <div>test</div>
   return (
     <>
+      <ProductSchema
+        productTitle="Research Question Generator for Papers & Thesis"
+        metaDescription="Not sure how to frame your research question? Scholarly AI research question generator helps students create research-ready questions in seconds. Start generating questions for free."
+        pageUrl={`${normalizedBaseUrl}/research-question`}
+      />
       {/* <ThemeToggle /> */}
       <AiHero
         heroContent={ResearchQuestionContent.heroContent}

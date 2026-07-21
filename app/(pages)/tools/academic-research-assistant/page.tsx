@@ -8,6 +8,7 @@ import MainToolLayout from "@/app/components/AiTools/MainTool/MainToolLayout";
 import EditorContainer from "@/app/components/AiTools/MainTool/EditorContainer";
 import MainDocEditer from "@/app/components/AiTools/MainTool/MainDocEditer";
 import { ToolsSuspenseFallback } from "@/app/components/AiTools/ToolsApiLoader";
+import ProductSchema from "@/app/components/ProductSchema";
 
 const ClientPage = () => {
   const searchParams = useSearchParams();
@@ -56,8 +57,19 @@ const ClientPage = () => {
 };
 
 const Page = () => {
+  const rawBaseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
+  const baseUrl = rawBaseUrl.endsWith("/")
+    ? rawBaseUrl.slice(0, -1)
+    : rawBaseUrl;
+
   return (
     <Suspense fallback={<ToolsSuspenseFallback />}>
+      <ProductSchema
+        productTitle="Academic Research Assistant - Scholarly Help"
+        metaDescription="Plan, draft, and refine research papers with an AI-powered academic research assistant that helps you structure documents and find credible references."
+        pageUrl={`${baseUrl}/tools/academic-research-assistant`}
+      />
       <ClientPage />
     </Suspense>
   );

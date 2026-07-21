@@ -15,6 +15,7 @@ import dynamic from "next/dynamic";
 import { FC } from "react";
 import { content } from "./content";
 import { MetaData } from "@/app/metadata/metadata";
+import ProductSchema from "@/app/components/ProductSchema";
 
 const WhyScholarly = dynamic(
   () => import("@/app/components/WhyScholarly/WhyScholarly"),
@@ -24,8 +25,18 @@ const WhyScholarly = dynamic(
 );
 interface PageProps {}
 const Page: FC<PageProps> = ({}) => {
+  const rawBaseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
+  const baseUrl = rawBaseUrl.endsWith("/")
+    ? rawBaseUrl.slice(0, -1)
+    : rawBaseUrl;
   return (
     <>
+      <ProductSchema
+        productTitle={MetaData.classHelpDiscount.title}
+        metaDescription={MetaData.classHelpDiscount.description}
+        pageUrl={`${baseUrl}/${MetaData.classHelpDiscount.url}`}
+      />
       <MainLayout>
         <Hero />
         <Qualities />

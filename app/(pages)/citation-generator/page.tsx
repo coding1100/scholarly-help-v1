@@ -9,12 +9,23 @@ import AiFaq from "@/app/components/AiLandingPage/AiFaq";
 import ElevateWriting from "@/app/components/AiLandingPage/ElevateWriting";
 // import ThemeToggle from "@/app/components/AiLandingPage/ThemeToggle";
 import { CitationGeneratorContent } from "@/app/components/AiLandingPage/AiContent";
+import ProductSchema from "@/app/components/ProductSchema";
 
 interface PageProps {}
 const Page: FC<PageProps> = ({}) => {
   // return <div>test</div>
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
+  const normalizedBaseUrl = baseUrl.endsWith("/")
+    ? baseUrl.slice(0, -1)
+    : baseUrl;
   return (
     <>
+      <ProductSchema
+        productTitle="AI Citation Generator | Free APA, MLA, Chicago & More"
+        metaDescription="Generate accurate citations instantly with Scholarly AI. Free citation generator for APA, MLA, Chicago, Turabian, and other formats. Reduce errors and save time."
+        pageUrl={`${normalizedBaseUrl}/citation-generator`}
+      />
       {/* <ThemeToggle /> */}
       <AiHero
         heroContent={CitationGeneratorContent.heroContent}

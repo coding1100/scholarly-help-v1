@@ -5,6 +5,7 @@ import { MetaData } from "@/app/metadata/metadata";
 import { TakeMyExamDataProvider } from "../TakeMyExamDataProvider";
 import type { Metadata } from "next";
 import { getPageData } from "@/app/lib/mongodb";
+import ProductSchema from "@/app/components/ProductSchema";
 
 export const revalidate = 0;
 
@@ -22,9 +23,24 @@ async function fetchTakeMyExamData() {
 
 const Page = async () => {
   const pageData = await fetchTakeMyExamData();
-  
+  const rawBaseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
+  const baseUrl = rawBaseUrl.endsWith("/")
+    ? rawBaseUrl.slice(0, -1)
+    : rawBaseUrl;
+  const productTitle = pageData?.meta?.title || MetaData.takeMyExam.title;
+  const metaDescription =
+    pageData?.meta?.description || MetaData.takeMyExam.description;
+  const pageUrl =
+    pageData?.meta?.canonicalUrl || `${baseUrl}/${MetaData.takeMyExam.url}`;
+
   return (
     <TakeMyExamDataProvider data={pageData}>
+      <ProductSchema
+        productTitle={productTitle}
+        metaDescription={metaDescription}
+        pageUrl={pageUrl}
+      />
       <MainLayout>
         <HeroSection />
         <BelowFoldLanding />

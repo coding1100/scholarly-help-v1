@@ -8,6 +8,7 @@ import Faq from "@/app/components/LandingPage/Faq";
 import AcademicPartners from "@/app/components/LandingPage/AcademicPartners";
 import OriginalSection from "@/app/components/OtherLandingPages/PlagriarismFree/OriginalSection";
 import { getPageData } from "@/app/lib/mongodb";
+import ProductSchema from "@/app/components/ProductSchema";
 
 // Force dynamic rendering to prevent caching
 export const dynamic = 'force-dynamic';
@@ -48,8 +49,26 @@ const Home: NextPage = async () => {
   const whyScholarlySlider = pageData?.whyScholarlySlider || plagiarismFreeContent.whyScholalrySlider;
   const academicPartners = pageData?.academicPartners || undefined;
 
+  const rawBaseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
+  const baseUrl = rawBaseUrl.endsWith("/")
+    ? rawBaseUrl.slice(0, -1)
+    : rawBaseUrl;
+  const productTitle =
+    pageData?.meta?.title || "Plagiarism-Free Academic Work | Original & Verified Content";
+  const metaDescription =
+    pageData?.meta?.description ||
+    "Get authentic, plagiarism-free academic work created from scratch. Our verified process ensures originality, accuracy, and trusted quality every time.";
+  const pageUrl =
+    pageData?.meta?.canonicalUrl || `${baseUrl}/plagiarism-free-process`;
+
   return (
     <div>
+      <ProductSchema
+        productTitle={productTitle}
+        metaDescription={metaDescription}
+        pageUrl={pageUrl}
+      />
       <MainLayout>
         <HeroSection heroContent={heroContent} />
         <OriginalSection content={originalityContent} />

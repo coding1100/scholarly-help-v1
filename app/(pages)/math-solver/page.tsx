@@ -9,12 +9,23 @@ import AiFaq from "@/app/components/AiLandingPage/AiFaq";
 import ElevateWriting from "@/app/components/AiLandingPage/ElevateWriting";
 // import ThemeToggle from "@/app/components/AiLandingPage/ThemeToggle";
 import { MathSolverContent } from "@/app/components/AiLandingPage/AiContent";
+import ProductSchema from "@/app/components/ProductSchema";
 
 interface PageProps {}
 const Page: FC<PageProps> = ({}) => {
   // return <div>test</div>
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
+  const normalizedBaseUrl = baseUrl.endsWith("/")
+    ? baseUrl.slice(0, -1)
+    : baseUrl;
   return (
     <>
+      <ProductSchema
+        productTitle="Math Solver for Triangle Calculations"
+        metaDescription="Solve Pythagorean theorem problems instantly. Scholarly AI Math Solver provides fast, accurate right triangle solutions. Start solving now."
+        pageUrl={`${normalizedBaseUrl}/math-solver`}
+      />
       {/* <ThemeToggle /> */}
       <AiHero
         heroContent={MathSolverContent.heroContent}

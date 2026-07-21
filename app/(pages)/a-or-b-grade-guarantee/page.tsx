@@ -11,6 +11,7 @@ import WhyGuarantee from "@/app/components/OtherLandingPages/GradeGuarantee/WhyG
 import GuaranteeCovers from "@/app/components/OtherLandingPages/GradeGuarantee/GuaranteeCovers";
 import HowWorks from "@/app/components/OtherLandingPages/GradeGuarantee/HowWorks";
 import { getPageData } from "@/app/lib/mongodb";
+import ProductSchema from "@/app/components/ProductSchema";
 
 // Force dynamic rendering to prevent caching
 export const dynamic = 'force-dynamic';
@@ -92,8 +93,26 @@ const Page: NextPage = async () => {
   const academicPartners = pageData?.academicPartners || Content.academicPartners;
   const faq = pageData?.faq || Content.faq;
 
+  const rawBaseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
+  const baseUrl = rawBaseUrl.endsWith("/")
+    ? rawBaseUrl.slice(0, -1)
+    : rawBaseUrl;
+  const productTitle =
+    pageData?.meta?.title || "A/B Grade Guarantee | Reliable Academic Support";
+  const metaDescription =
+    pageData?.meta?.description ||
+    "Get dependable academic help backed by our A/B Grade Guarantee. Expert tutors, simple process, and trusted support built for strong, consistent results.";
+  const pageUrl =
+    pageData?.meta?.canonicalUrl || `${baseUrl}/a-or-b-grade-guarantee`;
+
   return (
     <div>
+      <ProductSchema
+        productTitle={productTitle}
+        metaDescription={metaDescription}
+        pageUrl={pageUrl}
+      />
       <MainLayout>
         <HeroSection heroContent={heroContent} />
         <WhyGuarantee content={whyGuaranteeContent} />
