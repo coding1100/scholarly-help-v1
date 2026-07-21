@@ -1,34 +1,35 @@
 import { FC } from "react";
 import { Metadata } from "next";
-import { MetaData } from "@/app/metadata/metadata";
-import AiHero from "@/app/components/AiLandingPage/AiHero";
-import AiTrust from "@/app/components/AiLandingPage/AITrust";
-import KeyFeatures from "@/app/components/AiLandingPage/KeyFeatures";
-import AiMission from "@/app/components/AiLandingPage/AiMission";
-import AiFaq from "@/app/components/AiLandingPage/AiFaq";
-import ElevateWriting from "@/app/components/AiLandingPage/ElevateWriting";
-import { AiParahrasingContent } from "@/app/components/AiLandingPage/AiContent";
-// import ThemeToggle from "@/app/components/AiLandingPage/ThemeToggle";
+import MainLayout from "@/app/MainLayout";
+import ParaphraserHero from "@/app/components/AiLandingPage/Paraphraser/ParaphraserHero";
+import BeforeAfter from "@/app/components/AiLandingPage/Paraphraser/BeforeAfter";
+import UseCases from "@/app/components/AiLandingPage/Paraphraser/UseCases";
+import HowItWorks from "@/app/components/AiLandingPage/Paraphraser/HowItWorks";
+import WatchVideo from "@/app/components/AiLandingPage/Paraphraser/WatchVideo";
+import WhyItWorks from "@/app/components/AiLandingPage/Paraphraser/WhyItWorks";
+import TwoWays from "@/app/components/AiLandingPage/Paraphraser/TwoWays";
+import ExpertBanner from "@/app/components/AiLandingPage/Paraphraser/ExpertBanner";
+import StudentReviews from "@/app/components/AiLandingPage/Paraphraser/StudentReviews";
+import ParaphraserFaq from "@/app/components/AiLandingPage/Paraphraser/ParaphraserFaq";
+import FooterCta from "@/app/components/AiLandingPage/Paraphraser/FooterCta";
 
-interface PageProps {}
-const Page: FC<PageProps> = ({}) => {
+const Page: FC = () => {
   return (
-    <>
-      {/* <ThemeToggle /> */}
-
-      <AiHero
-        heroContent={AiParahrasingContent.heroContent}
-        imgSection={AiParahrasingContent.imgSection}
-      />
-      <AiTrust trustSection={AiParahrasingContent.trustSection} />
-      <KeyFeatures featuresSection={AiParahrasingContent.featuresSection} />
-      <AiMission
-        missionSection={AiParahrasingContent.missionSection}
-        guideSection={AiParahrasingContent.guideSection}
-      />
-      <AiFaq FaqSestion={AiParahrasingContent.FaqSestion} />
-      <ElevateWriting elevateSection={AiParahrasingContent.elevateSection} />
-    </>
+    <MainLayout>
+      <div className="font-poppins">
+        <ParaphraserHero />
+        <BeforeAfter />
+        <UseCases />
+        <HowItWorks />
+        <WatchVideo />
+        <WhyItWorks />
+        <TwoWays />
+        <ExpertBanner />
+        <StudentReviews />
+        <ParaphraserFaq />
+        <FooterCta />
+      </div>
+    </MainLayout>
   );
 };
 export default Page;
@@ -42,9 +43,9 @@ export function generateMetadata(): Metadata {
   const canonicalUrl = `${normalizedBaseUrl}/ai-paraphraser`;
 
   return {
-    title: "AI Paraphrasing Tool | Rewrite & Refine Academic Content Free",
+    title: "Free Paraphrasing Tool | ScholarlyHelp",
     description:
-      "Enhance clarity and originality with our AI-powered paraphrasing tool. Reward academic content effortlessly while maintaining your true meaning and professional tone.",
+      "Use the free ScholarlyHelp’s paraphrasing tool to rewrite any text in seconds. Choose your style, keep your meaning, and just copy and paste it.",
     alternates: {
       canonical: canonicalUrl,
     },
