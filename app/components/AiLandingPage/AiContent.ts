@@ -1227,14 +1227,14 @@ export const CitationGeneratorContent = {
   },
 };
 
-export const PythagorasSolverContent = {
+export const MathSolverContent = {
   heroContent: {
     mainHeading:
-      "Free Pythagoras Theorem Calculator: Solve Right Triangles Instantly",
+      "Free Math Solver: Solve Right Triangles Instantly",
     description:
-      "Stuck on a geometry problem? The Scholarly Help Pythagoras equation solver is your intelligent academic companion for mastering right-angled triangles. Whether you need to find the hypotenuse or calculate a missing leg, our AI Pythagoras equation solver eliminates manual errors and delivers instant, accurate solutions. Stop struggling with formulas and start understanding math.",
+      "Stuck on a geometry problem? The Scholarly Help Math Solver is your intelligent academic companion for mastering right-angled triangles. Whether you need to find the hypotenuse or calculate a missing leg, our AI Math Solver eliminates manual errors and delivers instant, accurate solutions. Stop struggling with formulas and start understanding math.",
     buttonText: "Solve My Triangle Now",
-    buttonUrl: "/sign-in?returnUrl=/tools/pythagoras-solver",
+    buttonUrl: "/sign-in?returnUrl=/tools/math-solver",
   },
   imgSection: {
     img: AiDashboard,
@@ -1242,21 +1242,21 @@ export const PythagorasSolverContent = {
   trustSection: {
     heading: "Why Students Trust Scholarly AI",
     description:
-      "We combine mathematical rigor with a user-friendly interface to support students at every level. Unlike basic calculators, this pythagoras equation solver enhances learning by providing clear, reliable outputs aligned with standard academic requirements for geometry and trigonometry. It serves as a reliable checkpoint for anyone mastering right-angled triangles or solving trig equations with Pythagorean identities.",
+      "We combine mathematical rigor with a user-friendly interface to support students at every level. Unlike basic calculators, this Math Solver enhances learning by providing clear, reliable outputs aligned with standard academic requirements for geometry and trigonometry. It serves as a reliable checkpoint for anyone mastering right-angled triangles or solving trig equations with Pythagorean identities.",
     sliderImgs: [slide1, slide2, slide3, slide4, slide5],
   },
   featuresSection: {
     subTitle: "POWERFUL FEATURES",
-    heading: "Why Scholarly AI Is a Smarter Pythagoras Solver",
+    heading: "Why Scholarly AI Is a Smarter Math Solver",
     description:
-      "We combine mathematical rigor with a user-friendly interface to support students at every level. Our Pythagoras equation solver delivers accurate results and clear steps so you can master right-angled triangles and strengthen your geometry skills without manual errors or guesswork.",
+      "We combine mathematical rigor with a user-friendly interface to support students at every level. Our Math Solver delivers accurate results and clear steps so you can master right-angled triangles and strengthen your geometry skills without manual errors or guesswork.",
     features: [
       {
         heading: "Eliminate Calculation Errors",
         description:
           "The Pythagorean theorem equation solver removes arithmetic slips and squaring errors under pressure. Students can trust the final output when submitting assignments or double-checking manual calculations.",
         linkText: "Try the Tool for Free",
-        url: "/sign-in?returnUrl=/tools/pythagoras-solver",
+        url: "/sign-in?returnUrl=/tools/math-solver",
         img: effortless,
       },
       {
@@ -1264,7 +1264,7 @@ export const PythagorasSolverContent = {
         description:
           "Scholarly AI is not just about getting the answer; it's about seeing the relationship between perpendicular sides and the hypotenuse. By testing different values and seeing immediate results, students gain an intuitive grasp of triangle structure. This tool also supports solving trig equations with Pythagorean identities worksheet exercises for practice and revision.",
         linkText: "Try the Tool for Free",
-        url: "/sign-in?returnUrl=/tools/pythagoras-solver",
+        url: "/sign-in?returnUrl=/tools/math-solver",
         img: interactive,
       },
       {
@@ -1272,7 +1272,7 @@ export const PythagorasSolverContent = {
         description:
           "We believe that academic tools should be safe, private, and accessible for every student user. Scholarly Help does not store your input data, track your specific homework problems, or share your usage history. You can perform unlimited calculations with the assurance that your session data vanishes the moment you close the tab or refresh the page.",
         linkText: "Try the Tool for Free",
-        url: "/sign-in?returnUrl=/tools/pythagoras-solver",
+        url: "/sign-in?returnUrl=/tools/math-solver",
         img: learning,
       },
     ],
@@ -1281,13 +1281,13 @@ export const PythagorasSolverContent = {
     subTitle: "OUR Mission",
     heading: "Making Right-Angled Triangles Simple and Accurate",
     description:
-      "At Scholarly Help, we believe every student deserves access to reliable, stress-free tools for geometry and trigonometry. Our Pythagoras equation solver was created to help you solve right triangles with confidence, verify your work instantly, and build a deeper understanding of the Pythagorean theorem—without manual errors or guesswork.",
+      "At Scholarly Help, we believe every student deserves access to reliable, stress-free tools for geometry and trigonometry. Our Math Solver was created to help you solve right triangles with confidence, verify your work instantly, and build a deeper understanding of the Pythagorean theorem—without manual errors or guesswork.",
     buttonText: "Start Calculation",
-    buttonUrl: "/sign-in?returnUrl=/tools/pythagoras-solver",
+    buttonUrl: "/sign-in?returnUrl=/tools/math-solver",
   },
   guideSection: {
     subTitle: "GUIDE",
-    heading: "How to Use the Pythagoras Solver",
+    heading: "How to Use the Math Solver",
     steps: [
       {
         icon: "IoCheckmarkCircle",
@@ -1305,7 +1305,7 @@ export const PythagorasSolverContent = {
         icon: "GrMagic",
         title: "Generate the Solution",
         description:
-          "Click the Solve button to instantly process the Pythagoras equation solver formula and display the precise missing value.",
+          "Click the Solve button to instantly process the Pythagorean theorem formula and display the precise missing value.",
       },
       {
         icon: "GrMagic",
@@ -1320,12 +1320,12 @@ export const PythagorasSolverContent = {
     heading: "Frequently Asked Questions",
     faqs: [
       {
-        question: "What is a Pythagoras solver tool?",
+        question: "What is a Math Solver tool?",
         answer:
-          "A pythagoras equation solver is a digital calculator that applies the Pythagorean theorem (a² + b² = c²) to find missing side lengths of right-angled triangles.",
+          "A Math Solver is a digital calculator that applies the Pythagorean theorem (a² + b² = c²) to find missing side lengths of right-angled triangles.",
       },
       {
-        question: "Is the Scholarly AI Pythagoras Solver free?",
+        question: "Is the Scholarly AI Math Solver free?",
         answer:
           "Yes, our tool is completely free to use. There are no hidden subscriptions or limits on the number of calculations you can perform.",
       },
@@ -1352,7 +1352,7 @@ export const PythagorasSolverContent = {
       {
         question: "Do I need to sign up to use it?",
         answer:
-          "No account is required. Access the Pythagoras equation solver instantly and start solving.",
+          "No account is required. Access the Math Solver instantly and start solving.",
       },
       {
         question: "Is my data stored?",
@@ -1364,9 +1364,9 @@ export const PythagorasSolverContent = {
   elevateSection: {
     heading: "Start Solving with Confidence",
     description:
-      "Join students who use Scholarly AI to master geometry without manual stress. Use our pythagoras equation solver, pythagorean theorem equation solver, solving trig equations with Pythagorean identities, or solving trig equations with Pythagorean identities worksheet to get fast, accurate results and strengthen your understanding of right-angled triangles.",
+      "Join students who use Scholarly AI to master geometry without manual stress. Use our Math Solver, Pythagorean theorem equation solver, solving trig equations with Pythagorean identities, or solving trig equations with Pythagorean identities worksheet to get fast, accurate results and strengthen your understanding of right-angled triangles.",
     buttonText: "Use Solver Now",
-    buttonUrl: "/sign-in?returnUrl=/tools/pythagoras-solver",
+    buttonUrl: "/sign-in?returnUrl=/tools/math-solver",
   },
 };
 

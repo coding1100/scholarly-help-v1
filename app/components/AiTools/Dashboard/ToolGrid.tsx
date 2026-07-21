@@ -177,9 +177,9 @@ const tools: ToolCardData[] = [
 
   // Math & Science
   {
-    name: "Pythagoras Equation Solver",
+    name: "Math Solver",
     description: "Solve right-triangle problems with clean steps.",
-    href: "/tools/pythagoras-solver",
+    href: "/tools/math-solver",
     icon: LuRadical,
     badge: "Popular",
     category: "math-science",
