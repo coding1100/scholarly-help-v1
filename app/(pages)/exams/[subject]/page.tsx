@@ -20,6 +20,7 @@ import SubSubjectsSection from "@/app/components/LandingPage/SubSubjects";
 import OnlinePlatform from "@/app/components/OnlinePlatform/OnlinePlatform";
 import FinalCTA from "@/app/components/FinalCTA/FinalCTA";
 import PriceSection from "@/app/components/PriceSection/PriceSection";
+import ProductSchema from "@/app/components/ProductSchema";
 
 // Force dynamic rendering to prevent caching
 export const dynamic = "force-dynamic";
@@ -112,9 +113,25 @@ const Page: React.FC<PageProps> = async ({ params }) => {
       getQuote: { mainHeading: "", description: "", ctaButton: { text: "" } },
       faq: { mainHeading: "", faqs: [] },
     };
+    const subjectTitle =
+      params.subject.charAt(0).toUpperCase() +
+      params.subject.slice(1).replace(/-/g, " ");
+    const rawBaseUrl =
+      process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
+    const baseUrl = rawBaseUrl.endsWith("/")
+      ? rawBaseUrl.slice(0, -1)
+      : rawBaseUrl;
 
     return (
       <ExamDataProvider data={defaultPageData}>
+        <ProductSchema
+          productTitle={`Take My ${subjectTitle} Exam | Professional ${subjectTitle} Exam Help`}
+          metaDescription={`Get expert help with your ${params.subject.replace(
+            /-/g,
+            " ",
+          )} exams. Professional exam assistance for better grades.`}
+          pageUrl={`${baseUrl}/exams/${params.subject}`}
+        />
         <MainLayout>
           <HeroSection />
           <DeliveredOn />
@@ -143,8 +160,33 @@ const Page: React.FC<PageProps> = async ({ params }) => {
     notFound();
   }
 
+  const subjectTitle =
+    params.subject.charAt(0).toUpperCase() +
+    params.subject.slice(1).replace(/-/g, " ");
+  const rawBaseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
+  const baseUrl = rawBaseUrl.endsWith("/")
+    ? rawBaseUrl.slice(0, -1)
+    : rawBaseUrl;
+  const productTitle =
+    pageData.meta?.title ||
+    `Take My ${subjectTitle} Exam | Professional ${subjectTitle} Exam Help`;
+  const metaDescription =
+    pageData.meta?.description ||
+    `Get expert help with your ${params.subject.replace(
+      /-/g,
+      " ",
+    )} exams. Professional exam assistance for better grades.`;
+  const pageUrl =
+    pageData.meta?.canonicalUrl || `${baseUrl}/exams/${params.subject}`;
+
   return (
     <ExamDataProvider data={pageData}>
+      <ProductSchema
+        productTitle={productTitle}
+        metaDescription={metaDescription}
+        pageUrl={pageUrl}
+      />
       <MainLayout>
         <HeroSection />
         <DeliveredOn />

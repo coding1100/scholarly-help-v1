@@ -10,6 +10,7 @@ import TrustSection from "@/app/components/OtherLandingPages/UsExpert/TrustedSec
 import ExpertSection from "@/app/components/OtherLandingPages/UsExpert/ExpertSection";
 import ChooseExpert from "@/app/components/OtherLandingPages/UsExpert/ChooseExpert";
 import { getPageData } from "@/app/lib/mongodb";
+import ProductSchema from "@/app/components/ProductSchema";
 
 // Force dynamic rendering to prevent caching
 export const dynamic = 'force-dynamic';
@@ -77,8 +78,26 @@ const Home: NextPage = async () => {
   const academicPartners = pageData?.academicPartners || undefined;
   const faq = pageData?.faq || undefined; // FAQ is an array, pass directly
 
+  const rawBaseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
+  const baseUrl = rawBaseUrl.endsWith("/")
+    ? rawBaseUrl.slice(0, -1)
+    : rawBaseUrl;
+  const productTitle =
+    pageData?.meta?.title || "US-Based PhD Experts | Trusted Academic Support Online";
+  const metaDescription =
+    pageData?.meta?.description ||
+    "Connect with verified US-based PhD scholars for reliable academic support. Expert guidance you can trust across multiple subjects and tasks.";
+  const pageUrl =
+    pageData?.meta?.canonicalUrl || `${baseUrl}/us-based-phd-experts`;
+
   return (
     <div>
+      <ProductSchema
+        productTitle={productTitle}
+        metaDescription={metaDescription}
+        pageUrl={pageUrl}
+      />
       <MainLayout>
         <HeroSection heroContent={heroContent} />
         <TrustSection content={supportContent} />

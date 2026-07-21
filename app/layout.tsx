@@ -3,6 +3,7 @@ import Script from "next/script";
 import dynamic from "next/dynamic";
 import "./globals.css";
 import { Metadata } from "next";
+import OrganizationSchema from "./components/OrganizationSchema";
 
 const ClientScripts = dynamic(() => import("./components/ClientScripts"), {
   ssr: false,
@@ -44,6 +45,7 @@ export default function RootLayout({
         )}
       </head>
       <body suppressHydrationWarning>
+        <OrganizationSchema />
         <main id="main-content">{children}</main>
 
         {/* GTM - Loaded only after the page is fully loaded to protect LCP */}

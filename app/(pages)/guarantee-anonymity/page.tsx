@@ -8,6 +8,7 @@ import CustomerReviews from "@/app/components/LandingPage/CustomerReviews";
 import Faq from "@/app/components/LandingPage/Faq";
 import AcademicPartners from "@/app/components/LandingPage/AcademicPartners";
 import { getPageData } from "@/app/lib/mongodb";
+import ProductSchema from "@/app/components/ProductSchema";
 
 // Force dynamic rendering to prevent caching
 export const dynamic = 'force-dynamic';
@@ -49,8 +50,26 @@ const Home: NextPage = async () => {
   const whyScholarlySlider = pageData?.whyScholarlySlider || guaranteeAnonymityContent.whyScholalrySlider;
   const academicPartners = pageData?.academicPartners || undefined;
 
+  const rawBaseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
+  const baseUrl = rawBaseUrl.endsWith("/")
+    ? rawBaseUrl.slice(0, -1)
+    : rawBaseUrl;
+  const productTitle =
+    pageData?.meta?.title || "100% Anonymity Guaranteed | Secure & Confidential Help";
+  const metaDescription =
+    pageData?.meta?.description ||
+    "Experience fully private, secure, and confidential academic support. Your identity stays protected with strict privacy measures at every step.";
+  const pageUrl =
+    pageData?.meta?.canonicalUrl || `${baseUrl}/guarantee-anonymity`;
+
   return (
     <div>
+      <ProductSchema
+        productTitle={productTitle}
+        metaDescription={metaDescription}
+        pageUrl={pageUrl}
+      />
       <MainLayout>
         <HeroSection heroContent={heroContent} />
         <PrivacySection content={privacyContent} />

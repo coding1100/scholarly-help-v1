@@ -14,6 +14,7 @@ import { mergeAcademicResearchContent } from "@/app/components/MainToolLanding/m
 import { defaultAcademicResearchContent } from "@/app/components/MainToolLanding/MainToolContent";
 import DeadLine from "@/app/components/MainToolLanding/DeadLine";
 import { ExpertQuoteModalProvider } from "@/app/components/MainToolLanding/ExpertQuoteModal";
+import ProductSchema from "@/app/components/ProductSchema";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -32,9 +33,24 @@ interface PageProps {}
 const Page = async ({}: PageProps) => {
   const pageData = await fetchAcademicResearchData();
   const content = mergeAcademicResearchContent(pageData);
+  const rawBaseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
+  const baseUrl = rawBaseUrl.endsWith("/")
+    ? rawBaseUrl.slice(0, -1)
+    : rawBaseUrl;
+  const productTitle =
+    content.meta.title || defaultAcademicResearchContent.meta.title;
+  const metaDescription =
+    content.meta.description || defaultAcademicResearchContent.meta.description;
+  const pageUrl = content.meta.canonicalUrl || `${baseUrl}/academic-research`;
 
   return (
     <AcademicResearchDataProvider data={content}>
+      <ProductSchema
+        productTitle={productTitle}
+        metaDescription={metaDescription}
+        pageUrl={pageUrl}
+      />
       <ExpertQuoteModalProvider>
         <MainLayout>
           <MainToolHero />

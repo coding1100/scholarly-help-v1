@@ -17,6 +17,7 @@ import GetFreeQuote from "../do-my-class/component/GetFreeQuote";
 import { content } from "./content";
 import AppNav from "@/app/components/NavBar/AppNav";
 import { MetaData } from "@/app/metadata/metadata";
+import ProductSchema from "@/app/components/ProductSchema";
 // import GetFreeQuote from "./component/GetFreeQuote";
 
 const WhyScholarly = dynamic(
@@ -27,8 +28,18 @@ const WhyScholarly = dynamic(
 );
 interface PageProps {}
 const Page: FC<PageProps> = ({}) => {
+  const rawBaseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
+  const baseUrl = rawBaseUrl.endsWith("/")
+    ? rawBaseUrl.slice(0, -1)
+    : rawBaseUrl;
   return (
     <MainLayout>
+      <ProductSchema
+        productTitle={MetaData.doMyClass2.title}
+        metaDescription={MetaData.doMyClass2.description}
+        pageUrl={`${baseUrl}/${MetaData.doMyClass2.url}`}
+      />
       {/* <Hero content={content.heroContent} /> */}
       <GetFreeQuote />
       <Qualities />

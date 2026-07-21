@@ -6,6 +6,7 @@ import Logo from "@/app/assets/Images/logo.png";
 import toast from "react-hot-toast";
 import axios from "axios";
 import OTPInput from "./OTPInput";
+import ProductSchema from "@/app/components/ProductSchema";
 
 const OTPPage = () => {
   const [otp, setOtp] = useState("");
@@ -78,8 +79,19 @@ const OTPPage = () => {
     }
   };
 
+  const rawBaseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
+  const baseUrl = rawBaseUrl.endsWith("/")
+    ? rawBaseUrl.slice(0, -1)
+    : rawBaseUrl;
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#f6f7fa] relative px-2">
+      <ProductSchema
+        productTitle="Verify Your Email - Scholarly Help"
+        metaDescription="Enter the one-time password (OTP) sent to your email to verify your Scholarly Help account and complete your registration."
+        pageUrl={`${baseUrl}/otp/`}
+      />
       {/* Card shape layering */}
       <div className="absolute z-0 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
         <div className="w-[430px] h-[320px] bg-[#a99cf5] rounded-2xl -rotate-[15deg]" />

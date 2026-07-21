@@ -10,6 +10,7 @@ import Success from "@/app/components/LandingPage/Success";
 import FeaturedStories from "@/app/components/OtherLandingPages/SuccessStories/FeaturedStories";
 import TrustSection from "@/app/components/OtherLandingPages/UsExpert/TrustedSection";
 import { getPageData } from "@/app/lib/mongodb";
+import ProductSchema from "@/app/components/ProductSchema";
 
 // Force dynamic rendering to prevent caching
 export const dynamic = 'force-dynamic';
@@ -70,8 +71,26 @@ const Home: NextPage = async () => {
   const academicPartners = pageData?.academicPartners || undefined;
   const faq = pageData?.faq || undefined;
 
+  const rawBaseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
+  const baseUrl = rawBaseUrl.endsWith("/")
+    ? rawBaseUrl.slice(0, -1)
+    : rawBaseUrl;
+  const productTitle =
+    pageData?.meta?.title || "Success Stories & Reviews | Student Results & Experiences";
+  const metaDescription =
+    pageData?.meta?.description ||
+    "Explore real success stories from students who achieved better grades and confidence with our support. Honest reviews that reflect trust, quality, and results.";
+  const pageUrl =
+    pageData?.meta?.canonicalUrl || `${baseUrl}/success-stories-and-reviews`;
+
   return (
     <div>
+      <ProductSchema
+        productTitle={productTitle}
+        metaDescription={metaDescription}
+        pageUrl={pageUrl}
+      />
       <MainLayout>
         <HeroSection heroContent={heroContent} />
         <div className="bg-white py-20">

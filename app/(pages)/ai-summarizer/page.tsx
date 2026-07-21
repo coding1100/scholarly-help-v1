@@ -9,12 +9,23 @@ import AiFaq from "@/app/components/AiLandingPage/AiFaq";
 import ElevateWriting from "@/app/components/AiLandingPage/ElevateWriting";
 import { AiSummarizerContent } from "@/app/components/AiLandingPage/AiContent";
 // import ThemeToggle from "@/app/components/AiLandingPage/ThemeToggle";
+import ProductSchema from "@/app/components/ProductSchema";
 
 interface PageProps {}
 const Page: FC<PageProps> = ({}) => {
   // return <div>test</div>
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
+  const normalizedBaseUrl = baseUrl.endsWith("/")
+    ? baseUrl.slice(0, -1)
+    : baseUrl;
   return (
     <>
+      <ProductSchema
+        productTitle="AI Summarizer Tool | Condense Articles & Research Papers Instantly"
+        metaDescription="Turn long chapters, PDFs, notes, or articles into clear, concise summaries. Save study time and capture main ideas quickly with our intelligent AI summarizer."
+        pageUrl={`${normalizedBaseUrl}/ai-summarizer`}
+      />
       {/* <ThemeToggle /> */}
 
       <AiHero

@@ -4,7 +4,6 @@ import HeroHeading from "./components/LandingPage/HeroHeading";
 import { HomeDataProvider } from "./(pages)/HomeDataProvider";
 import { getHomeData } from "./lib/mongodb";
 import BelowFoldLanding from "./components/LandingPage/BelowFoldLanding";
-import OrganizationSchema from "./components/OrganizationSchema";
 
 // Enable ISR with 60 second revalidation for fast TTFB
 export const revalidate = 60;
@@ -16,7 +15,6 @@ const Home = async () => {
 
   return (
     <HomeDataProvider data={pageData}>
-      <OrganizationSchema />
       <MainLayout>
         <HeroSection
           headingSlot={

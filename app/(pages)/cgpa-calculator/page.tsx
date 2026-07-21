@@ -8,11 +8,22 @@ import AiHero from "@/app/components/AiLandingPage/AiHero";
 // import ElevateWriting from "@/app/components/AiLandingPage/ElevateWriting";
 import { CgpaCalculatorContent } from "@/app/components/AiLandingPage/AiContent";
 // import ThemeToggle from "@/app/components/AiLandingPage/ThemeToggle";
+import ProductSchema from "@/app/components/ProductSchema";
 
 interface PageProps {}
 const Page: FC<PageProps> = ({}) => {
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
+  const normalizedBaseUrl = baseUrl.endsWith("/")
+    ? baseUrl.slice(0, -1)
+    : baseUrl;
   return (
     <>
+      <ProductSchema
+        productTitle="CGPA Calculator | Calculate GPA & Track Academic Progress"
+        metaDescription="Calculate your semester GPA and CGPA with Scholarly Help's easy academic calculator. Add courses, credits, and grades to track your academic progress."
+        pageUrl={`${normalizedBaseUrl}/cgpa-calculator`}
+      />
       {/* <ThemeToggle /> */}
 
       <AiHero

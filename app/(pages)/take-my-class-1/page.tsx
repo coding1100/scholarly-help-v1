@@ -16,6 +16,7 @@ import { HomeDataProvider } from "../HomeDataProvider";
 import dynamicImport from "next/dynamic";
 import type { Metadata } from "next";
 import { getPageData } from "@/app/lib/mongodb";
+import ProductSchema from "@/app/components/ProductSchema";
 
 const GetQouteDynamic = dynamicImport(() => import("@/app/components/LandingPage/GetQoute"), { ssr: false });
 
@@ -43,9 +44,25 @@ import DelayedBelowFold from "@/app/components/LandingPage/DelayedBelowFold";
 
 const TakeMyClass1 = async () => {
   const pageData = await fetchTakeMyClass1Data();
+  const rawBaseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
+  const baseUrl = rawBaseUrl.endsWith("/")
+    ? rawBaseUrl.slice(0, -1)
+    : rawBaseUrl;
+  const productTitle =
+    pageData?.meta?.title || "Take My Class 1 - Academic Writing Services For You";
+  const metaDescription =
+    pageData?.meta?.description ||
+    "Struggling with online classes, exams, assignments or essays? Scholarly Help provides professional academic writing services tailored to your needs. Get timely, plagiarism-free solutions crafted by experts. Your success starts here!";
+  const pageUrl = pageData?.meta?.canonicalUrl || `${baseUrl}/take-my-class-1`;
 
   return (
     <HomeDataProvider data={pageData}>
+      <ProductSchema
+        productTitle={productTitle}
+        metaDescription={metaDescription}
+        pageUrl={pageUrl}
+      />
       <MainLayout>
         <HeroSection />
         <DelayedBelowFold>

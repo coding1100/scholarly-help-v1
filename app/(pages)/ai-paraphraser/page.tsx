@@ -12,10 +12,21 @@ import ExpertBanner from "@/app/components/AiLandingPage/Paraphraser/ExpertBanne
 import StudentReviews from "@/app/components/AiLandingPage/Paraphraser/StudentReviews";
 import ParaphraserFaq from "@/app/components/AiLandingPage/Paraphraser/ParaphraserFaq";
 import FooterCta from "@/app/components/AiLandingPage/Paraphraser/FooterCta";
+import ProductSchema from "@/app/components/ProductSchema";
 
 const Page: FC = () => {
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
+  const normalizedBaseUrl = baseUrl.endsWith("/")
+    ? baseUrl.slice(0, -1)
+    : baseUrl;
   return (
     <MainLayout>
+      <ProductSchema
+        productTitle="Free Paraphrasing Tool | ScholarlyHelp"
+        metaDescription="Use the free ScholarlyHelp’s paraphrasing tool to rewrite any text in seconds. Choose your style, keep your meaning, and just copy and paste it."
+        pageUrl={`${normalizedBaseUrl}/ai-paraphraser`}
+      />
       <div className="font-poppins">
         <ParaphraserHero />
         <BeforeAfter />
