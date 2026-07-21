@@ -38,7 +38,7 @@ const AcademicTools: FC<AcademicToolsProps> = ({ content }) => {
       case "Generate Your Citation Now ":
         return "/citation-generator";
       case "Solve Pythagoras Equation Quickly":
-        return "/pythagoras-solver";
+        return "/math-solver";
       case "Generate Your Research Questions ":
         return "/research-question";
       default:
