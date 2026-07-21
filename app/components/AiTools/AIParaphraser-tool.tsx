@@ -14,9 +14,15 @@ import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGate
 
 interface AIParaphraserProp {
   setFlag: (value: boolean) => void;
+  /**
+   * "landing" renders the same tool as a rounded, shadowed hero card (used on
+   * the /ai-paraphraser landing page); the default keeps the /tools styling.
+   */
+  variant?: "default" | "landing";
 }
 
-const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag }) => {
+const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag, variant = "default" }) => {
+  const isLanding = variant === "landing";
   const [token, setToken] = useState<string | null>(null);
   const [inputText, setInputText] = useState<string>("");
   const [resultText, setResultText] = useState<string>("");
@@ -157,9 +163,21 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag }) => {
   };
 
   return (
-    <div className="container relative mx-auto max-w-[840px] px-4 md:px-8 md:pt-8 2xl:max-w-6xl">
+    <div
+      className={
+        isLanding
+          ? "relative w-full"
+          : "container relative mx-auto max-w-[840px] px-4 md:px-8 md:pt-8 2xl:max-w-6xl"
+      }
+    >
       <ToolsApiLoader show={isSubmitting} />
-      <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 overflow-hidden transition-colors duration-300">
+      <div
+        className={`bg-white dark:bg-gray-800 overflow-hidden transition-colors duration-300 ${
+          isLanding
+            ? "rounded-2xl shadow-[0_30px_70px_-20px_rgba(43,28,80,0.35)] text-left"
+            : "border dark:border-gray-700"
+        }`}
+      >
         {/* ---------- main two‑column layout ---------- */}
         <div className="grid grid-cols-1 md:grid-cols-2">
           {/* --- left column : input --- */}
@@ -235,6 +253,13 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag }) => {
                 wordLimitExceeded ||
                 (toneMode === "custom" && !customToneInstructions.trim())
               }
+              {...(isLanding
+                ? {
+                    containerClassName: "!bg-primary-200/60",
+                    submitColorClassName:
+                      "bg-[#F56200] hover:bg-[#ff7a24] active:bg-[#d95700]",
+                  }
+                : {})}
             />
           </div>
 
@@ -252,15 +277,24 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag }) => {
           />
         </div>
       </div>
-      <div className="text-sm font-serif text-center pt-8 text-gray-500 dark:text-gray-400 transition-colors duration-300">
-        <q>
-          Finding it hard to rephrase your ideas effectively? ScholarlyHelp
-          offers a powerful AI-driven paraphrasing tool designed to rewrite your
-          academic content with clarity, coherence, and originality—helping you
-          express your thoughts more clearly and confidently.{" "}
-        </q>
-      </div>
-      <GuestAuthGateModal open={gateOpen} onClose={closeGate} />
+      {!isLanding && (
+        <div className="text-sm font-serif text-center pt-8 text-gray-500 dark:text-gray-400 transition-colors duration-300">
+          <q>
+            Finding it hard to rephrase your ideas effectively? ScholarlyHelp
+            offers a powerful AI-driven paraphrasing tool designed to rewrite
+            your academic content with clarity, coherence, and
+            originality—helping you express your thoughts more clearly and
+            confidently.{" "}
+          </q>
+        </div>
+      )}
+      <GuestAuthGateModal
+        open={gateOpen}
+        onClose={closeGate}
+        {...(isLanding
+          ? { heading: "Unlock your full paraphrased text — it's free" }
+          : {})}
+      />
     </div>
   );
 };

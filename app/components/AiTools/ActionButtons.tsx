@@ -9,6 +9,10 @@ interface ActionButtonsProps {
   isSubmitting?: boolean;
   isDisabled?: boolean;
   isSecondaryDisabled?: boolean;
+  /** Extra classes for the outer bar (e.g. a tinted background on landing pages). */
+  containerClassName?: string;
+  /** Overrides the primary button's color classes (enabled state). */
+  submitColorClassName?: string;
 }
 
 const ActionButtons: React.FC<ActionButtonsProps> = ({
@@ -20,12 +24,14 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
   isSubmitting = false,
   isDisabled,
   isSecondaryDisabled,
+  containerClassName = "",
+  submitColorClassName = "bg-primary-400 hover:bg-primary-300 active:bg-primary-500",
 }) => {
   const showSecondary = Boolean(secondaryButtonText && onSecondarySubmit);
   return (
     // Mobile: the primary button stretches to fill the row as a prominent CTA
     // with Clear compact beside it; md+ keeps the original corner-aligned look.
-    <div className="flex text-sm items-center justify-between gap-3 md:gap-4 px-4 md:px-8 py-3 bg-white dark:bg-gray-900 transition-colors duration-300">
+    <div className={`flex text-sm items-center justify-between gap-3 md:gap-4 px-4 md:px-8 py-3 bg-white dark:bg-gray-900 transition-colors duration-300 ${containerClassName}`}>
       <button
         onClick={onClear}
         disabled={isSubmitting || isDisabled}
@@ -56,8 +62,8 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
           disabled={isSubmitting || isDisabled}
           className={`flex-1 md:flex-initial p-3 whitespace-nowrap font-semibold text-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2b7fff] focus:ring-opacity-50 transition-colors duration-300 ${
             isSubmitting || isDisabled
-              ? "bg-primary-400 cursor-not-allowed opacity-80"
-              : "bg-primary-400 hover:bg-primary-300 active:bg-primary-500"
+              ? `${submitColorClassName} cursor-not-allowed opacity-80 pointer-events-none`
+              : submitColorClassName
           }`}
         >
           {isSubmitting ? `${submitButtonText}...` : submitButtonText}
