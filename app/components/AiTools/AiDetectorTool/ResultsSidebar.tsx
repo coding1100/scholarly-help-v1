@@ -169,6 +169,13 @@ export default function ResultsSidebar({
         <div className="mt-1 text-xs text-gray-400 dark:text-gray-500">
           Likely range {bandLo}–{bandHi}% · confidence {result.verdict.confidence}%
         </div>
+        {/* Backend caveat (e.g. short input). Repeated here because the input-side
+            hint is gone by the time the user is reading the score. */}
+        {result.meta.warning && (
+          <div className="mt-2 text-xs font-medium text-[#fb2c36] dark:text-red-400">
+            {result.meta.warning}
+          </div>
+        )}
         <div className="mt-4 text-left">
           <div className="pb-1.5 text-xs text-gray-400 dark:text-gray-500">
             How the {result.meta.words}-word document breaks down by sentence

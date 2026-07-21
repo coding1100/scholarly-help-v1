@@ -19,6 +19,7 @@ import {
   type EditableSegment,
   type SegmentLabel,
   MAX_DETECT_WORDS,
+  LOW_CONFIDENCE_WORDS,
   MIN_DETECT_WORDS,
 } from "./types";
 
@@ -421,6 +422,17 @@ const AiDetectorTool: React.FC = () => {
                 {MIN_DETECT_WORDS - wordCount} more word
                 {MIN_DETECT_WORDS - wordCount === 1 ? "" : "s"} needed — short text
                 can't be scored reliably.
+              </div>
+            )}
+            {/* Scoreable, but the model is measurably weaker on short passages,
+                so warn BEFORE the scan is spent. Clears at LOW_CONFIDENCE_WORDS. */}
+            {wordCount >= MIN_DETECT_WORDS && wordCount < LOW_CONFIDENCE_WORDS && (
+              <div className="text-xs font-medium text-[#fb2c36] dark:text-red-400">
+                Short texts under {LOW_CONFIDENCE_WORDS} words are harder to
+                analyze — this score will be less reliable than usual. Add{" "}
+                {LOW_CONFIDENCE_WORDS - wordCount} more word
+                {LOW_CONFIDENCE_WORDS - wordCount === 1 ? "" : "s"} for a firmer
+                result.
               </div>
             )}
             {wordCount > MAX_DETECT_WORDS && (

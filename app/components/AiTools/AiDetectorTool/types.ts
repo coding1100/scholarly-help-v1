@@ -45,6 +45,10 @@ export interface DetectionResponse {
     arbiter_reason: string;
     words: number;
     truncated: boolean;
+    /** Backend flag: input short enough that the score is materially weaker. */
+    low_confidence?: boolean;
+    /** User-facing caveat from the backend, '' when there is nothing to warn about. */
+    warning?: string;
     latency_ms: number;
     tokens_used: number;
   };
@@ -59,4 +63,10 @@ export interface EditableSegment extends DetectSegment {
 }
 
 export const MIN_DETECT_WORDS = 50;
+/**
+ * Below this the score is returned but flagged as less reliable — the backend
+ * sets `meta.low_confidence` at the same threshold (LOW_CONFIDENCE_WORDS in
+ * detection-engine.service.ts); keep the two in sync.
+ */
+export const LOW_CONFIDENCE_WORDS = 100;
 export const MAX_DETECT_WORDS = 1500;
