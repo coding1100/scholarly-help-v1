@@ -7,10 +7,17 @@ import type { DetectionResponse, EditableSegment } from "./types";
 
 export type SidebarView = "score" | "log" | "focus";
 
+/**
+ * The breakdown reports the SHARE OF SENTENCES in each class — a count, not a
+ * second opinion on the gauge. The gauge is the word-weighted average AI
+ * probability, so the two legitimately differ (every sentence can be flagged AI
+ * at ~0.67 confidence each: 100% of sentences, 67% overall). The labels say
+ * "sentences" explicitly so that never reads as a contradiction.
+ */
 const BREAKDOWN_ROWS = [
-  { key: "ai" as const, label: "AI-generated", dot: "bg-red-500" },
-  { key: "mixed" as const, label: "Mixed", dot: "bg-amber-500" },
-  { key: "human" as const, label: "Human-written", dot: "bg-emerald-500" },
+  { key: "ai" as const, label: "Sentences flagged AI", dot: "bg-red-500" },
+  { key: "mixed" as const, label: "Sentences mixed", dot: "bg-amber-500" },
+  { key: "human" as const, label: "Sentences human-written", dot: "bg-emerald-500" },
 ];
 
 /**
@@ -163,6 +170,9 @@ export default function ResultsSidebar({
           Likely range {bandLo}–{bandHi}% · confidence {result.verdict.confidence}%
         </div>
         <div className="mt-4 text-left">
+          <div className="pb-1.5 text-xs text-gray-400 dark:text-gray-500">
+            How the {result.meta.words}-word document breaks down by sentence
+          </div>
           {BREAKDOWN_ROWS.map((row) => (
             <div
               key={row.key}
