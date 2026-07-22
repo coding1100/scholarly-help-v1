@@ -68,32 +68,44 @@ const INTENSITY_ORDER: RewriteIntensity[] = ["normal", "moderate", "full"];
 
 /**
  * Server-scored sentence highlights: renders the segments returned by the shared
- * detector, marking AI sentences red-tinted and mixed sentences amber-tinted.
- * (The old client-side sentence scorer was deleted — highlights and the gauge now
- * always agree because they come from the same backend response.)
+ * detector. Only sentences the model is CONFIDENT are AI get a prominent block
+ * highlight; "mixed" (borderline) sentences get a subtle underline instead of a full
+ * tint, so an uncertain document — where the model bunches most sentences in the
+ * middle band — no longer reads as if every sentence were flagged. When nothing is
+ * decisively AI, the caller shows an empty-state instead of this paragraph, so the
+ * highlights stay consistent with an uncertain headline score.
  */
 function SentenceHighlightedText({ segments }: { segments: DetectSegment[] }) {
   return (
     <p className="leading-relaxed text-gray-800 dark:text-gray-100 text-sm whitespace-pre-wrap">
       {segments.map((seg, i) => {
-        const highlight =
-          seg.label === "ai"
-            ? "bg-red-100 text-gray-900 dark:bg-red-400/40 dark:text-gray-100"
-            : seg.label === "mixed"
-              ? "bg-amber-100 text-gray-900 dark:bg-amber-400/40 dark:text-gray-100"
-              : "";
-        return highlight ? (
-          <span key={i}>
-            <mark
-              className={`${highlight} rounded-sm`}
-              title={`${seg.label} · ${Math.round(seg.prob_ai * 100)}% AI likelihood`}
+        const title = `${seg.label} · ${Math.round(seg.prob_ai * 100)}% AI likelihood`;
+        if (seg.label === "ai") {
+          return (
+            <span key={i}>
+              <mark
+                className="bg-red-100 text-gray-900 dark:bg-red-400/40 dark:text-gray-100 rounded-sm"
+                title={title}
+              >
+                {seg.text}
+              </mark>{" "}
+            </span>
+          );
+        }
+        if (seg.label === "mixed") {
+          // Subtle: a dotted amber underline marks borderline sentences without
+          // painting the whole document. Reads as "worth a look", not "flagged".
+          return (
+            <span
+              key={i}
+              className="underline decoration-dotted decoration-amber-400/70 underline-offset-4"
+              title={title}
             >
-              {seg.text}
-            </mark>{" "}
-          </span>
-        ) : (
-          <span key={i}>{seg.text} </span>
-        );
+              {seg.text}{" "}
+            </span>
+          );
+        }
+        return <span key={i}>{seg.text} </span>;
       })}
     </p>
   );
@@ -537,12 +549,23 @@ const HumanizerTool: React.FC = () => {
                 {/* Highlights view */}
                 {aiDetectView === "highlights" && detection && (
                   <div className="flex-1 flex flex-col p-4 gap-3 overflow-y-auto">
-                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                      <span className="inline-block h-3 w-4 rounded-sm bg-red-100 dark:bg-red-400/40 flex-shrink-0" />
-                      AI-likely sentences
-                      <span className="inline-block h-3 w-4 rounded-sm bg-amber-100 dark:bg-amber-400/40 flex-shrink-0" />
-                      Mixed sentences
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-600 dark:text-gray-300">
+                      <span className="flex items-center gap-2">
+                        <span className="inline-block h-3 w-4 rounded-sm bg-red-100 dark:bg-red-400/40 flex-shrink-0" />
+                        AI-likely sentences
+                      </span>
+                      <span className="flex items-center gap-2">
+                        <span className="inline-block h-3 w-4 border-b-2 border-dotted border-amber-400/70 flex-shrink-0" />
+                        Borderline sentences
+                      </span>
                     </div>
+                    {!(detection.segments ?? []).some((s) => s.label === "ai") && (
+                      <div className="rounded-md bg-gray-50 dark:bg-gray-700/40 px-3 py-2 text-xs text-gray-500 dark:text-gray-400">
+                        No sentences stood out as clearly AI-generated. The detector is
+                        uncertain across this text — borderline sentences are underlined
+                        below, but none crossed the AI threshold.
+                      </div>
+                    )}
                     <SentenceHighlightedText segments={detection.segments ?? []} />
                   </div>
                 )}
