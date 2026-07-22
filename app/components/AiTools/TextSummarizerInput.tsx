@@ -14,6 +14,12 @@ interface TextSummarizerInputProps {
   accept?: string;
   uploadButtonText?: string;
   showWordLimit?: boolean;
+  /**
+   * Lets long content scroll inside the textarea (visible scrollbar) instead
+   * of being clipped by the default overflow-hidden. Opt-in so existing tools
+   * keep their current look.
+   */
+  scrollable?: boolean;
 }
 
 const TextSummarizerInput: React.FC<TextSummarizerInputProps> = ({
@@ -28,6 +34,7 @@ const TextSummarizerInput: React.FC<TextSummarizerInputProps> = ({
   accept = ".pdf",
   uploadButtonText = "Upload Document",
   showWordLimit = true,
+  scrollable = false,
 }) => {
   const [inputText, setInputText] = useState<string>(initialText);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -114,7 +121,11 @@ const TextSummarizerInput: React.FC<TextSummarizerInputProps> = ({
       {/* Textarea */}
       <div className="relative px-4 pt-5 pb-8 border-b border-t border-gray-200 dark:border-gray-700 transition-colors duration-300 ">
         <textarea
-          className="w-full h-48 p-3 py-4 rounded-md focus:outline-none resize-none overflow-hidden scrollbar-hide text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors duration-300"
+          className={`w-full p-3 py-4 rounded-md focus:outline-none resize-none text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors duration-300 ${
+            scrollable
+              ? "h-72 overflow-y-auto custom-scrollbar"
+              : "h-48 overflow-hidden scrollbar-hide"
+          }`}
           placeholder={placeholder}
           value={inputText}
           onChange={handleInputChange}
