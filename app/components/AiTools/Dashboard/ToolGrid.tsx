@@ -5,6 +5,7 @@ import {
   FiAlignLeft,
   FiBarChart,
   FiBookmark,
+  FiCheckCircle,
   FiFileText,
   FiList,
   FiGlobe,
@@ -135,6 +136,16 @@ const tools: ToolCardData[] = [
     badge: "New",
     category: "essay-writing",
     cta: "Check for AI",
+  },
+  {
+    name: "Grammar Checker",
+    description:
+      "Fix grammar, tense, clarity, and tone with inline explanations.",
+    href: "/tools/grammar-checker",
+    icon: FiCheckCircle,
+    badge: "New",
+    category: "essay-writing",
+    cta: "Check my grammar",
   },
 
   // Research
