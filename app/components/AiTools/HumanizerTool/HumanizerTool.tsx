@@ -37,6 +37,13 @@ type HumanizerResponse = {
   citation_count: number;
   llm_used: string;
   tokens_used: number;
+  // Loop-until-target fields (backend v2). Optional so older bundles/responses are fine.
+  internal_ai_score?: number;
+  ai_score_source?: "ml" | "heuristic";
+  target_score?: number;
+  target_met?: boolean;
+  repair_passes?: number;
+  structural_mode?: boolean;
 };
 
 /**
