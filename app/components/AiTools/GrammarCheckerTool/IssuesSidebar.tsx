@@ -1,7 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
-import { FiArrowDown, FiArrowLeft, FiBook, FiCheck, FiX } from "react-icons/fi";
+import {
+  FiArrowLeft,
+  FiBook,
+  FiCheck,
+  FiChevronLeft,
+  FiChevronRight,
+  FiX,
+} from "react-icons/fi";
 import type { ResolveAction } from "./EditorPane";
 import {
   CATEGORY_META,
@@ -160,14 +167,27 @@ const IssuesSidebar: React.FC<IssuesSidebarProps> = ({
                   </div>
                 </div>
                 {list.length > 1 && (
-                  <div className="mt-2 flex justify-center">
+                  <div className="mt-2 flex items-center justify-center gap-3">
+                    <button
+                      onClick={() =>
+                        setCursor((cursor - 1 + list.length) % list.length)
+                      }
+                      aria-label="Previous issue"
+                      title="Previous issue"
+                      className={`${iconBtn} border-gray-300 text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800`}
+                    >
+                      <FiChevronLeft />
+                    </button>
+                    <span className="min-w-[44px] text-center text-xs text-gray-500 dark:text-gray-400">
+                      {Math.min(cursor, list.length - 1) + 1} / {list.length}
+                    </span>
                     <button
                       onClick={() => setCursor((cursor + 1) % list.length)}
                       aria-label="Next issue"
                       title="Next issue"
                       className={`${iconBtn} border-gray-300 text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800`}
                     >
-                      <FiArrowDown />
+                      <FiChevronRight />
                     </button>
                   </div>
                 )}
