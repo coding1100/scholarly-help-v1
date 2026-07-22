@@ -57,6 +57,7 @@ const GrammarCheckerTool: React.FC = () => {
   const [dictionary, setDictionary] = useState<string[]>([]);
   const [goalsOpen, setGoalsOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [downloadingReport, setDownloadingReport] = useState(false);
   const [showRecheckNote, setShowRecheckNote] = useState(false);
   const [copied, setCopied] = useState(false);
   /**
@@ -358,6 +359,37 @@ const GrammarCheckerTool: React.FC = () => {
     }
   };
 
+  /** Backend-rendered PDF, downloaded as a file (same flow as the AI Detector). */
+  const handleDownloadReport = async () => {
+    setDownloadingReport(true);
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/grammar-check/report`,
+        {
+          text: doc?.text ?? text,
+          score_grammar: scores.grammar,
+          score_tense: scores.tense,
+          score_clarity: scores.clarity,
+          score_tone: scores.tone,
+          score_overall: scores.overall,
+        },
+        { headers: authHeaders, responseType: "blob" },
+      );
+      const url = URL.createObjectURL(
+        new Blob([response.data], { type: "application/pdf" }),
+      );
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "grammar-report.pdf";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error("Failed to generate the report. Please try again.");
+    } finally {
+      setDownloadingReport(false);
+    }
+  };
+
   const handleCopyCorrected = async () => {
     try {
       await navigator.clipboard.writeText(correctedText);
@@ -498,6 +530,8 @@ const GrammarCheckerTool: React.FC = () => {
         onClose={() => setReportOpen(false)}
         text={doc?.text ?? text}
         scores={scores}
+        onDownloadPdf={handleDownloadReport}
+        downloading={downloadingReport}
       />
       <GuestAuthGateModal open={gateOpen} onClose={closeGate} />
     </div>
