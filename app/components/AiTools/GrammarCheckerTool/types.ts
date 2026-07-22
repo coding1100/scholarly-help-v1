@@ -68,6 +68,10 @@ export const DEFAULT_GOALS: GrammarGoals = {
   section: "general",
 };
 
+/**
+ * Highlight tints intentionally use the SAME hue as each category's dial
+ * color, so an underlined word in the editor visually maps to its dial.
+ */
 export const CATEGORY_META: Record<
   GrammarCategory,
   { label: string; labelColor: string; dialColor: string; markClass: string }
@@ -76,26 +80,29 @@ export const CATEGORY_META: Record<
     label: "Grammar",
     labelColor: "text-red-600 dark:text-red-400",
     dialColor: "#dc2626",
-    markClass: "border-b-2 border-solid border-red-500",
+    markClass:
+      "border-b-2 border-solid border-[#dc2626] bg-red-50 dark:bg-red-900/25",
   },
   tense: {
     label: "Tense",
     labelColor: "text-[#565add] dark:text-[#8b8ff0]",
     dialColor: "#565add",
-    markClass: "border-b-2 border-solid border-[#565add]",
+    markClass:
+      "border-b-2 border-solid border-[#565add] bg-primary-100 dark:bg-indigo-900/25",
   },
   clarity: {
     label: "Clarity",
     labelColor: "text-[#ca8a04] dark:text-amber-400",
     dialColor: "#ca8a04",
     markClass:
-      "border-b-2 border-solid border-[#ca8a04] bg-amber-50 dark:bg-amber-900/20",
+      "border-b-2 border-solid border-[#ca8a04] bg-amber-50 dark:bg-amber-900/25",
   },
   tone: {
     label: "Tone",
     labelColor: "text-[#7c3aed] dark:text-[#a78bfa]",
     dialColor: "#7c3aed",
-    markClass: "border-b-2 border-dotted border-[#7c3aed]",
+    markClass:
+      "border-b-2 border-dotted border-[#7c3aed] bg-purple-50 dark:bg-purple-900/25",
   },
 };
 
@@ -199,6 +206,26 @@ export function deriveCorrectedText(text: string, issues: ClientIssue[]): string
     cursor = issue.end;
   }
   out += text.slice(cursor);
+  return cleanCorrectedText(out);
+}
+
+/**
+ * Mechanical cleanup after substitutions (word deletions especially can leave
+ * artifacts): collapse doubled spaces, remove space before punctuation, and
+ * capitalize the first letter of every sentence. Applied ONLY to the clean-
+ * text output — never to the editor document, whose offsets must stay exact.
+ */
+export function cleanCorrectedText(text: string): string {
+  let out = text
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/ +([,.;:!?])/g, "$1")
+    .trim();
+  // Capitalize at the start of the text, after sentence enders, and at the
+  // start of each new line/paragraph.
+  out = out.replace(
+    /(^|[.!?]["')\]]?\s+|\n[ \t]*)([a-z])/g,
+    (_m, boundary: string, letter: string) => boundary + letter.toUpperCase(),
+  );
   return out;
 }
 

@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { FiFileText, FiSettings } from "react-icons/fi";
+import { FiArrowLeft, FiFileText, FiPlus, FiSettings } from "react-icons/fi";
 import ActionButtons from "@/app/components/AiTools/ActionButtons";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 import TextSummarizerInput from "@/app/components/AiTools/TextSummarizerInput";
@@ -442,12 +442,20 @@ const GrammarCheckerTool: React.FC = () => {
                 />
               ))}
             </div>
-            <button
-              onClick={handleNewCheck}
-              className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
-            >
-              Edit &amp; re-check
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={handleNewCheck}
+                className="flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
+              >
+                <FiArrowLeft size={14} /> Back to editor
+              </button>
+              <button
+                onClick={handleClear}
+                className="flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
+              >
+                <FiPlus size={14} /> New check
+              </button>
+            </div>
           </div>
 
           <div className="flex flex-col gap-4 md:flex-row md:items-start">

@@ -123,7 +123,13 @@ const EditorPane: React.FC<EditorPaneProps> = ({
   return (
     <div className="min-w-0 flex-1">
       <div ref={containerRef} className="relative">
-        <div className="whitespace-pre-wrap rounded-xl border border-gray-200 bg-white p-5 text-base leading-8 text-gray-800 transition-colors duration-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 md:p-6">
+        {/* Fixed-height frame with an always-visible scrollbar (custom-scrollbar
+            from globals.css) — max-h alone left no visible frame/scrollbar on
+            short docs and Windows overlay scrollbars. */}
+        <div
+          onScroll={() => setPopover(null)}
+          className="custom-scrollbar h-[55vh] min-h-[300px] overflow-y-auto whitespace-pre-wrap rounded-xl border border-gray-200 bg-white p-5 text-base leading-8 text-gray-800 transition-colors duration-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 md:p-6"
+        >
           {segments}
         </div>
 
