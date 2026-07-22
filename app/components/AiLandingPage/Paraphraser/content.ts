@@ -37,11 +37,11 @@ export const useCasesContent = {
       icon: "📝",
       title: "Deadline Tonight",
       description:
-        "Short on time? Turn complex paragraphs into submission-ready text in seconds.",
+        "Short on time? Turn complex paragraphs into submission-ready text in seconds, then submit it tonight.",
     },
     {
       icon: "🌐",
-      title: "English is not the first language",
+      title: "Academic English",
       description:
         "Use Formal mode to hear how good academic English should sound in your subject, and learn from each result.",
     },
@@ -55,7 +55,7 @@ export const useCasesContent = {
       icon: "🏅",
       title: "Maintain Academic Integrity",
       description:
-        "Rephrase complex research into your own words to make citing effortless.",
+        "One draft won't fit everything, so switch modes until it sounds right for the essay or the post.",
     },
     {
       icon: "📑",
@@ -79,12 +79,12 @@ export const howItWorksContent = {
     {
       title: "Paste your text",
       description:
-        "Paste a sentence, section, or full paragraph you want to rephrase in up to 200 words.",
+        "Paste in a sentence, a section, or a whole paragraph that you want to rephrase, in up to 200 words.",
     },
     {
       title: "Choose your style",
       description:
-        "Standard, Creative, Formal, or Casual or use Custom to spell out exactly what you want.",
+        "Choose Standard, Creative, Formal, or Casual, or use Custom to spell out exactly what you want now.",
     },
     {
       title: "Enter your email",
@@ -110,7 +110,8 @@ export const howItWorksContent = {
 export const watchVideoContent = {
   eyebrow: "Watch Video",
   title: "From Rough Draft to Clean Academic Prose",
-  videoSrc: "/videos/thankYou.mp4",
+  // https://youtu.be/vP6a1CMaTZg
+  youtubeEmbedUrl: "https://www.youtube.com/embed/vP6a1CMaTZg",
 };
 
 export const whyItWorksContent = {
@@ -122,13 +123,13 @@ export const whyItWorksContent = {
       icon: "🎯",
       title: "Meaning preserved",
       description:
-        "Improve sentence flow and vocabulary while keeping your original meaning intact.",
+        "Improve the sentence flow and vocabulary in your writing while keeping your own original meaning entirely intact.",
     },
     {
       icon: "💬",
       title: "Results in seconds",
       description:
-        "No waiting: paste, click, done, with both versions side by side so you can compare them instantly.",
+        "No waiting at all: paste, click, done, with both versions sitting side by side so you can compare them instantly.",
     },
     {
       icon: "🎓",
@@ -150,12 +151,12 @@ export const twoWaysContent = {
       {
         title: "Paste your text",
         description:
-          "Drop in content up to 200 words, a sentence, a paragraph, or a section that needs rewriting.",
+          "Drop in content of up to 200 words, whether that is a sentence, a paragraph, or a section needing a rewrite.",
       },
       {
         title: "Get a rewrite in seconds",
         description:
-          "Choose a style and click Paraphrase, and both versions appear side by side straight away.",
+          "Choose a style and then click Paraphrase, and both of the versions appear side by side almost straight away.",
       },
       {
         title: "Unlock your rewrite",
@@ -164,7 +165,7 @@ export const twoWaysContent = {
       },
       {
         title: "Copy and submit",
-        description: "Take the version you like best, and you are done.",
+        description: "Take whichever version you like best, make any final tweaks that it needs, and then you are completely done.",
       },
     ],
   },

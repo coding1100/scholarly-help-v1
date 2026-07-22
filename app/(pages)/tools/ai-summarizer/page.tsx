@@ -24,7 +24,7 @@ const Page: FC<PageProps> = ({}) => {
       <ProductSchema
         productTitle="AI Summarizer Tool | Condense Articles & Research Papers Instantly"
         metaDescription="Turn long chapters, PDFs, notes, or articles into clear, concise summaries. Save study time and capture main ideas quickly with our intelligent AI summarizer."
-        pageUrl={`${normalizedBaseUrl}/ai-summarizer`}
+        pageUrl={`${normalizedBaseUrl}/tools/ai-summarizer`}
       />
       {/* <ThemeToggle /> */}
 
@@ -51,7 +51,7 @@ export function generateMetadata(): Metadata {
   const normalizedBaseUrl = baseUrl.endsWith("/")
     ? baseUrl.slice(0, -1)
     : baseUrl;
-  const canonicalUrl = `${normalizedBaseUrl}/ai-summarizer`;
+  const canonicalUrl = `${normalizedBaseUrl}/tools/ai-summarizer`;
 
   return {
     title: "AI Summarizer Tool | Condense Articles & Research Papers Instantly",

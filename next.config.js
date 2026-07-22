@@ -122,8 +122,18 @@ const nextConfig = {
     return config;
   },
 
-  // Old Pythagoras Solver URLs — the tool is now Math Solver.
+  // Old Pythagoras Solver URLs — the tool is now Math Solver — plus the tool
+  // LANDING pages that moved from /{slug} to /tools/{slug}.
   async redirects() {
+    const movedLandings = [
+      'ai-paraphraser',
+      'ai-academic-research',
+      'ai-essay-generator',
+      'ai-summarizer',
+      'ai-thesis-generator',
+      'citation-generator',
+      'essay-title-generator',
+    ];
     return [
       {
         source: '/pythagoras-solver',
@@ -135,6 +145,11 @@ const nextConfig = {
         destination: '/tools/math-solver',
         permanent: true,
       },
+      ...movedLandings.map((slug) => ({
+        source: `/${slug}`,
+        destination: `/tools/${slug}`,
+        permanent: true,
+      })),
     ];
   },
 

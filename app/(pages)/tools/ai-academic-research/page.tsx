@@ -22,7 +22,7 @@ const Page: FC<PageProps> = ({}) => {
       <ProductSchema
         productTitle="AI Academic Research Assistant | Scholarly Academic Research"
         metaDescription="Use Scholarly academic research to explore sources, organize notes, write stronger academic drafts, and prepare citation-ready research with confidence."
-        pageUrl={`${normalizedBaseUrl}/ai-academic-research`}
+        pageUrl={`${normalizedBaseUrl}/tools/ai-academic-research`}
       />
       {/* <ThemeToggle /> */}
 
@@ -49,7 +49,7 @@ export function generateMetadata(): Metadata {
   const normalizedBaseUrl = baseUrl.endsWith("/")
     ? baseUrl.slice(0, -1)
     : baseUrl;
-  const canonicalUrl = `${normalizedBaseUrl}/ai-academic-research`;
+  const canonicalUrl = `${normalizedBaseUrl}/tools/ai-academic-research`;
 
   return {
     title: "AI Academic Research Assistant | Scholarly Academic Research",

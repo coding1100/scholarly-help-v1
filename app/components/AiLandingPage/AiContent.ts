@@ -34,7 +34,7 @@ export const MainAiLanding = {
   },
   academicTools: {
     heading1: "AI Designed Tools for Students Educational Success",
-    description1: `At ScholarlyHelp, we believe academic work should be smarter, simpler, and more accessible. Our AI-powered tools are created to help you learn faster, write better, and complete your tasks with confidence. Whether you're <a href="/essay-writing/" class="text-[#323dd6] hover:underline">generating essays</a>, <a href="/ai-paraphraser" class="text-[#323dd6] hover:underline">paraphrasing content</a>, <a href="/ai-summarizer" class="text-[#323dd6] hover:underline">summarizing long readings</a>, or <a href="/ai-thesis-generator" class="text-[#323dd6] hover:underline">crafting a thesis statement</a>, our tools are here to support you instantly and for free.`,
+    description1: `At ScholarlyHelp, we believe academic work should be smarter, simpler, and more accessible. Our AI-powered tools are created to help you learn faster, write better, and complete your tasks with confidence. Whether you're <a href="/essay-writing/" class="text-[#323dd6] hover:underline">generating essays</a>, <a href="/tools/ai-paraphraser" class="text-[#323dd6] hover:underline">paraphrasing content</a>, <a href="/tools/ai-summarizer" class="text-[#323dd6] hover:underline">summarizing long readings</a>, or <a href="/tools/ai-thesis-generator" class="text-[#323dd6] hover:underline">crafting a thesis statement</a>, our tools are here to support you instantly and for free.`,
 
     heading2: "Our AI Academic Tools",
     description2:
@@ -42,7 +42,7 @@ export const MainAiLanding = {
     tools: [
       {
         title: "AI Essay Generator sdadsd",
-        description: `Create structured, high-quality essays in minutes with our intelligent essay builder. Our <a href="/ai-essay-generator" class="text-[#323dd6] hover:underline">AI Essay Generator</a> helps you:`,
+        description: `Create structured, high-quality essays in minutes with our intelligent essay builder. Our <a href="/tools/ai-essay-generator" class="text-[#323dd6] hover:underline">AI Essay Generator</a> helps you:`,
         list: [
           "Build strong introductions with a clear focus",
           "Develop organized and logical body paragraphs",
@@ -57,7 +57,7 @@ export const MainAiLanding = {
       },
       {
         title: "AI Paraphraser",
-        description: `Rewrite content into fresh, original wording while keeping the meaning intact. Our <a href="/ai-paraphraser" class="text-[#323dd6] hover:underline">AI Paraphraser</a> helps you:`,
+        description: `Rewrite content into fresh, original wording while keeping the meaning intact. Our <a href="/tools/ai-paraphraser" class="text-[#323dd6] hover:underline">AI Paraphraser</a> helps you:`,
         list: [
           "Avoid repetitive phrasing",
           "Improve clarity and readability",
@@ -72,7 +72,7 @@ export const MainAiLanding = {
       },
       {
         title: "AI Summarizer",
-        description: `Turn long chapters, PDFs, notes, or articles into clear, concise summaries instantly. Our <a href="/ai-summarizer" class="text-[#323dd6] hover:underline">AI Summarizer</a> helps you:`,
+        description: `Turn long chapters, PDFs, notes, or articles into clear, concise summaries instantly. Our <a href="/tools/ai-summarizer" class="text-[#323dd6] hover:underline">AI Summarizer</a> helps you:`,
         list: [
           "Capture the main ideas quickly",
           "Extract important arguments",
@@ -87,7 +87,7 @@ export const MainAiLanding = {
       },
       {
         title: "AI Thesis Statement Generator",
-        description: `Craft a compelling, academically sound thesis statement with guided suggestions. Our <a href="/ai-thesis-generator" class="text-[#323dd6] hover:underline">AI Thesis Statement Generator</a> helps you:`,
+        description: `Craft a compelling, academically sound thesis statement with guided suggestions. Our <a href="/tools/ai-thesis-generator" class="text-[#323dd6] hover:underline">AI Thesis Statement Generator</a> helps you:`,
         list: [
           "Build a focused research direction",
           "Create strong, argument-driven statements",

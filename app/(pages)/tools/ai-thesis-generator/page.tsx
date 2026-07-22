@@ -24,7 +24,7 @@ const Page: FC<PageProps> = ({}) => {
       <ProductSchema
         productTitle="AI Thesis Statement Generator | Create Strong Thesis Statements Free"
         metaDescription="Craft focused, academic thesis statements instantly. Our AI tool analyzes your topic and perspective to build a strong foundation for your research papers and essays."
-        pageUrl={`${normalizedBaseUrl}/ai-thesis-generator`}
+        pageUrl={`${normalizedBaseUrl}/tools/ai-thesis-generator`}
       />
       {/* <ThemeToggle /> */}
 
@@ -51,7 +51,7 @@ export function generateMetadata(): Metadata {
   const normalizedBaseUrl = baseUrl.endsWith("/")
     ? baseUrl.slice(0, -1)
     : baseUrl;
-  const canonicalUrl = `${normalizedBaseUrl}/ai-thesis-generator`;
+  const canonicalUrl = `${normalizedBaseUrl}/tools/ai-thesis-generator`;
 
   return {
     title:

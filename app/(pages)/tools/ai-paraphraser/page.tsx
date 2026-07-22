@@ -25,7 +25,7 @@ const Page: FC = () => {
       <ProductSchema
         productTitle="Free Paraphrasing Tool | ScholarlyHelp"
         metaDescription="Use the free ScholarlyHelp’s paraphrasing tool to rewrite any text in seconds. Choose your style, keep your meaning, and just copy and paste it."
-        pageUrl={`${normalizedBaseUrl}/ai-paraphraser`}
+        pageUrl={`${normalizedBaseUrl}/tools/ai-paraphraser`}
       />
       <div className="font-poppins">
         <ParaphraserHero />
@@ -51,7 +51,7 @@ export function generateMetadata(): Metadata {
   const normalizedBaseUrl = baseUrl.endsWith("/")
     ? baseUrl.slice(0, -1)
     : baseUrl;
-  const canonicalUrl = `${normalizedBaseUrl}/ai-paraphraser`;
+  const canonicalUrl = `${normalizedBaseUrl}/tools/ai-paraphraser`;
 
   return {
     title: "Free Paraphrasing Tool | ScholarlyHelp",
