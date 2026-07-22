@@ -22,7 +22,7 @@ const Page: FC<PageProps> = ({}) => {
       <ProductSchema
         productTitle="AI Essay Title Generator for Research & Assignments"
         metaDescription="Make a strong first impression with the right essay title. Scholarly AI helps students generate accurate, academic-ready essay titles quickly. Try it for free."
-        pageUrl={`${normalizedBaseUrl}/essay-title-generator`}
+        pageUrl={`${normalizedBaseUrl}/tools/essay-title-generator`}
       />
       {/* <ThemeToggle /> */}
       <AiHero
@@ -52,7 +52,7 @@ export function generateMetadata(): Metadata {
   const normalizedBaseUrl = baseUrl.endsWith("/")
     ? baseUrl.slice(0, -1)
     : baseUrl;
-  const canonicalUrl = `${normalizedBaseUrl}/essay-title-generator`;
+  const canonicalUrl = `${normalizedBaseUrl}/tools/essay-title-generator`;
 
   return {
     title: "AI Essay Title Generator for Research & Assignments",

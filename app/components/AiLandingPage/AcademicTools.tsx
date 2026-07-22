@@ -26,17 +26,17 @@ const AcademicTools: FC<AcademicToolsProps> = ({ content }) => {
   const getToolUrl = (btnText: string, btnUrl?: string) => {
     switch (btnText) {
       case "Generate Your Essay Now":
-        return "/ai-essay-generator";
+        return "/tools/ai-essay-generator";
       case "Paraphrase Your Text Instantly":
-        return "/ai-paraphraser";
+        return "/tools/ai-paraphraser";
       case "Summarize Any Text":
-        return "/ai-summarizer";
+        return "/tools/ai-summarizer";
       case "Generate Your Thesis Statement":
-        return "/ai-thesis-generator";
+        return "/tools/ai-thesis-generator";
       case "Generate Your Essay Title Instant":
-        return "/essay-title-generator";
+        return "/tools/essay-title-generator";
       case "Generate Your Citation Now ":
-        return "/citation-generator";
+        return "/tools/citation-generator";
       case "Solve Pythagoras Equation Quickly":
         return "/math-solver";
       case "Generate Your Research Questions ":

@@ -24,7 +24,7 @@ const Page: FC<PageProps> = ({}) => {
       <ProductSchema
         productTitle="AI Citation Generator | Free APA, MLA, Chicago & More"
         metaDescription="Generate accurate citations instantly with Scholarly AI. Free citation generator for APA, MLA, Chicago, Turabian, and other formats. Reduce errors and save time."
-        pageUrl={`${normalizedBaseUrl}/citation-generator`}
+        pageUrl={`${normalizedBaseUrl}/tools/citation-generator`}
       />
       {/* <ThemeToggle /> */}
       <AiHero
@@ -52,7 +52,7 @@ export function generateMetadata(): Metadata {
   const normalizedBaseUrl = baseUrl.endsWith("/")
     ? baseUrl.slice(0, -1)
     : baseUrl;
-  const canonicalUrl = `${normalizedBaseUrl}/citation-generator`;
+  const canonicalUrl = `${normalizedBaseUrl}/tools/citation-generator`;
 
   return {
     title: "AI Citation Generator | Free APA, MLA, Chicago & More",
