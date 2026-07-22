@@ -3,12 +3,20 @@
 import React from "react";
 import type { EditableSegment, SegmentLabel } from "./types";
 
+/**
+ * Tint + underline per class. The underline colour is the SAME token used by the
+ * filter chips and the breakdown rows (emerald / amber / red), so a sentence in
+ * the document is visually traceable to the category it was counted under.
+ */
 const SEGMENT_BG: Record<SegmentLabel, string> = {
-  human: "bg-emerald-100 dark:bg-emerald-900/40",
-  mixed: "bg-amber-100 dark:bg-amber-900/40",
-  ai: "bg-red-100 dark:bg-red-900/40",
-  neutral: "bg-gray-100 dark:bg-gray-700/50",
+  human: "bg-emerald-100 dark:bg-emerald-900/40 decoration-emerald-500",
+  mixed: "bg-amber-100 dark:bg-amber-900/40 decoration-amber-500",
+  ai: "bg-red-100 dark:bg-red-900/40 decoration-red-500",
+  neutral: "bg-gray-100 dark:bg-gray-700/50 decoration-gray-400",
 };
+
+/** Underline styling shared by every scored segment. */
+const SEGMENT_UNDERLINE = "underline decoration-2 underline-offset-4";
 
 /**
  * The scanned document rendered as clickable sentence segments, tinted by class.
@@ -51,7 +59,7 @@ export default function SegmentedDoc({
                     ? "Edited — rescan to rescore"
                     : `${seg.label} · ${Math.round(seg.prob_ai * 100)}% AI likelihood`
                 }
-                className={`cursor-pointer rounded-sm px-0.5 transition-opacity duration-150 ${
+                className={`cursor-pointer rounded-sm px-0.5 transition-opacity duration-150 ${SEGMENT_UNDERLINE} ${
                   settled ? SEGMENT_BG.neutral : SEGMENT_BG[seg.label]
                 } ${dimmedByFilter || dimmedByFocus ? "opacity-40" : "opacity-100"} ${
                   focusedIndex === i

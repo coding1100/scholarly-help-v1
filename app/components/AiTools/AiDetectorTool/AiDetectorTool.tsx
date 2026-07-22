@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { FiRefreshCw } from "react-icons/fi";
+import { FiPlus, FiRefreshCw } from "react-icons/fi";
 import ActionButtons from "@/app/components/AiTools/ActionButtons";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 import TextSummarizerInput from "@/app/components/AiTools/TextSummarizerInput";
@@ -406,6 +406,7 @@ const AiDetectorTool: React.FC = () => {
             placeholder="Paste your text here..."
             maxWords={MAX_DETECT_WORDS}
             accept=".pdf,.docx,.txt,.png,.jpg,.jpeg,.webp"
+            scrollable
           />
           <div className="space-y-3 border-b border-gray-200 dark:border-gray-700 p-3 transition-colors duration-300">
             <p className="text-sm text-gray-600 dark:text-gray-300">
@@ -421,7 +422,7 @@ const AiDetectorTool: React.FC = () => {
               <div className="text-xs text-gray-500 dark:text-gray-400">
                 {MIN_DETECT_WORDS - wordCount} more word
                 {MIN_DETECT_WORDS - wordCount === 1 ? "" : "s"} needed — short text
-                can't be scored reliably.
+                can&apos;t be scored reliably.
               </div>
             )}
             {/* Scoreable, but the model is measurably weaker on short passages,
@@ -477,8 +478,9 @@ const AiDetectorTool: React.FC = () => {
             <button
               type="button"
               onClick={handleClear}
-              className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 underline-offset-2 hover:underline"
+              className="inline-flex items-center gap-1.5 rounded-md bg-primary-400 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-primary-300 active:bg-primary-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2b7fff]"
             >
+              <FiPlus className="h-4 w-4" />
               New scan
             </button>
           </div>

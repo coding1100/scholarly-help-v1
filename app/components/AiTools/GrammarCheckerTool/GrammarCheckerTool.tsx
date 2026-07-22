@@ -420,6 +420,7 @@ const GrammarCheckerTool: React.FC = () => {
             accept=".pdf,.doc,.docx,.txt"
             onFileUpload={handleUploadDocument}
             placeholder="Paste your essay, discussion post, or paragraph here..."
+            scrollable
           />
           <ActionButtons
             onClear={handleClear}
