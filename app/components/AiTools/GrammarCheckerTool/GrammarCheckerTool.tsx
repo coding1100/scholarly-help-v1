@@ -59,6 +59,18 @@ const GrammarCheckerTool: React.FC = () => {
   const [reportOpen, setReportOpen] = useState(false);
   const [showRecheckNote, setShowRecheckNote] = useState(false);
   const [copied, setCopied] = useState(false);
+  /**
+   * Convergence memory for the current document lineage (survives
+   * "Edit & re-check", resets on Clear):
+   * - settled: wording the user already decided on (accepted suggestions and
+   *   dismissed originals). Sent with every check so the model never
+   *   re-litigates it — without this, each re-check invents a fresh round of
+   *   nitpicks on its own previous fixes and the tool never converges.
+   * - seenIssueIds: every issue id ever shown, so a re-check can't resurface
+   *   an issue the user dismissed.
+   */
+  const [settled, setSettled] = useState<string[]>([]);
+  const [seenIssueIds, setSeenIssueIds] = useState<string[]>([]);
 
   const { gateOpen, closeGate, guardAiClick } = useGuestGate();
 
@@ -176,12 +188,23 @@ const GrammarCheckerTool: React.FC = () => {
       try {
         const response = await axios.post(
           `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/grammar-check`,
-          { text, ...goals, dictionary },
+          {
+            text,
+            ...goals,
+            dictionary,
+            settled_phrases: settled.slice(-100),
+            known_issue_keys: seenIssueIds.slice(-500),
+          },
           { headers: authHeaders },
         );
         const data = (response.data?.data ?? response.data) as GrammarCheckResponse;
-        setDoc({ text, issues: toClientIssues(text, data.issues ?? []) });
-        if ((data.issues ?? []).length === 0) {
+        const issues = toClientIssues(text, data.issues ?? []);
+        setDoc({ text, issues });
+        setSeenIssueIds((prev) => [
+          ...prev,
+          ...issues.map((i) => i.id).filter((id) => !prev.includes(id)),
+        ]);
+        if (issues.length === 0) {
           toast.success("No issues found — nice work!");
         }
       } catch (err: any) {
@@ -195,9 +218,16 @@ const GrammarCheckerTool: React.FC = () => {
   /**
    * After an accepted fix, silently re-check just the edited sentence so a fix
    * that introduces a follow-up problem (e.g. tense fix making a time phrase
-   * redundant) is caught immediately. Best-effort: failures stay silent.
+   * redundant) is caught immediately. Hard-capped at ONE follow-up round:
+   * issues found here are marked isNew, and accepting an isNew issue never
+   * triggers another re-check — so a fix chain is original → follow-up → done,
+   * never an endless loop of new suggestions. Best-effort: failures stay silent.
    */
-  const recheckSentence = async (nextDoc: CheckedDoc, editStart: number) => {
+  const recheckSentence = async (
+    nextDoc: CheckedDoc,
+    editStart: number,
+    settledNow: string[],
+  ) => {
     const sentence = sentenceAt(nextDoc.text, editStart);
     if (countWords(sentence.text) < 3) return;
     try {
@@ -209,6 +239,7 @@ const GrammarCheckerTool: React.FC = () => {
           dictionary,
           scope: "sentence",
           known_issue_keys: nextDoc.issues.map((i) => i.id),
+          settled_phrases: settledNow.slice(-100),
         },
         { headers: authHeaders },
       );
@@ -233,10 +264,28 @@ const GrammarCheckerTool: React.FC = () => {
           ? { ...current, issues: [...current.issues, ...fresh] }
           : current,
       );
+      setSeenIssueIds((prev) => [
+        ...prev,
+        ...fresh.map((i) => i.id).filter((id) => !prev.includes(id)),
+      ]);
       setShowRecheckNote(true);
     } catch {
       /* re-check is a bonus pass — never surface its errors */
     }
+  };
+
+  /** Record wording the user decided on; returns the updated list synchronously. */
+  const addSettled = (phrase: string): string[] => {
+    const clean = phrase.trim();
+    if (
+      clean.length <= 1 ||
+      settled.some((s) => s.toLowerCase() === clean.toLowerCase())
+    ) {
+      return settled;
+    }
+    const next = [...settled, clean];
+    setSettled(next);
+    return next;
   };
 
   const handleResolve = (issueId: string, action: ResolveAction) => {
@@ -249,8 +298,13 @@ const GrammarCheckerTool: React.FC = () => {
       if (!result) return;
       const nextDoc = { text: result.text, issues: result.issues };
       setDoc(nextDoc);
+      const settledNow = addSettled(issue.suggestion);
       toast.success("Fixed");
-      void recheckSentence(nextDoc, result.editedRange.start);
+      // Follow-up re-check only for FIRST-round issues; accepting a follow-up
+      // (isNew) issue ends the chain — this is the "max 2 tries" guarantee.
+      if (!issue.isNew) {
+        void recheckSentence(nextDoc, result.editedRange.start, settledNow);
+      }
       return;
     }
 
@@ -260,6 +314,7 @@ const GrammarCheckerTool: React.FC = () => {
         i.id === issueId ? { ...i, status: action } : i,
       ),
     });
+    addSettled(issue.original);
 
     if (action === "dictionary") {
       const word = issue.original.trim();
@@ -317,6 +372,9 @@ const GrammarCheckerTool: React.FC = () => {
     setText("");
     setDoc(null);
     setShowRecheckNote(false);
+    // New document, new lineage — forget the convergence memory.
+    setSettled([]);
+    setSeenIssueIds([]);
   };
 
   /** Back to the input view, carrying the edited document along. */
