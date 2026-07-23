@@ -36,11 +36,11 @@ const BeforeAfter: FC = () => (
             <p className="text-base leading-7 text-gray-800 md:text-lg md:leading-8">
               {c.resultText}
             </p>
-            <div className="mt-6 flex flex-wrap gap-3">
+            <div className="mt-6 flex flex-nowrap gap-2 md:gap-3">
               {c.tags.map((tag) => (
                 <span
                   key={tag.label}
-                  className={`rounded-lg px-4 py-2 text-sm font-medium ${tag.className}`}
+                  className={`whitespace-nowrap rounded-lg px-2.5 py-2 text-xs font-medium md:px-3 md:text-sm ${tag.className}`}
                 >
                   {tag.label}
                 </span>
