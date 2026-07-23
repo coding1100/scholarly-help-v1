@@ -111,6 +111,70 @@ function SentenceHighlightedText({ segments }: { segments: DetectSegment[] }) {
   );
 }
 
+/** Shape returned by POST /tools/humanizer/jobs and GET /tools/humanizer/jobs/:id. */
+type HumanizerJobResponse = {
+  job_id: string;
+  status: "queued" | "processing" | "completed" | "failed";
+  progress: number;
+  result: HumanizerResponse | null;
+  error: string | null;
+};
+
+/** The API wraps responses as { success, message, data } on some routes. */
+function unwrapData<T>(payload: unknown): T {
+  return (
+    payload && typeof payload === "object" && "data" in payload
+      ? (payload as { data?: T }).data
+      : payload
+  ) as T;
+}
+
+// Polling cadence. The run is 30-70s, so a 2s interval is frequent enough to
+// feel responsive without hammering the API. The ceiling is a safety net: it
+// stops a broken job from polling forever, and is set well above the slowest
+// observed run (~70s).
+const POLL_INTERVAL_MS = 2000;
+const POLL_TIMEOUT_MS = 180000;
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Poll a humanize job until it completes, fails, or the timeout is reached.
+ *
+ * Resolves with the finished result, or throws with a message the caller
+ * surfaces via toast. The caller keeps its loading state true for the whole
+ * duration of this call, so the loader never disappears mid-run.
+ */
+async function pollHumanizerJob(
+  jobId: string,
+  headers: Record<string, string>,
+): Promise<HumanizerResponse> {
+  const deadline = Date.now() + POLL_TIMEOUT_MS;
+
+  while (Date.now() < deadline) {
+    await sleep(POLL_INTERVAL_MS);
+
+    const response = await axios.get<
+      HumanizerJobResponse | { data?: HumanizerJobResponse }
+    >(`${process.env.NEXT_PUBLIC_NGROX_URL}/tools/humanizer/jobs/${jobId}`, {
+      headers,
+    });
+    const job = unwrapData<HumanizerJobResponse>(response.data);
+
+    if (job?.status === "completed" && job.result) {
+      return job.result;
+    }
+    if (job?.status === "failed") {
+      throw new Error(job.error || "Humanizing failed. Please try again.");
+    }
+    // queued / processing -> keep waiting (loader stays up).
+  }
+
+  throw new Error(
+    "Humanizing is taking longer than expected. Please try again.",
+  );
+}
+
 const HumanizerTool: React.FC = () => {
   const [token, setToken] = useState<string | null>(null);
   const [text, setText] = useState("");
@@ -229,36 +293,48 @@ const HumanizerTool: React.FC = () => {
       trackToolGenerate({ toolName: "Humanizer Tool" });
 
       try {
+        // ASYNC JOB + POLL. A full humanize run is 30-70s, which is longer than
+        // the API gateway's read timeout — the old synchronous POST returned
+        // 504 Gateway Time-out. We now create a job (returns in ms) and poll it
+        // until it finishes, so no connection is held open for the whole run.
+        //
+        // `loading` deliberately stays true for the ENTIRE poll: it is only
+        // cleared in the finally below, once the job reaches a terminal state.
+        // The user therefore sees one continuous loader, never a flash back to
+        // the idle state between the create call and the first poll.
+        const headers = {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        };
+
         // Guests (no token) are allowed; the backend accepts guest requests and
         // the click gate above enforces the free allowance.
-        const response = await axios.post<
-          HumanizerResponse | { data?: HumanizerResponse }
+        const createResponse = await axios.post<
+          HumanizerJobResponse | { data?: HumanizerJobResponse }
         >(
-        `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/humanizer`,
-        {
-          text,
-          tone_mode: tone,
-          rewrite_intensity: intensity,
-          preserve_citations: true,
-          return_diff: true,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
+          `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/humanizer/jobs`,
+          {
+            text,
+            tone_mode: tone,
+            rewrite_intensity: intensity,
+            preserve_citations: true,
+            return_diff: true,
           },
-        },
-      );
+          { headers },
+        );
 
-      // Backend wraps responses as { success, message, data }
-      const humanizerResult = (
-        response.data && typeof response.data === "object" && "data" in response.data
-          ? (response.data as { data?: HumanizerResponse }).data
-          : response.data
-      ) as HumanizerResponse;
-      setResult(humanizerResult);
-      toast.success("Humanized successfully!");
-    } catch (err: any) {
+        const createdJob = unwrapData<HumanizerJobResponse>(createResponse.data);
+        if (!createdJob?.job_id) {
+          throw new Error("Humanizer did not return a job id.");
+        }
+
+        const humanizerResult = await pollHumanizerJob(
+          createdJob.job_id,
+          headers,
+        );
+        setResult(humanizerResult);
+        toast.success("Humanized successfully!");
+      } catch (err: any) {
       const status = err?.response?.status;
       const message =
         err?.response?.data?.message ||
