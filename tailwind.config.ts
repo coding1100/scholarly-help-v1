@@ -55,6 +55,38 @@ const config: Config = {
         800: '#1f2937',
         900: '#111827',
       },
+      // Semantic status colours. This `colors` block REPLACES Tailwind's default
+      // palette, so anything not listed here silently generates no CSS — which
+      // is why the AI Detector's green/amber/red sentence tints, underlines and
+      // legend dots rendered as plain black text. Only the shades actually used
+      // are included, to keep the bundle small.
+      emerald: {
+        100: '#d1fae5',
+        400: '#34d399',
+        500: '#10b981',
+        900: '#064e3b',
+      },
+      amber: {
+        50: '#fffbeb',
+        100: '#fef3c7',
+        200: '#fde68a',
+        300: '#fcd34d',
+        400: '#fbbf24',
+        500: '#f59e0b',
+        800: '#92400e',
+        900: '#78350f',
+        950: '#451a03',
+      },
+      red: {
+        100: '#fee2e2',
+        400: '#f87171',
+        500: '#ef4444',
+        900: '#7f1d1d',
+      },
+      blue: {
+        50: '#eff6ff',
+        900: '#1e3a8a',
+      },
     },
     // Strictly limited spacing to only used values (REDUCES CSS DRASTICALLY)
     spacing: {
