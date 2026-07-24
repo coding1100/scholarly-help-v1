@@ -107,15 +107,22 @@ export const CATEGORY_META: Record<
 };
 
 // ---------------------------------------------------------------------------
-// Scores (prototype formula: each open issue costs an equal share of 60 pts,
-// floor 40 — so a category with all issues resolved reads 100).
+// Scores — error-DENSITY based. The old prototype formula (each open issue
+// costs an equal share of 60 pts) collapsed to a constant 40 for every
+// category that had ANY unresolved issues: open === total on first render, so
+// 1 mistake and 20 mistakes both showed 40. Density ties the score to how
+// error-riddled the text actually is, and resolving issues raises it to 100.
 // ---------------------------------------------------------------------------
 
-export function categoryScore(total: number, remaining: number): number {
-  if (total <= 0) return 100;
-  const deduction = 60 / total;
-  const score = Math.round(100 - remaining * deduction);
-  return Math.max(40, Math.min(100, score));
+/** Points deducted per open issue per 100 words. */
+const DENSITY_PENALTY = 12;
+const SCORE_FLOOR = 40;
+
+export function categoryScore(openCount: number, wordCount: number): number {
+  if (openCount <= 0) return 100;
+  const per100Words = (openCount / Math.max(wordCount, 20)) * 100;
+  const score = Math.round(100 - per100Words * DENSITY_PENALTY);
+  return Math.max(SCORE_FLOOR, Math.min(100, score));
 }
 
 export interface CategoryScores {
@@ -127,16 +134,18 @@ export interface CategoryScores {
 }
 
 /**
- * `totals` = issues ever seen per category (incl. re-check finds);
- * remaining = still-open ones. Accepted/dismissed/dictionary all count as
- * handled — the score rewards working through the list either way.
+ * Only still-open issues count against the score — accepted/dismissed/
+ * dictionary all count as handled, so working through the list (either way)
+ * moves every dial toward 100.
  */
-export function computeScores(issues: ClientIssue[]): CategoryScores {
+export function computeScores(
+  issues: ClientIssue[],
+  wordCount: number,
+): CategoryScores {
   const scores = { grammar: 100, tense: 100, clarity: 100, tone: 100 };
   for (const cat of GRAMMAR_CATEGORIES) {
-    const inCat = issues.filter((i) => i.category === cat);
-    const open = inCat.filter((i) => i.status === "open");
-    scores[cat] = categoryScore(inCat.length, open.length);
+    const open = issues.filter((i) => i.category === cat && i.status === "open");
+    scores[cat] = categoryScore(open.length, wordCount);
   }
   const overall = Math.round(
     (scores.grammar + scores.tense + scores.clarity + scores.tone) / 4,

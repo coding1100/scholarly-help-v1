@@ -108,8 +108,8 @@ const GrammarCheckerTool: React.FC = () => {
 
   const wordCount = useMemo(() => countWords(text), [text]);
   const scores = useMemo(
-    () => computeScores(doc?.issues ?? []),
-    [doc?.issues],
+    () => computeScores(doc?.issues ?? [], countWords(doc?.text ?? "")),
+    [doc?.issues, doc?.text],
   );
   const correctedText = useMemo(
     () => (doc ? deriveCorrectedText(doc.text, doc.issues) : ""),
@@ -478,13 +478,13 @@ const GrammarCheckerTool: React.FC = () => {
             <div className="flex gap-2">
               <button
                 onClick={handleNewCheck}
-                className="flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
+                className="flex items-center gap-1.5 rounded-lg border border-primary-400 bg-white px-3 py-1.5 text-sm font-medium text-primary-400 transition-colors hover:bg-primary-100 dark:bg-gray-900 dark:text-[#8b8ff0] dark:hover:bg-gray-800"
               >
                 <FiArrowLeft size={14} /> Back to editor
               </button>
               <button
                 onClick={handleClear}
-                className="flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
+                className="flex items-center gap-1.5 rounded-lg bg-primary-400 px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-300 active:bg-primary-500"
               >
                 <FiPlus size={14} /> New check
               </button>
