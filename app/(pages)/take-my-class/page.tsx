@@ -49,6 +49,18 @@ const Page = async () => {
         metaDescription={metaDescription}
         pageUrl={pageUrl}
       />
+      {/* Hand-inlined critical CSS for the LCP element (hero H1) so it paints
+          styled before the external stylesheet finishes loading. Values must
+          stay in sync with the Tailwind classes on that H1 in HeroLead.tsx. */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+            #hero-section{background:#F5F6FA}
+            .tmc-hero-heading{font-weight:600;font-size:30px;line-height:1.1;color:#000}
+            @media (min-width:768px){.tmc-hero-heading{font-size:48px}}
+          `,
+        }}
+      />
       <MainLayout>
         <HeroSection useHeroForm2 />
         <DelayedBelowFold>
