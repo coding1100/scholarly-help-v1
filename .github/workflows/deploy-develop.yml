@@ -1,0 +1,128 @@
+name: Deploy to Staging (EC2)
+
+on:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Next.js application
+        run: npm run build
+        env:
+          DISABLE_HTTPS_HEADERS: "true"
+          NEXT_PUBLIC_API_URL: https://scholarly.namatechnologlies.com/v1
+          NEXT_PUBLIC_COMPANY_PHONE_NUMBER: +1 646 480 6092
+          NEXT_PUBLIC_SITE_URL: ${{ secrets.STAGING_SITE_URL }}
+          NEXT_PUBLIC_GOOGLE_CLIENT_ID: 772400319491-nvr9lgmaphm8cs8udslad1opjct0mam5.apps.googleusercontent.com
+          NEXT_PUBLIC_NGROX_URL: https://scholarly.namatechnologlies.com/v1
+          NEXT_PUBLIC_BASE_URL: ${{ secrets.NEXT_PUBLIC_BASE_URL }}
+          NEXT_PUBLIC_API_KEY: ${{ secrets.NEXT_PUBLIC_API_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          GHL_AUTHORIZATION_TOKEN: ${{ secrets.GHL_AUTHORIZATION_TOKEN }}
+          GHL_CGPA_CUSTOM_FIELD_ID: ${{ secrets.GHL_CGPA_CUSTOM_FIELD_ID }}
+          DIRECTUS_KEY: ${{ secrets.DIRECTUS_KEY }}
+          DIRECTUS_SECRET: ${{ secrets.DIRECTUS_SECRET }}
+          DIRECTUS_ADMIN_EMAIL: ${{ secrets.DIRECTUS_ADMIN_EMAIL }}
+          DIRECTUS_ADMIN_PASSWORD: ${{ secrets.DIRECTUS_ADMIN_PASSWORD }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL_ID: ${{ secrets.GEMINI_MODEL_ID }}
+
+      - name: Create deployment package
+        run: |
+          mkdir -p deploy
+          cp -r .next deploy/
+          cp -r public deploy/
+          cp -r node_modules deploy/
+          cp package.json deploy/
+          cp package-lock.json deploy/
+          cp next.config.js deploy/
+          tar -czf deploy.tar.gz -C deploy .
+
+      - name: Deploy to Staging EC2
+        env:
+          EC2_HOST: ${{ secrets.STAGING_EC2_HOST }}
+          EC2_USER: ${{ secrets.STAGING_EC2_USER }}
+          EC2_SSH_KEY: ${{ secrets.STAGING_SSH_KEY }}
+          APP_DIR: ${{ secrets.STAGING_APP_DIR }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL_ID: ${{ secrets.GEMINI_MODEL_ID }}
+          GOOGLE_CLIENT_TOOL_EMAIL: ${{ secrets.GOOGLE_CLIENT_TOOL_EMAIL }}
+          GOOGLE_PRIVATE_TOOL_KEY: ${{ secrets.GOOGLE_PRIVATE_TOOL_KEY }}
+          GOOGLE_SHEET_TOOL_ID: ${{ secrets.GOOGLE_SHEET_TOOL_ID }}
+        run: |
+          # Setup SSH
+          mkdir -p ~/.ssh
+          echo "$EC2_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H $EC2_HOST >> ~/.ssh/known_hosts
+
+          # Copy deployment package to EC2
+          scp -i ~/.ssh/deploy_key deploy.tar.gz $EC2_USER@$EC2_HOST:/tmp/
+
+          # Execute deployment commands on EC2
+          ssh -i ~/.ssh/deploy_key $EC2_USER@$EC2_HOST "APP_DIR='$APP_DIR' GEMINI_API_KEY='$GEMINI_API_KEY' GEMINI_MODEL_ID='$GEMINI_MODEL_ID' GOOGLE_CLIENT_TOOL_EMAIL='$GOOGLE_CLIENT_TOOL_EMAIL' GOOGLE_PRIVATE_TOOL_KEY='$GOOGLE_PRIVATE_TOOL_KEY' GOOGLE_SHEET_TOOL_ID='$GOOGLE_SHEET_TOOL_ID' bash -s" << 'EOF'
+            # Ensure PATH includes where pm2 is installed
+            export PATH=$PATH:/home/ubuntu/.nvm/versions/node/v24.12.0/bin
+
+            # Navigate to application directory
+            cd $APP_DIR || exit 1
+
+            # Stop the application (if using PM2)
+            pm2 stop scholarly-help-staging || true
+            pm2 delete scholarly-help-staging || true
+
+            # Create new directory and extract
+            mkdir -p current
+            tar -xzf /tmp/deploy.tar.gz -C current/
+            cd current
+
+            # Set environment variables (if .env file exists on server)
+            if [ -f ../.env ]; then
+              cp ../.env .env
+            fi
+
+            touch .env
+            sed -i '/^GEMINI_API_KEY=/d' .env
+            sed -i '/^GEMINI_MODEL_ID=/d' .env
+            sed -i '/^GOOGLE_CLIENT_TOOL_EMAIL=/d' .env
+            sed -i '/^GOOGLE_PRIVATE_TOOL_KEY=/d' .env
+            sed -i '/^GOOGLE_SHEET_TOOL_ID=/d' .env
+            {
+              echo "GEMINI_API_KEY=$GEMINI_API_KEY"
+              echo "GEMINI_MODEL_ID=$GEMINI_MODEL_ID"
+              echo "GOOGLE_CLIENT_TOOL_EMAIL=$GOOGLE_CLIENT_TOOL_EMAIL"
+              echo "GOOGLE_PRIVATE_TOOL_KEY=$GOOGLE_PRIVATE_TOOL_KEY"
+              echo "GOOGLE_SHEET_TOOL_ID=$GOOGLE_SHEET_TOOL_ID"
+            } >> .env
+
+            export GEMINI_API_KEY="$GEMINI_API_KEY"
+            export GEMINI_MODEL_ID="$GEMINI_MODEL_ID"
+            export GOOGLE_CLIENT_TOOL_EMAIL="$GOOGLE_CLIENT_TOOL_EMAIL"
+            export GOOGLE_PRIVATE_TOOL_KEY="$GOOGLE_PRIVATE_TOOL_KEY"
+            export GOOGLE_SHEET_TOOL_ID="$GOOGLE_SHEET_TOOL_ID"
+            pm2 start npm --name "scholarly-help-staging" -- start
+            pm2 save
+
+            # Cleanup
+            rm /tmp/deploy.tar.gz
+          EOF
+
+          # Cleanup local SSH key
+          rm ~/.ssh/deploy_key
