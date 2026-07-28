@@ -37,6 +37,12 @@ const sanitizeCitation = (html: string | null | undefined): string => {
 
 interface CitationToolProps {
   setFlag: (value: boolean) => void;
+  /**
+   * "landing" renders the same tool as a rounded, shadowed hero card (used on
+   * the /tools/citation-generator landing page); the default keeps the /tools
+   * styling.
+   */
+  variant?: "default" | "landing";
 }
 
 type CitationStyle = "APA" | "MLA" | "Chicago" | "Harvard";
@@ -148,7 +154,8 @@ const inputClass =
 const labelClass =
   "flex items-center text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-300";
 
-const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
+const CitationTool: FC<CitationToolProps> = ({ setFlag, variant = "default" }) => {
+  const isLanding = variant === "landing";
   const [token, setToken] = useState<string | null>(null);
   const [citationStyle, setCitationStyle] = useState<CitationStyle>("APA");
   const [sourceType, setSourceType] = useState<SourceType>("book");
@@ -661,9 +668,21 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
       : "Accessed online";
 
   return (
-    <div className="container relative mx-auto max-w-[840px] px-4 md:px-8 md:pt-8 2xl:max-w-6xl">
+    <div
+      className={
+        isLanding
+          ? "relative w-full"
+          : "container relative mx-auto max-w-[840px] px-4 md:px-8 md:pt-8 2xl:max-w-6xl"
+      }
+    >
       <ToolsApiLoader show={isSubmitting} />
-      <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 overflow-hidden transition-colors duration-300">
+      <div
+        className={`bg-white dark:bg-gray-800 overflow-hidden transition-colors duration-300 ${
+          isLanding
+            ? "rounded-2xl shadow-[0_30px_70px_-20px_rgba(43,28,80,0.35)] text-left"
+            : "border dark:border-gray-700"
+        }`}
+      >
         {/* Main Overview Section */}
         <div className="pt-6 ">
           <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-3 transition-colors duration-300 text-center">
@@ -1581,14 +1600,16 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
       />
 
       {/* Footer Quote */}
-      <div className="text-sm font-serif text-center pt-8 text-gray-500 dark:text-gray-400 transition-colors duration-300">
-        <q>
-          Create perfect academic citations effortlessly with ScholarlyHelp&apos;s
-          Citation Generator. Generate properly formatted citations in APA, MLA,
-          Chicago, or Harvard style for books, websites, journals, and
-          articles—all with in-text citation support.
-        </q>
-      </div>
+      {!isLanding && (
+        <div className="text-sm font-serif text-center pt-8 text-gray-500 dark:text-gray-400 transition-colors duration-300">
+          <q>
+            Create perfect academic citations effortlessly with
+            ScholarlyHelp&apos;s Citation Generator. Generate properly formatted
+            citations in APA, MLA, Chicago, or Harvard style for books,
+            websites, journals, and articles—all with in-text citation support.
+          </q>
+        </div>
+      )}
       <GuestAuthGateModal open={gateOpen} onClose={closeGate} />
     </div>
   );
