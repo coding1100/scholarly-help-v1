@@ -26,11 +26,11 @@ jobs:
       - name: Build Next.js application
         run: npm run build
         env:
-          NEXT_PUBLIC_API_URL: https://scholarly.namatechnologlies.com/v1
+          NEXT_PUBLIC_API_URL: https://api.scholarlyhelp.com/v1
           NEXT_PUBLIC_COMPANY_PHONE_NUMBER: +1 646 480 6092
           NEXT_PUBLIC_SITE_URL: https://scholarlyhelp.com/
           NEXT_PUBLIC_GOOGLE_CLIENT_ID: 772400319491-nvr9lgmaphm8cs8udslad1opjct0mam5.apps.googleusercontent.com
-          NEXT_PUBLIC_NGROX_URL: https://scholarly.namatechnologlies.com/v1
+          NEXT_PUBLIC_NGROX_URL: https://api.scholarlyhelp.com/v1
           # Agentic platform (powers Tutor / Micro Learning / Exam Prep agents).
           # NEXT_PUBLIC_* are inlined at build time, so they must be present here.
           NEXT_PUBLIC_BASE_URL: ${{ secrets.NEXT_PUBLIC_BASE_URL }}
