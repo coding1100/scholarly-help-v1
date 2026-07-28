@@ -4,7 +4,6 @@ import dynamic from "next/dynamic";
 import "./globals.css";
 import { Metadata } from "next";
 import OrganizationSchema from "./components/OrganizationSchema";
-import CssDeferScript from "./components/CssDeferScript";
 
 const ClientScripts = dynamic(() => import("./components/ClientScripts"), {
   ssr: false,
@@ -44,9 +43,6 @@ export default function RootLayout({
         {process.env.NODE_ENV === "production" && (
           <meta httpEquiv="Content-Security-Policy" content="upgrade-insecure-requests" />
         )}
-
-        {/* Defers render-blocking stylesheets on scoped routes (see DEFER_ROUTES) */}
-        <CssDeferScript />
       </head>
       <body suppressHydrationWarning>
         <OrganizationSchema />
