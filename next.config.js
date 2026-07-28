@@ -155,7 +155,7 @@ const nextConfig = {
 
   // Headers for caching static assets and enabling bfcache
   async headers() {
-    const isProd = process.env.NODE_ENV === 'production';
+    const isProd = process.env.NODE_ENV === 'production' && process.env.DISABLE_HTTPS_HEADERS !== 'true';
     return [
       // Security headers for all pages
       {
@@ -166,6 +166,10 @@ const nextConfig = {
               {
                 key: 'Content-Security-Policy',
                 value: 'upgrade-insecure-requests',
+              },
+              {
+                key: 'Strict-Transport-Security',
+                value: 'max-age=31536000; includeSubDomains; preload',
               },
             ]
             : []),
@@ -184,10 +188,6 @@ const nextConfig = {
           {
             key: 'Referrer-Policy',
             value: 'strict-origin-when-cross-origin',
-          },
-          {
-            key: 'Strict-Transport-Security',
-            value: 'max-age=31536000; includeSubDomains; preload',
           },
         ],
       },
