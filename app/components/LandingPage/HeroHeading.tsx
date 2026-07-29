@@ -4,7 +4,14 @@ import { styleParentheticalText } from "./heroHeadingUtils";
 /**
  * Server-only hero heading so the LCP text is in the initial HTML (no client render delay).
  */
-export default function HeroHeading({ mainHeading }: { mainHeading: string }) {
+export default function HeroHeading({
+  mainHeading,
+  spanClassName,
+}: {
+  mainHeading: string;
+  /** Extra classes for the heading span (take-my-class needs "md:pt-5 block"). */
+  spanClassName?: string;
+}) {
   if (!mainHeading) {
     return (
       <h1 className="font-semibold text-[30px] md:text-[48px] leading-[1.1] text-black">
@@ -27,7 +34,10 @@ export default function HeroHeading({ mainHeading }: { mainHeading: string }) {
     : styleParentheticalText(mainHeading);
   return (
     <h1 className="font-semibold text-[30px] md:text-[48px] leading-[1.1] text-black">
-      <span dangerouslySetInnerHTML={{ __html: styled }} />
+      <span
+        className={spanClassName}
+        dangerouslySetInnerHTML={{ __html: styled }}
+      />
     </h1>
   );
 }
