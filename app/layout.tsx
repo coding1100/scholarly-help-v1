@@ -13,12 +13,18 @@ const ClientScripts = dynamic(() => import("./components/ClientScripts"), {
 // display "optional": if Poppins isn't ready within the block period the
 // metric-matched fallback stays for this page view (no late swap repaint).
 // The swap repaint was registering as LCP (~3.5s) on slow connections.
+//
+// preload false: "optional" means these files are NOT used for the first
+// paint unless they arrive within ~100ms, yet preloading fetched all three
+// weights (~24KB) at high priority, competing with the render-blocking
+// stylesheet for bandwidth on slow connections. adjustFontFallback keeps the
+// fallback metric-matched, so dropping the preload costs no layout shift.
 const poppins = Poppins({
   subsets: ["latin"],
   display: "optional",
   variable: "--font-poppins",
   weight: ["400", "600", "700"],
-  preload: true,
+  preload: false,
   fallback: ["system-ui", "-apple-system", "Segoe UI", "Arial", "sans-serif"],
   adjustFontFallback: true,
 });
