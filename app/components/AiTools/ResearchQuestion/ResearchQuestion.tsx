@@ -11,6 +11,12 @@ import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGate
 
 interface ResearchQuestionProps {
   setFlag: (value: boolean) => void;
+  /**
+   * "landing" renders the same tool as a rounded, shadowed hero card (used on
+   * the /tools/research-question-generator landing page); the default keeps
+   * the /tools styling.
+   */
+  variant?: "default" | "landing";
 }
 
 interface QuestionResponse {
@@ -61,7 +67,11 @@ const levelOfSpecificityOptions = [
   { value: "highly-specific", label: "Highly Specific" },
 ];
 
-const ResearchQuestion: FC<ResearchQuestionProps> = ({ setFlag }) => {
+const ResearchQuestion: FC<ResearchQuestionProps> = ({
+  setFlag,
+  variant = "default",
+}) => {
+  const isLanding = variant === "landing";
   const [token, setToken] = useState<string | null>(null);
   const [topic, setTopic] = useState<string>("");
   const [keywords, setKeywords] = useState<string>("");
@@ -194,9 +204,21 @@ const ResearchQuestion: FC<ResearchQuestionProps> = ({ setFlag }) => {
   };
 
   return (
-    <div className="container relative mx-auto max-w-[840px] px-4 md:px-8 md:pt-8 2xl:max-w-6xl">
+    <div
+      className={
+        isLanding
+          ? "relative w-full"
+          : "container relative mx-auto max-w-[840px] px-4 md:px-8 md:pt-8 2xl:max-w-6xl"
+      }
+    >
       <ToolsApiLoader show={isSubmitting} />
-      <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 overflow-hidden transition-colors duration-300">
+      <div
+        className={`bg-white dark:bg-gray-800 overflow-hidden transition-colors duration-300 ${
+          isLanding
+            ? "rounded-2xl shadow-[0_30px_70px_-20px_rgba(43,28,80,0.35)] text-left"
+            : "border dark:border-gray-700"
+        }`}
+      >
         {/* Main Overview Section */}
         <div className="pt-6 ">
           <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-3 transition-colors duration-300 text-center">
@@ -439,15 +461,17 @@ const ResearchQuestion: FC<ResearchQuestionProps> = ({ setFlag }) => {
       </div>
 
       {/* Footer Quote */}
-      <div className="text-sm font-serif text-center pt-8 text-gray-500 dark:text-gray-400 transition-colors duration-300">
-        <q>
-          Need well-structured research questions for your academic project?
-          ScholarlyHelp&apos;s AI-powered Research Question Generator creates
-          methodologically sound questions tailored to qualitative,
-          quantitative, or mixed methods research—helping you build a strong
-          foundation for your study.
-        </q>
-      </div>
+      {!isLanding && (
+        <div className="text-sm font-serif text-center pt-8 text-gray-500 dark:text-gray-400 transition-colors duration-300">
+          <q>
+            Need well-structured research questions for your academic project?
+            ScholarlyHelp&apos;s AI-powered Research Question Generator creates
+            methodologically sound questions tailored to qualitative,
+            quantitative, or mixed methods research—helping you build a strong
+            foundation for your study.
+          </q>
+        </div>
+      )}
       <GuestAuthGateModal open={gateOpen} onClose={closeGate} />
     </div>
   );
