@@ -16,6 +16,7 @@
 /.next/
 /.next-verify/
 /out/
+build.tar.gz
 
 # production
 /build
