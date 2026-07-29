@@ -1,6 +1,7 @@
 import { cache } from "react";
 import MainLayout from "@/app/MainLayout";
 import HeroSection from "@/app/components/LandingPage/HeroSection";
+import HeroHeading from "@/app/components/LandingPage/HeroHeading";
 import BelowFoldLanding from "@/app/components/LandingPage/BelowFoldLanding";
 import { MetaData } from "@/app/metadata/metadata";
 import { TakeMyClassDataProvider } from "../TakeMyClassDataProvider";
@@ -41,6 +42,9 @@ const Page = async () => {
     pageData?.meta?.description || MetaData.takeMyClass.description;
   const pageUrl =
     pageData?.meta?.canonicalUrl || `${baseUrl}/${MetaData.takeMyClass.url}`;
+  // LCP is this H1. Rendering it here (server component) instead of inside the
+  // "use client" HeroSection removes the ~2.5s element render delay.
+  const mainHeading = pageData?.heroSection?.mainHeading ?? "";
 
   return (
     <TakeMyClassDataProvider data={pageData}>
@@ -62,7 +66,21 @@ const Page = async () => {
         }}
       />
       <MainLayout>
-        <HeroSection useHeroForm2 />
+        <HeroSection
+          useHeroForm2
+          headingSlot={
+            mainHeading ? (
+              // max-w-2xl mirrors HeroLead's own wrapper so the heading keeps
+              // its previous width constraint on single-column (mobile) layout.
+              <div className="max-w-2xl">
+                <HeroHeading
+                  mainHeading={mainHeading}
+                  spanClassName="md:pt-5 block"
+                />
+              </div>
+            ) : undefined
+          }
+        />
         <DelayedBelowFold>
           <BelowFoldLanding />
         </DelayedBelowFold>
