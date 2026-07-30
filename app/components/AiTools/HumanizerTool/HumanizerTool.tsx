@@ -13,10 +13,14 @@ import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 import {
+  detectorContentShare,
+  detectorDisagreement,
+  detectorHumanLikelihood,
+  detectorLikelihood,
   type DetectionResponse,
   type DetectSegment,
-  MIN_DETECT_WORDS,
 } from "@/app/components/AiTools/AiDetectorTool/types";
+import { useDetectorConfig } from "@/app/components/AiTools/AiDetectorTool/useDetectorConfig";
 
 type HumanizerTone = "natural" | "simple" | "polished" | "academic" | "custom";
 type RewriteIntensity = "normal" | "moderate" | "full";
@@ -192,6 +196,7 @@ const HumanizerTool: React.FC = () => {
     "score",
   );
   const [copied, setCopied] = useState(false);
+  const detectorConfig = useDetectorConfig();
 
   const { gateOpen, closeGate, guardAiClick } = useGuestGate();
 
@@ -364,14 +369,16 @@ const HumanizerTool: React.FC = () => {
       toast.error("Please enter some text.");
       return;
     }
-    if (wordCount < MIN_DETECT_WORDS) {
+    if (wordCount < detectorConfig.minimum_words) {
       toast.error(
-        `Please provide at least ${MIN_DETECT_WORDS} words — detection on very short text is unreliable.`,
+        `Please provide at least ${detectorConfig.minimum_words} words — detection on very short text is unreliable.`,
       );
       return;
     }
-    if (wordCount > 1500) {
-      toast.error("Please keep input at or under 1500 words.");
+    if (wordCount > detectorConfig.maximum_words) {
+      toast.error(
+        `Please keep input at or under ${detectorConfig.maximum_words} words.`,
+      );
       return;
     }
     if (looksLikeGibberish(text)) {
@@ -422,12 +429,18 @@ const HumanizerTool: React.FC = () => {
     });
   };
 
-  const canCheckAi = text.trim().length > 0 && wordCount <= 1500 && !loading;
+  const canCheckAi =
+    text.trim().length > 0 &&
+    wordCount <= detectorConfig.maximum_words &&
+    !loading;
 
   const detection = aiDetection?.success ? aiDetection.result : null;
-  const aiPercent = detection ? detection.verdict.ai_percent : 0;
+  const aiPercent = detection ? detectorLikelihood(detection) : 0;
+  const humanPercent = detection ? detectorHumanLikelihood(detection) : 0;
+  const aiContentShare = detection ? detectorContentShare(detection) : 0;
+  const disagreement = detection ? detectorDisagreement(detection) : 0;
   const aiHeadline = detection
-    ? `${aiPercent}% of this text appears to be AI-generated`
+    ? `${aiPercent}% likelihood this document was AI-generated`
     : "AI detection result will appear here...";
 
   return (
@@ -589,7 +602,7 @@ const HumanizerTool: React.FC = () => {
                         <div className="flex items-center gap-2">
                           <span className="inline-block h-3 w-3 rounded-full bg-indigo-500" />
                           <span className="text-gray-700 dark:text-gray-200">
-                            Resembles AI text
+                            AI authorship likelihood
                           </span>
                         </div>
                         <span className="text-gray-700 dark:text-gray-200">
@@ -600,17 +613,59 @@ const HumanizerTool: React.FC = () => {
                         <div className="flex items-center gap-2">
                           <span className="inline-block h-3 w-3 rounded-full bg-emerald-500" />
                           <span className="text-gray-700 dark:text-gray-200">
-                            No AI text patterns found
+                            Human authorship likelihood
                           </span>
                         </div>
                         <span className="text-gray-700 dark:text-gray-200">
-                          {Math.max(0, 100 - aiPercent)}%
+                          {humanPercent}%
                         </span>
                       </div>
                       {detection && (
-                        <div className="pt-2 text-xs text-gray-500 dark:text-gray-400">
-                          Likely range {detection.verdict.band[0]}–
-                          {detection.verdict.band[1]}% · {detection.trust.reason}
+                        <div className="space-y-2 pt-2 text-xs text-gray-500 dark:text-gray-400">
+                          <div>
+                            Estimated AI-influenced content: {aiContentShare}%
+                            of analyzed words
+                          </div>
+                          <div className="space-y-1 border-t border-gray-200 pt-2 dark:border-gray-700">
+                            <div className="font-medium">
+                              Estimated composition by analyzed words
+                            </div>
+                            <div className="flex justify-between">
+                              <span>AI-like words</span>
+                              <span>{detection.breakdown.ai}%</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Mixed or uncertain words</span>
+                              <span>{detection.breakdown.mixed}%</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Human-like words</span>
+                              <span>{detection.breakdown.human}%</span>
+                            </div>
+                          </div>
+                          <div>
+                            Likely range {detection.verdict.band[0]}–
+                            {detection.verdict.band[1]}% · confidence{" "}
+                            {detection.verdict.confidence}%
+                          </div>
+                          {detection.meta.warning && (
+                            <div className="font-medium text-red-600 dark:text-red-400">
+                              {detection.meta.warning}
+                            </div>
+                          )}
+                          <div
+                            className={
+                              detection.trust.trustworthy
+                                ? ""
+                                : "text-amber-700 dark:text-amber-300"
+                            }
+                          >
+                            {detection.trust.reason}
+                          </div>
+                          <div>
+                            Document likelihood and content share differ by{" "}
+                            {disagreement} percentage points.
+                          </div>
                         </div>
                       )}
                       {aiDetection && !aiDetection.success && (

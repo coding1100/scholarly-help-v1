@@ -18,8 +18,15 @@ export interface DetectSegment {
 export interface DetectionResponse {
   status: "success";
   verdict: {
+    /** @deprecated Use ai_likelihood_percent when present. */
     ai_percent: number;
+    /** @deprecated Use human_likelihood_percent when present. */
     human_percent: number;
+    ai_likelihood_percent?: number;
+    human_likelihood_percent?: number;
+    ai_content_share_percent?: number;
+    metric_version?: string;
+    primary_metric?: "document_likelihood";
     band: [number, number];
     confidence: number;
     label: SegmentLabel;
@@ -35,6 +42,8 @@ export interface DetectionResponse {
     trustworthy: boolean;
     paraphrase_suspected: boolean;
     evasion_chars_found: boolean;
+    signals_agree?: boolean;
+    disagreement_percent?: number;
     reason: string;
   };
   meta: {
@@ -62,11 +71,50 @@ export interface EditableSegment extends DetectSegment {
   ignored: boolean;
 }
 
-export const MIN_DETECT_WORDS = 50;
+export interface DetectorPublicConfig {
+  minimum_words: number;
+  low_confidence_words: number;
+  maximum_words: number;
+  metric_version: string;
+}
+
+export const MIN_DETECT_WORDS = 100;
 /**
  * Below this the score is returned but flagged as less reliable — the backend
  * sets `meta.low_confidence` at the same threshold (LOW_CONFIDENCE_WORDS in
  * detection-engine.service.ts); keep the two in sync.
  */
-export const LOW_CONFIDENCE_WORDS = 100;
+export const LOW_CONFIDENCE_WORDS = 180;
 export const MAX_DETECT_WORDS = 1500;
+
+export const FALLBACK_DETECTOR_CONFIG: DetectorPublicConfig = {
+  minimum_words: MIN_DETECT_WORDS,
+  low_confidence_words: LOW_CONFIDENCE_WORDS,
+  maximum_words: MAX_DETECT_WORDS,
+  metric_version: "2.0",
+};
+
+/** Backward-compatible selectors for a rolling backend/frontend deployment. */
+export function detectorLikelihood(result: DetectionResponse): number {
+  return result.verdict.ai_likelihood_percent ?? result.verdict.ai_percent;
+}
+
+export function detectorHumanLikelihood(result: DetectionResponse): number {
+  return (
+    result.verdict.human_likelihood_percent ?? result.verdict.human_percent
+  );
+}
+
+export function detectorContentShare(result: DetectionResponse): number {
+  return (
+    result.verdict.ai_content_share_percent ??
+    Math.round(result.breakdown.ai + result.breakdown.mixed * 0.5)
+  );
+}
+
+export function detectorDisagreement(result: DetectionResponse): number {
+  return (
+    result.trust.disagreement_percent ??
+    Math.abs(detectorLikelihood(result) - detectorContentShare(result))
+  );
+}
