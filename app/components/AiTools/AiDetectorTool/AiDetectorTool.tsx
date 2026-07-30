@@ -59,7 +59,6 @@ const AiDetectorTool: React.FC = () => {
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
   const [rewriteValue, setRewriteValue] = useState("");
   const [copiedSentence, setCopiedSentence] = useState(false);
-  const [autoReplacing, setAutoReplacing] = useState(false);
   const [downloadingReport, setDownloadingReport] = useState(false);
   const [rescanNeeded, setRescanNeeded] = useState(false);
   const [log, setLog] = useState<string[]>([]);
@@ -304,11 +303,7 @@ const AiDetectorTool: React.FC = () => {
     }
   };
 
-  const applyReplacement = (
-    index: number,
-    newText: string,
-    viaHumanizer: boolean,
-  ) => {
+  const applyReplacement = (index: number, newText: string) => {
     setSegments((prev) =>
       prev.map((s, i) =>
         i === index ? { ...s, text: newText, edited: true } : s,
@@ -317,53 +312,14 @@ const AiDetectorTool: React.FC = () => {
     setRescanNeeded(true);
     setSidebarView("score");
     setFocusedIndex(null);
-    addLog(
-      viaHumanizer
-        ? "Auto-replaced a flagged sentence with the Humanizer"
-        : "Replaced a flagged sentence with your rewrite",
-    );
+    addLog("Replaced a flagged sentence with your rewrite");
   };
 
-  const handleAutoReplace = async () => {
+  const handleReplace = () => {
     if (focusedIndex === null || !focusedSegment) return;
     const manual = rewriteValue.trim();
-    if (manual) {
-      applyReplacement(focusedIndex, manual, false);
-      return;
-    }
-    // No manual rewrite → hand the sentence to the Humanizer (single-sentence mode)
-    // instead of reimplementing a second rewriter inside the detector.
-    setAutoReplacing(true);
-    try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/humanizer`,
-        {
-          text: focusedSegment.text,
-          tone_mode: "natural",
-          rewrite_intensity: "normal",
-          preserve_citations: true,
-          return_diff: false,
-        },
-        { headers: authHeaders },
-      );
-      const data = response.data?.data ?? response.data;
-      const rewritten = String(data?.rewritten_text || "").trim();
-      if (!rewritten) {
-        toast.error(
-          "The Humanizer returned no rewrite. Try writing one yourself.",
-        );
-        return;
-      }
-      applyReplacement(focusedIndex, rewritten, true);
-    } catch (err: any) {
-      const message =
-        err?.response?.data?.message || err?.message || "Auto-replace failed.";
-      toast.error(
-        Array.isArray(message) ? message.join(", ") : String(message),
-      );
-    } finally {
-      setAutoReplacing(false);
-    }
+    if (!manual) return;
+    applyReplacement(focusedIndex, manual);
   };
 
   const handleIgnore = () => {
@@ -550,8 +506,7 @@ const AiDetectorTool: React.FC = () => {
               onRewriteChange={setRewriteValue}
               onCopySentence={handleCopySentence}
               copiedSentence={copiedSentence}
-              onAutoReplace={handleAutoReplace}
-              autoReplacing={autoReplacing}
+              onReplace={handleReplace}
               onIgnore={handleIgnore}
               onDownloadReport={handleDownloadReport}
               downloadingReport={downloadingReport}

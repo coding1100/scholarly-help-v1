@@ -45,8 +45,7 @@ export default function ResultsSidebar({
   onRewriteChange,
   onCopySentence,
   copiedSentence,
-  onAutoReplace,
-  autoReplacing,
+  onReplace,
   onIgnore,
   onDownloadReport,
   downloadingReport,
@@ -60,8 +59,7 @@ export default function ResultsSidebar({
   onRewriteChange: (v: string) => void;
   onCopySentence: () => void;
   copiedSentence: boolean;
-  onAutoReplace: () => void;
-  autoReplacing: boolean;
+  onReplace: () => void;
   onIgnore: () => void;
   onDownloadReport: () => void;
   downloadingReport: boolean;
@@ -153,21 +151,17 @@ export default function ResultsSidebar({
           rows={3}
           value={rewriteValue}
           onChange={(e) => onRewriteChange(e.target.value)}
-          placeholder="Type your own version, or use Auto-replace…"
+          placeholder="Type your own version…"
           className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 p-2.5 text-sm text-gray-800 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2b7fff] mb-3 resize-y"
         />
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={onAutoReplace}
-            disabled={autoReplacing}
+            onClick={onReplace}
+            disabled={!rewriteValue.trim()}
             className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium text-white bg-primary-400 hover:bg-primary-300 disabled:opacity-60 disabled:cursor-not-allowed transition-colors duration-150"
           >
-            {autoReplacing
-              ? "Replacing…"
-              : rewriteValue.trim()
-                ? "Replace"
-                : "Auto-replace"}
+            Replace
           </button>
           <button
             type="button"
@@ -177,9 +171,6 @@ export default function ResultsSidebar({
             <FiX className="h-3.5 w-3.5" /> Ignore
           </button>
         </div>
-        <p className="mt-2 text-[11px] leading-4 text-gray-400 dark:text-gray-500">
-          Auto-replace rewrites this sentence with the Humanizer.
-        </p>
       </div>
     );
   }
