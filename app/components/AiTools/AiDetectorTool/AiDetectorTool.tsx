@@ -18,10 +18,8 @@ import {
   type DetectionResponse,
   type EditableSegment,
   type SegmentLabel,
-  MAX_DETECT_WORDS,
-  LOW_CONFIDENCE_WORDS,
-  MIN_DETECT_WORDS,
 } from "./types";
+import { useDetectorConfig } from "./useDetectorConfig";
 
 type Filter = "all" | Exclude<SegmentLabel, "neutral">;
 
@@ -33,7 +31,10 @@ const CHIPS: { key: Filter; label: string; dot?: string }[] = [
 ];
 
 function timeStamp(): string {
-  return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return new Date().toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 /** sha256 hex via Web Crypto — feedback sends a hash, never the text itself. */
@@ -62,6 +63,12 @@ const AiDetectorTool: React.FC = () => {
   const [downloadingReport, setDownloadingReport] = useState(false);
   const [rescanNeeded, setRescanNeeded] = useState(false);
   const [log, setLog] = useState<string[]>([]);
+  const detectorConfig = useDetectorConfig();
+  const {
+    minimum_words: minimumWords,
+    low_confidence_words: lowConfidenceWords,
+    maximum_words: maximumWords,
+  } = detectorConfig;
 
   const { gateOpen, closeGate, guardAiClick } = useGuestGate();
 
@@ -73,7 +80,7 @@ const AiDetectorTool: React.FC = () => {
 
   const wordCount = useMemo(() => countWords(text), [text]);
   const canSubmit =
-    text.trim().length > 0 && wordCount <= MAX_DETECT_WORDS && !loading;
+    text.trim().length > 0 && wordCount <= maximumWords && !loading;
 
   const addLog = (entry: string) =>
     setLog((prev) => [`${timeStamp()} — ${entry}`, ...prev]);
@@ -104,14 +111,14 @@ const AiDetectorTool: React.FC = () => {
       toast.error("Please enter some text.");
       return false;
     }
-    if (words < MIN_DETECT_WORDS) {
+    if (words < minimumWords) {
       toast.error(
-        `Please provide at least ${MIN_DETECT_WORDS} words — detection on very short text is unreliable, and we won't show a misleading score.`,
+        `Please provide at least ${minimumWords} words — detection on very short text is unreliable, and we won't show a misleading score.`,
       );
       return false;
     }
-    if (words > MAX_DETECT_WORDS) {
-      toast.error(`Please keep input at or under ${MAX_DETECT_WORDS} words.`);
+    if (words > maximumWords) {
+      toast.error(`Please keep input at or under ${maximumWords} words.`);
       return false;
     }
     if (looksLikeGibberish(input)) {
@@ -130,7 +137,11 @@ const AiDetectorTool: React.FC = () => {
         `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/ai-detect`,
         {
           text: input,
-          options: { include_segments: true, include_signals: true, mode: "standard" },
+          options: {
+            include_segments: true,
+            include_signals: true,
+            mode: "standard",
+          },
         },
         { headers: authHeaders },
       );
@@ -138,7 +149,11 @@ const AiDetectorTool: React.FC = () => {
       const data = (response.data?.data ?? response.data) as DetectionResponse;
       setResult(data);
       setSegments(
-        (data.segments ?? []).map((s) => ({ ...s, edited: false, ignored: false })),
+        (data.segments ?? []).map((s) => ({
+          ...s,
+          edited: false,
+          ignored: false,
+        })),
       );
       setFilter("all");
       setSidebarView("score");
@@ -159,7 +174,9 @@ const AiDetectorTool: React.FC = () => {
           "You don't have enough token balance, or the input exceeds limits.",
         );
       } else {
-        toast.error(Array.isArray(message) ? message.join(", ") : String(message));
+        toast.error(
+          Array.isArray(message) ? message.join(", ") : String(message),
+        );
       }
     } finally {
       setLoading(false);
@@ -206,16 +223,18 @@ const AiDetectorTool: React.FC = () => {
       const responseData = response.data?.data ?? response.data;
       const extracted = String(responseData || "").trim();
       setText(extracted);
-      if (countWords(extracted) > MAX_DETECT_WORDS) {
+      if (countWords(extracted) > maximumWords) {
         toast.error(
-          `This document is over ${MAX_DETECT_WORDS} words. Please trim it before checking.`,
+          `This document is over ${maximumWords} words. Please trim it before checking.`,
         );
       } else {
         toast.success("Document text extracted.");
       }
     } catch (err: any) {
       const message =
-        err?.response?.data?.message || err?.message || "Failed to parse document.";
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to parse document.";
       toast.error(Array.isArray(message) ? message.join(", ") : message);
     } finally {
       setLoading(false);
@@ -248,7 +267,9 @@ const AiDetectorTool: React.FC = () => {
       toast.success("Text extracted from image.");
     } catch (err: any) {
       const message =
-        err?.response?.data?.message || err?.message || "Failed to read the image.";
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to read the image.";
       toast.error(Array.isArray(message) ? message.join(", ") : message);
     } finally {
       setLoading(false);
@@ -286,9 +307,15 @@ const AiDetectorTool: React.FC = () => {
     }
   };
 
-  const applyReplacement = (index: number, newText: string, viaHumanizer: boolean) => {
+  const applyReplacement = (
+    index: number,
+    newText: string,
+    viaHumanizer: boolean,
+  ) => {
     setSegments((prev) =>
-      prev.map((s, i) => (i === index ? { ...s, text: newText, edited: true } : s)),
+      prev.map((s, i) =>
+        i === index ? { ...s, text: newText, edited: true } : s,
+      ),
     );
     setRescanNeeded(true);
     setSidebarView("score");
@@ -325,14 +352,18 @@ const AiDetectorTool: React.FC = () => {
       const data = response.data?.data ?? response.data;
       const rewritten = String(data?.rewritten_text || "").trim();
       if (!rewritten) {
-        toast.error("The Humanizer returned no rewrite. Try writing one yourself.");
+        toast.error(
+          "The Humanizer returned no rewrite. Try writing one yourself.",
+        );
         return;
       }
       applyReplacement(focusedIndex, rewritten, true);
     } catch (err: any) {
       const message =
         err?.response?.data?.message || err?.message || "Auto-replace failed.";
-      toast.error(Array.isArray(message) ? message.join(", ") : String(message));
+      toast.error(
+        Array.isArray(message) ? message.join(", ") : String(message),
+      );
     } finally {
       setAutoReplacing(false);
     }
@@ -389,7 +420,8 @@ const AiDetectorTool: React.FC = () => {
   const chipCount = (key: Filter): number =>
     key === "all"
       ? segments.length
-      : segments.filter((s) => !s.edited && !s.ignored && s.label === key).length;
+      : segments.filter((s) => !s.edited && !s.ignored && s.label === key)
+          .length;
 
   return (
     <div className="container relative mx-auto max-w-[840px] px-3 py-4 sm:px-4 md:px-8 md:pt-8 2xl:max-w-6xl">
@@ -404,41 +436,42 @@ const AiDetectorTool: React.FC = () => {
             onFileUpload={handleUpload}
             initialText={text}
             placeholder="Paste your text here..."
-            maxWords={MAX_DETECT_WORDS}
+            maxWords={maximumWords}
             accept=".pdf,.docx,.txt,.png,.jpg,.jpeg,.webp"
             scrollable
           />
           <div className="space-y-3 border-b border-gray-200 dark:border-gray-700 p-3 transition-colors duration-300">
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              Checks whether text reads as AI-generated, human-written, or mixed —
-              with sentence-level highlights and plain-language explanations.
+              Checks whether text reads as AI-generated, human-written, or mixed
+              — with sentence-level highlights and plain-language explanations.
             </p>
             <p className="rounded-md bg-amber-50 p-2 text-xs leading-5 text-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
               Disclaimer: No AI detector is 100% accurate, including this one.
-              Scores are calibrated estimates with a confidence range — never treat
-              a score alone as proof of authorship. We do not store your text.
+              Scores are calibrated estimates with a confidence range — never
+              treat a score alone as proof of authorship. We do not store your
+              text.
             </p>
-            {wordCount > 0 && wordCount < MIN_DETECT_WORDS && (
+            {wordCount > 0 && wordCount < minimumWords && (
               <div className="text-xs text-gray-500 dark:text-gray-400">
-                {MIN_DETECT_WORDS - wordCount} more word
-                {MIN_DETECT_WORDS - wordCount === 1 ? "" : "s"} needed — short text
+                {minimumWords - wordCount} more word
+                {minimumWords - wordCount === 1 ? "" : "s"} needed — short text
                 can&apos;t be scored reliably.
               </div>
             )}
             {/* Scoreable, but the model is measurably weaker on short passages,
-                so warn BEFORE the scan is spent. Clears at LOW_CONFIDENCE_WORDS. */}
-            {wordCount >= MIN_DETECT_WORDS && wordCount < LOW_CONFIDENCE_WORDS && (
+                so warn BEFORE the scan is spent. Clears at the API threshold. */}
+            {wordCount >= minimumWords && wordCount < lowConfidenceWords && (
               <div className="text-xs font-medium text-[#fb2c36] dark:text-red-400">
-                Short texts under {LOW_CONFIDENCE_WORDS} words are harder to
+                Short texts under {lowConfidenceWords} words are harder to
                 analyze — this score will be less reliable than usual. Add{" "}
-                {LOW_CONFIDENCE_WORDS - wordCount} more word
-                {LOW_CONFIDENCE_WORDS - wordCount === 1 ? "" : "s"} for a firmer
+                {lowConfidenceWords - wordCount} more word
+                {lowConfidenceWords - wordCount === 1 ? "" : "s"} for a firmer
                 result.
               </div>
             )}
-            {wordCount > MAX_DETECT_WORDS && (
+            {wordCount > maximumWords && (
               <div className="text-xs font-semibold text-[#fb2c36] dark:text-red-400">
-                Word limit exceeded: {wordCount}/{MAX_DETECT_WORDS}. Please trim
+                Word limit exceeded: {wordCount}/{maximumWords}. Please trim
                 before submitting.
               </div>
             )}
@@ -469,7 +502,9 @@ const AiDetectorTool: React.FC = () => {
                   }`}
                 >
                   {chip.dot && (
-                    <span className={`inline-block h-2 w-2 rounded-full ${chip.dot}`} />
+                    <span
+                      className={`inline-block h-2 w-2 rounded-full ${chip.dot}`}
+                    />
                   )}
                   {chip.label} · {chipCount(chip.key)}
                 </button>

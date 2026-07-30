@@ -7,6 +7,7 @@
     "build": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next build",
     "start": "next start",
     "lint": "next lint",
+    "test:detector-v2": "node scripts/verify-detector-v2.mjs",
     "analyze": "cross-env ANALYZE=true NODE_OPTIONS=--max-old-space-size=4096 next build"
   },
   "dependencies": {
