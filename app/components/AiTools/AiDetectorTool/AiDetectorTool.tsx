@@ -64,11 +64,8 @@ const AiDetectorTool: React.FC = () => {
   const [rescanNeeded, setRescanNeeded] = useState(false);
   const [log, setLog] = useState<string[]>([]);
   const detectorConfig = useDetectorConfig();
-  const {
-    minimum_words: minimumWords,
-    low_confidence_words: lowConfidenceWords,
-    maximum_words: maximumWords,
-  } = detectorConfig;
+  const { minimum_words: minimumWords, maximum_words: maximumWords } =
+    detectorConfig;
 
   const { gateOpen, closeGate, guardAiClick } = useGuestGate();
 
@@ -456,17 +453,6 @@ const AiDetectorTool: React.FC = () => {
                 {minimumWords - wordCount} more word
                 {minimumWords - wordCount === 1 ? "" : "s"} needed — short text
                 can&apos;t be scored reliably.
-              </div>
-            )}
-            {/* Scoreable, but the model is measurably weaker on short passages,
-                so warn BEFORE the scan is spent. Clears at the API threshold. */}
-            {wordCount >= minimumWords && wordCount < lowConfidenceWords && (
-              <div className="text-xs font-medium text-[#fb2c36] dark:text-red-400">
-                Short texts under {lowConfidenceWords} words are harder to
-                analyze — this score will be less reliable than usual. Add{" "}
-                {lowConfidenceWords - wordCount} more word
-                {lowConfidenceWords - wordCount === 1 ? "" : "s"} for a firmer
-                result.
               </div>
             )}
             {wordCount > maximumWords && (

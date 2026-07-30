@@ -25,8 +25,9 @@ export interface DetectionResponse {
     ai_likelihood_percent?: number;
     human_likelihood_percent?: number;
     ai_content_share_percent?: number;
+    human_content_share_percent?: number;
     metric_version?: string;
-    primary_metric?: "document_likelihood";
+    primary_metric?: "document_likelihood" | "ai_content_share";
     band: [number, number];
     confidence: number;
     label: SegmentLabel;
@@ -110,6 +111,18 @@ export function detectorContentShare(result: DetectionResponse): number {
     result.verdict.ai_content_share_percent ??
     Math.round(result.breakdown.ai + result.breakdown.mixed * 0.5)
   );
+}
+
+export function detectorHumanContentShare(result: DetectionResponse): number {
+  return (
+    result.verdict.human_content_share_percent ??
+    100 - detectorContentShare(result)
+  );
+}
+
+/** The visible gauge follows content composition, never the internal diagnostic. */
+export function detectorPrimaryScore(result: DetectionResponse): number {
+  return detectorContentShare(result);
 }
 
 export function detectorDisagreement(result: DetectionResponse): number {

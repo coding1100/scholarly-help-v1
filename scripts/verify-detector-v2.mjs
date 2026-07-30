@@ -27,6 +27,8 @@ const {
   detectorLikelihood,
   detectorHumanLikelihood,
   detectorContentShare,
+  detectorHumanContentShare,
+  detectorPrimaryScore,
   detectorDisagreement,
   FALLBACK_DETECTOR_CONFIG,
 } = module.exports;
@@ -53,6 +55,8 @@ const base = {
 assert.equal(detectorLikelihood(base), 97);
 assert.equal(detectorHumanLikelihood(base), 3);
 assert.equal(detectorContentShare(base), 50);
+assert.equal(detectorHumanContentShare(base), 50);
+assert.equal(detectorPrimaryScore(base), 50);
 assert.equal(detectorDisagreement(base), 47);
 
 const v2 = {
@@ -62,12 +66,16 @@ const v2 = {
     ai_likelihood_percent: 91,
     human_likelihood_percent: 9,
     ai_content_share_percent: 34,
+    human_content_share_percent: 66,
+    primary_metric: "ai_content_share",
   },
   trust: { ...base.trust, disagreement_percent: 57 },
 };
 assert.equal(detectorLikelihood(v2), 91);
 assert.equal(detectorHumanLikelihood(v2), 9);
 assert.equal(detectorContentShare(v2), 34);
+assert.equal(detectorHumanContentShare(v2), 66);
+assert.equal(detectorPrimaryScore(v2), 34);
 assert.equal(detectorDisagreement(v2), 57);
 
 assert.deepEqual(
@@ -86,9 +94,12 @@ assert.deepEqual(
 );
 
 for (const source of [sidebarSource, humanizerSource]) {
-  assert.match(source, /likelihood this document was AI-generated/);
+  assert.match(source, /AI-like content detected/);
+  assert.match(source, /This text reads as humanized/);
   assert.match(source, /Estimated composition/);
-  assert.match(source, /analyzed words/);
+  assert.doesNotMatch(source, /Likely range/);
+  assert.doesNotMatch(source, /Document likelihood and content share differ/);
+  assert.doesNotMatch(source, /Short texts under/);
   assert.doesNotMatch(source, /% of this text appears to be AI-generated/);
 }
 
