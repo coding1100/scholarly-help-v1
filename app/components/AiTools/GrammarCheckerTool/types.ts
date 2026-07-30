@@ -46,6 +46,7 @@ export interface ClientIssue extends ServerIssue {
 
 export interface GrammarCheckResponse {
   issues: ServerIssue[];
+  corrected_text?: string;
   stats: { word_count: number; char_count: number; sentence_count: number };
   meta: {
     llm_used: string;
@@ -53,6 +54,9 @@ export interface GrammarCheckResponse {
     chunks: number;
     dropped_unanchored: number;
     tokens_used: number;
+    verification_rounds?: number;
+    residual_corrections?: number;
+    verified?: boolean;
   };
 }
 
@@ -144,7 +148,9 @@ export function computeScores(
 ): CategoryScores {
   const scores = { grammar: 100, tense: 100, clarity: 100, tone: 100 };
   for (const cat of GRAMMAR_CATEGORIES) {
-    const open = issues.filter((i) => i.category === cat && i.status === "open");
+    const open = issues.filter(
+      (i) => i.category === cat && i.status === "open",
+    );
     scores[cat] = categoryScore(open.length, wordCount);
   }
   const overall = Math.round(
@@ -198,12 +204,18 @@ export function applyFix(
   return {
     text: newText,
     issues: nextIssues,
-    editedRange: { start: target.start, end: target.start + target.suggestion.length },
+    editedRange: {
+      start: target.start,
+      end: target.start + target.suggestion.length,
+    },
   };
 }
 
 /** Corrected-text view: all still-open suggestions applied at once. */
-export function deriveCorrectedText(text: string, issues: ClientIssue[]): string {
+export function deriveCorrectedText(
+  text: string,
+  issues: ClientIssue[],
+): string {
   const open = issues
     .filter((i) => i.status === "open")
     .sort((a, b) => a.start - b.start);
@@ -306,7 +318,9 @@ export function buildReportStats(text: string): ReportStats {
   const totalSyllables = words.reduce((sum, w) => sum + syllables(w), 0);
   const fk =
     sentenceCount && wordCount
-      ? 0.39 * (wordCount / sentenceCount) + 11.8 * (totalSyllables / wordCount) - 15.59
+      ? 0.39 * (wordCount / sentenceCount) +
+        11.8 * (totalSyllables / wordCount) -
+        15.59
       : 0;
   return {
     wordCount,
