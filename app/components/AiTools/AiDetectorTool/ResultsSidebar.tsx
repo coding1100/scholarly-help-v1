@@ -11,9 +11,8 @@ import {
 } from "react-icons/fi";
 import AiGauge from "@/app/components/AiTools/shared/AiGauge";
 import {
-  detectorContentShare,
-  detectorDisagreement,
-  detectorLikelihood,
+  detectorHumanContentShare,
+  detectorPrimaryScore,
   type DetectionResponse,
   type EditableSegment,
 } from "./types";
@@ -33,7 +32,7 @@ const BREAKDOWN_ROWS = [
 
 /**
  * Right-hand column of the results view. Three exclusive panels, mirroring the
- * approved prototype: overall score (gauge + breakdown + trust card), the
+ * approved prototype: overall score (gauge + breakdown), the
  * activity log, and the focused-sentence panel with rewrite/ignore actions.
  */
 export default function ResultsSidebar({
@@ -67,10 +66,14 @@ export default function ResultsSidebar({
   onDownloadReport: () => void;
   downloadingReport: boolean;
 }) {
-  const ai = detectorLikelihood(result);
-  const aiContentShare = detectorContentShare(result);
-  const disagreement = detectorDisagreement(result);
-  const [bandLo, bandHi] = result.verdict.band;
+  const ai = detectorPrimaryScore(result);
+  const human = detectorHumanContentShare(result);
+  const summary =
+    ai < 35
+      ? "This text reads as humanized"
+      : ai < 65
+        ? "This text contains mixed writing patterns"
+        : "This text contains predominantly AI-like writing patterns";
 
   const card =
     "bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg p-4 transition-colors duration-300";
@@ -186,25 +189,17 @@ export default function ResultsSidebar({
     <div className="space-y-3">
       <div className={`${card} text-center`}>
         <div className="text-sm text-gray-600 dark:text-gray-300 mb-3">
-          {ai}% likelihood this document was AI-generated
+          {ai}% AI-like content detected
         </div>
         <div className="flex justify-center">
           <AiGauge percent={ai} colorByScore />
         </div>
+        <div className="mt-1 text-sm font-medium text-gray-600 dark:text-gray-300">
+          {summary}
+        </div>
         <div className="mt-1 text-xs text-gray-400 dark:text-gray-500">
-          Likely range {bandLo}–{bandHi}% · confidence{" "}
-          {result.verdict.confidence}%
+          {human}% human-like content
         </div>
-        <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-          Estimated AI-influenced content: {aiContentShare}% of analyzed words
-        </div>
-        {/* Backend caveat (e.g. short input). Repeated here because the input-side
-            hint is gone by the time the user is reading the score. */}
-        {result.meta.warning && (
-          <div className="mt-2 text-xs font-medium text-[#fb2c36] dark:text-red-400">
-            {result.meta.warning}
-          </div>
-        )}
         <div className="mt-4 text-left">
           <div className="pb-1.5 text-xs text-gray-400 dark:text-gray-500">
             Estimated composition across {result.meta.words} analyzed words
@@ -242,34 +237,6 @@ export default function ResultsSidebar({
         >
           <FiList className="h-3.5 w-3.5" /> View activity log
         </button>
-      </div>
-
-      <div className={card}>
-        <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-1.5">
-          Should you trust this score?
-        </h3>
-        <p
-          className={`text-sm leading-6 ${
-            result.trust.trustworthy
-              ? "text-gray-600 dark:text-gray-300"
-              : "text-amber-700 dark:text-amber-300"
-          }`}
-        >
-          {result.trust.trustworthy ? "Yes — " : "Be careful — "}
-          {result.trust.reason}
-        </p>
-        <p className="mt-2 text-[11px] text-gray-400 dark:text-gray-500">
-          Document likelihood and content share differ by {disagreement}{" "}
-          percentage points.
-        </p>
-        <p className="mt-1 text-[11px] text-gray-400 dark:text-gray-500">
-          Engine {result.meta.engine_version} · model{" "}
-          {result.meta.model_version}
-          {result.verdict.metric_version
-            ? ` · metric ${result.verdict.metric_version}`
-            : ""}
-          {result.meta.truncated ? " · input truncated to 1500 words" : ""}
-        </p>
       </div>
     </div>
   );

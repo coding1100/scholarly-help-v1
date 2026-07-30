@@ -13,10 +13,8 @@ import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 import {
-  detectorContentShare,
-  detectorDisagreement,
-  detectorHumanLikelihood,
-  detectorLikelihood,
+  detectorHumanContentShare,
+  detectorPrimaryScore,
   type DetectionResponse,
   type DetectSegment,
 } from "@/app/components/AiTools/AiDetectorTool/types";
@@ -435,13 +433,18 @@ const HumanizerTool: React.FC = () => {
     !loading;
 
   const detection = aiDetection?.success ? aiDetection.result : null;
-  const aiPercent = detection ? detectorLikelihood(detection) : 0;
-  const humanPercent = detection ? detectorHumanLikelihood(detection) : 0;
-  const aiContentShare = detection ? detectorContentShare(detection) : 0;
-  const disagreement = detection ? detectorDisagreement(detection) : 0;
+  const aiPercent = detection ? detectorPrimaryScore(detection) : 0;
+  const humanPercent = detection ? detectorHumanContentShare(detection) : 0;
   const aiHeadline = detection
-    ? `${aiPercent}% likelihood this document was AI-generated`
+    ? `${aiPercent}% AI-like content detected`
     : "AI detection result will appear here...";
+  const detectionSummary = detection
+    ? aiPercent < 35
+      ? "This text reads as humanized"
+      : aiPercent < 65
+        ? "This text contains mixed writing patterns"
+        : "This text contains predominantly AI-like writing patterns"
+    : "";
 
   return (
     <div className="container relative mx-auto max-w-[840px] px-3 py-4 sm:px-4 md:px-8 md:pt-8 2xl:max-w-6xl">
@@ -597,12 +600,17 @@ const HumanizerTool: React.FC = () => {
                     <div className="mt-6 mb-6">
                       <AiGauge percent={aiPercent} colorByScore />
                     </div>
+                    {detection && (
+                      <div className="mb-4 text-sm font-medium text-gray-600 dark:text-gray-300">
+                        {detectionSummary}
+                      </div>
+                    )}
                     <div className="w-full max-w-md space-y-2">
                       <div className="flex items-center justify-between text-sm">
                         <div className="flex items-center gap-2">
                           <span className="inline-block h-3 w-3 rounded-full bg-indigo-500" />
                           <span className="text-gray-700 dark:text-gray-200">
-                            AI authorship likelihood
+                            AI-like content
                           </span>
                         </div>
                         <span className="text-gray-700 dark:text-gray-200">
@@ -613,7 +621,7 @@ const HumanizerTool: React.FC = () => {
                         <div className="flex items-center gap-2">
                           <span className="inline-block h-3 w-3 rounded-full bg-emerald-500" />
                           <span className="text-gray-700 dark:text-gray-200">
-                            Human authorship likelihood
+                            Human-like content
                           </span>
                         </div>
                         <span className="text-gray-700 dark:text-gray-200">
@@ -622,10 +630,6 @@ const HumanizerTool: React.FC = () => {
                       </div>
                       {detection && (
                         <div className="space-y-2 pt-2 text-xs text-gray-500 dark:text-gray-400">
-                          <div>
-                            Estimated AI-influenced content: {aiContentShare}%
-                            of analyzed words
-                          </div>
                           <div className="space-y-1 border-t border-gray-200 pt-2 dark:border-gray-700">
                             <div className="font-medium">
                               Estimated composition by analyzed words
@@ -642,29 +646,6 @@ const HumanizerTool: React.FC = () => {
                               <span>Human-like words</span>
                               <span>{detection.breakdown.human}%</span>
                             </div>
-                          </div>
-                          <div>
-                            Likely range {detection.verdict.band[0]}–
-                            {detection.verdict.band[1]}% · confidence{" "}
-                            {detection.verdict.confidence}%
-                          </div>
-                          {detection.meta.warning && (
-                            <div className="font-medium text-red-600 dark:text-red-400">
-                              {detection.meta.warning}
-                            </div>
-                          )}
-                          <div
-                            className={
-                              detection.trust.trustworthy
-                                ? ""
-                                : "text-amber-700 dark:text-amber-300"
-                            }
-                          >
-                            {detection.trust.reason}
-                          </div>
-                          <div>
-                            Document likelihood and content share differ by{" "}
-                            {disagreement} percentage points.
                           </div>
                         </div>
                       )}
