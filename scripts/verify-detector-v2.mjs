@@ -6,13 +6,17 @@ import ts from "typescript";
 const root = process.cwd();
 const typesPath = "app/components/AiTools/AiDetectorTool/types.ts";
 const sidebarPath = "app/components/AiTools/AiDetectorTool/ResultsSidebar.tsx";
+const detectorToolPath =
+  "app/components/AiTools/AiDetectorTool/AiDetectorTool.tsx";
 const humanizerPath = "app/components/AiTools/HumanizerTool/HumanizerTool.tsx";
 
-const [typesSource, sidebarSource, humanizerSource] = await Promise.all([
-  readFile(`${root}/${typesPath}`, "utf8"),
-  readFile(`${root}/${sidebarPath}`, "utf8"),
-  readFile(`${root}/${humanizerPath}`, "utf8"),
-]);
+const [typesSource, sidebarSource, detectorToolSource, humanizerSource] =
+  await Promise.all([
+    readFile(`${root}/${typesPath}`, "utf8"),
+    readFile(`${root}/${sidebarPath}`, "utf8"),
+    readFile(`${root}/${detectorToolPath}`, "utf8"),
+    readFile(`${root}/${humanizerPath}`, "utf8"),
+  ]);
 
 const compiled = ts.transpileModule(typesSource, {
   compilerOptions: {
@@ -102,5 +106,11 @@ for (const source of [sidebarSource, humanizerSource]) {
   assert.doesNotMatch(source, /Short texts under/);
   assert.doesNotMatch(source, /% of this text appears to be AI-generated/);
 }
+
+for (const source of [sidebarSource, detectorToolSource]) {
+  assert.doesNotMatch(source, /Auto-replace/i);
+  assert.doesNotMatch(source, /autoReplacing/);
+}
+assert.doesNotMatch(detectorToolSource, /\/tools\/humanizer/);
 
 console.log("Detector v2 frontend contract verified.");
