@@ -25,7 +25,8 @@ import {
  */
 
 type TabKey = "all" | GrammarCategory;
-type View = { kind: "tabs" } | { kind: "cards"; tab: TabKey } | { kind: "corrected" };
+type View =
+  { kind: "tabs" } | { kind: "cards"; tab: TabKey } | { kind: "corrected" };
 
 interface IssuesSidebarProps {
   issues: ClientIssue[];
@@ -33,6 +34,8 @@ interface IssuesSidebarProps {
   correctedText: string;
   onCopyCorrected: () => void;
   copied: boolean;
+  onApplyAll: () => void;
+  canApplyAll: boolean;
 }
 
 const IssuesSidebar: React.FC<IssuesSidebarProps> = ({
@@ -41,6 +44,8 @@ const IssuesSidebar: React.FC<IssuesSidebarProps> = ({
   correctedText,
   onCopyCorrected,
   copied,
+  onApplyAll,
+  canApplyAll,
 }) => {
   const [view, setView] = useState<View>({ kind: "tabs" });
   const [cursor, setCursor] = useState(0);
@@ -61,13 +66,21 @@ const IssuesSidebar: React.FC<IssuesSidebarProps> = ({
     <div className="w-full flex-shrink-0 md:w-56">
       {view.kind === "tabs" && (
         <div>
-          {([
+          {canApplyAll && (
+            <button
+              onClick={onApplyAll}
+              className="mb-3 flex w-full items-center justify-center gap-1.5 rounded-lg bg-primary-400 px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-300 active:bg-primary-500"
+            >
+              <FiCheck /> Fix all issues
+            </button>
+          )}
+          {[
             { key: "all" as TabKey, label: "All" },
             ...GRAMMAR_CATEGORIES.map((c) => ({
               key: c as TabKey,
               label: CATEGORY_META[c].label,
             })),
-          ]).map(({ key, label }) => {
+          ].map(({ key, label }) => {
             const count = openIn(key).length;
             return (
               <button
@@ -126,7 +139,9 @@ const IssuesSidebar: React.FC<IssuesSidebarProps> = ({
                     {issue.isNew ? "New issue from your edit" : meta.label}
                   </p>
                   <p className="text-sm leading-6 text-gray-800 dark:text-gray-100">
-                    <s className="text-gray-400 dark:text-gray-500">{issue.original}</s>{" "}
+                    <s className="text-gray-400 dark:text-gray-500">
+                      {issue.original}
+                    </s>{" "}
                     <b className="font-semibold text-emerald-600 dark:text-emerald-400">
                       {issue.suggestion || "(remove)"}
                     </b>
