@@ -367,7 +367,18 @@ const StructuredResultView = ({ result }: { result: SummarizerResult }) => {
 // SUMMARIZER_MAX_INPUT_WORDS guard.
 const MAX_INPUT_WORDS = 20000;
 
-const SummarizerTool: React.FC = () => {
+interface SummarizerToolProps {
+  /**
+   * "landing" hides the saved-folders / save-to-folder controls (used on the
+   * /tools/ai-summarizer landing page); the default keeps the full /tools UI.
+   */
+  variant?: "default" | "landing";
+}
+
+const SummarizerTool: React.FC<SummarizerToolProps> = ({
+  variant = "default",
+}) => {
+  const isLanding = variant === "landing";
   const [token, setToken] = useState<string | null>(null);
   const [currentInputText, setCurrentInputText] = useState("");
   const [summaryStyle, setSummaryStyle] = useState("Paragraph");
@@ -910,6 +921,8 @@ const SummarizerTool: React.FC = () => {
               </div>
             </div>
 
+            {!isLanding && (
+            <>
             <div className="rounded-md border border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700">
               <button
                 type="button"
@@ -1042,6 +1055,8 @@ const SummarizerTool: React.FC = () => {
                 </div>
               )}
             </div>
+            </>
+            )}
           </div>
 
           <div className="order-2 md:order-none">

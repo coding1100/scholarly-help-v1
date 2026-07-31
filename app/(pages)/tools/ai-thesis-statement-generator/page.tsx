@@ -11,7 +11,7 @@ import TwoWays from "@/app/components/AiLandingPage/ToolLanding/TwoWays";
 import StudentReviews from "@/app/components/AiLandingPage/ToolLanding/StudentReviews";
 import LandingFaq from "@/app/components/AiLandingPage/ToolLanding/LandingFaq";
 import FooterCta from "@/app/components/AiLandingPage/ToolLanding/FooterCta";
-import SummarizerHeroTool from "@/app/components/AiLandingPage/Summarizer/SummarizerHeroTool";
+import ThesisHeroTool from "@/app/components/AiLandingPage/ThesisStatementGenerator/ThesisHeroTool";
 import {
   heroContent,
   useCasesContent,
@@ -22,12 +22,11 @@ import {
   reviewsContent,
   faqContent,
   footerCtaContent,
-} from "@/app/components/AiLandingPage/Summarizer/content";
+} from "@/app/components/AiLandingPage/ThesisStatementGenerator/content";
 
-const META_TITLE =
-  "Free AI Summarizer: Notes, Flashcards & Audio | ScholarlyHelp";
+const META_TITLE = "Free Thesis Statement Generator | ScholarlyHelp";
 const META_DESCRIPTION =
-  "Turn long texts, documents, or PDFs into flashcards, study notes, slide decks, or audio with our free AI summarizer. Try ScholarlyHelp today!";
+  "Use ScholarlyHelp's free thesis statement generator to convert any topic into analytical, argumentative, and comparative thesis statements in seconds. Try it today!";
 
 const Page: FC = () => {
   const baseUrl =
@@ -40,11 +39,11 @@ const Page: FC = () => {
       <ProductSchema
         productTitle={META_TITLE}
         metaDescription={META_DESCRIPTION}
-        pageUrl={`${normalizedBaseUrl}/tools/ai-summarizer`}
+        pageUrl={`${normalizedBaseUrl}/tools/ai-thesis-statement-generator`}
       />
       <div className="font-poppins">
-        <LandingHero content={heroContent} toolAnchorId="summarizer-tool">
-          <SummarizerHeroTool />
+        <LandingHero content={heroContent} toolAnchorId="thesis-tool">
+          <ThesisHeroTool />
         </LandingHero>
         <UseCases content={useCasesContent} />
         <HowItWorks content={howItWorksContent} />
@@ -66,7 +65,7 @@ export function generateMetadata(): Metadata {
   const normalizedBaseUrl = baseUrl.endsWith("/")
     ? baseUrl.slice(0, -1)
     : baseUrl;
-  const canonicalUrl = `${normalizedBaseUrl}/tools/ai-summarizer`;
+  const canonicalUrl = `${normalizedBaseUrl}/tools/ai-thesis-statement-generator`;
 
   return {
     title: META_TITLE,
