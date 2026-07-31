@@ -1361,14 +1361,20 @@ export default function StudyWorkspace() {
   const tutorHasChat = tutorMessages.length > 0;
 
   return (
-    <section className="w-full px-3 pt-4 sm:px-5">
+    <section className="w-full min-w-0 overflow-x-hidden px-3 pt-4 sm:px-5">
       <div
-        className={`grid gap-4 lg:grid-cols-[1fr_500px] lg:items-stretch ${
+        // minmax(0,1fr) not 1fr: a grid track's default min-width is `auto`, so a
+        // column refuses to shrink below its content's intrinsic width. Long
+        // unbroken text from a large upload therefore widened the left column and
+        // pushed the fixed 500px tutor panel off-screen (clipped right edge).
+        // minmax(0,...) lets both tracks shrink; min-w-0 on the children lets their
+        // contents shrink too, which is what actually contains the overflow.
+        className={`grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,500px)] lg:items-stretch ${
           tutorHasChat ? "lg:h-[calc(100dvh-5.5rem)] lg:min-h-0" : ""
         }`}
       >
         <div
-          className={`rounded-2xl border border-[#dfe4ff] bg-gradient-to-b from-[#fbfbff] to-[#f6f8ff] shadow-[0_2px_8px_rgba(95,112,255,0.08)] ${
+          className={`min-w-0 rounded-2xl border border-[#dfe4ff] bg-gradient-to-b from-[#fbfbff] to-[#f6f8ff] shadow-[0_2px_8px_rgba(95,112,255,0.08)] ${
             tutorHasChat ? "flex min-h-0 flex-col lg:h-full lg:min-h-0" : ""
           }`}
         >
@@ -1858,7 +1864,7 @@ export default function StudyWorkspace() {
         </div>
 
         <aside
-          className={`rounded-2xl border border-[#dfe3ff] bg-gradient-to-b from-[#fbfbff] to-[#f6f8ff] p-4 shadow-[0_2px_10px_rgba(95,112,255,0.08)] ${
+          className={`min-w-0 rounded-2xl border border-[#dfe3ff] bg-gradient-to-b from-[#fbfbff] to-[#f6f8ff] p-4 shadow-[0_2px_10px_rgba(95,112,255,0.08)] ${
             tutorHasChat ? "flex min-h-0 flex-col lg:h-full lg:min-h-0" : ""
           }`}
         >
