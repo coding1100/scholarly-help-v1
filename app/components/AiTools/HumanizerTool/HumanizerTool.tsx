@@ -22,6 +22,9 @@ import { useDetectorConfig } from "@/app/components/AiTools/AiDetectorTool/useDe
 
 type HumanizerTone = "natural" | "simple" | "polished" | "academic" | "custom";
 type RewriteIntensity = "normal" | "moderate" | "full";
+type HumanizerRegister =
+  "academic" | "professional" | "natural" | "personal" | "marketing";
+type RegisterSelection = HumanizerRegister | "auto";
 
 type DiffSegment = {
   type: "equal" | "insert" | "delete";
@@ -39,13 +42,10 @@ type HumanizerResponse = {
   citation_count: number;
   llm_used: string;
   tokens_used: number;
-  // Loop-until-target fields (backend v2). Optional so older bundles/responses are fine.
-  internal_ai_score?: number;
-  ai_score_source?: "ml" | "heuristic";
-  target_score?: number;
-  target_met?: boolean;
-  repair_passes?: number;
-  structural_mode?: boolean;
+  register_mode: HumanizerRegister;
+  voice_profile_used: boolean;
+  quality_score: number;
+  quality_issues: string[];
 };
 
 /**
@@ -62,11 +62,28 @@ const INTENSITY_META: Record<
   { label: string; description: string }
 > = {
   normal: { label: "Normal", description: "Light touch, closest to original" },
-  moderate: { label: "Moderate", description: "Balanced rewrite (recommended)" },
-  full: { label: "Full", description: "Aggressive rewrite for undetectability" },
+  moderate: {
+    label: "Moderate",
+    description: "Balanced rewrite (recommended)",
+  },
+  full: {
+    label: "Full",
+    description: "Substantial restructuring while preserving meaning",
+  },
 };
 
 const INTENSITY_ORDER: RewriteIntensity[] = ["normal", "moderate", "full"];
+const REGISTER_OPTIONS: Array<{
+  value: RegisterSelection;
+  label: string;
+}> = [
+  { value: "auto", label: "Auto-detect" },
+  { value: "academic", label: "Academic" },
+  { value: "professional", label: "Professional" },
+  { value: "natural", label: "Natural" },
+  { value: "personal", label: "Personal" },
+  { value: "marketing", label: "Marketing" },
+];
 
 /**
  * Server-scored sentence highlights: renders the segments returned by the shared
@@ -135,7 +152,7 @@ function unwrapData<T>(payload: unknown): T {
 // feel responsive without hammering the API. The ceiling is a safety net: it
 // stops a broken job from polling forever, and is set well above the slowest
 // observed run (~70s).
-const POLL_INTERVAL_MS = 2000;
+const POLL_INTERVAL_MS = 5000;
 const POLL_TIMEOUT_MS = 180000;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -156,11 +173,25 @@ async function pollHumanizerJob(
   while (Date.now() < deadline) {
     await sleep(POLL_INTERVAL_MS);
 
-    const response = await axios.get<
-      HumanizerJobResponse | { data?: HumanizerJobResponse }
-    >(`${process.env.NEXT_PUBLIC_NGROX_URL}/tools/humanizer/jobs/${jobId}`, {
-      headers,
-    });
+    let response;
+    try {
+      response = await axios.get<
+        HumanizerJobResponse | { data?: HumanizerJobResponse }
+      >(`${process.env.NEXT_PUBLIC_NGROX_URL}/tools/humanizer/jobs/${jobId}`, {
+        headers,
+      });
+    } catch (error: any) {
+      if (error?.response?.status === 429) {
+        const retryAfterSeconds = Number(
+          error.response.headers?.["retry-after"] ??
+            error.response.data?.retry_after_seconds ??
+            5,
+        );
+        await sleep(Math.min(30000, Math.max(1000, retryAfterSeconds * 1000)));
+        continue;
+      }
+      throw error;
+    }
     const job = unwrapData<HumanizerJobResponse>(response.data);
 
     if (job?.status === "completed" && job.result) {
@@ -182,14 +213,14 @@ const HumanizerTool: React.FC = () => {
   const [text, setText] = useState("");
   const tone: HumanizerTone = "natural";
   const [intensity, setIntensity] = useState<RewriteIntensity>("moderate");
+  const [register, setRegister] = useState<RegisterSelection>("auto");
+  const [voiceSample, setVoiceSample] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<HumanizerResponse | null>(null);
   const [activePanel, setActivePanel] = useState<"humanized" | "ai_detection">(
     "humanized",
   );
-  const [aiDetection, setAiDetection] = useState<AiDetectionState | null>(
-    null,
-  );
+  const [aiDetection, setAiDetection] = useState<AiDetectionState | null>(null);
   const [aiDetectView, setAiDetectView] = useState<"score" | "highlights">(
     "score",
   );
@@ -320,13 +351,17 @@ const HumanizerTool: React.FC = () => {
             text,
             tone_mode: tone,
             rewrite_intensity: intensity,
+            ...(register !== "auto" ? { register_mode: register } : {}),
+            ...(voiceSample.trim() ? { voice_sample: voiceSample.trim() } : {}),
             preserve_citations: true,
             return_diff: true,
           },
           { headers },
         );
 
-        const createdJob = unwrapData<HumanizerJobResponse>(createResponse.data);
+        const createdJob = unwrapData<HumanizerJobResponse>(
+          createResponse.data,
+        );
         if (!createdJob?.job_id) {
           throw new Error("Humanizer did not return a job id.");
         }
@@ -338,12 +373,12 @@ const HumanizerTool: React.FC = () => {
         setResult(humanizerResult);
         toast.success("Humanized successfully!");
       } catch (err: any) {
-      const status = err?.response?.status;
-      const message =
-        err?.response?.data?.message ||
-        err?.response?.data ||
-        err?.message ||
-        "Failed to humanize text.";
+        const status = err?.response?.status;
+        const message =
+          err?.response?.data?.message ||
+          err?.response?.data ||
+          err?.message ||
+          "Failed to humanize text.";
 
         if (status === 401) {
           toast.error("Session expired. Please sign in again.");
@@ -409,7 +444,8 @@ const HumanizerTool: React.FC = () => {
           },
         );
         // Backend wraps responses as { success, message, data }
-        const result = (response.data?.data ?? response.data) as DetectionResponse;
+        const result = (response.data?.data ??
+          response.data) as DetectionResponse;
         setAiDetection({ success: true, result });
       } catch (err: any) {
         const message =
@@ -450,9 +486,7 @@ const HumanizerTool: React.FC = () => {
     <div className="container relative mx-auto max-w-[840px] px-3 py-4 sm:px-4 md:px-8 md:pt-8 2xl:max-w-6xl">
       <ToolsApiLoader show={loading} />
 
-      <div
-        className="grid grid-cols-1 md:grid-cols-2 items-stretch"
-      >
+      <div className="grid grid-cols-1 md:grid-cols-2 items-stretch">
         {/* Input */}
         <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 min-w-0 h-auto flex flex-col transition-colors duration-300">
           <TextSummarizerInput
@@ -474,8 +508,8 @@ const HumanizerTool: React.FC = () => {
             {/* Disclaimer */}
             <p className="rounded-md bg-amber-50 p-2 text-xs leading-5 text-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
               Disclaimer: This tool is designed to enhance your writing style.
-              Please remember that AI detection is not 100% accurate; use this as
-              a creative assistant for drafting and refining your work.
+              Please remember that AI detection is not 100% accurate; use this
+              as a creative assistant for drafting and refining your work.
             </p>
 
             {/* Rewrite intensity */}
@@ -504,6 +538,37 @@ const HumanizerTool: React.FC = () => {
               </div>
             </div>
 
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="block text-sm font-semibold text-gray-800 dark:text-gray-100">
+                Writing type
+                <select
+                  value={register}
+                  onChange={(event) =>
+                    setRegister(event.target.value as RegisterSelection)
+                  }
+                  className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-2 py-2 text-sm font-normal text-gray-800 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                >
+                  {REGISTER_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="block text-sm font-semibold text-gray-800 dark:text-gray-100">
+                Your voice sample
+                <textarea
+                  value={voiceSample}
+                  onChange={(event) => setVoiceSample(event.target.value)}
+                  maxLength={12000}
+                  rows={2}
+                  placeholder="Optional: paste a short sample of your own writing"
+                  className="mt-1 block w-full resize-y rounded-md border border-gray-300 bg-white px-2 py-2 text-sm font-normal text-gray-800 placeholder:text-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                />
+              </label>
+            </div>
+
             {wordCount > 1500 && (
               <div className="text-xs font-semibold text-[#fb2c36] dark:text-red-400">
                 Word limit exceeded: {wordCount}/1500. Please trim before
@@ -528,7 +593,9 @@ const HumanizerTool: React.FC = () => {
         <div className="bg-white dark:bg-gray-800 border border-t-0 md:border-t md:border-l-0 border-gray-300 dark:border-gray-700 min-w-0 h-auto flex flex-col justify-between transition-colors duration-300">
           <div className="border-b border-gray-200 dark:border-gray-700 p-3 flex items-center justify-between gap-2">
             <h2 className="text-base font-semibold text-gray-800 dark:text-gray-100">
-              {activePanel === "ai_detection" ? "AI Detection" : "Humanized Text"}
+              {activePanel === "ai_detection"
+                ? "AI Detection"
+                : "Humanized Text"}
             </h2>
 
             {activePanel === "humanized" && rewrittenText && (
@@ -557,9 +624,24 @@ const HumanizerTool: React.FC = () => {
                     In process...
                   </p>
                 ) : rewrittenText ? (
-                  <p className="whitespace-pre-wrap break-words leading-relaxed text-sm text-gray-800 dark:text-gray-100">
-                    {rewrittenText}
-                  </p>
+                  <>
+                    <div className="mb-3 flex flex-wrap gap-2 text-xs">
+                      <span className="rounded-full bg-blue-50 px-2 py-1 text-blue-700 dark:bg-blue-950/40 dark:text-blue-200">
+                        Quality {result?.quality_score}/100
+                      </span>
+                      <span className="rounded-full bg-gray-100 px-2 py-1 capitalize text-gray-700 dark:bg-gray-700 dark:text-gray-200">
+                        {result?.register_mode}
+                      </span>
+                      {result?.voice_profile_used && (
+                        <span className="rounded-full bg-violet-50 px-2 py-1 text-violet-700 dark:bg-violet-950/40 dark:text-violet-200">
+                          Voice matched
+                        </span>
+                      )}
+                    </div>
+                    <p className="whitespace-pre-wrap break-words leading-relaxed text-sm text-gray-800 dark:text-gray-100">
+                      {rewrittenText}
+                    </p>
+                  </>
                 ) : (
                   <p className="text-sm text-gray-400 dark:text-gray-500">
                     Result will appear here...
@@ -671,14 +753,19 @@ const HumanizerTool: React.FC = () => {
                         Borderline sentences
                       </span>
                     </div>
-                    {!(detection.segments ?? []).some((s) => s.label === "ai") && (
+                    {!(detection.segments ?? []).some(
+                      (s) => s.label === "ai",
+                    ) && (
                       <div className="rounded-md bg-gray-50 dark:bg-gray-700/40 px-3 py-2 text-xs text-gray-500 dark:text-gray-400">
-                        No sentences stood out as clearly AI-generated. The detector is
-                        uncertain across this text — borderline sentences are underlined
-                        below, but none crossed the AI threshold.
+                        No sentences stood out as clearly AI-generated. The
+                        detector is uncertain across this text — borderline
+                        sentences are underlined below, but none crossed the AI
+                        threshold.
                       </div>
                     )}
-                    <SentenceHighlightedText segments={detection.segments ?? []} />
+                    <SentenceHighlightedText
+                      segments={detection.segments ?? []}
+                    />
                   </div>
                 )}
               </div>

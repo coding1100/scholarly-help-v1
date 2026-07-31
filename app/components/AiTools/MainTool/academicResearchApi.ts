@@ -207,6 +207,12 @@ export type HumanizerTone =
   | "custom";
 
 export type RewriteIntensity = "normal" | "moderate" | "full";
+export type HumanizerRegister =
+  | "academic"
+  | "professional"
+  | "natural"
+  | "personal"
+  | "marketing";
 
 export type HumanizerDiffSegment = {
   type: "equal" | "insert" | "delete";
@@ -216,7 +222,6 @@ export type HumanizerDiffSegment = {
 export type HumanizerResponse = {
   original_text?: string;
   tone_mode?: HumanizerTone;
-  selected_tone?: HumanizerTone;
   rewrite_intensity?: RewriteIntensity;
   rewritten_text?: string;
   /** Backward-compatible alias for `rewritten_text`. */
@@ -226,6 +231,10 @@ export type HumanizerResponse = {
   citation_count?: number;
   llm_used?: string;
   tokens_used?: number;
+  register_mode?: HumanizerRegister;
+  voice_profile_used?: boolean;
+  quality_score?: number;
+  quality_issues?: string[];
 };
 
 export const humanizeText = (payload: {
@@ -233,6 +242,8 @@ export const humanizeText = (payload: {
   tone?: HumanizerTone;
   rewrite_intensity?: RewriteIntensity;
   custom_tone_instruction?: string;
+  register_mode?: HumanizerRegister;
+  voice_sample?: string;
 }) =>
   request<HumanizerResponse>("/tools/humanizer", {
     method: "POST",
@@ -243,6 +254,8 @@ export const humanizeText = (payload: {
       ...(payload.custom_tone_instruction
         ? { custom_tone_instruction: payload.custom_tone_instruction }
         : {}),
+      ...(payload.register_mode ? { register_mode: payload.register_mode } : {}),
+      ...(payload.voice_sample ? { voice_sample: payload.voice_sample } : {}),
       preserve_citations: true,
       return_diff: false,
     },
