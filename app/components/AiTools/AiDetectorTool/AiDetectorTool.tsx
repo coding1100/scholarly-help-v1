@@ -5,10 +5,8 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { FiPlus, FiRefreshCw } from "react-icons/fi";
 import ActionButtons from "@/app/components/AiTools/ActionButtons";
-import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 import TextSummarizerInput from "@/app/components/AiTools/TextSummarizerInput";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
-import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import { countWords, looksLikeGibberish } from "@/app/utils/text";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import CopyPanel from "./CopyPanel";
@@ -65,8 +63,6 @@ const AiDetectorTool: React.FC = () => {
   const detectorConfig = useDetectorConfig();
   const { minimum_words: minimumWords, maximum_words: maximumWords } =
     detectorConfig;
-
-  const { gateOpen, closeGate, guardAiClick } = useGuestGate();
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -181,12 +177,8 @@ const AiDetectorTool: React.FC = () => {
 
   const handleDetect = () => {
     if (!validate(text)) return;
-    // Guests get a small number of free AI actions across all tools; the gate
-    // opens instead of calling the AI once the allowance is used up.
-    guardAiClick(async () => {
-      trackToolGenerate({ toolName: "AI Detector Tool" });
-      await runDetection(text, false);
-    });
+    trackToolGenerate({ toolName: "AI Detector Tool" });
+    void runDetection(text, false);
   };
 
   const currentDocText = () => segments.map((s) => s.text).join(" ");
@@ -194,10 +186,8 @@ const AiDetectorTool: React.FC = () => {
   const handleRescan = () => {
     const rebuilt = currentDocText();
     if (!validate(rebuilt)) return;
-    guardAiClick(async () => {
-      setText(rebuilt);
-      await runDetection(rebuilt, true);
-    });
+    setText(rebuilt);
+    void runDetection(rebuilt, true);
   };
 
   const handleUploadDocument = async (file: File) => {
@@ -514,8 +504,6 @@ const AiDetectorTool: React.FC = () => {
           </div>
         </div>
       )}
-
-      <GuestAuthGateModal open={gateOpen} onClose={closeGate} />
     </div>
   );
 };
