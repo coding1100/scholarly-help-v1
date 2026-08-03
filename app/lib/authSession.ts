@@ -2,9 +2,22 @@
 
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { clearAuthSession } from "@/app/utils/auth";
+import {
+  hasRefreshSessionHint,
+  readMemoryAccessToken,
+  writeMemoryAccessToken,
+} from "@/app/lib/accessTokenStore";
 
 const SESSION_EXPIRED_EVENT = "sh:session-expired";
 let refreshInFlight: Promise<string> | null = null;
+let bootstrapInFlight: Promise<string | null> | null = null;
+let bootstrapComplete = false;
+
+class SessionRefreshError extends Error {
+  constructor(public readonly status: number) {
+    super(`Session refresh failed with status ${status}`);
+  }
+}
 
 type RetryableRequestConfig = InternalAxiosRequestConfig & {
   __sessionRefreshRetried?: boolean;
@@ -37,13 +50,15 @@ function isAuthRequest(url?: string): boolean {
   );
 }
 
-export function getAccessToken(): string | null {
-  if (typeof window === "undefined") return null;
-  try {
-    return window.localStorage.getItem("access_token");
-  } catch {
-    return null;
+function newIdempotencyKey(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
   }
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+}
+
+export function getAccessToken(): string | null {
+  return readMemoryAccessToken();
 }
 
 export function persistAccessToken(
@@ -51,10 +66,9 @@ export function persistAccessToken(
   expiresInSeconds = 3600,
 ): void {
   if (typeof window === "undefined" || !accessToken) return;
-  const safeMaxAge = Math.max(60, Number(expiresInSeconds) || 3600);
-  window.localStorage.setItem("access_token", accessToken);
-  const secure = window.location.protocol === "https:" ? "; Secure" : "";
-  document.cookie = `access_token=${encodeURIComponent(accessToken)}; path=/; max-age=${safeMaxAge}; SameSite=Lax${secure}`;
+  writeMemoryAccessToken(accessToken);
+  bootstrapComplete = true;
+  window.dispatchEvent(new CustomEvent("sh:auth-session-changed"));
 }
 
 function expireLocalSession(): void {
@@ -66,7 +80,9 @@ function expireLocalSession(): void {
   }
 }
 
-export async function refreshAccessToken(): Promise<string> {
+export async function refreshAccessToken(options?: {
+  silentUnauthorized?: boolean;
+}): Promise<string> {
   if (refreshInFlight) return refreshInFlight;
 
   const base = apiBase();
@@ -81,7 +97,7 @@ export async function refreshAccessToken(): Promise<string> {
     });
 
     if (!response.ok) {
-      throw new Error(`Session refresh failed with status ${response.status}`);
+      throw new SessionRefreshError(response.status);
     }
 
     const raw = await response.json();
@@ -94,7 +110,13 @@ export async function refreshAccessToken(): Promise<string> {
     return session.access_token as string;
   })()
     .catch((error) => {
-      expireLocalSession();
+      if (
+        !options?.silentUnauthorized &&
+        error instanceof SessionRefreshError &&
+        [401, 403].includes(error.status)
+      ) {
+        expireLocalSession();
+      }
       throw error;
     })
     .finally(() => {
@@ -104,12 +126,34 @@ export async function refreshAccessToken(): Promise<string> {
   return refreshInFlight;
 }
 
+/** Restore an authenticated page after reload without exposing the refresh
+ * token or access token to persistent JavaScript storage. */
+export async function initializeAuthSession(): Promise<string | null> {
+  const current = getAccessToken();
+  if (current) return current;
+  if (bootstrapComplete) return null;
+  if (bootstrapInFlight) return bootstrapInFlight;
+  bootstrapInFlight = refreshAccessToken({
+    silentUnauthorized: !hasRefreshSessionHint(),
+  })
+    .catch(() => null)
+    .finally(() => {
+      bootstrapComplete = true;
+      bootstrapInFlight = null;
+    });
+  return bootstrapInFlight;
+}
+
+export async function getOrRefreshAccessToken(): Promise<string | null> {
+  return getAccessToken() || initializeAuthSession();
+}
+
 /**
  * Installs one global Axios policy: send the latest token and retry a backend
  * request exactly once after a single shared refresh operation.
  */
 export function installAxiosAuthRefresh(): () => void {
-  const requestInterceptor = axios.interceptors.request.use((config) => {
+  const requestInterceptor = axios.interceptors.request.use(async (config) => {
     if (
       !isBackendRequest(config.url, config.baseURL) ||
       isAuthRequest(config.url)
@@ -117,9 +161,13 @@ export function installAxiosAuthRefresh(): () => void {
       return config;
     }
 
-    const token = getAccessToken();
+    const token = await getOrRefreshAccessToken();
     if (token) {
       config.headers.set("Authorization", `Bearer ${token}`);
+    }
+    const method = String(config.method || 'get').toUpperCase();
+    if (!['GET', 'HEAD', 'OPTIONS'].includes(method) && !config.headers.has('Idempotency-Key')) {
+      config.headers.set('Idempotency-Key', newIdempotencyKey());
     }
     return config;
   });
@@ -132,7 +180,7 @@ export function installAxiosAuthRefresh(): () => void {
         error.response?.status !== 401 ||
         !config ||
         config.__sessionRefreshRetried ||
-        !getAccessToken() ||
+        !hasRefreshSessionHint() ||
         !isBackendRequest(config.url, config.baseURL) ||
         isAuthRequest(config.url)
       ) {
@@ -157,15 +205,20 @@ export async function fetchWithAuthRetry(
   input: RequestInfo | URL,
   init: RequestInit = {},
 ): Promise<Response> {
+  const stableHeaders = new Headers(init.headers);
+  const method = String(init.method || 'GET').toUpperCase();
+  if (!['GET', 'HEAD', 'OPTIONS'].includes(method) && !stableHeaders.has('Idempotency-Key')) {
+    stableHeaders.set('Idempotency-Key', newIdempotencyKey());
+  }
   const request = async (token: string | null) => {
-    const headers = new Headers(init.headers);
+    const headers = new Headers(stableHeaders);
     if (token) headers.set("Authorization", `Bearer ${token}`);
     return fetch(input, { ...init, headers, credentials: "include" });
   };
 
-  const currentToken = getAccessToken();
+  const currentToken = await getOrRefreshAccessToken();
   const response = await request(currentToken);
-  if (response.status !== 401 || !currentToken) return response;
+  if (response.status !== 401 || !hasRefreshSessionHint()) return response;
 
   const refreshedToken = await refreshAccessToken();
   return request(refreshedToken);

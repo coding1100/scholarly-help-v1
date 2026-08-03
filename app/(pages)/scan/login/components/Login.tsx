@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { FC, FormEvent, useState } from "react";
 import useAuth from "../../hooks/useAuth";
 import dynamic from "next/dynamic";
+import { setScanAccessToken } from "@/app/lib/scanAccessTokenStore";
 
 interface LoginProps { }
 const Login: FC<LoginProps> = ({ }) => {
@@ -34,7 +35,7 @@ const Login: FC<LoginProps> = ({ }) => {
       );
       setIsLoading(false);
 
-      localStorage.setItem("authToken", res?.data?.authToken);
+      setScanAccessToken(res?.data?.authToken);
       // @ts-ignore
       setIsAuthenticated(true);
       // @ts-ignore

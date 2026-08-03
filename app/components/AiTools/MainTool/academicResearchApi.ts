@@ -1,6 +1,7 @@
 "use client";
 
 import axios, { type AxiosError, type AxiosRequestConfig } from "axios";
+import { getAccessToken } from "@/app/lib/authSession";
 
 export const ACADEMIC_PAYWALL_MESSAGE =
   "Your token balance is exhausted. Please upgrade to continue using AI tools.";
@@ -9,9 +10,6 @@ const getApiBaseUrl = () => {
   const baseUrl = (process.env.NEXT_PUBLIC_NGROX_URL || "").replace(/\/$/, "");
   return baseUrl.endsWith("/v1") ? baseUrl : `${baseUrl}/v1`;
 };
-
-const getAccessToken = () =>
-  typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
 
 const authHeaders = () => {
   const token = getAccessToken();

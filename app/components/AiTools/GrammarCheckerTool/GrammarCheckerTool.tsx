@@ -11,6 +11,7 @@ import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import { countWords, looksLikeGibberish } from "@/app/utils/text";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
+import { getAccessToken } from "@/app/lib/authSession";
 import EditorPane, { type ResolveAction } from "./EditorPane";
 import GoalsModal from "./GoalsModal";
 import IssuesSidebar from "./IssuesSidebar";
@@ -79,7 +80,7 @@ const GrammarCheckerTool: React.FC = () => {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const storedToken = localStorage.getItem("access_token");
+    const storedToken = getAccessToken();
     setToken(storedToken);
     try {
       const storedGoals = localStorage.getItem(GOALS_STORAGE_KEY);

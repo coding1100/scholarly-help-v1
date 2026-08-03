@@ -7,6 +7,7 @@ import ReactMarkdown from "react-markdown";
 import { FaCommentDots, FaTimes } from "react-icons/fa";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
+import { getAccessToken } from "@/app/lib/authSession";
 
 type ChatRole = "user" | "assistant";
 type ChatMessage = { role: ChatRole; content: string };
@@ -47,10 +48,7 @@ export default function SummarizerChat({ context }: SummarizerChatProps) {
     // the backend accepts guest requests.
     if (!ensureGuestClick()) return;
 
-    const token =
-      typeof window !== "undefined"
-        ? localStorage.getItem("access_token")
-        : null;
+    const token = getAccessToken();
 
     const nextMessages: ChatMessage[] = [
       ...messages,

@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { FaRegClock, FaDatabase } from "react-icons/fa";
 import toast from "react-hot-toast";
 import axios from "axios";
+import { getOrRefreshAccessToken } from "@/app/lib/authSession";
 
 interface PricingPlan {
   name: string;
@@ -57,8 +58,6 @@ const PricingPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
   const userId =
     typeof window !== "undefined" ? localStorage.getItem("user_id") : null;
-  const authToken =
-    typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
   const totalTokens =
     typeof window !== "undefined"
       ? Number(localStorage.getItem("totalTokens") || 0)
@@ -94,12 +93,12 @@ const PricingPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     setIsLoading(true);
     const planName = plans[selectedPlan].name.toLowerCase();
     try {
+      const authToken = await getOrRefreshAccessToken();
       if (!userId || !authToken) {
         console.error("Missing userId or authToken");
         return;
       }
       const payload = {
-        user_id: userId,
         plan: planName,
       };
 

@@ -1,8 +1,9 @@
 "use client";
 
-import axiosInstance from "@/app/axios";
+import axios from "axios";
 import { FC } from "react";
 import { IoCheckmarkSharp, IoChevronDownOutline } from "react-icons/io5";
+import { getOrRefreshAccessToken } from "@/app/lib/authSession";
 
 interface PricingCardProps {
   item: {
@@ -23,17 +24,12 @@ interface PricingCardProps {
 const PricingCard: FC<PricingCardProps> = ({ item, index }) => {
   const handleStripe = async (submitplan: string) => {
     try {
-      const user_id = "f0920ed7-2d98-4fd9-a872-863a4b8bad20";
-      const token =
-        "eyJhbGciOiJIUzI1NiIsImtpZCI6ImlaYzAya0laelFDSmhhRXciLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2l0eW12aXR4amFucGFobGx2c2liLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJmMDkyMGVkNy0yZDk4LTRmZDktYTg3Mi04NjNhNGI4YmFkMjAiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzUzNzk0MDU3LCJpYXQiOjE3NTM3OTA0NTcsImVtYWlsIjoibWFsaWt1bWFpcjQ0ODI2QGdtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7InByb3ZpZGVyIjoiZW1haWwiLCJwcm92aWRlcnMiOlsiZW1haWwiXX0sInVzZXJfbWV0YWRhdGEiOnsiZW1haWwiOiJtYWxpa3VtYWlyNDQ4MjZAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInBob25lX3ZlcmlmaWVkIjpmYWxzZSwic2lnbnVwX2NvbXBsZXRlZCI6ZmFsc2UsInN1YiI6ImYwOTIwZWQ3LTJkOTgtNGZkOS1hODcyLTg2M2E0YjhiYWQyMCIsInRlbXBfdXNlcl9kYXRhIjoie1wiZW1haWxcIjpcIm1hbGlrdW1haXI0NDgyNkBnbWFpbC5jb21cIixcIm5hbWVcIjpcIlVtYWlyIE1hbGlrXCJ9In0sInJvbGUiOiJhdXRoZW50aWNhdGVkIiwiYWFsIjoiYWFsMSIsImFtciI6W3sibWV0aG9kIjoicGFzc3dvcmQiLCJ0aW1lc3RhbXAiOjE3NTM3OTA0NTd9XSwic2Vzc2lvbl9pZCI6IjU2YmJhNzQzLWQyOTAtNDk5YS1hNjc4LThiNjkwNjkzYTQ3ZSIsImlzX2Fub255bW91cyI6ZmFsc2V9.wVmAskdxlqPems_r_krzhTv3tGAa7pjsPxbWQd3mtKI";
+      const token = await getOrRefreshAccessToken();
+      if (!token) throw new Error("Sign in before selecting a plan");
+      const payload = { plan: submitplan };
 
-      const payload = {
-        user_id,
-        plan: submitplan,
-      };
-
-      const response = await axiosInstance.post(
-        "https://c8e28868a478.ngrok-free.app/v1/billing/create-checkout",
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_NGROX_URL}/v1/billing/create-checkout`,
         payload,
         {
           headers: {

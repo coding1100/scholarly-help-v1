@@ -20,6 +20,7 @@ import DOMPurify from "dompurify";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 import SavedCitations from "./SavedCitations";
+import { getAccessToken } from "@/app/lib/authSession";
 
 // Citations only ever contain italic markup for titles. Restrict the allowed
 // tags tightly so nothing executable can be injected even if upstream changes.
@@ -218,7 +219,7 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag, variant = "default" }) =
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setToken(localStorage.getItem("access_token"));
+      setToken(getAccessToken());
     }
   }, []);
 
