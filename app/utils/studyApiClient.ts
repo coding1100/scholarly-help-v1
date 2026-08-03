@@ -1,3 +1,5 @@
+import { fetchWithAuthRetry } from "@/app/lib/authSession";
+
 const STUDY_API_BASE = "/api/study";
 const ACTIVE_STUDY_SESSION_KEY = "sh_active_study_session_id_v1";
 
@@ -118,7 +120,7 @@ function getAccessToken() {
 
 async function callStudyApi<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getAccessToken();
-  const res = await fetch(`${STUDY_API_BASE}${path}`, {
+  const res = await fetchWithAuthRetry(`${STUDY_API_BASE}${path}`, {
     ...init,
     headers: {
       "Content-Type": "application/json",
@@ -224,7 +226,7 @@ export async function addStudySourceFile(
   form.set("name", input.name);
   form.set("file", input.file);
 
-  const res = await fetch(`${STUDY_API_BASE}/sessions/${sessionId}/sources`, {
+  const res = await fetchWithAuthRetry(`${STUDY_API_BASE}/sessions/${sessionId}/sources`, {
     method: "POST",
     headers: {
       "x-user-id": getUserId(),
@@ -321,7 +323,7 @@ export async function streamStudyTutor(
   },
 ) {
   const token = getAccessToken();
-  const res = await fetch(`${STUDY_API_BASE}/sessions/${sessionId}/tutor`, {
+  const res = await fetchWithAuthRetry(`${STUDY_API_BASE}/sessions/${sessionId}/tutor`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -412,4 +414,3 @@ export async function streamStudyTutor(
     throw new Error(fallback);
   }
 }
-

@@ -1,3 +1,5 @@
+import { fetchWithAuthRetry } from "@/app/lib/authSession";
+
 export type TokenUsageSnapshot = {
   totalTokens: number;
   usedTokens: number;
@@ -48,7 +50,7 @@ async function fetchTokenUsage(accessToken: string): Promise<{
   const base = process.env.NEXT_PUBLIC_NGROX_URL;
   if (!base) throw new Error("Missing NEXT_PUBLIC_NGROX_URL");
 
-  const res = await fetch(`${base}/users/token-usage`, {
+  const res = await fetchWithAuthRetry(`${base}/users/token-usage`, {
     method: "GET",
     headers: { Authorization: `Bearer ${accessToken}` },
   });
@@ -82,7 +84,9 @@ export function getTokenUsageSnapshot() {
   return snapshot;
 }
 
-export async function refreshTokenUsageNow(opts?: { defaultTotalTokens?: number }) {
+export async function refreshTokenUsageNow(opts?: {
+  defaultTotalTokens?: number;
+}) {
   if (typeof window === "undefined") return;
 
   const accessToken = getAccessToken();
@@ -108,7 +112,9 @@ export async function refreshTokenUsageNow(opts?: { defaultTotalTokens?: number 
     } catch (e: any) {
       if (e?.status === 401 && typeof window !== "undefined") {
         try {
-          window.dispatchEvent(new CustomEvent(__TOKEN_USAGE_UNAUTHORIZED_EVENT__));
+          window.dispatchEvent(
+            new CustomEvent(__TOKEN_USAGE_UNAUTHORIZED_EVENT__),
+          );
         } catch {
           // ignore
         }
@@ -129,7 +135,10 @@ export async function refreshTokenUsageNow(opts?: { defaultTotalTokens?: number 
           lastUpdatedAt: Date.now(),
         });
         try {
-          window.localStorage.setItem("totalTokens", String(defaultTotalTokens));
+          window.localStorage.setItem(
+            "totalTokens",
+            String(defaultTotalTokens),
+          );
         } catch {
           // ignore
         }
@@ -194,4 +203,3 @@ export function initTokenUsageAutoRefresh(toolGenerateEventName: string) {
     scheduleAutoRefreshSequence();
   });
 }
-

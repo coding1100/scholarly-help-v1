@@ -11,7 +11,11 @@ import axios from "axios";
 import AuthButtonSpinner from "./AuthButtonSpinner";
 import SocialAuthButtons from "./SocialAuthButtons";
 import { buildHrefWithSameQuery } from "@/app/utils/url";
-import { validateEmail, validateSignInPassword } from "@/app/lib/authValidation";
+import {
+  validateEmail,
+  validateSignInPassword,
+} from "@/app/lib/authValidation";
+import { persistAccessToken } from "@/app/lib/authSession";
 
 interface SignInCardProps {
   switchAuthForm?: string;
@@ -36,10 +40,12 @@ const SignInCard: FC<SignInCardProps> = ({
   const [submitError, setSubmitError] = useState<string | null>(null);
   // Inline field validation. Errors are only surfaced once a field is "touched"
   // (blurred or after a submit attempt), so the user isn't scolded mid-typing.
-  const [touched, setTouched] = useState<{ email: boolean; password: boolean }>({
-    email: false,
-    password: false,
-  });
+  const [touched, setTouched] = useState<{ email: boolean; password: boolean }>(
+    {
+      email: false,
+      password: false,
+    },
+  );
 
   const emailError = validateEmail(email);
   const passwordError = validateSignInPassword(password);
@@ -70,7 +76,7 @@ const SignInCard: FC<SignInCardProps> = ({
 
   const persistSessionAndRedirect = useCallback(
     (data: any) => {
-      localStorage.setItem("access_token", data.access_token);
+      persistAccessToken(data.access_token, data.expires_in);
       localStorage.setItem("user_id", data.user.user_id);
       localStorage.setItem("user_name", data.user.name);
       localStorage.setItem("package_type", data.user.package_type);
@@ -81,7 +87,6 @@ const SignInCard: FC<SignInCardProps> = ({
         .trim()
         .toLowerCase();
       if (resolvedEmail) localStorage.setItem("user_email", resolvedEmail);
-      document.cookie = `access_token=${data.access_token}; path=/; max-age=86400`;
 
       const redirectPath = returnUrl || "/tools/dashboard/";
       const qs = searchParams?.toString() || "";
@@ -103,7 +108,7 @@ const SignInCard: FC<SignInCardProps> = ({
     const token = localStorage.getItem("access_token");
     if (token) {
       // Set cookie for middleware if not already set
-      document.cookie = `access_token=${token}; path=/; max-age=86400`;
+      persistAccessToken(token);
 
       if (returnUrl) {
         // Hard navigation so middleware sees the cookie (see persist above).
@@ -129,6 +134,7 @@ const SignInCard: FC<SignInCardProps> = ({
       const res = await axios.post(
         `${process.env.NEXT_PUBLIC_NGROX_URL}/auth/signin`,
         payload,
+        { withCredentials: true },
       );
       setEmail("");
       setPassword("");
@@ -241,11 +247,7 @@ const SignInCard: FC<SignInCardProps> = ({
           } ${!isFormValid || loading ? "opacity-50 cursor-not-allowed" : ""}`}
           aria-live="polite"
         >
-          {loading ? (
-            <AuthButtonSpinner />
-          ) : (
-            <span>Sign In</span>
-          )}
+          {loading ? <AuthButtonSpinner /> : <span>Sign In</span>}
           {!submitError && <FaArrowRight />}
         </button>
 
