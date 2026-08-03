@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import toast from "react-hot-toast";
 import ProductSchema from "@/app/components/ProductSchema";
+import { persistAccessToken } from "@/app/lib/authSession";
 
 const AuthCallbackPage = () => {
   const router = useRouter();
@@ -17,6 +18,7 @@ const AuthCallbackPage = () => {
         );
         const queryParams = new URLSearchParams(window.location.search);
         const accessToken = hashParams.get("access_token");
+        const refreshToken = hashParams.get("refresh_token");
         const errorDescription = hashParams.get("error_description");
         const next = queryParams.get("next") || "/tools/dashboard/";
 
@@ -26,34 +28,29 @@ const AuthCallbackPage = () => {
           return;
         }
 
-        if (!accessToken) {
-          toast.error("OAuth callback did not return an access token.");
+        if (!accessToken || !refreshToken) {
+          toast.error("OAuth callback did not return a complete session.");
           router.replace("/sign-in/");
           return;
         }
 
-        const verifyResponse = await axios.get(
-          `${process.env.NEXT_PUBLIC_NGROX_URL}/auth/verify-token`,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-            params: {
-              provider: "SUPABASE",
-            },
-          },
+        // Exchange the callback refresh token once. The backend rotates it into
+        // an HttpOnly cookie so JavaScript never persists the long-lived token.
+        const sessionResponse = await axios.post(
+          `${process.env.NEXT_PUBLIC_NGROX_URL}/auth/session`,
+          { refresh_token: refreshToken },
+          { withCredentials: true },
         );
 
-        // Response is wrapped as { success, message, data: { user } } (fallback to raw).
-        const user =
-          verifyResponse?.data?.data?.user ?? verifyResponse?.data?.user;
+        const session = sessionResponse?.data?.data ?? sessionResponse?.data;
+        const user = session?.user;
         if (!user?.user_id) {
           toast.error("Unable to verify authenticated user.");
           router.replace("/sign-in/");
           return;
         }
 
-        localStorage.setItem("access_token", accessToken);
+        persistAccessToken(session.access_token, session.expires_in);
         localStorage.setItem("user_id", user.user_id);
         localStorage.setItem("user_name", user.name || "User");
         const resolvedEmail = String(user?.email || user?.user_email || "")
@@ -61,7 +58,11 @@ const AuthCallbackPage = () => {
           .toLowerCase();
         if (resolvedEmail) localStorage.setItem("user_email", resolvedEmail);
         localStorage.setItem("package_type", user.package_type || "none");
-        document.cookie = `access_token=${accessToken}; path=/; max-age=86400`;
+        window.history.replaceState(
+          null,
+          "",
+          `${window.location.pathname}${window.location.search}`,
+        );
 
         toast.success("Signed in successfully!");
         router.replace(next);

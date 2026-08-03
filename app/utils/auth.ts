@@ -25,6 +25,18 @@ const AUTH_STORAGE_KEYS = [
 /** Clear the persisted session (localStorage + the access_token cookie). */
 export function clearAuthSession(): void {
   if (typeof window === "undefined") return;
+  const apiBase = String(
+    process.env.NEXT_PUBLIC_NGROX_URL || process.env.NEXT_PUBLIC_API_URL || "",
+  ).replace(/\/$/, "");
+  if (apiBase) {
+    void fetch(`${apiBase}/auth/logout`, {
+      method: "POST",
+      credentials: "include",
+      keepalive: true,
+    }).catch(() => {
+      // Local logout must still succeed when the API is unavailable.
+    });
+  }
   for (const key of AUTH_STORAGE_KEYS) {
     localStorage.removeItem(key);
   }
