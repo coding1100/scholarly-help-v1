@@ -8,6 +8,7 @@ import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
+import { getAccessToken } from "@/app/lib/authSession";
 
 interface EssayTitleProps {
   setFlag: (value: boolean) => void;
@@ -85,7 +86,7 @@ const EssayTitle: FC<EssayTitleProps> = ({ setFlag, variant = "default" }) => {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setToken(localStorage.getItem("access_token"));
+      setToken(getAccessToken());
     }
   }, []);
 

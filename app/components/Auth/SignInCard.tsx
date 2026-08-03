@@ -15,7 +15,7 @@ import {
   validateEmail,
   validateSignInPassword,
 } from "@/app/lib/authValidation";
-import { persistAccessToken } from "@/app/lib/authSession";
+import { initializeAuthSession, persistAccessToken } from "@/app/lib/authSession";
 
 interface SignInCardProps {
   switchAuthForm?: string;
@@ -105,16 +105,12 @@ const SignInCard: FC<SignInCardProps> = ({
   const currentPage = usePathname();
   // Check if user is already authenticated
   useEffect(() => {
-    const token = localStorage.getItem("access_token");
+    void initializeAuthSession().then((token) => {
     if (token) {
-      // Set cookie for middleware if not already set
-      persistAccessToken(token);
-
       if (returnUrl) {
-        // Hard navigation so middleware sees the cookie (see persist above).
         window.location.assign(returnUrl);
       }
-    }
+    }});
   }, [returnUrl]);
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -11,6 +11,7 @@ import {
   listStudySessions,
   setActiveStudySessionId,
 } from "@/app/utils/studyApiClient";
+import { initializeAuthSession } from "@/app/lib/authSession";
 
 export default function DashboardPageContent() {
   const [flag, setFlag] = useState<boolean>(false);
@@ -19,9 +20,8 @@ export default function DashboardPageContent() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    const isAuthenticated =
-      localStorage.getItem("access_token") || localStorage.getItem("authToken");
-    if (!isAuthenticated) {
+    void initializeAuthSession().then((token) => {
+    if (!token) {
       const currentQs =
         typeof window !== "undefined" ? window.location.search.slice(1) : "";
       const signInBase = currentQs ? `/sign-in?${currentQs}` : "/sign-in";
@@ -32,17 +32,14 @@ export default function DashboardPageContent() {
           `returnUrl=${encodeURIComponent(returnTo)}`,
         ),
       );
-    }
+    }});
   }, [pathname, router]);
 
   useEffect(() => {
     let active = true;
 
     async function bootstrapStudySession() {
-      const isAuthenticated =
-        localStorage.getItem("access_token") ||
-        localStorage.getItem("authToken");
-      if (!isAuthenticated) return;
+      if (!(await initializeAuthSession())) return;
 
       const qsSessionId = searchParams.get("sessionId");
       const localSessionId = getActiveStudySessionId();

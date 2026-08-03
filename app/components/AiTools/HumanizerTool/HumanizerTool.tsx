@@ -19,6 +19,7 @@ import {
   type DetectSegment,
 } from "@/app/components/AiTools/AiDetectorTool/types";
 import { useDetectorConfig } from "@/app/components/AiTools/AiDetectorTool/useDetectorConfig";
+import { getAccessToken } from "@/app/lib/authSession";
 
 type HumanizerTone = "natural" | "simple" | "polished" | "academic" | "custom";
 type RewriteIntensity = "normal" | "moderate" | "full";
@@ -231,7 +232,7 @@ const HumanizerTool: React.FC = () => {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setToken(localStorage.getItem("access_token"));
+      setToken(getAccessToken());
     }
   }, []);
 

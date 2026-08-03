@@ -19,6 +19,7 @@ import {
   getAcademicErrorMessage,
 } from "./academicResearchApi";
 import { outlineToHtml } from "./outlineGeneration";
+import { initializeAuthSession } from "@/app/lib/authSession";
 export interface TitleContextValue {
   title: string;
   setTitle: React.Dispatch<React.SetStateAction<string>>;
@@ -163,12 +164,13 @@ const MainToolLayout: React.FC<MainToolLayoutProps> = ({
     // Guests may use the Academic Research Assistant. We read the token if
     // present (so signed-in features work) but never redirect guests away — the
     // per-AI-action click gate enforces the free allowance instead.
-    const t =
-      typeof window !== "undefined"
-        ? localStorage.getItem("access_token")
-        : null;
-    setToken(t);
-    setChecked(true);
+    let active = true;
+    void initializeAuthSession().then((t) => {
+      if (!active) return;
+      setToken(t);
+      setChecked(true);
+    });
+    return () => { active = false; };
   }, [currentQs, router, pathname]);
 
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);

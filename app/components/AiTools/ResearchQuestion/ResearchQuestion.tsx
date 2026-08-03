@@ -8,6 +8,7 @@ import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
+import { getAccessToken } from "@/app/lib/authSession";
 
 interface ResearchQuestionProps {
   setFlag: (value: boolean) => void;
@@ -87,7 +88,7 @@ const ResearchQuestion: FC<ResearchQuestionProps> = ({
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setToken(localStorage.getItem("access_token"));
+      setToken(getAccessToken());
     }
   }, []);
 

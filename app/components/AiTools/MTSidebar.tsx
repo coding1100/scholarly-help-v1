@@ -26,6 +26,7 @@ import {
 } from "./MainTool/academicResearchApi";
 import { outlineToHtml } from "./MainTool/outlineGeneration";
 import { appendQueryString } from "@/app/utils/url";
+import { getAccessToken } from "@/app/lib/authSession";
 import { clearAuthSession } from "@/app/utils/auth";
 import { isGuest, stashGuestMigrationId } from "@/app/lib/client/guestStudyLimits";
 import { upsertFbclidToolContext } from "@/app/utils/fbclidTracking";
@@ -88,7 +89,7 @@ const MTSidebar = ({
   // Defaults to false during SSR so the markup is stable until we read storage.
   const [guest, setGuest] = useState(false);
   const accessToken =
-    typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+    typeof window !== "undefined" ? getAccessToken() : null;
   const isVerifying = useRef(false);
   const [userToggled, setUserToggled] = useState(false);
   const [showPopover, setShowPopover] = useState(false);

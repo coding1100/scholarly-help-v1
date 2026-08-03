@@ -1,4 +1,4 @@
-import { fetchWithAuthRetry } from "@/app/lib/authSession";
+import { fetchWithAuthRetry, getOrRefreshAccessToken } from "@/app/lib/authSession";
 
 export type TokenUsageSnapshot = {
   totalTokens: number;
@@ -32,15 +32,6 @@ function emit() {
 function setSnapshot(patch: Partial<TokenUsageSnapshot>) {
   snapshot = { ...snapshot, ...patch };
   emit();
-}
-
-function getAccessToken(): string | null {
-  if (typeof window === "undefined") return null;
-  try {
-    return window.localStorage.getItem("access_token");
-  } catch {
-    return null;
-  }
 }
 
 async function fetchTokenUsage(accessToken: string): Promise<{
@@ -89,7 +80,7 @@ export async function refreshTokenUsageNow(opts?: {
 }) {
   if (typeof window === "undefined") return;
 
-  const accessToken = getAccessToken();
+  const accessToken = await getOrRefreshAccessToken();
   if (!accessToken) return;
 
   if (inFlight) return inFlight;
@@ -119,32 +110,6 @@ export async function refreshTokenUsageNow(opts?: {
           // ignore
         }
       }
-      // Backend down fallback (matches previous behavior)
-      const code = String(e?.code || "");
-      const message = String(e?.message || "");
-      if (
-        code === "ERR_NETWORK" ||
-        code === "ERR_CONNECTION_REFUSED" ||
-        message.includes("Failed to fetch")
-      ) {
-        const defaultTotalTokens = Number(opts?.defaultTotalTokens ?? 1000000);
-        setSnapshot({
-          totalTokens: defaultTotalTokens,
-          usedTokens: 0,
-          loading: false,
-          lastUpdatedAt: Date.now(),
-        });
-        try {
-          window.localStorage.setItem(
-            "totalTokens",
-            String(defaultTotalTokens),
-          );
-        } catch {
-          // ignore
-        }
-        return;
-      }
-
       setSnapshot({ loading: false });
       throw e;
     } finally {

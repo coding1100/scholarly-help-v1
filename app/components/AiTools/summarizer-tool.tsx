@@ -24,6 +24,7 @@ import SummarizerChat from "@/app/components/AiTools/SummarizerChat/SummarizerCh
 import { sanitizeHtml } from "@/app/utils/sanitizeHtml";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
+import { getAccessToken } from "@/app/lib/authSession";
 
 type OutputType = "text_summary" | "flashcards" | "slide_deck" | "audio_summary";
 
@@ -418,7 +419,7 @@ const SummarizerTool: React.FC<SummarizerToolProps> = ({
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setToken(localStorage.getItem("access_token"));
+      setToken(getAccessToken());
     }
   }, []);
 

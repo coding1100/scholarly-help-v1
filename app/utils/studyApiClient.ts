@@ -109,23 +109,12 @@ function getUserId() {
   return guestId;
 }
 
-function getAccessToken() {
-  if (typeof window === "undefined") return "";
-  return (
-    localStorage.getItem("access_token") ||
-    localStorage.getItem("authToken") ||
-    ""
-  );
-}
-
 async function callStudyApi<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = getAccessToken();
   const res = await fetchWithAuthRetry(`${STUDY_API_BASE}${path}`, {
     ...init,
     headers: {
       "Content-Type": "application/json",
       "x-user-id": getUserId(),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(init?.headers || {}),
     },
   });
@@ -220,7 +209,6 @@ export async function addStudySourceFile(
   sessionId: string,
   input: { kind?: StudySourceKind; name: string; file: File },
 ) {
-  const token = getAccessToken();
   const form = new FormData();
   form.set("kind", input.kind || "file");
   form.set("name", input.name);
@@ -230,7 +218,6 @@ export async function addStudySourceFile(
     method: "POST",
     headers: {
       "x-user-id": getUserId(),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: form,
   });
@@ -322,13 +309,11 @@ export async function streamStudyTutor(
     onError?: (message: string) => void;
   },
 ) {
-  const token = getAccessToken();
   const res = await fetchWithAuthRetry(`${STUDY_API_BASE}/sessions/${sessionId}/tutor`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "x-user-id": getUserId(),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify({
       message,

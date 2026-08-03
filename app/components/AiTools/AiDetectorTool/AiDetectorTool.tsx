@@ -18,6 +18,7 @@ import {
   type SegmentLabel,
 } from "./types";
 import { useDetectorConfig } from "./useDetectorConfig";
+import { getAccessToken } from "@/app/lib/authSession";
 
 type Filter = "all" | Exclude<SegmentLabel, "neutral">;
 
@@ -66,7 +67,7 @@ const AiDetectorTool: React.FC = () => {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setToken(localStorage.getItem("access_token"));
+      setToken(getAccessToken());
     }
   }, []);
 
