@@ -235,6 +235,28 @@ export async function getStudySessionDetails(sessionId: string) {
   });
 }
 
+export async function streamStudySourceStatuses(
+  sessionId: string,
+  onStatuses: (statuses: Array<{ id: string; name: string; indexStatus?: StudySourceIndexStatus }>) => void,
+  signal: AbortSignal,
+) {
+  const response = await fetchWithAuthRetry(`${STUDY_API_BASE}/sessions/${sessionId}/events`, {
+    headers: { "x-user-id": getUserId(), Accept: "text/event-stream" }, signal, cache: "no-store",
+  });
+  if (!response.ok || !response.body) throw new Error("Could not open source status stream.");
+  const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = "";
+  while (!signal.aborted) {
+    const { done, value } = await reader.read(); if (done) return;
+    buffer += decoder.decode(value, { stream: true });
+    const events = buffer.split("\n\n"); buffer = events.pop() || "";
+    for (const event of events) {
+      if (!event.includes("event: source-status")) continue;
+      const data = event.split("\n").find((line) => line.startsWith("data:"))?.slice(5).trim();
+      if (data) onStatuses(JSON.parse(data));
+    }
+  }
+}
+
 export async function updateStudySessionTitle(sessionId: string, title: string) {
   return callStudyApi<{ session: StudySessionDto }>(`/sessions/${sessionId}`, {
     method: "PATCH",

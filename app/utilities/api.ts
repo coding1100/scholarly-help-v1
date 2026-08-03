@@ -35,6 +35,16 @@ export interface ChatRequest {
   message: string;
 }
 
+export type AgentTaskRequest = {
+  task: "create_study_schedule" | "create_practice_exam";
+  parameters: Record<string, string | number | boolean | string[]>;
+};
+
+/** Sends a versioned, machine-readable task instead of prompt-like tool instructions. */
+export function sendAgentTask(request: AgentTaskRequest, conversationId: string | null = null) {
+  return sendChatMessage(JSON.stringify({ schema_version: 1, ...request }), conversationId);
+}
+
 export interface ParsedQuestion {
   number: number;
   question: string;

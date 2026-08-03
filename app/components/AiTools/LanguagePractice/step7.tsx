@@ -202,6 +202,7 @@ export default function Step7() {
     clearArea,
   } = useLanguagePractice();
   const [input, setInput] = useState("");
+  const [isListening, setIsListening] = useState(false);
 
   const turns = history.pronunciation;
   const lastAi =
@@ -256,6 +257,33 @@ export default function Step7() {
     });
   };
 
+  const speakPrompt = () => {
+    if (!("speechSynthesis" in window) || !lastAi) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(lastAi.replace(/[*_#`]/g, ""));
+    const matchingVoice = window.speechSynthesis.getVoices().find((voice) =>
+      language ? voice.lang.toLowerCase().includes(language.slice(0, 2).toLowerCase()) : false,
+    );
+    if (matchingVoice) utterance.voice = matchingVoice;
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const listen = () => {
+    type RecognitionEvent = Event & { results: ArrayLike<{ 0: { transcript: string } }> };
+    type Recognition = { lang: string; interimResults: boolean; onresult: (event: RecognitionEvent) => void; onend: () => void; onerror: () => void; start: () => void };
+    const browser = window as unknown as { SpeechRecognition?: new () => Recognition; webkitSpeechRecognition?: new () => Recognition };
+    const SpeechRecognition = browser.SpeechRecognition ?? browser.webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+    const recognition = new SpeechRecognition();
+    recognition.lang = language || navigator.language;
+    recognition.interimResults = false;
+    recognition.onresult = (event) => setInput(event.results[0]?.[0]?.transcript || "");
+    recognition.onend = () => setIsListening(false);
+    recognition.onerror = () => setIsListening(false);
+    setIsListening(true);
+    recognition.start();
+  };
+
   const meta = (
     <div className="flex flex-wrap gap-2 text-xs">
       <span className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-gray-700">
@@ -275,10 +303,10 @@ export default function Step7() {
     <div className="space-y-6">
       <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 shadow-sm">
         <div className="text-sm font-semibold">
-          Pronunciation practice (text-based)
+          Pronunciation practice
         </div>
         <div className="mt-1 text-sm text-gray-600">
-          Learn how words sound with phonetic hints and text feedback.
+          Hear a model phrase, speak it aloud, and receive structured feedback.
         </div>
         <div className="mt-3">{meta}</div>
       </div>
@@ -569,6 +597,8 @@ export default function Step7() {
               placeholder="Type how you think it sounds…"
               className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-[#155dfc] focus:ring-2 focus:ring-blue-100 disabled:bg-gray-50"
             />
+            <button type="button" onClick={speakPrompt} disabled={!lastAi} className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold disabled:opacity-50" aria-label="Listen to pronunciation prompt">Listen</button>
+            <button type="button" onClick={listen} disabled={isListening} className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold disabled:opacity-50" aria-label="Record spoken attempt">{isListening ? "Listening…" : "Speak"}</button>
             <button
               type="button"
               onClick={send}

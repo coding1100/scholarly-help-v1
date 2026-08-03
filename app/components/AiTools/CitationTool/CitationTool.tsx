@@ -1,6 +1,7 @@
 "use client";
 
 import React, { FC, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import {
   FaChevronDown,
   FaRegCopy,
@@ -19,7 +20,7 @@ import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import DOMPurify from "dompurify";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
-import SavedCitations from "./SavedCitations";
+const SavedCitations = dynamic(() => import("./SavedCitations"), { ssr: false, loading: () => <div className="p-4 text-sm text-gray-500">Loading citation library…</div> });
 import { getAccessToken } from "@/app/lib/authSession";
 
 // Citations only ever contain italic markup for titles. Restrict the allowed
@@ -116,6 +117,12 @@ const MONTHS = [
   "November",
   "December",
 ];
+
+const normalizeDoi = (value: string) => value.trim().replace(/^https?:\/\/(?:dx\.)?doi\.org\//i, "").replace(/^doi:\s*/i, "").toLowerCase();
+const normalizeUrl = (value: string) => {
+  const raw = value.trim(); if (!raw) return "";
+  try { const parsed = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`); parsed.hash = ""; return parsed.toString(); } catch { return raw; }
+};
 
 /**
  * Hover/focus tooltip. Render-gated on local state (not CSS group-hover) so
@@ -255,8 +262,8 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag, variant = "default" }) =
     if (d.publisher) setPublisher(d.publisher);
     if (d.doi || d.url) {
       setIsOnline(true);
-      if (d.doi) setDoi(d.doi);
-      if (d.url) setUrl(d.url);
+      if (d.doi) setDoi(normalizeDoi(d.doi));
+      if (d.url) setUrl(normalizeUrl(d.url));
     }
   };
 
@@ -459,6 +466,18 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag, variant = "default" }) =
       toast.error("Please enter at least a title or an author name.");
       return;
     }
+    const missing = sourceType === "website"
+      ? [!title.trim() && "title", !url.trim() && "URL"]
+      : sourceType === "journal"
+        ? [!title.trim() && "article title", !journalName.trim() && "journal name"]
+        : sourceType === "article"
+          ? [!title.trim() && "article title", !publicationName.trim() && "publication name"]
+          : [!title.trim() && "book title", !hasAuthor && "author"];
+    const missingFields = missing.filter(Boolean);
+    if (missingFields.length) {
+      const message = `Add the required ${missingFields.join(" and ")}.`;
+      setError(message); toast.error(message); return;
+    }
 
     // Guests get a small number of free AI actions across all tools; the gate
     // opens instead of calling the AI once the allowance is used up.
@@ -516,8 +535,8 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag, variant = "default" }) =
       if (citationStyle === "Chicago") payload.chicago_variant = chicagoVariant;
       if (pages.trim()) payload.pages = pages.trim();
       // DOI/URL only when relevant: websites always, others when online.
-      if (showOnlineFields && doi.trim()) payload.doi = doi.trim();
-      if (showOnlineFields && url.trim()) payload.url = url.trim();
+      if (showOnlineFields && doi.trim()) payload.doi = normalizeDoi(doi);
+      if (showOnlineFields && url.trim()) payload.url = normalizeUrl(url);
       if (Object.keys(publication_date).length) payload.publication_date = publication_date;
       if (Object.keys(access_date_parts).length)
         payload.access_date_parts = access_date_parts;

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { FiArrowLeft, FiFileText, FiPlus, FiSettings } from "react-icons/fi";
@@ -35,6 +35,7 @@ import {
 
 const GOALS_STORAGE_KEY = "grammar_goals";
 const DICTIONARY_STORAGE_KEY = "grammar_dictionary";
+const DICTIONARY_SYNC_KEY = "grammar_dictionary_pending_sync";
 
 interface CheckedDoc {
   /** Current document text — mutates only through applyFix. */
@@ -42,6 +43,17 @@ interface CheckedDoc {
   issues: ClientIssue[];
   /** Complete backend correction after its internal verification rounds. */
   verifiedText?: string;
+}
+
+function changedParagraph(previous: string, next: string) {
+  if (!previous || previous === next) return { text: next, start: 0, incremental: false };
+  const nextParagraphs = [...next.matchAll(/(?:^|\n\s*\n)([^]*?)(?=\n\s*\n|$)/g)];
+  const changed = nextParagraphs.filter((match) => !previous.includes(match[1]));
+  if (changed.length !== 1) return { text: next, start: 0, incremental: false };
+  const match = changed[0];
+  const text = match[1].trim();
+  const start = next.indexOf(text, match.index ?? 0);
+  return text.length >= 10 ? { text, start, incremental: true } : { text: next, start: 0, incremental: false };
 }
 
 /** Keep only issues whose offsets still slice to their snippet (belt-and-braces). */
@@ -77,6 +89,9 @@ const GrammarCheckerTool: React.FC = () => {
   const [seenIssueIds, setSeenIssueIds] = useState<string[]>([]);
 
   const { gateOpen, closeGate, guardAiClick } = useGuestGate();
+  const requestControllerRef = useRef<AbortController | null>(null);
+  const lastCheckedTextRef = useRef("");
+  useEffect(() => () => requestControllerRef.current?.abort(), []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -143,11 +158,24 @@ const GrammarCheckerTool: React.FC = () => {
           { words },
           { headers: authHeaders },
         )
-        .catch(() => {
-          /* best-effort account sync; localStorage remains the fallback */
-        });
+        .then(() => localStorage.removeItem(DICTIONARY_SYNC_KEY))
+        .catch(() => localStorage.setItem(DICTIONARY_SYNC_KEY, JSON.stringify(words)));
     }
   };
+
+  useEffect(() => {
+    if (!token) return;
+    const flush = () => {
+      try {
+        const pending = JSON.parse(localStorage.getItem(DICTIONARY_SYNC_KEY) || "null");
+        if (!Array.isArray(pending)) return;
+        void axios.put(`${process.env.NEXT_PUBLIC_NGROX_URL}/tools/grammar-check/dictionary`, { words: pending }, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } })
+          .then(() => localStorage.removeItem(DICTIONARY_SYNC_KEY)).catch(() => undefined);
+      } catch { localStorage.removeItem(DICTIONARY_SYNC_KEY); }
+    };
+    flush(); window.addEventListener("online", flush);
+    return () => window.removeEventListener("online", flush);
+  }, [token]);
 
   const showApiError = (err: any, fallback: string) => {
     const status = err?.response?.status;
@@ -203,24 +231,29 @@ const GrammarCheckerTool: React.FC = () => {
       setLoading(true);
       setShowRecheckNote(false);
       try {
+        requestControllerRef.current?.abort();
+        const controller = new AbortController(); requestControllerRef.current = controller;
+        const requestSlice = changedParagraph(lastCheckedTextRef.current, text);
         const response = await axios.post(
           `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/grammar-check`,
           {
-            text,
+            text: requestSlice.text,
+            ...(requestSlice.incremental ? { scope: "paragraph", document_offset: requestSlice.start } : {}),
             ...goals,
             dictionary,
             settled_phrases: settled.slice(-100),
             known_issue_keys: seenIssueIds.slice(-500),
           },
-          { headers: authHeaders },
+          { headers: authHeaders, signal: controller.signal },
         );
         const data = (response.data?.data ??
           response.data) as GrammarCheckResponse;
-        const issues = toClientIssues(text, data.issues ?? []);
+        const issues = toClientIssues(requestSlice.text, data.issues ?? []).map((issue) => ({ ...issue, start: issue.start + requestSlice.start, end: issue.end + requestSlice.start }));
+        lastCheckedTextRef.current = text;
         setDoc({
           text,
           issues,
-          verifiedText:
+          verifiedText: !requestSlice.incremental &&
             typeof data.corrected_text === "string"
               ? data.corrected_text
               : undefined,
@@ -451,6 +484,7 @@ const GrammarCheckerTool: React.FC = () => {
     // New document, new lineage — forget the convergence memory.
     setSettled([]);
     setSeenIssueIds([]);
+    lastCheckedTextRef.current = "";
   };
 
   /** Back to the input view, carrying the edited document along. */

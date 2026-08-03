@@ -1,12 +1,7 @@
 import { FC } from "react";
 import { Metadata } from "next";
-import { content } from "./content";
-import MainLayout from "@/app/MainLayout";
-import Hero from "@/app/components/Hero/Hero";
-import ToolsGrid from "@/app/components/ToolsGrid/ToolsGrid";
-import ToolsHero from "@/app/components/ToolsHero/ToolsHero";
-import BreadCrumbs from "@/app/components/BreadCrumbs/BreadCrumbs";
 import ProductSchema from "@/app/components/ProductSchema";
+import MilesConverter from "./MilesConverter";
 // import Qualities from "@/app/components/Qualities/Qualities";
 // import SiteReviews from "@/app/components/SiteReviews/SiteReviews";
 // import AcademicPartner from "@/app/components/AcademicPartner/AcademicPartner";
@@ -28,15 +23,13 @@ const Page: FC<PageProps> = ({ }) => {
 
   // return <div>test</div>
   return (
-    <MainLayout>
+    <>
       <ProductSchema
         productTitle="Miles to Millimeters Converter | Free Academic Conversion Tool"
         metaDescription="Convert miles to millimeters accurately with our free academic conversion tool. Quick and easy distance conversions for students and researchers."
         pageUrl={`${baseUrl}/tools/miles-to-millimeters`}
       />
-      {/* <BreadCrumbs /> */}
-      <BreadCrumbs pageName="Miles to Millimeters" />
-      <ToolsHero content={content.heroContent} />
+      <MilesConverter />
       {/* <Hero content={content.heroContent} /> */}
       {/* <ToolsGrid
         mainHeading={content.conversionTools.mainheading}
@@ -68,7 +61,7 @@ const Page: FC<PageProps> = ({ }) => {
       <CustomerReviews btnText={content.btnText}/>
       <Subjects btnText={content.btnText} mainHeading={content.subjects.mainHeading} content={content.subjects.subjectsContent}/>
       <Faq content={content.faqContent} /> */}
-    </MainLayout>
+    </>
   );
 };
 export default Page;

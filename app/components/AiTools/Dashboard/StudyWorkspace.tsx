@@ -1,6 +1,7 @@
 "use client";
 
 import { ChangeEvent, ReactNode, useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
@@ -33,6 +34,7 @@ import {
   streamStudyTutor,
   StudyArtifactType,
   StudySourceIndexStatus,
+  streamStudySourceStatuses,
   TutorAttachmentInput,
   TutorMessageDto,
 } from "@/app/utils/studyApiClient";
@@ -44,7 +46,9 @@ import {
   StudyRecordingResult,
   StudyRecordingSnapshot,
 } from "@/app/lib/client/studyRecording";
-import StudyQuizPanel from "@/app/components/AiTools/Dashboard/StudyQuizPanel";
+const StudyQuizPanel = dynamic(() => import("@/app/components/AiTools/Dashboard/StudyQuizPanel"), {
+  loading: () => <div className="min-h-72 animate-pulse rounded-xl bg-gray-100" aria-label="Loading quiz" />,
+});
 
 // Learning modes were removed from the UI; generation/tutor now always run in
 // the default "research" mode (the backend still accepts a mode param).
@@ -649,14 +653,18 @@ export default function StudyWorkspace() {
   // While any source is still indexing (background embedding not yet finished),
   // poll the session so the status badge flips from "Indexing…" to "Ready"
   // without a manual refresh. Stops as soon as nothing is pending.
+  const hasPendingSources = sourceStatuses.some((s) => s.indexStatus === "pending");
   useEffect(() => {
-    const anyPending = sourceStatuses.some((s) => s.indexStatus === "pending");
-    if (!anyPending || !sessionId) return;
-    const timer = window.setTimeout(() => {
-      setRefreshTick((prev) => prev + 1);
-    }, 4000);
-    return () => window.clearTimeout(timer);
-  }, [sourceStatuses, sessionId]);
+    if (!hasPendingSources || !sessionId) return;
+    const controller = new AbortController();
+    void streamStudySourceStatuses(sessionId, (statuses) => {
+      setSourceStatuses(statuses);
+      if (!statuses.some((source) => source.indexStatus === "pending")) setRefreshTick((prev) => prev + 1);
+    }, controller.signal).catch(() => {
+      if (!controller.signal.aborted) setRefreshTick((prev) => prev + 1);
+    });
+    return () => controller.abort();
+  }, [hasPendingSources, sessionId]);
 
   useEffect(() => {
     const onSourceAdded = (event: Event) => {

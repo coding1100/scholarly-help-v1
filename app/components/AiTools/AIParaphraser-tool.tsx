@@ -1,6 +1,6 @@
 "use client";
 
-import React, { FC, useEffect, useState } from "react";
+import React, { FC, useEffect, useMemo, useState } from "react";
 import { FaChevronDown } from "react-icons/fa";
 import TextSummarizerInput from "./TextSummarizerInput";
 import ResultDisplay from "./ResultDisplay";
@@ -12,6 +12,7 @@ import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 import { getAccessToken } from "@/app/lib/authSession";
+import { useLatestAbortController } from "@/app/lib/client/toolOptimization";
 
 interface AIParaphraserProp {
   setFlag: (value: boolean) => void;
@@ -33,6 +34,15 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag, variant = "default" }) 
   const [file, setFile] = useState<File | null>(null);
   const [wordLimitExceeded, setWordLimitExceeded] = useState(false);
   const { gateOpen, closeGate, guardAiClick } = useGuestGate();
+  const nextController = useLatestAbortController();
+  const comparison = useMemo(() => {
+    const words = (value: string) => new Set(value.toLowerCase().match(/[a-z0-9']+/g) || []);
+    const before = words(inputText); const after = words(resultText);
+    if (!resultText || before.size === 0) return null;
+    const overlap = [...before].filter((word) => after.has(word)).length;
+    const union = new Set([...before, ...after]).size || 1;
+    return { retained: Math.round((overlap / union) * 100), changed: Math.round((1 - overlap / Math.max(1, before.size)) * 100) };
+  }, [inputText, resultText]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -54,6 +64,7 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag, variant = "default" }) 
     // Clear any prior result so stale output isn't shown during/after a new run.
     setResultText("");
     setSubmitting(true);
+    const controller = nextController();
 
     try {
       const response = await axios.post(
@@ -70,6 +81,7 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag, variant = "default" }) 
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
+          signal: controller.signal,
         },
       );
       const paraphrased = response.data?.data?.paraphrased_text ?? "";
@@ -265,17 +277,13 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag, variant = "default" }) 
           </div>
 
           {/* --- right column : result --- */}
-          <ResultDisplay
-            resultText={resultText}
-            title="Result"
-            onCopy={(txt) =>
-              navigator.clipboard
-                .writeText(txt)
-                .then(() => toast.success("Copied to clipboard!"))
-                .catch(() => toast.error("Failed to copy."))
-            }
-            loading={isSubmitting}
-          />
+          <div className="min-w-0">
+            {comparison && <div className="mx-4 mt-3 flex gap-2 text-xs" aria-label="Paraphrase comparison">
+              <span className="rounded-full bg-blue-50 px-3 py-1 text-blue-700">Semantic overlap {comparison.retained}%</span>
+              <span className="rounded-full bg-violet-50 px-3 py-1 text-violet-700">Vocabulary changed {comparison.changed}%</span>
+            </div>}
+            <ResultDisplay resultText={resultText} title="Result" onCopy={(txt) => navigator.clipboard.writeText(txt).then(() => toast.success("Copied to clipboard!")).catch(() => toast.error("Failed to copy."))} loading={isSubmitting} />
+          </div>
         </div>
       </div>
       {!isLanding && (

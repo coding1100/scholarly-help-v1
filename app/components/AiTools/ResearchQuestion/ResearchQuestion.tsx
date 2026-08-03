@@ -9,6 +9,7 @@ import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 import { getAccessToken } from "@/app/lib/authSession";
+import { rankAcademicText, useLatestAbortController } from "@/app/lib/client/toolOptimization";
 
 interface ResearchQuestionProps {
   setFlag: (value: boolean) => void;
@@ -85,6 +86,7 @@ const ResearchQuestion: FC<ResearchQuestionProps> = ({
   const [error, setError] = useState<string>("");
 
   const { gateOpen, closeGate, guardAiClick } = useGuestGate();
+  const nextController = useLatestAbortController();
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -120,6 +122,7 @@ const ResearchQuestion: FC<ResearchQuestionProps> = ({
       setQuestions([]);
 
       try {
+      const controller = nextController();
       const payload: {
         topic?: string;
         keywords?: string;
@@ -161,13 +164,15 @@ const ResearchQuestion: FC<ResearchQuestionProps> = ({
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
+        signal: controller.signal,
       });
 
       // Backend wraps responses as { success, message, data }
       const responsePayload = response.data?.data ?? response.data;
 
-      if (responsePayload?.status === "success" && responsePayload?.questions) {
-        setQuestions(responsePayload.questions);
+      const ranked = rankAcademicText(responsePayload?.questions, "question");
+      if (responsePayload?.status === "success" && ranked.length > 0) {
+        setQuestions(ranked.map((item) => item.text));
         setFlag(true);
         toast.success("Research questions generated successfully!");
       } else {
@@ -444,6 +449,7 @@ const ResearchQuestion: FC<ResearchQuestionProps> = ({
                 >
                   <p className="flex-1 text-gray-800 dark:text-gray-100 pr-4 transition-colors duration-300">
                     {index + 1}. {question}
+                    <span className="ml-2 rounded-full bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">Researchability {rankAcademicText([question], "question")[0]?.score ?? 0}</span>
                   </p>
                   <button
                     onClick={() => handleCopyQuestion(question)}
