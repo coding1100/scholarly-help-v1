@@ -1,15 +1,16 @@
 "use client";
 
-import React, { FC, useEffect, useState } from "react";
+import React, { FC, useState } from "react";
 import { FaRegCopy } from "react-icons/fa";
-import axios from "axios";
 import toast from "react-hot-toast";
+import dynamic from "next/dynamic";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
-import { useGuestGate } from "@/app/lib/client/useGuestGate";
-import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
-import StemSolver from "./StemSolver";
-import { getAccessToken } from "@/app/lib/authSession";
+
+const StemSolver = dynamic(() => import("./StemSolver"), {
+  ssr: false,
+  loading: () => <div className="p-8 text-center text-sm text-gray-500">Loading STEM solver…</div>,
+});
 
 interface MathSolverProps {
   setFlag: (value: boolean) => void;
@@ -37,7 +38,6 @@ interface SolverResponse {
 }
 
 const MathSolver: FC<MathSolverProps> = ({ setFlag }) => {
-  const [token, setToken] = useState<string | null>(null);
   const [solverMode, setSolverMode] = useState<"triangle" | "stem">("triangle");
   const [sideA, setSideA] = useState<string>("");
   const [sideB, setSideB] = useState<string>("");
@@ -45,13 +45,6 @@ const MathSolver: FC<MathSolverProps> = ({ setFlag }) => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [result, setResult] = useState<SolverResponse | null>(null);
   const [error, setError] = useState<string>("");
-  const { gateOpen, closeGate, guardAiClick } = useGuestGate();
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setToken(getAccessToken());
-    }
-  }, []);
 
   const handleClear = () => {
     setSideA("");
@@ -82,7 +75,7 @@ const MathSolver: FC<MathSolverProps> = ({ setFlag }) => {
     } = {};
 
     if (sideA.trim()) {
-      const aValue = parseFloat(sideA.trim());
+      const aValue = Number(sideA.trim());
       if (isNaN(aValue) || aValue <= 0) {
         setError("Side 'a' must be a positive number.");
         toast.error("Side 'a' must be a positive number.");
@@ -91,7 +84,7 @@ const MathSolver: FC<MathSolverProps> = ({ setFlag }) => {
       payload.a = aValue;
     }
     if (sideB.trim()) {
-      const bValue = parseFloat(sideB.trim());
+      const bValue = Number(sideB.trim());
       if (isNaN(bValue) || bValue <= 0) {
         setError("Side 'b' must be a positive number.");
         toast.error("Side 'b' must be a positive number.");
@@ -100,7 +93,7 @@ const MathSolver: FC<MathSolverProps> = ({ setFlag }) => {
       payload.b = bValue;
     }
     if (sideC.trim()) {
-      const cValue = parseFloat(sideC.trim());
+      const cValue = Number(sideC.trim());
       if (isNaN(cValue) || cValue <= 0) {
         setError("Side 'c' must be a positive number.");
         toast.error("Side 'c' must be a positive number.");
@@ -109,49 +102,44 @@ const MathSolver: FC<MathSolverProps> = ({ setFlag }) => {
       payload.c = cValue;
     }
 
-    // Guests get a small number of free AI actions across all tools; the gate
-    // opens instead of calling the AI once the allowance is used up.
-    guardAiClick(async () => {
-      trackToolGenerate({ toolName: "Math Solver" });
+      trackToolGenerate({ toolName: "Math Solver (Local)" });
       setIsSubmitting(true);
       setError("");
       setResult(null);
 
       try {
-        const response = await axios.post(
-          `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/math-solver`,
-          payload,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          },
-        );
-
-        // Backend wraps responses as { success, message, data }
-        const responsePayload = response.data?.data ?? response.data;
-
-        if (responsePayload?.status === "success") {
-          setResult(responsePayload);
-          setFlag(true);
-          toast.success("Triangle solved successfully!");
+        const { a, b, c } = payload;
+        let solved: { a: number; b: number; c: number };
+        let missing: "a" | "b" | "c";
+        if (a === undefined) {
+          if (b === undefined || c === undefined || c <= b) throw new Error("Hypotenuse c must be greater than side b.");
+          solved = { a: Math.sqrt(c * c - b * b), b, c }; missing = "a";
+        } else if (b === undefined) {
+          if (c === undefined || c <= a) throw new Error("Hypotenuse c must be greater than side a.");
+          solved = { a, b: Math.sqrt(c * c - a * a), c }; missing = "b";
         } else {
-          setError("Failed to solve the triangle. Please try again.");
-          toast.error("Failed to solve the triangle.");
+          solved = { a, b, c: Math.hypot(a, b) }; missing = "c";
         }
-      } catch (error: any) {
-        console.error("Error solving triangle:", error);
-        const errorMessage =
-          error?.response?.data?.message ||
-          error?.message ||
-          "Something went wrong. Please try again.";
-        setError(errorMessage);
-        toast.error(errorMessage);
+        const side = (value: number): SideResult => ({ decimal: value, radical: null });
+        setResult({
+          status: "success", input: payload,
+          result: { a: side(solved.a), b: side(solved.b), c: side(solved.c) },
+          formula: "a² + b² = c²",
+          steps: [
+            `Identify ${missing} as the unknown side.`,
+            missing === "c" ? "Use c = √(a² + b²)." : `Rearrange the Pythagorean theorem to solve for ${missing}.`,
+            `${missing} = ${solved[missing].toFixed(6)}`,
+          ],
+        });
+        setFlag(true);
+        toast.success("Triangle solved locally.");
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Could not solve this triangle.";
+        setError(message);
+        toast.error(message);
       } finally {
         setIsSubmitting(false);
       }
-    });
   };
 
   const handleCopyResult = async (text: string) => {
@@ -524,7 +512,6 @@ const MathSolver: FC<MathSolverProps> = ({ setFlag }) => {
           triangle problems.
         </q>
       </div>
-      <GuestAuthGateModal open={gateOpen} onClose={closeGate} />
     </div>
   );
 };

@@ -191,6 +191,9 @@ export default function ResultsSidebar({
         <div className="mt-1 text-xs text-gray-400 dark:text-gray-500">
           {human}% human-like content
         </div>
+        <div className="mt-2 text-xs text-gray-400 dark:text-gray-500" title="Detector model and engine versions">
+          Model {result.meta.model_version} · Engine {result.meta.engine_version} · {result.meta.latency_ms} ms
+        </div>
         <div className="mt-4 text-left">
           <div className="pb-1.5 text-xs text-gray-400 dark:text-gray-500">
             Estimated composition across {result.meta.words} analyzed words

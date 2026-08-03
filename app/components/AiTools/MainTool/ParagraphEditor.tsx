@@ -615,6 +615,8 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
   const referencesSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
+  const autosaveVersionRef = useRef(0);
+  const autosaveChainRef = useRef<Promise<unknown>>(Promise.resolve());
   const referencesLoadedRef = useRef(false);
   const suggestionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSuggestionKeyRef = useRef("");
@@ -1134,10 +1136,16 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
       }
 
       autosaveTimerRef.current = setTimeout(() => {
+        const version = ++autosaveVersionRef.current;
         const html = `${editor.getHTML()}${serializeReferences(
           referencesRef.current,
         )}`;
-        void updateDocumentContent(documentId, html).catch((error) => {
+        // Serialize writes and skip a queued stale snapshot. This prevents a
+        // slower older request from overwriting a newer edit.
+        autosaveChainRef.current = autosaveChainRef.current.then(() => {
+          if (version !== autosaveVersionRef.current) return;
+          return updateDocumentContent(documentId, html, version);
+        }).catch((error) => {
           console.error(
             "Autosave failed:",
             getAcademicErrorMessage(error, "Could not autosave document."),

@@ -113,6 +113,24 @@ export function detectorContentShare(result: DetectionResponse): number {
   );
 }
 
+const percent = (value: number) => Math.min(100, Math.max(0, Number.isFinite(value) ? value : 0));
+
+/** Runtime boundary for model output: clamps probabilities and drops invalid segments. */
+export function normalizeDetectionResponse(result: DetectionResponse): DetectionResponse {
+  return {
+    ...result,
+    verdict: {
+      ...result.verdict,
+      ai_percent: percent(result.verdict.ai_percent), human_percent: percent(result.verdict.human_percent),
+      ai_likelihood_percent: result.verdict.ai_likelihood_percent === undefined ? undefined : percent(result.verdict.ai_likelihood_percent),
+      human_likelihood_percent: result.verdict.human_likelihood_percent === undefined ? undefined : percent(result.verdict.human_likelihood_percent),
+      confidence: Math.min(1, Math.max(0, result.verdict.confidence || 0)),
+    },
+    breakdown: { ai: percent(result.breakdown.ai), mixed: percent(result.breakdown.mixed), human: percent(result.breakdown.human) },
+    segments: result.segments?.filter((segment) => typeof segment.text === "string" && Number.isFinite(segment.start) && Number.isFinite(segment.end)).map((segment) => ({ ...segment, prob_ai: Math.min(1, Math.max(0, segment.prob_ai || 0)) })),
+  };
+}
+
 export function detectorHumanContentShare(result: DetectionResponse): number {
   return (
     result.verdict.human_content_share_percent ??

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { FiCopy, FiCheck } from "react-icons/fi";
@@ -20,6 +20,7 @@ import {
 } from "@/app/components/AiTools/AiDetectorTool/types";
 import { useDetectorConfig } from "@/app/components/AiTools/AiDetectorTool/useDetectorConfig";
 import { getAccessToken } from "@/app/lib/authSession";
+import { cancelJob, waitForJob } from "@/app/lib/client/jobStream";
 
 type HumanizerTone = "natural" | "simple" | "polished" | "academic" | "custom";
 type RewriteIntensity = "normal" | "moderate" | "full";
@@ -149,66 +150,6 @@ function unwrapData<T>(payload: unknown): T {
   ) as T;
 }
 
-// Polling cadence. The run is 30-70s, so a 2s interval is frequent enough to
-// feel responsive without hammering the API. The ceiling is a safety net: it
-// stops a broken job from polling forever, and is set well above the slowest
-// observed run (~70s).
-const POLL_INTERVAL_MS = 5000;
-const POLL_TIMEOUT_MS = 180000;
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-/**
- * Poll a humanize job until it completes, fails, or the timeout is reached.
- *
- * Resolves with the finished result, or throws with a message the caller
- * surfaces via toast. The caller keeps its loading state true for the whole
- * duration of this call, so the loader never disappears mid-run.
- */
-async function pollHumanizerJob(
-  jobId: string,
-  headers: Record<string, string>,
-): Promise<HumanizerResponse> {
-  const deadline = Date.now() + POLL_TIMEOUT_MS;
-
-  while (Date.now() < deadline) {
-    await sleep(POLL_INTERVAL_MS);
-
-    let response;
-    try {
-      response = await axios.get<
-        HumanizerJobResponse | { data?: HumanizerJobResponse }
-      >(`${process.env.NEXT_PUBLIC_NGROX_URL}/tools/humanizer/jobs/${jobId}`, {
-        headers,
-      });
-    } catch (error: any) {
-      if (error?.response?.status === 429) {
-        const retryAfterSeconds = Number(
-          error.response.headers?.["retry-after"] ??
-            error.response.data?.retry_after_seconds ??
-            5,
-        );
-        await sleep(Math.min(30000, Math.max(1000, retryAfterSeconds * 1000)));
-        continue;
-      }
-      throw error;
-    }
-    const job = unwrapData<HumanizerJobResponse>(response.data);
-
-    if (job?.status === "completed" && job.result) {
-      return job.result;
-    }
-    if (job?.status === "failed") {
-      throw new Error(job.error || "Humanizing failed. Please try again.");
-    }
-    // queued / processing -> keep waiting (loader stays up).
-  }
-
-  throw new Error(
-    "Humanizing is taking longer than expected. Please try again.",
-  );
-}
-
 const HumanizerTool: React.FC = () => {
   const [token, setToken] = useState<string | null>(null);
   const [text, setText] = useState("");
@@ -218,6 +159,8 @@ const HumanizerTool: React.FC = () => {
   const [voiceSample, setVoiceSample] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<HumanizerResponse | null>(null);
+  const jobRef = useRef<{ id: string; controller: AbortController } | null>(null);
+  useEffect(() => () => jobRef.current?.controller.abort(), []);
   const [activePanel, setActivePanel] = useState<"humanized" | "ai_detection">(
     "humanized",
   );
@@ -367,13 +310,23 @@ const HumanizerTool: React.FC = () => {
           throw new Error("Humanizer did not return a job id.");
         }
 
-        const humanizerResult = await pollHumanizerJob(
-          createdJob.job_id,
-          headers,
-        );
+        const controller = new AbortController();
+        jobRef.current?.controller.abort();
+        jobRef.current = { id: createdJob.job_id, controller };
+        const humanizerResult = await waitForJob<HumanizerResponse>({
+          eventsUrl: `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/humanizer/jobs/${createdJob.job_id}/events`,
+          pollUrl: `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/humanizer/jobs/${createdJob.job_id}`,
+          headers, signal: controller.signal,
+          parse: (payload) => {
+            const job = unwrapData<HumanizerJobResponse>(payload);
+            return { ...job, result: job.result ?? undefined, error: job.error ?? undefined };
+          },
+        });
+        jobRef.current = null;
         setResult(humanizerResult);
         toast.success("Humanized successfully!");
       } catch (err: any) {
+        if (err?.name === "AbortError" || err?.name === "CanceledError") return;
         const status = err?.response?.status;
         const message =
           err?.response?.data?.message ||
@@ -588,6 +541,10 @@ const HumanizerTool: React.FC = () => {
             isDisabled={!canSubmit}
             isSecondaryDisabled={!canCheckAi}
           />
+          {loading && jobRef.current && <button type="button" className="mx-4 mb-3 rounded-md border border-red-200 px-4 py-2 text-sm font-medium text-red-700" onClick={() => {
+            const job = jobRef.current; if (!job) return; job.controller.abort(); jobRef.current = null; setLoading(false);
+            void cancelJob(`${process.env.NEXT_PUBLIC_NGROX_URL}/tools/humanizer/jobs/${job.id}`, { Authorization: `Bearer ${token}` }).catch(() => undefined);
+          }}>Cancel humanizing</button>}
         </div>
 
         {/* Result */}
@@ -642,6 +599,9 @@ const HumanizerTool: React.FC = () => {
                     <p className="whitespace-pre-wrap break-words leading-relaxed text-sm text-gray-800 dark:text-gray-100">
                       {rewrittenText}
                     </p>
+                    <div className="mt-4 rounded-md bg-gray-50 p-3 text-xs text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+                      <strong>What changed:</strong> {result?.quality_issues?.length ? result.quality_issues.join("; ") : `Adjusted sentence structure and word choice using ${result?.rewrite_intensity} intensity while ${result?.citations_preserved ? "preserving" : "reviewing"} citations.`}
+                    </div>
                   </>
                 ) : (
                   <p className="text-sm text-gray-400 dark:text-gray-500">

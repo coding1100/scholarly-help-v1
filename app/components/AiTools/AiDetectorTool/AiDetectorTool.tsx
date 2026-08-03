@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { FiPlus, FiRefreshCw } from "react-icons/fi";
@@ -16,6 +16,7 @@ import {
   type DetectionResponse,
   type EditableSegment,
   type SegmentLabel,
+  normalizeDetectionResponse,
 } from "./types";
 import { useDetectorConfig } from "./useDetectorConfig";
 import { getAccessToken } from "@/app/lib/authSession";
@@ -62,6 +63,8 @@ const AiDetectorTool: React.FC = () => {
   const [rescanNeeded, setRescanNeeded] = useState(false);
   const [log, setLog] = useState<string[]>([]);
   const detectorConfig = useDetectorConfig();
+  const feedbackQueueRef = useRef<Set<string>>(new Set());
+  const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { minimum_words: minimumWords, maximum_words: maximumWords } =
     detectorConfig;
 
@@ -82,6 +85,24 @@ const AiDetectorTool: React.FC = () => {
     Authorization: `Bearer ${token}`,
     "Content-Type": "application/json",
   };
+
+  const flushFeedback = async () => {
+    const hashes = [...feedbackQueueRef.current]; feedbackQueueRef.current.clear();
+    await Promise.allSettled(hashes.map((text_sha256) => axios.post(
+      `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/ai-detect/feedback`, { text_sha256 }, { headers: authHeaders },
+    )));
+  };
+
+  const queueFeedback = (hash: string) => {
+    feedbackQueueRef.current.add(hash);
+    if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+    feedbackTimerRef.current = setTimeout(() => void flushFeedback(), 2000);
+  };
+
+  useEffect(() => () => {
+    if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+    if (feedbackQueueRef.current.size) void flushFeedback();
+  }, []);
 
   const resetResults = () => {
     setResult(null);
@@ -139,7 +160,7 @@ const AiDetectorTool: React.FC = () => {
         { headers: authHeaders },
       );
       // Backend wraps responses as { success, message, data }
-      const data = (response.data?.data ?? response.data) as DetectionResponse;
+      const data = normalizeDetectionResponse((response.data?.data ?? response.data) as DetectionResponse);
       setResult(data);
       setSegments(
         (data.segments ?? []).map((s) => ({
@@ -325,11 +346,7 @@ const AiDetectorTool: React.FC = () => {
     void (async () => {
       try {
         const text_sha256 = await sha256Hex(text.trim());
-        await axios.post(
-          `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/ai-detect/feedback`,
-          { text_sha256 },
-          { headers: authHeaders },
-        );
+        queueFeedback(text_sha256);
       } catch {
         // Feedback is best-effort; never surface an error for it.
       }

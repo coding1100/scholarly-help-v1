@@ -136,10 +136,10 @@ export const updateDocumentTitle = (id: string, title: string) =>
     headers: { "Content-Type": "application/json" },
   });
 
-export const updateDocumentContent = (id: string, content: string) =>
+export const updateDocumentContent = (id: string, content: string, clientVersion?: number) =>
   request<DocumentRecord>(`/documents/${encodeURIComponent(id)}/content`, {
     method: "PATCH",
-    data: { content },
+    data: { content, ...(clientVersion !== undefined ? { client_version: clientVersion } : {}) },
     headers: { "Content-Type": "application/json" },
   });
 

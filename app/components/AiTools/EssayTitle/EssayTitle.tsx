@@ -9,6 +9,7 @@ import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 import { getAccessToken } from "@/app/lib/authSession";
+import { rankAcademicText, useLatestAbortController } from "@/app/lib/client/toolOptimization";
 
 interface EssayTitleProps {
   setFlag: (value: boolean) => void;
@@ -83,6 +84,7 @@ const EssayTitle: FC<EssayTitleProps> = ({ setFlag, variant = "default" }) => {
   const [titles, setTitles] = useState<string[]>([]);
   const [error, setError] = useState<string>("");
   const { gateOpen, closeGate, guardAiClick } = useGuestGate();
+  const nextController = useLatestAbortController();
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -124,6 +126,7 @@ const EssayTitle: FC<EssayTitleProps> = ({ setFlag, variant = "default" }) => {
       setTitles([]);
 
       try {
+        const controller = nextController();
         const payload: {
           topic?: string;
           keywords?: string;
@@ -167,11 +170,12 @@ const EssayTitle: FC<EssayTitleProps> = ({ setFlag, variant = "default" }) => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
+          signal: controller.signal,
         });
 
         const titles = response.data?.data?.titles;
         if (response.data?.success && Array.isArray(titles) && titles.length > 0) {
-          setTitles(titles);
+          setTitles(rankAcademicText(titles, "title").map((item) => item.text));
           setFlag(true);
           toast.success(response.data?.message || "Titles generated successfully!");
         } else {
@@ -471,6 +475,7 @@ const EssayTitle: FC<EssayTitleProps> = ({ setFlag, variant = "default" }) => {
                 >
                   <p className="flex-1 text-gray-800 dark:text-gray-100 pr-4 transition-colors duration-300">
                     {index + 1}. {title}
+                    <span className="ml-2 rounded-full bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">Quality {rankAcademicText([title], "title")[0]?.score ?? 0}</span>
                   </p>
                   <button
                     onClick={() => handleCopyTitle(title)}

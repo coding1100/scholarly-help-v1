@@ -25,6 +25,8 @@ import { sanitizeHtml } from "@/app/utils/sanitizeHtml";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 import { getAccessToken } from "@/app/lib/authSession";
+import { cachedRequest, invalidateCachedRequest } from "@/app/lib/client/toolOptimization";
+import { cancelJob, waitForJob } from "@/app/lib/client/jobStream";
 
 type OutputType = "text_summary" | "flashcards" | "slide_deck" | "audio_summary";
 
@@ -406,11 +408,13 @@ const SummarizerTool: React.FC<SummarizerToolProps> = ({
   // Tracks the job currently being polled. A new submit or unmount changes this
   // so stale polls stop updating state / clobbering newer results.
   const activeJobRef = useRef<string | null>(null);
+  const jobControllerRef = useRef<AbortController | null>(null);
   const isMountedRef = useRef(true);
   useEffect(() => {
     return () => {
       isMountedRef.current = false;
       activeJobRef.current = null;
+      jobControllerRef.current?.abort();
     };
   }, []);
 
@@ -457,10 +461,7 @@ const SummarizerTool: React.FC<SummarizerToolProps> = ({
   const fetchFolders = async () => {
     if (!token) return;
     try {
-      const response = await axios.get(`${baseUrl}/documents/folders`, {
-        headers: authHeaders,
-        params: { source_tool: SUMMARIZER_SOURCE_TOOL },
-      });
+      const response = await cachedRequest(`summarizer:folders:${token}`, () => axios.get(`${baseUrl}/documents/folders`, { headers: authHeaders, params: { source_tool: SUMMARIZER_SOURCE_TOOL } }));
       setFolders(response.data?.data || []);
     } catch {
       undefined;
@@ -471,10 +472,7 @@ const SummarizerTool: React.FC<SummarizerToolProps> = ({
     if (!token) return;
     setIsFetchingDocuments(true);
     try {
-      const response = await axios.get(`${baseUrl}/documents`, {
-        headers: authHeaders,
-        params: { source_tool: SUMMARIZER_SOURCE_TOOL },
-      });
+      const response = await cachedRequest(`summarizer:documents:${token}`, () => axios.get(`${baseUrl}/documents`, { headers: authHeaders, params: { source_tool: SUMMARIZER_SOURCE_TOOL } }), 15_000);
       setDocuments(response.data?.data || []);
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Failed to load saved documents.");
@@ -643,39 +641,32 @@ const SummarizerTool: React.FC<SummarizerToolProps> = ({
     }
     // Mark this as the active job; supersedes any earlier in-flight poll.
     activeJobRef.current = jobId;
-
-    for (let attempt = 0; attempt < 120; attempt += 1) {
-      // Stop if the component unmounted or a newer job took over.
-      if (!isMountedRef.current || activeJobRef.current !== jobId) return;
-
-      const response = await axios.get(
-        `${baseUrl}/tools/summarizer/jobs/${jobId}`,
-        { headers: authHeaders },
-      );
-
-      if (!isMountedRef.current || activeJobRef.current !== jobId) return;
-
-      const job = response.data?.data;
-      if (!job) {
-        throw new Error("Invalid job response from server.");
-      }
-      setJobMessage(`${job.status} (${job.progress || 0}%)`);
-      if (job.status === "completed") {
-        setResult(job.result);
-        if (job.result?.saved_document_id && !isAudioOnlyResult(job.result)) {
-          await fetchDocuments();
-          setIsFolderPanelOpen(true);
-        }
-        toast.success("Summary generated successfully!");
-        activeJobRef.current = null;
-        return;
-      }
-      if (job.status === "failed") {
-        throw new Error(job.error || "Summarizer job failed.");
-      }
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+    jobControllerRef.current?.abort();
+    const controller = new AbortController();
+    jobControllerRef.current = controller;
+    const result = await waitForJob<SummarizerResult>({
+      eventsUrl: `${baseUrl}/tools/summarizer/jobs/${jobId}/events`,
+      pollUrl: `${baseUrl}/tools/summarizer/jobs/${jobId}`,
+      headers: authHeaders,
+      signal: controller.signal,
+      parse: (payload) => ((payload as any)?.data ?? payload) as any,
+      onProgress: (job) => setJobMessage(`${job.status} (${job.progress || 0}%)`),
+    });
+    if (!isMountedRef.current || activeJobRef.current !== jobId) return;
+    setResult(result);
+    activeJobRef.current = null;
+    if (result.saved_document_id && !isAudioOnlyResult(result)) {
+      invalidateCachedRequest("summarizer:documents:");
+      await fetchDocuments(); setIsFolderPanelOpen(true);
     }
-    throw new Error("Summary job timed out.");
+    toast.success("Summary generated successfully!");
+  };
+
+  const cancelActiveJob = async () => {
+    const id = activeJobRef.current;
+    jobControllerRef.current?.abort(); activeJobRef.current = null;
+    setIsLoading(false); setJobMessage("Cancelled");
+    if (id) await cancelJob(`${baseUrl}/tools/summarizer/jobs/${id}`, authHeaders).catch(() => undefined);
   };
 
   const handleSummarize = async () => {
@@ -749,6 +740,7 @@ const SummarizerTool: React.FC<SummarizerToolProps> = ({
         });
         await pollJob(response.data?.data?.id);
       } catch (error: any) {
+        if (error?.name === "AbortError" || error?.name === "CanceledError") return;
         const msg = error?.response?.data?.message || error?.message || "Failed to summarize.";
         toast.error(msg);
       } finally {
@@ -758,6 +750,7 @@ const SummarizerTool: React.FC<SummarizerToolProps> = ({
   };
 
   const handleClearAllInputs = () => {
+    void cancelActiveJob();
     stopAudioSummary();
     setCurrentInputText("");
     setResult(null);
@@ -1068,6 +1061,7 @@ const SummarizerTool: React.FC<SummarizerToolProps> = ({
               isSubmitting={isLoading}
               isDisabled={isLoading || !currentInputText.trim() || inputWordsExceeded}
             />
+            {isLoading && activeJobRef.current && <button type="button" onClick={() => void cancelActiveJob()} className="mx-4 mb-3 rounded-md border border-red-200 px-4 py-2 text-sm font-medium text-red-700">Cancel generation</button>}
           </div>
         </div>
 
