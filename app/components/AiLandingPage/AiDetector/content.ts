@@ -166,6 +166,11 @@ export const aiDetectorContent: ToolLandingContent = {
       ],
     },
   },
+  watchVideo: {
+    eyebrow: "Watch video",
+    title: "How to Check AI using ScholarlyHelp AI Detector",
+    youtubeEmbedUrl: "https://www.youtube.com/embed/gnAWsmO_PPs",
+  },
   reviews: {
     eyebrow: "Student reviews",
     title: "What students say about this tool",

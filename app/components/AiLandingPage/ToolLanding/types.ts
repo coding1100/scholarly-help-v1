@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { WatchVideoContent } from "./WatchVideo";
 
 export interface LandingCard {
   icon: string;
@@ -56,6 +57,7 @@ export interface ToolLandingContent {
       steps: LandingStep[];
     };
   };
+  watchVideo?: WatchVideoContent;
   reviews: {
     eyebrow: string;
     title: string;

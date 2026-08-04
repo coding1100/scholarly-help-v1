@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import SectionPill from "@/app/components/AiLandingPage/Humanizer/SectionPill";
 import LandingFaq from "./LandingFaq";
+import WatchVideo from "./WatchVideo";
 import type { LandingStep, ToolLandingProps } from "./types";
 
 const NUMBER_COLORS = ["#8BC34A", "#26A69A", "#00BCD4", "#2196F3"];
@@ -255,6 +256,8 @@ const ToolLanding = ({ content: c, tool }: ToolLandingProps) => (
         </div>
       </div>
     </section>
+
+    {c.watchVideo ? <WatchVideo content={c.watchVideo} /> : null}
 
     <section className="bg-white py-16 md:py-20">
       <div className="mx-auto max-w-[1240px] px-4">
