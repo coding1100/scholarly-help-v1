@@ -162,6 +162,11 @@ export const mathSolverContent: ToolLandingContent = {
       ],
     },
   },
+  watchVideo: {
+    eyebrow: "Watch video",
+    title: "How to Solve Any Math or STEM Problem Instantly (Step-by-Step)",
+    youtubeEmbedUrl: "https://www.youtube.com/embed/02XHsyMdb98",
+  },
   reviews: {
     eyebrow: "Student reviews",
     title: "What students say about this tool",
