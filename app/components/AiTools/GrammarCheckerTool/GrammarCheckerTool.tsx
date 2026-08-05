@@ -536,6 +536,7 @@ const GrammarCheckerTool: React.FC = () => {
             onClear={handleClear}
             onSubmit={handleCheck}
             submitButtonText="Check my grammar"
+            submitColorClassName="bg-[#F56200] hover:bg-[#ff7a24] active:bg-[#e05800]"
             isSubmitting={loading}
             isDisabled={!text.trim() || wordCount > MAX_GRAMMAR_WORDS}
           />

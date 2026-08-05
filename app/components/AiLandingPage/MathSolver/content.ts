@@ -7,14 +7,34 @@ export const mathSolverContent: ToolLandingContent = {
     titleAccent: "Understand Every Step.",
     subtitle:
       "Type in your problem or upload a photo, and get a clear answer with every step explained, not just the final number.",
-    steps: ["Add your problem", "Read the steps", "Save your work"],
+    steps: ["Add your problem", "Read the steps", "Practice and learn"],
     toolId: "math-solver-tool",
+  },
+  beforeAfter: {
+    eyebrow: "Before vs after",
+    title: "From confusing word problems to step-by-step solutions.",
+    subtitle: "Paste your math problem and get instant, detailed answers.",
+    pasteLabel: "Original (What you paste)",
+    pasteText:
+      "Find the derivative of f(x) = 3x² + 5x - 2 and evaluate the slope when x equals four.",
+    pasteHtml:
+      "Find the derivative of <i>f(x) = 3x² + 5x - 2</i> and evaluate the slope when <i>x</i> equals four.",
+    resultLabel: "Solved (What you get)",
+    resultText:
+      "1. Identify Function: f'(x) = 3x² + 5x - 2\n2. Apply Power Rule: f'(x) = 6x + 5\n3. Evaluate at x = 4: f'(4) = 6(4) + 5 = 29",
+    resultHtml:
+      '<p><b>1. Identify Function:</b> <i>f(x) = 3x² + 5x - 2</i></p><p><b>2. Apply Power Rule:</b> <i>f\'(x) = 6x + 5</i></p><p><b>3. Evaluate at x = 4:</b> <i>f\'(4) = 6(4) + 5 = <span class="font-bold text-green-700">29</span></i></p>',
+    tags: [
+      { label: "Step-by-Step", className: "bg-green-100 text-green-800" },
+      { label: "Power Rule Applied", className: "bg-purple-100 text-purple-800" },
+      { label: "Instant Answer", className: "bg-blue-100 text-blue-800" },
+    ],
   },
   useCases: {
     eyebrow: "Use cases",
     title: "Your Personal STEM Tutor",
     subtitle:
-      "Get step-by-step solutions for math, physics, chemistry, and Pythagoras problems.",
+      "Get step-by-step solutions for math, physics, chemistry, and science problems.",
     cards: [
       {
         icon: "🧩",
