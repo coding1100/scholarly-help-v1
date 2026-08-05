@@ -12,6 +12,19 @@ export interface LandingStep {
   description: string;
 }
 
+export interface BeforeAfterContent {
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+  pasteLabel: string;
+  pasteText: string;
+  pasteHtml?: string;
+  resultLabel: string;
+  resultText: string;
+  resultHtml?: string;
+  tags?: { label: string; className: string }[];
+}
+
 export interface ToolLandingContent {
   hero: {
     badge: string;
@@ -21,6 +34,7 @@ export interface ToolLandingContent {
     steps: string[];
     toolId: string;
   };
+  beforeAfter?: BeforeAfterContent;
   useCases: {
     eyebrow: string;
     title: string;
