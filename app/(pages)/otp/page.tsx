@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import axios from "axios";
 import OTPInput from "./OTPInput";
 import ProductSchema from "@/app/components/ProductSchema";
+import { persistAccessToken } from "@/app/lib/authSession";
 
 const OTPPage = () => {
   const [otp, setOtp] = useState("");
@@ -43,11 +44,12 @@ const OTPPage = () => {
             email,
           },
         },
+        { withCredentials: true },
       );
       localStorage.removeItem("user_password");
       // Backend wraps responses as { success, message, data }
       const userData = response.data?.data ?? response.data;
-      localStorage.setItem("access_token", userData.access_token);
+      persistAccessToken(userData.access_token, userData.expires_in);
       localStorage.setItem("user_id", userData.user.user_id);
       localStorage.setItem("user_email", userData.user.email);
       localStorage.setItem("user_name", userData.user.name);
@@ -55,7 +57,6 @@ const OTPPage = () => {
       localStorage.setItem("totalTokens", userData.user.total_tokens);
       // Middleware guards /tools/* by the access_token COOKIE (not localStorage),
       // so it must be set here or the redirect below bounces back to sign-in.
-      document.cookie = `access_token=${userData.access_token}; path=/; max-age=86400`;
 
       toast.dismiss();
       toast.success(response?.data?.message || "Email verified successfully!");

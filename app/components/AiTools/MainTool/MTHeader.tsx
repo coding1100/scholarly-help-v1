@@ -1,11 +1,12 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { CgMenu } from "react-icons/cg";
 import { FaBolt } from "react-icons/fa";
 import { HiMiniClock } from "react-icons/hi2";
 import { RiSettings5Fill } from "react-icons/ri";
 import { EditorPreferencesContext, TitleContext } from "./MainToolLayout";
 import PricingPopup from "../PricingPopup";
-import DownloadFileType from "./PopupModal/DownloadFileType";
+const DownloadFileType = dynamic(() => import("./PopupModal/DownloadFileType"), { ssr: false });
 import PublishDocumentModal from "./PopupModal/PublishDocumentModal";
 interface MTHeaderProps {
   sidebarOpen: boolean;

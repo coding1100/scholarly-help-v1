@@ -1,28 +1,38 @@
 "use client";
 
 import React from "react";
-import { FiArrowLeft, FiCheck, FiCopy, FiDownload, FiList, FiX } from "react-icons/fi";
+import {
+  FiArrowLeft,
+  FiCheck,
+  FiCopy,
+  FiDownload,
+  FiList,
+  FiX,
+} from "react-icons/fi";
 import AiGauge from "@/app/components/AiTools/shared/AiGauge";
-import type { DetectionResponse, EditableSegment } from "./types";
+import {
+  detectorHumanContentShare,
+  detectorPrimaryScore,
+  type DetectionResponse,
+  type EditableSegment,
+} from "./types";
 
 export type SidebarView = "score" | "log" | "focus";
 
-/**
- * The breakdown reports the SHARE OF SENTENCES in each class — a count, not a
- * second opinion on the gauge. The gauge is the word-weighted average AI
- * probability, so the two legitimately differ (every sentence can be flagged AI
- * at ~0.67 confidence each: 100% of sentences, 67% overall). The labels say
- * "sentences" explicitly so that never reads as a contradiction.
- */
+/** Word-share composition, separate from document-level authorship likelihood. */
 const BREAKDOWN_ROWS = [
-  { key: "ai" as const, label: "Sentences flagged AI", dot: "bg-red-500" },
-  { key: "mixed" as const, label: "Sentences mixed", dot: "bg-amber-500" },
-  { key: "human" as const, label: "Sentences human-written", dot: "bg-emerald-500" },
+  { key: "ai" as const, label: "AI-like words", dot: "bg-red-500" },
+  {
+    key: "mixed" as const,
+    label: "Mixed or uncertain words",
+    dot: "bg-amber-500",
+  },
+  { key: "human" as const, label: "Human-like words", dot: "bg-emerald-500" },
 ];
 
 /**
  * Right-hand column of the results view. Three exclusive panels, mirroring the
- * approved prototype: overall score (gauge + breakdown + trust card), the
+ * approved prototype: overall score (gauge + breakdown), the
  * activity log, and the focused-sentence panel with rewrite/ignore actions.
  */
 export default function ResultsSidebar({
@@ -35,8 +45,7 @@ export default function ResultsSidebar({
   onRewriteChange,
   onCopySentence,
   copiedSentence,
-  onAutoReplace,
-  autoReplacing,
+  onReplace,
   onIgnore,
   onDownloadReport,
   downloadingReport,
@@ -50,14 +59,19 @@ export default function ResultsSidebar({
   onRewriteChange: (v: string) => void;
   onCopySentence: () => void;
   copiedSentence: boolean;
-  onAutoReplace: () => void;
-  autoReplacing: boolean;
+  onReplace: () => void;
   onIgnore: () => void;
   onDownloadReport: () => void;
   downloadingReport: boolean;
 }) {
-  const ai = result.verdict.ai_percent;
-  const [bandLo, bandHi] = result.verdict.band;
+  const ai = detectorPrimaryScore(result);
+  const human = detectorHumanContentShare(result);
+  const summary =
+    ai < 35
+      ? "This text reads as humanized"
+      : ai < 65
+        ? "This text contains mixed writing patterns"
+        : "This text contains predominantly AI-like writing patterns";
 
   const card =
     "bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg p-4 transition-colors duration-300";
@@ -69,7 +83,11 @@ export default function ResultsSidebar({
   if (view === "log") {
     return (
       <div className={card}>
-        <button type="button" className={backBtn} onClick={() => onViewChange("score")}>
+        <button
+          type="button"
+          className={backBtn}
+          onClick={() => onViewChange("score")}
+        >
           <FiArrowLeft className="h-3.5 w-3.5" /> Back to overall score
         </button>
         <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-2">
@@ -99,7 +117,11 @@ export default function ResultsSidebar({
   if (view === "focus" && focusedSegment) {
     return (
       <div className={card}>
-        <button type="button" className={backBtn} onClick={() => onViewChange("score")}>
+        <button
+          type="button"
+          className={backBtn}
+          onClick={() => onViewChange("score")}
+        >
           <FiArrowLeft className="h-3.5 w-3.5" /> Back to overall score
         </button>
         <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
@@ -129,17 +151,17 @@ export default function ResultsSidebar({
           rows={3}
           value={rewriteValue}
           onChange={(e) => onRewriteChange(e.target.value)}
-          placeholder="Type your own version, or use Auto-replace…"
+          placeholder="Type your own version…"
           className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 p-2.5 text-sm text-gray-800 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2b7fff] mb-3 resize-y"
         />
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={onAutoReplace}
-            disabled={autoReplacing}
+            onClick={onReplace}
+            disabled={!rewriteValue.trim()}
             className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium text-white bg-primary-400 hover:bg-primary-300 disabled:opacity-60 disabled:cursor-not-allowed transition-colors duration-150"
           >
-            {autoReplacing ? "Replacing…" : rewriteValue.trim() ? "Replace" : "Auto-replace"}
+            Replace
           </button>
           <button
             type="button"
@@ -149,9 +171,6 @@ export default function ResultsSidebar({
             <FiX className="h-3.5 w-3.5" /> Ignore
           </button>
         </div>
-        <p className="mt-2 text-[11px] leading-4 text-gray-400 dark:text-gray-500">
-          Auto-replace rewrites this sentence with the Humanizer.
-        </p>
       </div>
     );
   }
@@ -161,24 +180,23 @@ export default function ResultsSidebar({
     <div className="space-y-3">
       <div className={`${card} text-center`}>
         <div className="text-sm text-gray-600 dark:text-gray-300 mb-3">
-          {ai}% of this text appears to be AI-generated
+          {ai}% AI-like content detected
         </div>
         <div className="flex justify-center">
           <AiGauge percent={ai} colorByScore />
         </div>
-        <div className="mt-1 text-xs text-gray-400 dark:text-gray-500">
-          Likely range {bandLo}–{bandHi}% · confidence {result.verdict.confidence}%
+        <div className="mt-1 text-sm font-medium text-gray-600 dark:text-gray-300">
+          {summary}
         </div>
-        {/* Backend caveat (e.g. short input). Repeated here because the input-side
-            hint is gone by the time the user is reading the score. */}
-        {result.meta.warning && (
-          <div className="mt-2 text-xs font-medium text-[#fb2c36] dark:text-red-400">
-            {result.meta.warning}
-          </div>
-        )}
+        <div className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+          {human}% human-like content
+        </div>
+        <div className="mt-2 text-xs text-gray-400 dark:text-gray-500" title="Detector model and engine versions">
+          Model {result.meta.model_version} · Engine {result.meta.engine_version} · {result.meta.latency_ms} ms
+        </div>
         <div className="mt-4 text-left">
           <div className="pb-1.5 text-xs text-gray-400 dark:text-gray-500">
-            How the {result.meta.words}-word document breaks down by sentence
+            Estimated composition across {result.meta.words} analyzed words
           </div>
           {BREAKDOWN_ROWS.map((row) => (
             <div
@@ -186,7 +204,9 @@ export default function ResultsSidebar({
               className="flex items-center justify-between py-1.5 text-sm border-b border-gray-200 dark:border-gray-700 last:border-b-0"
             >
               <span className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
-                <span className={`inline-block h-2 w-2 rounded-full ${row.dot}`} />
+                <span
+                  className={`inline-block h-2 w-2 rounded-full ${row.dot}`}
+                />
                 {row.label}
               </span>
               <span className="text-gray-600 dark:text-gray-300 font-medium">
@@ -211,26 +231,6 @@ export default function ResultsSidebar({
         >
           <FiList className="h-3.5 w-3.5" /> View activity log
         </button>
-      </div>
-
-      <div className={card}>
-        <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-1.5">
-          Should you trust this score?
-        </h3>
-        <p
-          className={`text-sm leading-6 ${
-            result.trust.trustworthy
-              ? "text-gray-600 dark:text-gray-300"
-              : "text-amber-700 dark:text-amber-300"
-          }`}
-        >
-          {result.trust.trustworthy ? "Yes — " : "Be careful — "}
-          {result.trust.reason}
-        </p>
-        <p className="mt-2 text-[11px] text-gray-400 dark:text-gray-500">
-          Engine {result.meta.engine_version} · model {result.meta.model_version}
-          {result.meta.truncated ? " · input truncated to 1500 words" : ""}
-        </p>
       </div>
     </div>
   );

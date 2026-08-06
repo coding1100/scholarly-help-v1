@@ -37,7 +37,7 @@ export function computeCourse(course: Course, gradeScale: CalculatorState["grade
   const credits = clampMin(creditsRaw, 0);
 
   // Ignore non-positive credits for GPA (prevents divide-by-zero noise and matches typical calculators).
-  if (credits <= 0) return null;
+  if (credits <= 0 || credits > 100) return null;
 
   const qualityPoints = gradePoints * credits;
   return { credits, gradePoints, qualityPoints };
@@ -99,7 +99,8 @@ export function computeCumulativeTotals(state: CalculatorState): CumulativeTotal
       if (creditsRaw === null || gpaRaw === null) continue;
       const credits = clampMin(creditsRaw, 0);
       const gpa = clampMin(gpaRaw, 0);
-      if (credits <= 0) continue;
+      const maximumGradePoint = Math.max(...Object.values(state.gradeScale.pointsByLetter));
+      if (credits <= 0 || credits > 1000 || gpa > maximumGradePoint) continue;
       previousCredits += credits;
       previousQualityPoints += gpa * credits;
     }

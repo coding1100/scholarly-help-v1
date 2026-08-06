@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useCallback } from "react";
 import Script from "next/script";
 import { Toaster } from "react-hot-toast";
+import { initializeAuthSession, installAxiosAuthRefresh } from "@/app/lib/authSession";
 
 declare global {
   interface Window {
@@ -25,6 +26,12 @@ export default function ClientScripts() {
     currentPage === "/about-us" || currentPage === "/about-us/";
 
   const ShowLiveChat = isHomePage;
+
+  useEffect(() => {
+    const uninstall = installAxiosAuthRefresh();
+    void initializeAuthSession();
+    return uninstall;
+  }, []);
 
   // Memoize functions to prevent unnecessary re-renders
   const hideLiveChatWidget = useCallback(() => {

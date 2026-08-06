@@ -7,11 +7,11 @@ import Step1 from "./Step1";
 import Step2 from "./Step2";
 import Step3 from "./Step3";
 import Step4 from "./Step4";
-import { ChatResponse, sendChatMessage } from "@/app/utilities/api";
+import { ChatResponse, sendAgentTask } from "@/app/utilities/api";
+import { usePersistentState } from "@/app/lib/client/toolOptimization";
 
 export default function ExamPrepFlow() {
-    const [currentStep, setCurrentStep] = useState(1);
-    const [formData, setFormData] = useState<{
+    const [saved, setSaved] = usePersistentState<{ currentStep: number; formData: {
         examType: string;
         subject: string;
         examDate: string;
@@ -19,8 +19,13 @@ export default function ExamPrepFlow() {
         targetScore: string;
         hoursPerDay: number;
         apiResponse: ChatResponse;
-    } | null>(null);
-    const [examResponse, setExamResponse] = useState<ChatResponse | null>(null);
+    } | null; examResponse: ChatResponse | null }>("sh_exam_prep_v2", { currentStep: 1, formData: null, examResponse: null });
+    const currentStep = saved.currentStep;
+    const formData = saved.formData;
+    const examResponse = saved.examResponse;
+    const setCurrentStep = (step: number) => setSaved((value) => ({ ...value, currentStep: step }));
+    const setFormData = (data: NonNullable<typeof formData>) => setSaved((value) => ({ ...value, formData: data }));
+    const setExamResponse = (response: ChatResponse) => setSaved((value) => ({ ...value, examResponse: response }));
     const [isLoadingExam, setIsLoadingExam] = useState(false);
     const [examResults, setExamResults] = useState<{
         totalQuestions: number;
@@ -52,9 +57,10 @@ export default function ExamPrepFlow() {
         setIsLoadingExam(true);
         try {
             const currentLevel = formData.knowledgeLevel.toLowerCase();
-            const message = `Generate a practice exam for ${formData.examType} in ${formData.subject}. \nUse the create_practice_exam tool with:\n- exam_type: "${formData.examType}"\n- subject: "${formData.subject}"\n- num_questions: 20\n- time_limit: 60\n- difficulty: "${currentLevel}"`;
-
-            const response = await sendChatMessage(message, conversationId);
+            const response = await sendAgentTask({
+                task: "create_practice_exam",
+                parameters: { exam_type: formData.examType, subject: formData.subject, num_questions: 20, time_limit: 60, difficulty: currentLevel },
+            }, conversationId);
             setExamResponse(response);
             setCurrentStep(3);
         } catch (error: any) {

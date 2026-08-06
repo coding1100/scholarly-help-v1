@@ -1,3 +1,5 @@
+import { fetchWithAuthRetry } from "@/app/lib/authSession";
+
 const STUDY_API_BASE = "/api/study";
 const ACTIVE_STUDY_SESSION_KEY = "sh_active_study_session_id_v1";
 
@@ -107,23 +109,12 @@ function getUserId() {
   return guestId;
 }
 
-function getAccessToken() {
-  if (typeof window === "undefined") return "";
-  return (
-    localStorage.getItem("access_token") ||
-    localStorage.getItem("authToken") ||
-    ""
-  );
-}
-
 async function callStudyApi<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = getAccessToken();
-  const res = await fetch(`${STUDY_API_BASE}${path}`, {
+  const res = await fetchWithAuthRetry(`${STUDY_API_BASE}${path}`, {
     ...init,
     headers: {
       "Content-Type": "application/json",
       "x-user-id": getUserId(),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(init?.headers || {}),
     },
   });
@@ -218,17 +209,15 @@ export async function addStudySourceFile(
   sessionId: string,
   input: { kind?: StudySourceKind; name: string; file: File },
 ) {
-  const token = getAccessToken();
   const form = new FormData();
   form.set("kind", input.kind || "file");
   form.set("name", input.name);
   form.set("file", input.file);
 
-  const res = await fetch(`${STUDY_API_BASE}/sessions/${sessionId}/sources`, {
+  const res = await fetchWithAuthRetry(`${STUDY_API_BASE}/sessions/${sessionId}/sources`, {
     method: "POST",
     headers: {
       "x-user-id": getUserId(),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: form,
   });
@@ -244,6 +233,28 @@ export async function getStudySessionDetails(sessionId: string) {
   return callStudyApi<StudySessionDetailsDto>(`/sessions/${sessionId}`, {
     method: "GET",
   });
+}
+
+export async function streamStudySourceStatuses(
+  sessionId: string,
+  onStatuses: (statuses: Array<{ id: string; name: string; indexStatus?: StudySourceIndexStatus }>) => void,
+  signal: AbortSignal,
+) {
+  const response = await fetchWithAuthRetry(`${STUDY_API_BASE}/sessions/${sessionId}/events`, {
+    headers: { "x-user-id": getUserId(), Accept: "text/event-stream" }, signal, cache: "no-store",
+  });
+  if (!response.ok || !response.body) throw new Error("Could not open source status stream.");
+  const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = "";
+  while (!signal.aborted) {
+    const { done, value } = await reader.read(); if (done) return;
+    buffer += decoder.decode(value, { stream: true });
+    const events = buffer.split("\n\n"); buffer = events.pop() || "";
+    for (const event of events) {
+      if (!event.includes("event: source-status")) continue;
+      const data = event.split("\n").find((line) => line.startsWith("data:"))?.slice(5).trim();
+      if (data) onStatuses(JSON.parse(data));
+    }
+  }
 }
 
 export async function updateStudySessionTitle(sessionId: string, title: string) {
@@ -320,13 +331,11 @@ export async function streamStudyTutor(
     onError?: (message: string) => void;
   },
 ) {
-  const token = getAccessToken();
-  const res = await fetch(`${STUDY_API_BASE}/sessions/${sessionId}/tutor`, {
+  const res = await fetchWithAuthRetry(`${STUDY_API_BASE}/sessions/${sessionId}/tutor`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "x-user-id": getUserId(),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify({
       message,
@@ -412,4 +421,3 @@ export async function streamStudyTutor(
     throw new Error(fallback);
   }
 }
-

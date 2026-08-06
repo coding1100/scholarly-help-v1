@@ -130,6 +130,7 @@ export default function Step3({
   const [isTimeUp, setIsTimeUp] = useState(false);
   const [showTimeUpModal, setShowTimeUpModal] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const deadlineRef = useRef(0);
 
   // Parse questions on mount and calculate time limit
   useEffect(() => {
@@ -138,8 +139,19 @@ export default function Step3({
     // Calculate time: 30 seconds per question
     const calculatedTime = parsed.length * 30;
     setTimeLimit(calculatedTime);
-    setTimeRemaining(calculatedTime);
+    const storageKey = `sh_exam_attempt_${apiResponse.conversation_id}`;
+    try {
+      const saved = JSON.parse(localStorage.getItem(storageKey) || "null") as { deadline?: number; answers?: Array<[number, string]> } | null;
+      deadlineRef.current = saved?.deadline && saved.deadline > Date.now() ? saved.deadline : Date.now() + calculatedTime * 1000;
+      if (Array.isArray(saved?.answers)) setSelectedAnswers(new Map(saved.answers));
+    } catch { deadlineRef.current = Date.now() + calculatedTime * 1000; }
+    setTimeRemaining(Math.max(0, Math.ceil((deadlineRef.current - Date.now()) / 1000)));
   }, [apiResponse.message]);
+
+  useEffect(() => {
+    if (!apiResponse.conversation_id || !deadlineRef.current) return;
+    localStorage.setItem(`sh_exam_attempt_${apiResponse.conversation_id}`, JSON.stringify({ deadline: deadlineRef.current, answers: [...selectedAnswers] }));
+  }, [apiResponse.conversation_id, selectedAnswers]);
 
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -174,6 +186,7 @@ export default function Step3({
         : 0;
 
     if (onComplete) {
+      localStorage.removeItem(`sh_exam_attempt_${apiResponse.conversation_id}`);
       onComplete({
         totalQuestions: questions.length,
         correctAnswers: correctCount,
@@ -183,12 +196,14 @@ export default function Step3({
     }
   }, [questions, selectedAnswers, onComplete]);
 
-  // Timer countdown - only start when we have questions and time is set
+  // Derive remaining time from a fixed deadline so background-tab throttling
+  // cannot make the exam clock drift.
   useEffect(() => {
     if (timeRemaining > 0 && !isTimeUp && questions.length > 0) {
       timerRef.current = setInterval(() => {
-        setTimeRemaining((prev) => {
-          if (prev <= 1) {
+        setTimeRemaining(() => {
+          const next = Math.max(0, Math.ceil((deadlineRef.current - Date.now()) / 1000));
+          if (next === 0) {
             setIsTimeUp(true);
             setShowTimeUpModal(true);
             // Auto-submit after 2 seconds
@@ -197,9 +212,9 @@ export default function Step3({
             }, 2000);
             return 0;
           }
-          return prev - 1;
+          return next;
         });
-      }, 1000);
+      }, 250);
     }
 
     return () => {

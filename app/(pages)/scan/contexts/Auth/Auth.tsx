@@ -7,6 +7,7 @@ import React, {
   createContext,
   useState,
 } from "react";
+import { getScanAccessToken } from "@/app/lib/scanAccessTokenStore";
 
 interface AuthContextProps {
   isAuthenticated: boolean;
@@ -22,10 +23,7 @@ interface AuthProviderProps {
 export const Auth = createContext<AuthContextProps | undefined>(undefined);
 
 const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
-  let token = "";
-  if (typeof localStorage !== "undefined") {
-    token = localStorage.getItem("authToken") || "";
-  }
+  const token = getScanAccessToken();
 
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!!token);
   const [authToken, setAuthToken] = useState(token);
