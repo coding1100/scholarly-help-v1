@@ -5,6 +5,7 @@ import { useEffect, useCallback } from "react";
 import Script from "next/script";
 import { Toaster } from "react-hot-toast";
 import { initializeAuthSession, installAxiosAuthRefresh } from "@/app/lib/authSession";
+import { hasRefreshSessionHint } from "@/app/lib/accessTokenStore";
 
 declare global {
   interface Window {
@@ -29,7 +30,13 @@ export default function ClientScripts() {
 
   useEffect(() => {
     const uninstall = installAxiosAuthRefresh();
-    void initializeAuthSession();
+    // Only bootstrap a session for visitors who have signed in on this device.
+    // Without the hint the refresh is guaranteed to fail, and it still costs a
+    // cross-origin DNS + TLS + CORS preflight (~1150ms in) on anonymous landing
+    // traffic. Signed-in reloads are unaffected: the hint is written whenever an
+    // access token is persisted. Any real backend request still refreshes on
+    // demand through the axios interceptor installed above.
+    if (hasRefreshSessionHint()) void initializeAuthSession();
     return uninstall;
   }, []);
 
