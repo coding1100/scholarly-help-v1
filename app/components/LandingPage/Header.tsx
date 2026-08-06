@@ -347,10 +347,11 @@ export default function Header() {
     });
   };
 
-  useEffect(() => {
-    // Warm common routes to reduce page-switch delay from header links.
-    navItems.forEach((item) => prefetchRoute(item.href));
-  }, []);
+  // Routes are prefetched on intent instead of on mount: hovering a nav item
+  // (desktop) or opening the mobile menu both call prefetchNavItem, which
+  // fires well before a click. Warming every route on mount cost ~111KB of
+  // RSC payloads — 25% of this page's transfer weight — plus seven full
+  // server renders, all inside the window that decides LCP.
 
   return (
     <header
