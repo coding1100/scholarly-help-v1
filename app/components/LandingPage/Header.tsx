@@ -347,10 +347,11 @@ export default function Header() {
     });
   };
 
-  useEffect(() => {
-    // Warm common routes to reduce page-switch delay from header links.
-    navItems.forEach((item) => prefetchRoute(item.href));
-  }, []);
+  // Routes are prefetched on intent instead of on mount: hovering a nav item
+  // (desktop) or opening the mobile menu both call prefetchNavItem, which
+  // fires well before a click. Warming every route on mount cost ~111KB of
+  // RSC payloads — 25% of this page's transfer weight — plus seven full
+  // server renders, all inside the window that decides LCP.
 
   return (
     <header
@@ -393,8 +394,13 @@ export default function Header() {
             )}
           </button>
         )}
-        {/* Logo */}
-        <Link href="/">
+        {/* Logo. prefetch={false}: the logo sits above the fold, so Next would
+            prefetch the whole homepage RSC payload plus its chunks during the
+            window that decides first paint. Measured on /take-my-class/, that
+            request finishing late tracked paint slipping from ~960ms to
+            ~2540ms. Clicking the logo mid-session is rare enough to pay for
+            with a normal navigation. */}
+        <Link href="/" prefetch={false}>
           {/* <Image
             src={LogoSmall}
             alt="Scholarly Help Logo"
