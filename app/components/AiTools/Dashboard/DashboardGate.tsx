@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { FiArrowRight, FiLock } from "react-icons/fi";
 import Dashboard from "./Dashboard";
 import { appendQueryString } from "@/app/utils/url";
+import { initializeAuthSession } from "@/app/lib/authSession";
 
 type Mode = "inline" | "redirect";
 
@@ -17,22 +18,22 @@ export default function DashboardGate({ mode = "inline" }: { mode?: Mode }) {
   const [hasToken, setHasToken] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const token =
-      typeof window !== "undefined"
-        ? localStorage.getItem("access_token")
-        : null;
-    const ok = Boolean(token);
-    setHasToken(ok);
-
-    if (!ok && mode === "redirect") {
-      const signInBase = currentQs ? `/sign-in?${currentQs}` : "/sign-in";
-      router.replace(
-        appendQueryString(
-          signInBase,
-          `returnUrl=${encodeURIComponent(pathname || "/tools/dashboard")}`,
-        ),
-      );
-    }
+    let active = true;
+    void initializeAuthSession().then((token) => {
+      if (!active) return;
+      const ok = Boolean(token);
+      setHasToken(ok);
+      if (!ok && mode === "redirect") {
+        const signInBase = currentQs ? `/sign-in?${currentQs}` : "/sign-in";
+        router.replace(
+          appendQueryString(
+            signInBase,
+            `returnUrl=${encodeURIComponent(pathname || "/tools/dashboard")}`,
+          ),
+        );
+      }
+    });
+    return () => { active = false; };
   }, [currentQs, mode, pathname, router]);
 
   // Avoid flicker/hydration mismatch while checking token.

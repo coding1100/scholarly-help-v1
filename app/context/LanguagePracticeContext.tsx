@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useMemo, useState } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { sendChatMessage } from "../utilities/api";
 import toast from "react-hot-toast";
 
@@ -176,6 +176,38 @@ export function LanguagePracticeProvider({
     pronunciation: [],
     progress: [],
   });
+  const hydratedRef = useRef(false);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem("sh_language_practice_v2");
+      if (!raw) return;
+      const saved = JSON.parse(raw) as Partial<{
+        step: LanguagePracticeStep; language: string | null; level: CEFRLevel | null;
+        goals: Goal[]; progress: SkillsProgress; conversationId: string | null;
+        onboardingComplete: boolean; history: Record<PracticeArea, ChatTurn[]>;
+      }>;
+      if (Number.isInteger(saved.step) && Number(saved.step) >= 1 && Number(saved.step) <= 8) setStep(saved.step!);
+      if (typeof saved.language === "string" || saved.language === null) setLanguage(saved.language);
+      if (["A1", "A2", "B1", "B2", "C1", "C2", null].includes(saved.level ?? null)) setLevel(saved.level ?? null);
+      if (Array.isArray(saved.goals)) setGoals(saved.goals.filter((goal): goal is Goal => ["Travel", "Work", "Exams", "Casual conversation"].includes(goal)));
+      if (saved.progress && typeof saved.progress === "object") setProgress(saved.progress);
+      if (typeof saved.conversationId === "string" || saved.conversationId === null) setConversationId(saved.conversationId);
+      if (typeof saved.onboardingComplete === "boolean") setOnboardingComplete(saved.onboardingComplete);
+      if (saved.history && typeof saved.history === "object") setHistory(saved.history);
+    } catch {
+      window.localStorage.removeItem("sh_language_practice_v2");
+    } finally {
+      hydratedRef.current = true;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!hydratedRef.current) return;
+    window.localStorage.setItem("sh_language_practice_v2", JSON.stringify({
+      step, language, level, goals, progress, conversationId, onboardingComplete, history,
+    }));
+  }, [step, language, level, goals, progress, conversationId, onboardingComplete, history]);
 
   const bumpProgress = (delta: Partial<SkillsProgress>) => {
     setProgress((p) => ({

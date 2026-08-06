@@ -13,6 +13,7 @@ import {
   subscribeTokenUsage,
   __TOKEN_USAGE_UNAUTHORIZED_EVENT__,
 } from "@/app/utils/tokenUsageClient";
+import { getAccessToken } from "@/app/lib/authSession";
 
 interface UsageAndPricingProps {
   setFlag: (value: boolean) => void;
@@ -34,7 +35,7 @@ const UsageAndPricing: React.FC<UsageAndPricingProps> = ({ setFlag, flag }) => {
   );
   let accessToken: string | null = null;
   if (typeof window !== "undefined") {
-    accessToken = localStorage.getItem("access_token");
+    accessToken = getAccessToken();
   }
 
   // Calculate usage percentage with proper fallbacks

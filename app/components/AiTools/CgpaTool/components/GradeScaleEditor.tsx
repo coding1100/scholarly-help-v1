@@ -68,6 +68,10 @@ export default function GradeScaleEditor(props: {
             <Input
               className="mt-2"
               inputMode="decimal"
+              type="number"
+              min="0"
+              max="10"
+              step="0.01"
               value={String(gradeScale.pointsByLetter[letter] ?? "")}
               onChange={(e) => {
                 const raw = e.target.value;
@@ -76,7 +80,7 @@ export default function GradeScaleEditor(props: {
                   ...gradeScale,
                   pointsByLetter: {
                     ...gradeScale.pointsByLetter,
-                    [letter]: Number.isFinite(parsed) ? parsed : 0,
+                    [letter]: Number.isFinite(parsed) ? Math.min(10, Math.max(0, parsed)) : 0,
                   },
                 });
               }}

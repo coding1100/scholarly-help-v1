@@ -387,6 +387,7 @@ const MainDocEditor: React.FC<MainDocEditorProps> = ({
                 onChange={(event) => setCitationStyle(event.target.value)}
                 className="mt-2 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-primary-400"
               >
+                <option value="None">None</option>
                 <option value="APA 7th edition">APA 7th edition</option>
                 <option value="MLA 9th edition">MLA 9th edition</option>
                 <option value="Chicago 17th edition">

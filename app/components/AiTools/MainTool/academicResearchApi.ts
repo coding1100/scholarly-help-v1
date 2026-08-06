@@ -1,6 +1,7 @@
 "use client";
 
 import axios, { type AxiosError, type AxiosRequestConfig } from "axios";
+import { getAccessToken } from "@/app/lib/authSession";
 
 export const ACADEMIC_PAYWALL_MESSAGE =
   "Your token balance is exhausted. Please upgrade to continue using AI tools.";
@@ -9,9 +10,6 @@ const getApiBaseUrl = () => {
   const baseUrl = (process.env.NEXT_PUBLIC_NGROX_URL || "").replace(/\/$/, "");
   return baseUrl.endsWith("/v1") ? baseUrl : `${baseUrl}/v1`;
 };
-
-const getAccessToken = () =>
-  typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
 
 const authHeaders = () => {
   const token = getAccessToken();
@@ -138,10 +136,10 @@ export const updateDocumentTitle = (id: string, title: string) =>
     headers: { "Content-Type": "application/json" },
   });
 
-export const updateDocumentContent = (id: string, content: string) =>
+export const updateDocumentContent = (id: string, content: string, clientVersion?: number) =>
   request<DocumentRecord>(`/documents/${encodeURIComponent(id)}/content`, {
     method: "PATCH",
-    data: { content },
+    data: { content, ...(clientVersion !== undefined ? { client_version: clientVersion } : {}) },
     headers: { "Content-Type": "application/json" },
   });
 
@@ -207,6 +205,12 @@ export type HumanizerTone =
   | "custom";
 
 export type RewriteIntensity = "normal" | "moderate" | "full";
+export type HumanizerRegister =
+  | "academic"
+  | "professional"
+  | "natural"
+  | "personal"
+  | "marketing";
 
 export type HumanizerDiffSegment = {
   type: "equal" | "insert" | "delete";
@@ -216,7 +220,6 @@ export type HumanizerDiffSegment = {
 export type HumanizerResponse = {
   original_text?: string;
   tone_mode?: HumanizerTone;
-  selected_tone?: HumanizerTone;
   rewrite_intensity?: RewriteIntensity;
   rewritten_text?: string;
   /** Backward-compatible alias for `rewritten_text`. */
@@ -226,6 +229,10 @@ export type HumanizerResponse = {
   citation_count?: number;
   llm_used?: string;
   tokens_used?: number;
+  register_mode?: HumanizerRegister;
+  voice_profile_used?: boolean;
+  quality_score?: number;
+  quality_issues?: string[];
 };
 
 export const humanizeText = (payload: {
@@ -233,6 +240,8 @@ export const humanizeText = (payload: {
   tone?: HumanizerTone;
   rewrite_intensity?: RewriteIntensity;
   custom_tone_instruction?: string;
+  register_mode?: HumanizerRegister;
+  voice_sample?: string;
 }) =>
   request<HumanizerResponse>("/tools/humanizer", {
     method: "POST",
@@ -243,6 +252,8 @@ export const humanizeText = (payload: {
       ...(payload.custom_tone_instruction
         ? { custom_tone_instruction: payload.custom_tone_instruction }
         : {}),
+      ...(payload.register_mode ? { register_mode: payload.register_mode } : {}),
+      ...(payload.voice_sample ? { voice_sample: payload.voice_sample } : {}),
       preserve_citations: true,
       return_diff: false,
     },

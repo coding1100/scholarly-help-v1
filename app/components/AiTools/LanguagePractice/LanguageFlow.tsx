@@ -2,19 +2,22 @@
 "use client";
 
 import React, { useMemo } from "react";
-import Step1 from "./step1";
-import Step2 from "./step2";
-import Step3 from "./step3";
-import Step4 from "./step4";
-import Step5 from "./step5";
-import Step6 from "./step6";
-import Step7 from "./step7";
-import Step8 from "./step8";
+import dynamic from "next/dynamic";
 import {
   useLanguagePractice,
   LanguagePracticeProvider,
 } from "@/app/context/LanguagePracticeContext";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
+
+const stepLoader = () => <div className="min-h-48 animate-pulse rounded-xl bg-gray-100" aria-label="Loading practice" />;
+const Step1 = dynamic(() => import("./step1"), { loading: stepLoader });
+const Step2 = dynamic(() => import("./step2"), { loading: stepLoader });
+const Step3 = dynamic(() => import("./step3"), { loading: stepLoader });
+const Step4 = dynamic(() => import("./step4"), { loading: stepLoader });
+const Step5 = dynamic(() => import("./step5"), { loading: stepLoader });
+const Step6 = dynamic(() => import("./step6"), { loading: stepLoader });
+const Step7 = dynamic(() => import("./step7"), { loading: stepLoader });
+const Step8 = dynamic(() => import("./step8"), { loading: stepLoader });
 
 type StepMeta = {
   step: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;

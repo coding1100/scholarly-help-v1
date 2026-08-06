@@ -3,7 +3,6 @@
 import './admin.css';
 import { useState, useEffect, useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { jwtDecode } from 'jwt-decode';
 import { AdminConfirmProvider } from '@/app/components/Admin/AdminConfirmProvider';
 import { AdminSuccessProvider } from '@/app/components/Admin/AdminSuccessProvider';
 import {
@@ -70,23 +69,14 @@ function AdminLayoutShell({
       return;
     }
 
-    const token = localStorage.getItem('adminToken');
-    if (token) {
-      try {
-        const decoded = jwtDecode(token);
-        if (decoded.exp && decoded.exp * 1000 > Date.now()) {
-          setIsAuthenticated(true);
-        } else {
-          localStorage.removeItem('adminToken');
-          router.push('/admin/login');
-        }
-      } catch {
-        localStorage.removeItem('adminToken');
-        router.push('/admin/login');
-      }
-    } else {
-      router.push('/admin/login');
-    }
+    let active = true;
+    void fetch('/api/admin/session', { cache: 'no-store' }).then((response) => {
+      if (!active) return;
+      if (response.ok) setIsAuthenticated(true);
+      else router.push('/admin/login');
+    }).catch(() => {
+      if (active) router.push('/admin/login');
+    });
 
     const pagesChildActive = (href: string) => isAdminNavLinkActive(pathname, href);
     if (
@@ -95,6 +85,7 @@ function AdminLayoutShell({
     ) {
       setPagesOpen(true);
     }
+    return () => { active = false; };
   }, [router, pathname, duplicateNavPages]);
 
   useEffect(() => {
@@ -216,7 +207,7 @@ function AdminLayoutShell({
                     variant="logout"
                     className="inline-flex items-center gap-1.5 bg-[#da0e0e] text-white hover:bg-[#b80c0c]"
                     onClick={() => {
-                      localStorage.removeItem('adminToken');
+                      void fetch('/api/admin/logout', { method: 'POST' });
                       router.push('/admin/login');
                     }}
                   >

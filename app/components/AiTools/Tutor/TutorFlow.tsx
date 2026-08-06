@@ -22,6 +22,8 @@ import {
   updateTutorWorkspace,
 } from "@/app/utilities/api";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
+import axios from "axios";
+import { getAccessToken } from "@/app/lib/authSession";
 
 const academicLevels: {
   value: TutorAcademicLevel;
@@ -80,11 +82,17 @@ function gradePracticeSet(
 ) {
   const results = practiceSet.questions.map((question) => {
     const submitted = answers[question.id];
-    const expected = question.answer?.trim().toLowerCase();
-    const received = String(submitted || "")
-      .trim()
-      .toLowerCase();
-    const isCorrect = expected ? received === expected : false;
+    const normalize = (value: string) => value.toLowerCase().replace(/[^a-z0-9\s.-]/g, " ").replace(/\b(?:a|an|the)\b/g, " ").replace(/\s+/g, " ").trim();
+    const expected = normalize(question.answer || "");
+    const received = normalize(String(submitted || ""));
+    const option = question.options?.find((item) => normalize(item.id) === received);
+    const receivedText = option ? normalize(option.text) : received;
+    const expectedOption = question.options?.find((item) => normalize(item.id) === expected);
+    const expectedText = expectedOption ? normalize(expectedOption.text) : expected;
+    const expectedTokens = new Set(expectedText.split(" ").filter(Boolean));
+    const receivedTokens = new Set(receivedText.split(" ").filter(Boolean));
+    const overlap = [...expectedTokens].filter((token) => receivedTokens.has(token)).length / Math.max(1, expectedTokens.size);
+    const isCorrect = Boolean(expectedText) && (receivedText === expectedText || overlap >= 0.85);
 
     return {
       id: question.id,
@@ -215,6 +223,7 @@ export default function TutorFlow() {
   const [prompt, setPrompt] = useState("");
   const [sourceName, setSourceName] = useState("");
   const [sourceText, setSourceText] = useState("");
+  const [isExtractingSource, setIsExtractingSource] = useState(false);
   const [questionCount, setQuestionCount] = useState(5);
   const [result, setResult] = useState<TutorResponse | null>(null);
   const [answers, setAnswers] = useState<PracticeAnswers>({});
@@ -349,6 +358,24 @@ export default function TutorFlow() {
     }
   };
 
+  const extractSourceFile = async (file?: File) => {
+    if (!file) return;
+    setIsExtractingSource(true);
+    try {
+      const form = new FormData(); form.append("file", file);
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_NGROX_URL}/tools/parse-document`, form, {
+        headers: { Authorization: `Bearer ${getAccessToken()}`, "Content-Type": "multipart/form-data" },
+      });
+      const payload = response.data?.data ?? response.data;
+      const extracted = typeof payload === "string" ? payload : payload?.text;
+      if (!extracted) throw new Error("No readable text was found in this file.");
+      setSourceName(file.name); setSourceText(extracted);
+      toast.success("Source document extracted.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not extract this document.");
+    } finally { setIsExtractingSource(false); }
+  };
+
   const handleAnswerChange = (questionId: string, answer: string) => {
     setAnswers((current) => ({
       ...current,
@@ -468,6 +495,10 @@ export default function TutorFlow() {
                   placeholder="chapter-3.pdf"
                   className="w-full rounded-lg border border-gray-300/50 bg-white/40 px-4 py-3 text-sm text-black placeholder:text-gray-400 focus:border-[#2b7fff]/50 focus:outline-none focus:ring-2 focus:ring-[#2b7fff]/50"
                 />
+                <label className="mt-3 inline-flex cursor-pointer items-center rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700">
+                  {isExtractingSource ? "Extracting…" : "Upload source document"}
+                  <input type="file" className="sr-only" accept=".pdf,.doc,.docx,.txt" disabled={isExtractingSource} onChange={(event) => void extractSourceFile(event.target.files?.[0])} />
+                </label>
               </div>
             )}
 
@@ -500,13 +531,13 @@ export default function TutorFlow() {
                   htmlFor="sourceText"
                   className="mb-2 block text-sm font-semibold text-black"
                 >
-                  Notes or Extracted PDF Text
+                  Source text
                 </label>
                 <textarea
                   id="sourceText"
                   value={sourceText}
                   onChange={(event) => setSourceText(event.target.value)}
-                  placeholder="Paste notes or client-side extracted PDF text here."
+                  placeholder="Upload a document above or paste notes here."
                   rows={6}
                   className="w-full rounded-lg border border-gray-300/50 bg-white/40 px-4 py-3 text-sm text-black placeholder:text-gray-400 focus:border-[#2b7fff]/50 focus:outline-none focus:ring-2 focus:ring-[#2b7fff]/50"
                 />
