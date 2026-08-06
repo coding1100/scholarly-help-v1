@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getScanAccessToken } from "@/app/lib/scanAccessTokenStore";
 
 // Create an instance of Axios with a custom configuration
 const axiosInstance = axios.create({
@@ -9,7 +10,7 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (config) => {
     // Do something with the request config (e.g., add headers)
-    const authToken = localStorage.getItem("authToken");
+    const authToken = getScanAccessToken();
 
     if (authToken) {
       config.headers.Authorization = `Bearer ${authToken}`;

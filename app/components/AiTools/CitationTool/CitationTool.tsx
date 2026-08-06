@@ -1,6 +1,7 @@
 "use client";
 
 import React, { FC, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import {
   FaChevronDown,
   FaRegCopy,
@@ -19,7 +20,8 @@ import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import DOMPurify from "dompurify";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
-import SavedCitations from "./SavedCitations";
+const SavedCitations = dynamic(() => import("./SavedCitations"), { ssr: false, loading: () => <div className="p-4 text-sm text-gray-500">Loading citation library…</div> });
+import { getAccessToken } from "@/app/lib/authSession";
 
 // Citations only ever contain italic markup for titles. Restrict the allowed
 // tags tightly so nothing executable can be injected even if upstream changes.
@@ -37,6 +39,12 @@ const sanitizeCitation = (html: string | null | undefined): string => {
 
 interface CitationToolProps {
   setFlag: (value: boolean) => void;
+  /**
+   * "landing" renders the same tool as a rounded, shadowed hero card (used on
+   * the /tools/citation-generator landing page); the default keeps the /tools
+   * styling.
+   */
+  variant?: "default" | "landing";
 }
 
 type CitationStyle = "APA" | "MLA" | "Chicago" | "Harvard";
@@ -110,6 +118,12 @@ const MONTHS = [
   "December",
 ];
 
+const normalizeDoi = (value: string) => value.trim().replace(/^https?:\/\/(?:dx\.)?doi\.org\//i, "").replace(/^doi:\s*/i, "").toLowerCase();
+const normalizeUrl = (value: string) => {
+  const raw = value.trim(); if (!raw) return "";
+  try { const parsed = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`); parsed.hash = ""; return parsed.toString(); } catch { return raw; }
+};
+
 /**
  * Hover/focus tooltip. Render-gated on local state (not CSS group-hover) so
  * only the active tip ever shows and it never reserves layout space.
@@ -148,7 +162,8 @@ const inputClass =
 const labelClass =
   "flex items-center text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-300";
 
-const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
+const CitationTool: FC<CitationToolProps> = ({ setFlag, variant = "default" }) => {
+  const isLanding = variant === "landing";
   const [token, setToken] = useState<string | null>(null);
   const [citationStyle, setCitationStyle] = useState<CitationStyle>("APA");
   const [sourceType, setSourceType] = useState<SourceType>("book");
@@ -211,7 +226,7 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setToken(localStorage.getItem("access_token"));
+      setToken(getAccessToken());
     }
   }, []);
 
@@ -247,8 +262,8 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
     if (d.publisher) setPublisher(d.publisher);
     if (d.doi || d.url) {
       setIsOnline(true);
-      if (d.doi) setDoi(d.doi);
-      if (d.url) setUrl(d.url);
+      if (d.doi) setDoi(normalizeDoi(d.doi));
+      if (d.url) setUrl(normalizeUrl(d.url));
     }
   };
 
@@ -451,6 +466,18 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
       toast.error("Please enter at least a title or an author name.");
       return;
     }
+    const missing = sourceType === "website"
+      ? [!title.trim() && "title", !url.trim() && "URL"]
+      : sourceType === "journal"
+        ? [!title.trim() && "article title", !journalName.trim() && "journal name"]
+        : sourceType === "article"
+          ? [!title.trim() && "article title", !publicationName.trim() && "publication name"]
+          : [!title.trim() && "book title", !hasAuthor && "author"];
+    const missingFields = missing.filter(Boolean);
+    if (missingFields.length) {
+      const message = `Add the required ${missingFields.join(" and ")}.`;
+      setError(message); toast.error(message); return;
+    }
 
     // Guests get a small number of free AI actions across all tools; the gate
     // opens instead of calling the AI once the allowance is used up.
@@ -508,8 +535,8 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
       if (citationStyle === "Chicago") payload.chicago_variant = chicagoVariant;
       if (pages.trim()) payload.pages = pages.trim();
       // DOI/URL only when relevant: websites always, others when online.
-      if (showOnlineFields && doi.trim()) payload.doi = doi.trim();
-      if (showOnlineFields && url.trim()) payload.url = url.trim();
+      if (showOnlineFields && doi.trim()) payload.doi = normalizeDoi(doi);
+      if (showOnlineFields && url.trim()) payload.url = normalizeUrl(url);
       if (Object.keys(publication_date).length) payload.publication_date = publication_date;
       if (Object.keys(access_date_parts).length)
         payload.access_date_parts = access_date_parts;
@@ -661,9 +688,21 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
       : "Accessed online";
 
   return (
-    <div className="container relative mx-auto max-w-[840px] px-4 md:px-8 md:pt-8 2xl:max-w-6xl">
+    <div
+      className={
+        isLanding
+          ? "relative w-full"
+          : "container relative mx-auto max-w-[840px] px-4 md:px-8 md:pt-8 2xl:max-w-6xl"
+      }
+    >
       <ToolsApiLoader show={isSubmitting} />
-      <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 overflow-hidden transition-colors duration-300">
+      <div
+        className={`bg-white dark:bg-gray-800 overflow-hidden transition-colors duration-300 ${
+          isLanding
+            ? "rounded-2xl shadow-[0_30px_70px_-20px_rgba(43,28,80,0.35)] text-left"
+            : "border dark:border-gray-700"
+        }`}
+      >
         {/* Main Overview Section */}
         <div className="pt-6 ">
           <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-3 transition-colors duration-300 text-center">
@@ -1581,14 +1620,16 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag }) => {
       />
 
       {/* Footer Quote */}
-      <div className="text-sm font-serif text-center pt-8 text-gray-500 dark:text-gray-400 transition-colors duration-300">
-        <q>
-          Create perfect academic citations effortlessly with ScholarlyHelp&apos;s
-          Citation Generator. Generate properly formatted citations in APA, MLA,
-          Chicago, or Harvard style for books, websites, journals, and
-          articles—all with in-text citation support.
-        </q>
-      </div>
+      {!isLanding && (
+        <div className="text-sm font-serif text-center pt-8 text-gray-500 dark:text-gray-400 transition-colors duration-300">
+          <q>
+            Create perfect academic citations effortlessly with
+            ScholarlyHelp&apos;s Citation Generator. Generate properly formatted
+            citations in APA, MLA, Chicago, or Harvard style for books,
+            websites, journals, and articles—all with in-text citation support.
+          </q>
+        </div>
+      )}
       <GuestAuthGateModal open={gateOpen} onClose={closeGate} />
     </div>
   );

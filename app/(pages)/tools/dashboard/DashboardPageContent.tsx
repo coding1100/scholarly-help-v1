@@ -6,11 +6,11 @@ import ToolsLayout from "@/app/components/AiTools/ToolsLayout";
 import DashboardGate from "@/app/components/AiTools/Dashboard/DashboardGate";
 import { appendQueryString } from "@/app/utils/url";
 import {
-  createStudySession,
   getActiveStudySessionId,
   listStudySessions,
   setActiveStudySessionId,
 } from "@/app/utils/studyApiClient";
+import { initializeAuthSession } from "@/app/lib/authSession";
 
 export default function DashboardPageContent() {
   const [flag, setFlag] = useState<boolean>(false);
@@ -19,30 +19,16 @@ export default function DashboardPageContent() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    const isAuthenticated =
-      localStorage.getItem("access_token") || localStorage.getItem("authToken");
-    if (!isAuthenticated) {
-      const currentQs =
-        typeof window !== "undefined" ? window.location.search.slice(1) : "";
-      const signInBase = currentQs ? `/sign-in?${currentQs}` : "/sign-in";
-      const returnTo = `${pathname || "/tools/dashboard"}${currentQs ? `?${currentQs}` : ""}`;
-      router.replace(
-        appendQueryString(
-          signInBase,
-          `returnUrl=${encodeURIComponent(returnTo)}`,
-        ),
-      );
-    }
-  }, [pathname, router]);
-
-  useEffect(() => {
     let active = true;
 
     async function bootstrapStudySession() {
-      const isAuthenticated =
-        localStorage.getItem("access_token") ||
-        localStorage.getItem("authToken");
-      if (!isAuthenticated) return;
+      if (!(await initializeAuthSession())) {
+        const currentQs = window.location.search.slice(1);
+        const signInBase = currentQs ? `/sign-in?${currentQs}` : "/sign-in";
+        const returnTo = `${pathname || "/tools/dashboard"}${currentQs ? `?${currentQs}` : ""}`;
+        router.replace(appendQueryString(signInBase, `returnUrl=${encodeURIComponent(returnTo)}`));
+        return;
+      }
 
       const qsSessionId = searchParams.get("sessionId");
       const localSessionId = getActiveStudySessionId();
@@ -53,11 +39,8 @@ export default function DashboardPageContent() {
         (localSessionId && sessions.find((s) => s._id === localSessionId)) ||
         sessions[0];
 
-      if (!resolvedSession) {
-        resolvedSession = await createStudySession("My Study Session");
-      }
-
-      if (!active) return;
+      // Sessions are created only when the user adds their first source.
+      if (!active || !resolvedSession) return;
       setActiveStudySessionId(resolvedSession._id);
 
       const nextParams = new URLSearchParams(searchParams.toString());

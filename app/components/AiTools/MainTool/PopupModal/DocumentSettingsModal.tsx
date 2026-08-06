@@ -309,6 +309,7 @@ const DocumentSettingsModalContent: React.FC<SettingModalContentProps> = ({
               onChange={(e) => setCitationStyle(e.target.value)}
               className="w-4 md:w-80 border border-gray-300 rounded-md p-2 text-sm text-gray-800"
             >
+              <option value="None">None</option>
               <option value="APA 7th edition">APA · American Psychological Association</option>
               <option value="MLA 9th edition">MLA · Modern Language Association</option>
               <option value="Chicago 17th edition">Chicago · Chicago Manual of Style</option>

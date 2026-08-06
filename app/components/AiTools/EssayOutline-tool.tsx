@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import EssayOutlinerForm from "./EssayOutlineForm";
 import axios from "axios";
 import {
@@ -16,6 +16,8 @@ import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
+import { getAccessToken } from "@/app/lib/authSession";
+import { cachedRequest, invalidateCachedRequest } from "@/app/lib/client/toolOptimization";
 
 type OutlineItem = {
   section: string;
@@ -55,6 +57,8 @@ const EssayOutlinetool = () => {
   const [documents, setDocuments] = useState<SavedDocument[]>([]);
   const [isFetchingDocuments, setIsFetchingDocuments] = useState(false);
   const { gateOpen, closeGate, guardAiClick } = useGuestGate();
+  const generationControllerRef = useRef<AbortController | null>(null);
+  useEffect(() => () => generationControllerRef.current?.abort(), []);
   const baseUrl =
     process.env.NEXT_PUBLIC_NGROX_URL || process.env.NEXT_PUBLIC_BASE_URL || "";
 
@@ -121,17 +125,16 @@ const EssayOutlinetool = () => {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setToken(localStorage.getItem("access_token"));
+      setToken(getAccessToken());
     }
   }, []);
 
   useEffect(() => {
     if (!token) return;
-    axios
-      .get(`${baseUrl}/documents/folders`, {
+    cachedRequest(`outline:folders:${token}`, () => axios.get(`${baseUrl}/documents/folders`, {
         headers: { Authorization: `Bearer ${token}` },
         params: { source_tool: ESSAY_OUTLINE_SOURCE_TOOL },
-      })
+      }))
       .then((response) => setFolders(response.data?.data || []))
       .catch(() => toast.error("Failed to load folders."));
   }, [baseUrl, token]);
@@ -153,10 +156,10 @@ const EssayOutlinetool = () => {
     if (!token) return;
     setIsFetchingDocuments(true);
     try {
-      const response = await axios.get(`${baseUrl}/documents`, {
+      const response = await cachedRequest(`outline:documents:${token}`, () => axios.get(`${baseUrl}/documents`, {
         headers: { Authorization: `Bearer ${token}` },
         params: { source_tool: ESSAY_OUTLINE_SOURCE_TOOL },
-      });
+      }), 15_000);
       setDocuments(response.data?.data || []);
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Failed to load saved documents.");
@@ -226,6 +229,8 @@ const EssayOutlinetool = () => {
     trackToolGenerate({ toolName: "Essay Outline Tool" });
     setSubmitting(true);
     try {
+      generationControllerRef.current?.abort();
+      const controller = new AbortController(); generationControllerRef.current = controller;
       const response = await axios.post(
         `${baseUrl}/tools/essay-outline`,
         { topic, essay_level, essay_type, body_paragraph_count },
@@ -234,6 +239,7 @@ const EssayOutlinetool = () => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
+          signal: controller.signal,
         },
       );
       const outline = response.data?.data?.outline;
@@ -273,11 +279,16 @@ const EssayOutlinetool = () => {
       return;
     }
     setSubmitting(true);
+    const optimisticId = `pending-${Date.now()}`;
+    setDocuments((current) => [{ _id: optimisticId, title: `Outline - ${lastFormData?.topic || "Essay"}`, folder_id: selectedFolderId }, ...current]);
     try {
-      await persistDisplayedOutline();
+      const savedId = await persistDisplayedOutline();
+      setDocuments((current) => current.map((document) => document._id === optimisticId ? { ...document, _id: savedId } : document));
       toast.success(`Outline saved to "${selectedFolder?.name}".`);
+      invalidateCachedRequest("outline:documents:");
       await fetchDocuments();
     } catch (error: any) {
+      setDocuments((current) => current.filter((document) => document._id !== optimisticId));
       toast.error(
         error?.response?.data?.message ||
           error?.message ||

@@ -16,6 +16,7 @@ import { MdOutlineManageHistory } from "react-icons/md";
 import useAuth from "../../hooks/useAuth";
 import LimitReachedDialog from "./LimitReachedDialog";
 import PaymentSuccessDialog from "./PaymentSuccessDialog";
+import { clearScanAccessToken } from "@/app/lib/scanAccessTokenStore";
 
 function Exercise() {
   // @ts-ignore
@@ -95,7 +96,7 @@ function Exercise() {
   };
 
   const logout = () => {
-    localStorage.removeItem("authToken");
+    clearScanAccessToken();
     window.location.href = window.location.origin + "/scan";
   };
 

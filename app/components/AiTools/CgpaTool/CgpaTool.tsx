@@ -1,6 +1,6 @@
 "use client";
 
-import React, { FormEvent, useEffect, useMemo, useState } from "react";
+import React, { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { CalculatorState, Semester } from "./types";
 import GPAResultCard from "./components/GPAResultCard";
@@ -63,6 +63,7 @@ export default function CgpaTool(props: CgpaToolProps = {}) {
   const [headerCalculateCgpaError, setHeaderCalculateCgpaError] = useState<
     string | null
   >(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
   const [
     semesterCalculateGpaErrorSemesterId,
     setSemesterCalculateGpaErrorSemesterId,
@@ -131,6 +132,27 @@ export default function CgpaTool(props: CgpaToolProps = {}) {
       semesters: prev.semesters.map((s) => (s.id === next.id ? next : s)),
     }));
   }
+
+  const exportState = () => {
+    const blob = new Blob([JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), state }, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url; link.download = "scholarlyhelp-cgpa.json"; link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const importState = async (file?: File) => {
+    if (!file) return;
+    try {
+      const payload = JSON.parse(await file.text()) as { state?: unknown };
+      setState(normalizeLoadedState((payload.state ?? payload) as never, initial));
+      toast.success("CGPA data imported.");
+    } catch {
+      toast.error("That file is not a valid CGPA export.");
+    } finally {
+      if (importInputRef.current) importInputRef.current.value = "";
+    }
+  };
 
   function addSemester() {
     if (gateResults) setResultsUnlocked(false);
@@ -252,8 +274,13 @@ export default function CgpaTool(props: CgpaToolProps = {}) {
                     Fast - Accurate - Free
                   </div> */}
                   <div className="mt-1 text-sm sm:text-[15px] text-slate-600 dark:text-slate-300">
-                    Enter full cousrse details by semester
+                    Enter full course details by semester
                   </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button type="button" variant="ghost" onClick={() => importInputRef.current?.click()}>Import</Button>
+                  <Button type="button" variant="ghost" onClick={exportState}>Export</Button>
+                  <input ref={importInputRef} className="sr-only" type="file" accept="application/json,.json" onChange={(event) => void importState(event.target.files?.[0])} aria-label="Import CGPA JSON file" />
                 </div>
                 {/* {activeScreen === "calculator" ? (
                   <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">

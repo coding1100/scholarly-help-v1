@@ -1,3 +1,5 @@
+import { fetchWithAuthRetry, getOrRefreshAccessToken } from "@/app/lib/authSession";
+
 export type TokenUsageSnapshot = {
   totalTokens: number;
   usedTokens: number;
@@ -32,15 +34,6 @@ function setSnapshot(patch: Partial<TokenUsageSnapshot>) {
   emit();
 }
 
-function getAccessToken(): string | null {
-  if (typeof window === "undefined") return null;
-  try {
-    return window.localStorage.getItem("access_token");
-  } catch {
-    return null;
-  }
-}
-
 async function fetchTokenUsage(accessToken: string): Promise<{
   total_tokens: number;
   usedTokens: number;
@@ -48,7 +41,7 @@ async function fetchTokenUsage(accessToken: string): Promise<{
   const base = process.env.NEXT_PUBLIC_NGROX_URL;
   if (!base) throw new Error("Missing NEXT_PUBLIC_NGROX_URL");
 
-  const res = await fetch(`${base}/users/token-usage`, {
+  const res = await fetchWithAuthRetry(`${base}/users/token-usage`, {
     method: "GET",
     headers: { Authorization: `Bearer ${accessToken}` },
   });
@@ -82,10 +75,12 @@ export function getTokenUsageSnapshot() {
   return snapshot;
 }
 
-export async function refreshTokenUsageNow(opts?: { defaultTotalTokens?: number }) {
+export async function refreshTokenUsageNow(opts?: {
+  defaultTotalTokens?: number;
+}) {
   if (typeof window === "undefined") return;
 
-  const accessToken = getAccessToken();
+  const accessToken = await getOrRefreshAccessToken();
   if (!accessToken) return;
 
   if (inFlight) return inFlight;
@@ -108,34 +103,13 @@ export async function refreshTokenUsageNow(opts?: { defaultTotalTokens?: number 
     } catch (e: any) {
       if (e?.status === 401 && typeof window !== "undefined") {
         try {
-          window.dispatchEvent(new CustomEvent(__TOKEN_USAGE_UNAUTHORIZED_EVENT__));
+          window.dispatchEvent(
+            new CustomEvent(__TOKEN_USAGE_UNAUTHORIZED_EVENT__),
+          );
         } catch {
           // ignore
         }
       }
-      // Backend down fallback (matches previous behavior)
-      const code = String(e?.code || "");
-      const message = String(e?.message || "");
-      if (
-        code === "ERR_NETWORK" ||
-        code === "ERR_CONNECTION_REFUSED" ||
-        message.includes("Failed to fetch")
-      ) {
-        const defaultTotalTokens = Number(opts?.defaultTotalTokens ?? 1000000);
-        setSnapshot({
-          totalTokens: defaultTotalTokens,
-          usedTokens: 0,
-          loading: false,
-          lastUpdatedAt: Date.now(),
-        });
-        try {
-          window.localStorage.setItem("totalTokens", String(defaultTotalTokens));
-        } catch {
-          // ignore
-        }
-        return;
-      }
-
       setSnapshot({ loading: false });
       throw e;
     } finally {
@@ -194,4 +168,3 @@ export function initTokenUsageAutoRefresh(toolGenerateEventName: string) {
     scheduleAutoRefreshSequence();
   });
 }
-

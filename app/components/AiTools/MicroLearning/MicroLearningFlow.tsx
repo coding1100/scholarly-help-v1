@@ -1,17 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import toast from "react-hot-toast";
-import Step1 from "./Step1";
-import Step2 from "./Step2";
-import Step3 from "./Step3";
-import Step4 from "./Step4";
-import Step5 from "./Step5";
-import Step6 from "./Step6";
-import Step9 from "./Step9";
-import Step10 from "./Step10";
-import Step11 from "./Step11";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
+import { usePersistentState } from "@/app/lib/client/toolOptimization";
+
+const Step1 = dynamic(() => import("./Step1"));
+const Step2 = dynamic(() => import("./Step2"));
+const Step3 = dynamic(() => import("./Step3"));
+const Step4 = dynamic(() => import("./Step4"));
+const Step5 = dynamic(() => import("./Step5"));
+const Step6 = dynamic(() => import("./Step6"));
+const Step9 = dynamic(() => import("./Step9"));
+const Step10 = dynamic(() => import("./Step10"));
+const Step11 = dynamic(() => import("./Step11"));
+
+type LearningProgress = { dayStreak: number; bestStreak: number; lessonsCompleted: number; minutesLearned: number; topicsExplored: string[]; lastCompletedDate?: string };
 
 export default function MicroLearningFlow() {
     const [currentStep, setCurrentStep] = useState(1);
@@ -26,6 +31,26 @@ export default function MicroLearningFlow() {
         correctAnswers: number;
         incorrectQuestionNumbers: number[];
     } | null>(null);
+    const [progress, setProgress] = usePersistentState<LearningProgress>("sh_micro_learning_progress_v2", {
+        dayStreak: 0, bestStreak: 0, lessonsCompleted: 0, minutesLearned: 0, topicsExplored: [],
+    });
+
+    useEffect(() => {
+        if (selectedTopics.length === 0) return;
+        setProgress((current) => ({ ...current, topicsExplored: [...new Set([...current.topicsExplored, ...selectedTopics])] }));
+    }, [selectedTopics, setProgress]);
+
+    const completeLesson = () => {
+        const today = new Date().toISOString().slice(0, 10);
+        setProgress((current) => {
+            const previous = current.lastCompletedDate ? new Date(`${current.lastCompletedDate}T00:00:00`) : null;
+            const days = previous ? Math.round((Date.now() - previous.getTime()) / 86_400_000) : null;
+            const streak = current.lastCompletedDate === today ? current.dayStreak : days === 1 ? current.dayStreak + 1 : 1;
+            return { ...current, dayStreak: streak, bestStreak: Math.max(current.bestStreak, streak), lessonsCompleted: current.lessonsCompleted + 1, minutesLearned: current.minutesLearned + lessonDuration, lastCompletedDate: today };
+        });
+        setCurrentStep(6);
+        toast.success("Lesson complete. Nice work!", { id: "ml-complete" });
+    };
 
     return (
         <> 
@@ -68,11 +93,11 @@ export default function MicroLearningFlow() {
             )}
             {currentStep === 6 && (
                 <Step6
-                    dayStreak={0}
-                    bestStreak={0}
-                    lessonsCompleted={0}
-                    hoursLearned={0}
-                    topicsExplored={selectedTopics.length}
+                    dayStreak={progress.dayStreak}
+                    bestStreak={progress.bestStreak}
+                    lessonsCompleted={progress.lessonsCompleted}
+                    hoursLearned={Math.round((progress.minutesLearned / 60) * 10) / 10}
+                    topicsExplored={progress.topicsExplored.length}
                     todayLessonMinutes={minutesPerDay}
                     selectedTopic={selectedTopics[0] || "Science"}
                     onStartLesson={(duration, topic) => {
@@ -88,7 +113,7 @@ export default function MicroLearningFlow() {
                         setCurrentStep(9);
                     }}
                     onViewProgress={() => {
-                        toast("Your learning progress is tracked on your dashboard.", {
+                        toast(`You have completed ${progress.lessonsCompleted} lessons across ${progress.topicsExplored.length} topics.`, {
                             id: "ml-progress",
                         });
                     }}
@@ -108,13 +133,7 @@ export default function MicroLearningFlow() {
                         setQuizConversationId(conversationId);
                         setCurrentStep(10);
                     }}
-                    onCompleteLesson={() => {
-                        // Completing a lesson returns to the dashboard step.
-                        setCurrentStep(6);
-                        toast.success("Lesson complete. Nice work!", {
-                            id: "ml-complete",
-                        });
-                    }}
+                    onCompleteLesson={completeLesson}
                 />
             )}
             {currentStep === 10 && (

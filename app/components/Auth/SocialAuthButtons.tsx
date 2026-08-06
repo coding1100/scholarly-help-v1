@@ -5,6 +5,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { FaFacebookF } from "react-icons/fa";
 import { buildHrefWithSameQuery } from "@/app/utils/url";
+import { persistAccessToken } from "@/app/lib/authSession";
 
 declare global {
   interface Window {
@@ -55,7 +56,7 @@ const SocialAuthButtons = ({
 
   const persistSessionAndRedirect = useCallback(
     (data: any) => {
-      localStorage.setItem("access_token", data.access_token);
+      persistAccessToken(data.access_token, data.expires_in);
       localStorage.setItem("user_id", data.user.user_id);
       localStorage.setItem("user_name", data.user.name);
       localStorage.setItem("package_type", data.user.package_type);
@@ -66,7 +67,6 @@ const SocialAuthButtons = ({
         .trim()
         .toLowerCase();
       if (resolvedEmail) localStorage.setItem("user_email", resolvedEmail);
-      document.cookie = `access_token=${data.access_token}; path=/; max-age=86400`;
 
       const redirectPath = returnUrl || "/tools/dashboard/";
       const currentQs =
@@ -97,6 +97,7 @@ const SocialAuthButtons = ({
         const res = await axios.post(
           `${process.env.NEXT_PUBLIC_NGROX_URL}/auth/google/signin`,
           { idToken: response.credential },
+          { withCredentials: true },
         );
 
         // Backend wraps responses as { success, message, data }. Unwrap to the

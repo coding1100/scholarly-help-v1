@@ -92,6 +92,15 @@ const tools: ToolCardData[] = [
 
   // Essay writing
   {
+    name: "AI Essay Generator",
+    description: "Build a structured academic draft from a topic and requirements.",
+    href: "/tools/ai-essay-generator",
+    icon: FiFileText,
+    badge: "New",
+    category: "essay-writing",
+    cta: "Generate essay",
+  },
+  {
     name: "AI Paraphraser",
     description: "Rephrase sentences to sound clearer and more academic.",
     href: "/tools/paraphraser-tool",

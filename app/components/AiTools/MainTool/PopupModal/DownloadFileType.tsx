@@ -5,14 +5,6 @@ import { SiLatex } from "react-icons/si";
 import { HiOutlineLockClosed } from "react-icons/hi";
 import toast from "react-hot-toast";
 import { EditorContext, TitleContext } from "../MainToolLayout";
-import {
-  buildDocxBlob,
-  buildFullLaTeXDocument,
-  downloadBlob,
-  htmlToLaTeX,
-  sanitizeFilename,
-  savePdfFromHtml,
-} from "../academicDocumentExport";
 
 type DownloadFileTypeProps = {
   documentId?: string | null;
@@ -23,7 +15,7 @@ const DownloadFileType: React.FC<DownloadFileTypeProps> = () => {
   const { title } = useContext(TitleContext);
   const [exporting, setExporting] = useState(false);
 
-  const baseName = sanitizeFilename(title || "document");
+  const baseName = (title || "document").replace(/[<>:"/\\|?*\x00-\x1F]/g, "-").trim() || "document";
 
   const handleDownloadLaTeX = async () => {
     if (!editor) {
@@ -32,6 +24,7 @@ const DownloadFileType: React.FC<DownloadFileTypeProps> = () => {
     }
     setExporting(true);
     try {
+      const { htmlToLaTeX, buildFullLaTeXDocument, downloadBlob } = await import("../academicDocumentExport");
       const html = editor.getHTML();
       const body = htmlToLaTeX(html);
       const full = buildFullLaTeXDocument(body, title || "Untitled");
@@ -55,6 +48,7 @@ const DownloadFileType: React.FC<DownloadFileTypeProps> = () => {
     }
     setExporting(true);
     try {
+      const { buildDocxBlob, downloadBlob } = await import("../academicDocumentExport");
       const blob = await buildDocxBlob(editor.getHTML(), title || "Document");
       downloadBlob(blob, `${baseName}.docx`);
       toast.success("Word file downloaded.", { id: "export-docx-ok" });
@@ -73,6 +67,7 @@ const DownloadFileType: React.FC<DownloadFileTypeProps> = () => {
     }
     setExporting(true);
     try {
+      const { savePdfFromHtml } = await import("../academicDocumentExport");
       await savePdfFromHtml(editor.getHTML(), baseName);
       toast.success("PDF downloaded.", { id: "export-pdf-ok" });
     } catch (e) {
