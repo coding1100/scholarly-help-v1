@@ -1,46 +1,61 @@
 import { FC } from "react";
 import { Metadata } from "next";
-import { MetaData } from "@/app/metadata/metadata";
-import AiHero from "@/app/components/AiLandingPage/AiHero";
-import AiTrust from "@/app/components/AiLandingPage/AITrust";
-import KeyFeatures from "@/app/components/AiLandingPage/KeyFeatures";
-import AiMission from "@/app/components/AiLandingPage/AiMission";
-import AiFaq from "@/app/components/AiLandingPage/AiFaq";
-import ElevateWriting from "@/app/components/AiLandingPage/ElevateWriting";
-import { AiSummarizerContent } from "@/app/components/AiLandingPage/AiContent";
-// import ThemeToggle from "@/app/components/AiLandingPage/ThemeToggle";
+import MainLayout from "@/app/MainLayout";
 import ProductSchema from "@/app/components/ProductSchema";
+import LandingHero from "@/app/components/AiLandingPage/ToolLanding/LandingHero";
+import UseCases from "@/app/components/AiLandingPage/ToolLanding/UseCases";
+import HowItWorks from "@/app/components/AiLandingPage/ToolLanding/HowItWorks";
+import WatchVideo from "@/app/components/AiLandingPage/ToolLanding/WatchVideo";
+import WhyItWorks from "@/app/components/AiLandingPage/ToolLanding/WhyItWorks";
+import TwoWays from "@/app/components/AiLandingPage/ToolLanding/TwoWays";
+import StudentReviews from "@/app/components/AiLandingPage/ToolLanding/StudentReviews";
+import LandingFaq from "@/app/components/AiLandingPage/ToolLanding/LandingFaq";
+import FooterCta from "@/app/components/AiLandingPage/ToolLanding/FooterCta";
+import SummarizerHeroTool from "@/app/components/AiLandingPage/Summarizer/SummarizerHeroTool";
+import {
+  heroContent,
+  useCasesContent,
+  howItWorksContent,
+  whyItWorksContent,
+  watchVideoContent,
+  twoWaysContent,
+  reviewsContent,
+  faqContent,
+  footerCtaContent,
+} from "@/app/components/AiLandingPage/Summarizer/content";
 
-interface PageProps {}
-const Page: FC<PageProps> = ({}) => {
-  // return <div>test</div>
+const META_TITLE =
+  "Free AI Summarizer: Notes, Flashcards & Audio | ScholarlyHelp";
+const META_DESCRIPTION =
+  "Turn long texts, documents, or PDFs into flashcards, study notes, slide decks, or audio with our free AI summarizer. Try ScholarlyHelp today!";
+
+const Page: FC = () => {
   const baseUrl =
     process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
   const normalizedBaseUrl = baseUrl.endsWith("/")
     ? baseUrl.slice(0, -1)
     : baseUrl;
   return (
-    <>
+    <MainLayout>
       <ProductSchema
-        productTitle="AI Summarizer Tool | Condense Articles & Research Papers Instantly"
-        metaDescription="Turn long chapters, PDFs, notes, or articles into clear, concise summaries. Save study time and capture main ideas quickly with our intelligent AI summarizer."
+        productTitle={META_TITLE}
+        metaDescription={META_DESCRIPTION}
         pageUrl={`${normalizedBaseUrl}/tools/ai-summarizer`}
       />
-      {/* <ThemeToggle /> */}
-
-      <AiHero
-        heroContent={AiSummarizerContent.heroContent}
-        imgSection={AiSummarizerContent.imgSection}
-      />
-      <AiTrust trustSection={AiSummarizerContent.trustSection} />
-      <KeyFeatures featuresSection={AiSummarizerContent.featuresSection} />
-      <AiMission
-        missionSection={AiSummarizerContent.missionSection}
-        guideSection={AiSummarizerContent.guideSection}
-      />
-      <AiFaq FaqSestion={AiSummarizerContent.FaqSestion} />
-      <ElevateWriting elevateSection={AiSummarizerContent.elevateSection} />
-    </>
+      <div className="font-poppins">
+        <LandingHero content={heroContent} toolAnchorId="summarizer-tool">
+          <SummarizerHeroTool />
+        </LandingHero>
+        <UseCases content={useCasesContent} />
+        <HowItWorks content={howItWorksContent} />
+        <WhyItWorks content={whyItWorksContent} />
+        <WatchVideo content={watchVideoContent} />
+        <TwoWays content={twoWaysContent} />
+        <StudentReviews content={reviewsContent} />
+        <LandingFaq content={faqContent} />
+        <FooterCta content={footerCtaContent} />
+      </div>
+    </MainLayout>
   );
 };
 export default Page;
@@ -54,9 +69,8 @@ export function generateMetadata(): Metadata {
   const canonicalUrl = `${normalizedBaseUrl}/tools/ai-summarizer`;
 
   return {
-    title: "AI Summarizer Tool | Condense Articles & Research Papers Instantly",
-    description:
-      "Turn long chapters, PDFs, notes, or articles into clear, concise summaries. Save study time and capture main ideas quickly with our intelligent AI summarizer.",
+    title: META_TITLE,
+    description: META_DESCRIPTION,
     alternates: {
       canonical: canonicalUrl,
     },

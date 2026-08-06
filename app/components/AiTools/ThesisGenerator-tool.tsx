@@ -10,6 +10,8 @@ import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
+import { getAccessToken } from "@/app/lib/authSession";
+import { rankAcademicText, useLatestAbortController } from "@/app/lib/client/toolOptimization";
 
 type ThesisEntry = { type: string; thesis: string };
 
@@ -23,9 +25,11 @@ const TYPE_DESCRIPTIONS: Record<string, string> = {
 };
 
 function ThesisCard({ entry }: { entry: ThesisEntry }) {
+  const [editableThesis, setEditableThesis] = useState(entry.thesis);
+  const rationale = editableThesis.match(/\b(?:because|since|as)\b\s+(.+)/i)?.[1] || "Add a clear supporting reason to strengthen this thesis.";
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(entry.thesis);
+        await navigator.clipboard.writeText(editableThesis);
       toast.success("Copied to clipboard!");
     } catch {
       toast.error("Failed to copy.");
@@ -54,9 +58,8 @@ function ThesisCard({ entry }: { entry: ThesisEntry }) {
           <FaRegCopy className="w-3.5 h-3.5" />
         </button>
       </div>
-      <p className="text-sm text-gray-800 dark:text-gray-100 leading-relaxed">
-        &ldquo;{entry.thesis}&rdquo;
-      </p>
+      <textarea value={editableThesis} onChange={(event) => setEditableThesis(event.target.value)} className="w-full resize-y rounded-md border border-gray-200 bg-transparent p-2 text-sm leading-relaxed dark:border-gray-700" aria-label={`${entry.type} thesis statement`} />
+      <div className="mt-2 grid gap-1 text-xs text-gray-500"><span><strong>Claim:</strong> {editableThesis.split(/\b(?:because|since|as)\b/i)[0]}</span><span><strong>Reason:</strong> {rationale}</span></div>
     </div>
   );
 }
@@ -66,6 +69,7 @@ const ThesisGenerator = () => {
   const [theses, setTheses] = useState<ThesisEntry[]>([]);
   const [isSubmitting, setSubmitting] = useState<boolean>(false);
   const { gateOpen, closeGate, guardAiClick } = useGuestGate();
+  const nextController = useLatestAbortController();
   const [formData, setFormData] = useState({
     topic: "",
     mainIdea: "",
@@ -75,7 +79,7 @@ const ThesisGenerator = () => {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setToken(localStorage.getItem("access_token"));
+      setToken(getAccessToken());
     }
   }, []);
 
@@ -98,6 +102,7 @@ const ThesisGenerator = () => {
       setTheses([]);
 
       try {
+        const controller = nextController();
         const response = await axios.post(
           `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/generate-thesis`,
           {
@@ -111,13 +116,16 @@ const ThesisGenerator = () => {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
+            signal: controller.signal,
           },
         );
 
         // Backend wraps responses as { success, message, data }
         const data = response.data?.data ?? response.data;
         if (Array.isArray(data?.theses) && data.theses.length > 0) {
-          setTheses(data.theses);
+          const unique = rankAcademicText(data.theses.map((item: ThesisEntry) => item.thesis), "thesis");
+          const typeByText = new Map<string, string>(data.theses.map((item: ThesisEntry) => [item.thesis, item.type]));
+          setTheses(unique.map((item) => ({ thesis: item.text, type: typeByText.get(item.text) || "Argumentative" })));
           toast.success("Thesis statements generated successfully!");
         } else {
           toast.error("No thesis statements returned. Please try again.");
@@ -168,7 +176,7 @@ const ThesisGenerator = () => {
             ) : (
               <div className="space-y-4">
                 {theses.map((entry, i) => (
-                  <ThesisCard key={i} entry={entry} />
+                  <ThesisCard key={`${entry.type}:${entry.thesis}`} entry={entry} />
                 ))}
               </div>
             )}

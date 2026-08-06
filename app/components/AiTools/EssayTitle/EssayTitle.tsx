@@ -8,9 +8,17 @@ import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
+import { getAccessToken } from "@/app/lib/authSession";
+import { rankAcademicText, useLatestAbortController } from "@/app/lib/client/toolOptimization";
 
 interface EssayTitleProps {
   setFlag: (value: boolean) => void;
+  /**
+   * "landing" renders the same tool as a rounded, shadowed hero card (used on
+   * the /tools/ai-essay-title-generator landing page); the default keeps the
+   * /tools styling.
+   */
+  variant?: "default" | "landing";
 }
 
 interface ApiEnvelope<T> {
@@ -62,7 +70,8 @@ const academicLevelOptions = [
   { value: "journal-ready", label: "Journal-Ready" },
 ];
 
-const EssayTitle: FC<EssayTitleProps> = ({ setFlag }) => {
+const EssayTitle: FC<EssayTitleProps> = ({ setFlag, variant = "default" }) => {
+  const isLanding = variant === "landing";
   const [token, setToken] = useState<string | null>(null);
   const [topic, setTopic] = useState<string>("");
   const [keywords, setKeywords] = useState<string>("");
@@ -75,10 +84,11 @@ const EssayTitle: FC<EssayTitleProps> = ({ setFlag }) => {
   const [titles, setTitles] = useState<string[]>([]);
   const [error, setError] = useState<string>("");
   const { gateOpen, closeGate, guardAiClick } = useGuestGate();
+  const nextController = useLatestAbortController();
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setToken(localStorage.getItem("access_token"));
+      setToken(getAccessToken());
     }
   }, []);
 
@@ -116,6 +126,7 @@ const EssayTitle: FC<EssayTitleProps> = ({ setFlag }) => {
       setTitles([]);
 
       try {
+        const controller = nextController();
         const payload: {
           topic?: string;
           keywords?: string;
@@ -159,11 +170,12 @@ const EssayTitle: FC<EssayTitleProps> = ({ setFlag }) => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
+          signal: controller.signal,
         });
 
         const titles = response.data?.data?.titles;
         if (response.data?.success && Array.isArray(titles) && titles.length > 0) {
-          setTitles(titles);
+          setTitles(rankAcademicText(titles, "title").map((item) => item.text));
           setFlag(true);
           toast.success(response.data?.message || "Titles generated successfully!");
         } else {
@@ -200,9 +212,21 @@ const EssayTitle: FC<EssayTitleProps> = ({ setFlag }) => {
   };
 
   return (
-    <div className="container relative mx-auto max-w-[840px] px-4 md:px-8 md:pt-8 2xl:max-w-6xl">
+    <div
+      className={
+        isLanding
+          ? "relative w-full"
+          : "container relative mx-auto max-w-[840px] px-4 md:px-8 md:pt-8 2xl:max-w-6xl"
+      }
+    >
       <ToolsApiLoader show={isSubmitting} />
-      <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 overflow-hidden transition-colors duration-300">
+      <div
+        className={`bg-white dark:bg-gray-800 overflow-hidden transition-colors duration-300 ${
+          isLanding
+            ? "rounded-2xl shadow-[0_30px_70px_-20px_rgba(43,28,80,0.35)] text-left"
+            : "border dark:border-gray-700"
+        }`}
+      >
         {/* Main Overview Section */}
         <div className="pt-6 ">
           <h2 className="text-2xl text-center font-bold text-gray-800 dark:text-gray-100 mb-3 transition-colors duration-300">
@@ -451,6 +475,7 @@ const EssayTitle: FC<EssayTitleProps> = ({ setFlag }) => {
                 >
                   <p className="flex-1 text-gray-800 dark:text-gray-100 pr-4 transition-colors duration-300">
                     {index + 1}. {title}
+                    <span className="ml-2 rounded-full bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">Quality {rankAcademicText([title], "title")[0]?.score ?? 0}</span>
                   </p>
                   <button
                     onClick={() => handleCopyTitle(title)}
@@ -469,14 +494,16 @@ const EssayTitle: FC<EssayTitleProps> = ({ setFlag }) => {
       </div>
 
       {/* Footer Quote */}
-      <div className="text-sm font-serif text-center pt-8 text-gray-500 dark:text-gray-400 transition-colors duration-300">
-        <q>
-          Struggling to find the perfect essay title? ScholarlyHelp&apos;s AI-powered
-          Essay Title Generator creates compelling, academic-appropriate titles
-          that capture your topic&apos;s essence and engage your readers from the
-          start.
-        </q>
-      </div>
+      {!isLanding && (
+        <div className="text-sm font-serif text-center pt-8 text-gray-500 dark:text-gray-400 transition-colors duration-300">
+          <q>
+            Struggling to find the perfect essay title? ScholarlyHelp&apos;s
+            AI-powered Essay Title Generator creates compelling,
+            academic-appropriate titles that capture your topic&apos;s essence
+            and engage your readers from the start.
+          </q>
+        </div>
+      )}
 
       <GuestAuthGateModal open={gateOpen} onClose={closeGate} />
     </div>

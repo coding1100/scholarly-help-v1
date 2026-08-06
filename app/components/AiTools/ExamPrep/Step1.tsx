@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { HiDocumentText, HiCalendar } from "react-icons/hi2";
 import { HiChevronDown } from "react-icons/hi";
-import { sendChatMessage, ChatResponse } from "@/app/utilities/api";
+import { sendAgentTask, ChatResponse } from "@/app/utilities/api";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import toast from "react-hot-toast";
@@ -106,12 +106,11 @@ export default function Step1({ onContinue }: Step1Props) {
 
     try {
       trackToolGenerate({ toolName: "Exam Prep" });
-      // Format the message payload
       const currentLevel = knowledgeLevel.toLowerCase();
-      const message = `Use the create_study_schedule tool with:\n- exam_date: "${examDate}"\n- subjects: "${subject}"\n- hours_per_day: ${hoursPerDay}\n- current_level: "${currentLevel}"`;
-
-      // Call the API
-      const response = await sendChatMessage(message, null);
+      const response = await sendAgentTask({
+        task: "create_study_schedule",
+        parameters: { exam_date: examDate, subjects: [subject], hours_per_day: hoursPerDay, current_level: currentLevel },
+      });
 
       // Pass data to next step
       if (onContinue) {

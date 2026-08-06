@@ -11,6 +11,7 @@ import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import { sanitizeHtml } from "@/app/utils/sanitizeHtml";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
+import { getAccessToken } from "@/app/lib/authSession";
 
 type Subject = "math" | "physics" | "chemistry" | "general";
 type InputMode = "image" | "text";
@@ -407,7 +408,7 @@ const StemSolver: FC<{ setFlag: (v: boolean) => void }> = ({ setFlag }) => {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setToken(localStorage.getItem("access_token"));
+      setToken(getAccessToken());
     }
   }, []);
 

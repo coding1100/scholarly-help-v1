@@ -1,15 +1,12 @@
 ﻿"use client";
 
-import { Suspense, useState } from "react";
-import ToolsLayout from "@/app/components/AiTools/ToolsLayout";
+import { Suspense } from "react";
 import CgpaTool from "@/app/components/AiTools/CgpaTool/CgpaTool";
 import { ToolsSuspenseFallback } from "@/app/components/AiTools/ToolsApiLoader";
-import ToolWithExplore from "@/app/components/AiTools/ToolWithExplore";
 import ProductSchema from "@/app/components/ProductSchema";
 // import ThemeToggle from "@/app/components/AiLandingPage/ThemeToggle";
 
 export default function MathSolverPage() {
-  const [flag, setFlag] = useState<boolean>(false);
   const rawBaseUrl =
     process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
   const baseUrl = rawBaseUrl.endsWith("/")
@@ -28,11 +25,7 @@ export default function MathSolverPage() {
         pageUrl={`${baseUrl}/tools/cgpa-calculator`}
       />
       {/* <ThemeToggle top="top-12" /> */}
-      <ToolsLayout setFlag={setFlag} flag={flag}>
-        <ToolWithExplore>
-          <CgpaTool />
-        </ToolWithExplore>
-      </ToolsLayout>
+      <main className="min-h-screen bg-white py-8 dark:bg-gray-900"><CgpaTool /></main>
     </Suspense>
   );
 }

@@ -45,11 +45,17 @@ export default function CourseRow(props: {
       <div className="col-span-10 md:col-span-3">
         <Input
           inputMode="decimal"
+          type="number"
+          min="0.01"
+          max="100"
+          step="0.01"
           value={course.credits}
           onChange={(e) => onChange({ ...course, credits: e.target.value })}
           placeholder="Credits"
           aria-label="Credit hours"
+          aria-describedby={`credits-help-${course.id}`}
         />
+        <span id={`credits-help-${course.id}`} className="sr-only">Credit hours must be between 0.01 and 100.</span>
       </div>
 
       <div className="col-span-2 flex justify-center">

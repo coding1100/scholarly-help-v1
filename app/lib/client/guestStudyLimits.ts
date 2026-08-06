@@ -1,4 +1,5 @@
 "use client";
+import { hasRefreshSessionHint } from "@/app/lib/accessTokenStore";
 
 /**
  * Client-side guest bookkeeping for the AI Study Workspace.
@@ -33,10 +34,7 @@ function writeCount(key: string, value: number): void {
 /** A guest is any visitor without an auth token. */
 export function isGuest(): boolean {
   if (typeof window === "undefined") return false;
-  return !(
-    window.localStorage.getItem("access_token") ||
-    window.localStorage.getItem("authToken")
-  );
+  return !hasRefreshSessionHint();
 }
 
 export function getGuestSessionCount(): number {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { FiArrowLeft, FiFileText, FiPlus, FiSettings } from "react-icons/fi";
@@ -11,6 +11,7 @@ import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import { countWords, looksLikeGibberish } from "@/app/utils/text";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
+import { getAccessToken } from "@/app/lib/authSession";
 import EditorPane, { type ResolveAction } from "./EditorPane";
 import GoalsModal from "./GoalsModal";
 import IssuesSidebar from "./IssuesSidebar";
@@ -34,11 +35,25 @@ import {
 
 const GOALS_STORAGE_KEY = "grammar_goals";
 const DICTIONARY_STORAGE_KEY = "grammar_dictionary";
+const DICTIONARY_SYNC_KEY = "grammar_dictionary_pending_sync";
 
 interface CheckedDoc {
   /** Current document text — mutates only through applyFix. */
   text: string;
   issues: ClientIssue[];
+  /** Complete backend correction after its internal verification rounds. */
+  verifiedText?: string;
+}
+
+function changedParagraph(previous: string, next: string) {
+  if (!previous || previous === next) return { text: next, start: 0, incremental: false };
+  const nextParagraphs = [...next.matchAll(/(?:^|\n\s*\n)([^]*?)(?=\n\s*\n|$)/g)];
+  const changed = nextParagraphs.filter((match) => !previous.includes(match[1]));
+  if (changed.length !== 1) return { text: next, start: 0, incremental: false };
+  const match = changed[0];
+  const text = match[1].trim();
+  const start = next.indexOf(text, match.index ?? 0);
+  return text.length >= 10 ? { text, start, incremental: true } : { text: next, start: 0, incremental: false };
 }
 
 /** Keep only issues whose offsets still slice to their snippet (belt-and-braces). */
@@ -74,14 +89,18 @@ const GrammarCheckerTool: React.FC = () => {
   const [seenIssueIds, setSeenIssueIds] = useState<string[]>([]);
 
   const { gateOpen, closeGate, guardAiClick } = useGuestGate();
+  const requestControllerRef = useRef<AbortController | null>(null);
+  const lastCheckedTextRef = useRef("");
+  useEffect(() => () => requestControllerRef.current?.abort(), []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const storedToken = localStorage.getItem("access_token");
+    const storedToken = getAccessToken();
     setToken(storedToken);
     try {
       const storedGoals = localStorage.getItem(GOALS_STORAGE_KEY);
-      if (storedGoals) setGoals({ ...DEFAULT_GOALS, ...JSON.parse(storedGoals) });
+      if (storedGoals)
+        setGoals({ ...DEFAULT_GOALS, ...JSON.parse(storedGoals) });
       const storedWords = localStorage.getItem(DICTIONARY_STORAGE_KEY);
       if (storedWords) setDictionary(JSON.parse(storedWords));
     } catch {
@@ -90,9 +109,12 @@ const GrammarCheckerTool: React.FC = () => {
     // Signed-in users: the account copy of the dictionary wins over the device copy.
     if (storedToken) {
       axios
-        .get(`${process.env.NEXT_PUBLIC_NGROX_URL}/tools/grammar-check/dictionary`, {
-          headers: { Authorization: `Bearer ${storedToken}` },
-        })
+        .get(
+          `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/grammar-check/dictionary`,
+          {
+            headers: { Authorization: `Bearer ${storedToken}` },
+          },
+        )
         .then((response) => {
           const words = (response.data?.data ?? response.data)?.words;
           if (Array.isArray(words) && words.length > 0) {
@@ -112,7 +134,10 @@ const GrammarCheckerTool: React.FC = () => {
     [doc?.issues, doc?.text],
   );
   const correctedText = useMemo(
-    () => (doc ? deriveCorrectedText(doc.text, doc.issues) : ""),
+    () =>
+      doc
+        ? (doc.verifiedText ?? deriveCorrectedText(doc.text, doc.issues))
+        : "",
     [doc],
   );
 
@@ -133,11 +158,24 @@ const GrammarCheckerTool: React.FC = () => {
           { words },
           { headers: authHeaders },
         )
-        .catch(() => {
-          /* best-effort account sync; localStorage remains the fallback */
-        });
+        .then(() => localStorage.removeItem(DICTIONARY_SYNC_KEY))
+        .catch(() => localStorage.setItem(DICTIONARY_SYNC_KEY, JSON.stringify(words)));
     }
   };
+
+  useEffect(() => {
+    if (!token) return;
+    const flush = () => {
+      try {
+        const pending = JSON.parse(localStorage.getItem(DICTIONARY_SYNC_KEY) || "null");
+        if (!Array.isArray(pending)) return;
+        void axios.put(`${process.env.NEXT_PUBLIC_NGROX_URL}/tools/grammar-check/dictionary`, { words: pending }, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } })
+          .then(() => localStorage.removeItem(DICTIONARY_SYNC_KEY)).catch(() => undefined);
+      } catch { localStorage.removeItem(DICTIONARY_SYNC_KEY); }
+    };
+    flush(); window.addEventListener("online", flush);
+    return () => window.removeEventListener("online", flush);
+  }, [token]);
 
   const showApiError = (err: any, fallback: string) => {
     const status = err?.response?.status;
@@ -149,11 +187,15 @@ const GrammarCheckerTool: React.FC = () => {
     if (status === 401) {
       toast.error("Session expired. Please sign in again.");
     } else if (status === 403) {
-      toast.error("You don't have enough token balance, or the input exceeds limits.");
+      toast.error(
+        "You don't have enough token balance, or the input exceeds limits.",
+      );
     } else if (status === 429) {
       toast.error("Too many requests — please wait a moment and try again.");
     } else {
-      toast.error(Array.isArray(message) ? message.join(", ") : String(message));
+      toast.error(
+        Array.isArray(message) ? message.join(", ") : String(message),
+      );
     }
   };
 
@@ -164,7 +206,9 @@ const GrammarCheckerTool: React.FC = () => {
       return false;
     }
     if (words < MIN_GRAMMAR_WORDS) {
-      toast.error(`Please provide at least ${MIN_GRAMMAR_WORDS} words to check.`);
+      toast.error(
+        `Please provide at least ${MIN_GRAMMAR_WORDS} words to check.`,
+      );
       return false;
     }
     if (words > MAX_GRAMMAR_WORDS) {
@@ -187,25 +231,44 @@ const GrammarCheckerTool: React.FC = () => {
       setLoading(true);
       setShowRecheckNote(false);
       try {
+        requestControllerRef.current?.abort();
+        const controller = new AbortController(); requestControllerRef.current = controller;
+        const requestSlice = changedParagraph(lastCheckedTextRef.current, text);
         const response = await axios.post(
           `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/grammar-check`,
           {
-            text,
+            text: requestSlice.text,
+            ...(requestSlice.incremental ? { scope: "paragraph", document_offset: requestSlice.start } : {}),
             ...goals,
             dictionary,
             settled_phrases: settled.slice(-100),
             known_issue_keys: seenIssueIds.slice(-500),
           },
-          { headers: authHeaders },
+          { headers: authHeaders, signal: controller.signal },
         );
-        const data = (response.data?.data ?? response.data) as GrammarCheckResponse;
-        const issues = toClientIssues(text, data.issues ?? []);
-        setDoc({ text, issues });
+        const data = (response.data?.data ??
+          response.data) as GrammarCheckResponse;
+        const issues = toClientIssues(requestSlice.text, data.issues ?? []).map((issue) => ({ ...issue, start: issue.start + requestSlice.start, end: issue.end + requestSlice.start }));
+        lastCheckedTextRef.current = text;
+        setDoc({
+          text,
+          issues,
+          verifiedText: !requestSlice.incremental &&
+            typeof data.corrected_text === "string"
+              ? data.corrected_text
+              : undefined,
+        });
         setSeenIssueIds((prev) => [
           ...prev,
           ...issues.map((i) => i.id).filter((id) => !prev.includes(id)),
         ]);
-        if (issues.length === 0) {
+        if (
+          issues.length === 0 &&
+          typeof data.corrected_text === "string" &&
+          data.corrected_text !== text
+        ) {
+          toast.success("A verified correction is ready to apply.");
+        } else if (issues.length === 0) {
           toast.success("No issues found — nice work!");
         }
       } catch (err: any) {
@@ -244,14 +307,17 @@ const GrammarCheckerTool: React.FC = () => {
         },
         { headers: authHeaders },
       );
-      const data = (response.data?.data ?? response.data) as GrammarCheckResponse;
+      const data = (response.data?.data ??
+        response.data) as GrammarCheckResponse;
       // Anchor against the snapshot we posted, not live state — pure derivation.
       const fresh: ClientIssue[] = [];
       for (const raw of data.issues ?? []) {
         const start = raw.start + sentence.start;
         const end = raw.end + sentence.start;
         if (nextDoc.text.slice(start, end) !== raw.original) continue;
-        const collides = nextDoc.issues.some((i) => start < i.end && end > i.start);
+        const collides = nextDoc.issues.some(
+          (i) => start < i.end && end > i.start,
+        );
         const duplicate = nextDoc.issues.some(
           (i) => i.category === raw.category && i.original === raw.original,
         );
@@ -311,6 +377,7 @@ const GrammarCheckerTool: React.FC = () => {
 
     setDoc({
       ...doc,
+      verifiedText: undefined,
       issues: doc.issues.map((i) =>
         i.id === issueId ? { ...i, status: action } : i,
       ),
@@ -343,7 +410,9 @@ const GrammarCheckerTool: React.FC = () => {
           },
         },
       );
-      const extracted = String(response.data?.data ?? response.data ?? "").trim();
+      const extracted = String(
+        response.data?.data ?? response.data ?? "",
+      ).trim();
       setText(extracted);
       if (countWords(extracted) > MAX_GRAMMAR_WORDS) {
         toast.error(
@@ -400,6 +469,14 @@ const GrammarCheckerTool: React.FC = () => {
     }
   };
 
+  const handleApplyAll = () => {
+    if (!doc || correctedText === doc.text) return;
+    setDoc({ text: correctedText, issues: [] });
+    setText(correctedText);
+    setShowRecheckNote(false);
+    toast.success("All corrections applied");
+  };
+
   const handleClear = () => {
     setText("");
     setDoc(null);
@@ -407,6 +484,7 @@ const GrammarCheckerTool: React.FC = () => {
     // New document, new lineage — forget the convergence memory.
     setSettled([]);
     setSeenIssueIds([]);
+    lastCheckedTextRef.current = "";
   };
 
   /** Back to the input view, carrying the edited document along. */
@@ -458,6 +536,7 @@ const GrammarCheckerTool: React.FC = () => {
             onClear={handleClear}
             onSubmit={handleCheck}
             submitButtonText="Check my grammar"
+            submitColorClassName="bg-[#F56200] hover:bg-[#ff7a24] active:bg-[#e05800]"
             isSubmitting={loading}
             isDisabled={!text.trim() || wordCount > MAX_GRAMMAR_WORDS}
           />
@@ -498,6 +577,8 @@ const GrammarCheckerTool: React.FC = () => {
               correctedText={correctedText}
               onCopyCorrected={handleCopyCorrected}
               copied={copied}
+              onApplyAll={handleApplyAll}
+              canApplyAll={correctedText !== doc.text}
             />
             <EditorPane
               text={doc.text}

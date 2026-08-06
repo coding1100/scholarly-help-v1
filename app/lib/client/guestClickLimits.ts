@@ -1,4 +1,5 @@
 "use client";
+import { hasRefreshSessionHint } from "@/app/lib/accessTokenStore";
 
 /**
  * Global click-based guest limit shared by ALL AI tools.
@@ -35,10 +36,7 @@ function writeCount(key: string, value: number): void {
 /** A guest is any visitor without an auth token. */
 export function isGuest(): boolean {
   if (typeof window === "undefined") return false;
-  return !(
-    window.localStorage.getItem("access_token") ||
-    window.localStorage.getItem("authToken")
-  );
+  return !hasRefreshSessionHint();
 }
 
 /** How many AI clicks the current guest has already used. */

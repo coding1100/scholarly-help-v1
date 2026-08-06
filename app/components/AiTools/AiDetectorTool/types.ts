@@ -18,8 +18,16 @@ export interface DetectSegment {
 export interface DetectionResponse {
   status: "success";
   verdict: {
+    /** @deprecated Use ai_likelihood_percent when present. */
     ai_percent: number;
+    /** @deprecated Use human_likelihood_percent when present. */
     human_percent: number;
+    ai_likelihood_percent?: number;
+    human_likelihood_percent?: number;
+    ai_content_share_percent?: number;
+    human_content_share_percent?: number;
+    metric_version?: string;
+    primary_metric?: "document_likelihood" | "ai_content_share";
     band: [number, number];
     confidence: number;
     label: SegmentLabel;
@@ -35,6 +43,8 @@ export interface DetectionResponse {
     trustworthy: boolean;
     paraphrase_suspected: boolean;
     evasion_chars_found: boolean;
+    signals_agree?: boolean;
+    disagreement_percent?: number;
     reason: string;
   };
   meta: {
@@ -62,11 +72,80 @@ export interface EditableSegment extends DetectSegment {
   ignored: boolean;
 }
 
-export const MIN_DETECT_WORDS = 50;
+export interface DetectorPublicConfig {
+  minimum_words: number;
+  low_confidence_words: number;
+  maximum_words: number;
+  metric_version: string;
+}
+
+export const MIN_DETECT_WORDS = 100;
 /**
  * Below this the score is returned but flagged as less reliable — the backend
  * sets `meta.low_confidence` at the same threshold (LOW_CONFIDENCE_WORDS in
  * detection-engine.service.ts); keep the two in sync.
  */
-export const LOW_CONFIDENCE_WORDS = 100;
+export const LOW_CONFIDENCE_WORDS = 180;
 export const MAX_DETECT_WORDS = 1500;
+
+export const FALLBACK_DETECTOR_CONFIG: DetectorPublicConfig = {
+  minimum_words: MIN_DETECT_WORDS,
+  low_confidence_words: LOW_CONFIDENCE_WORDS,
+  maximum_words: MAX_DETECT_WORDS,
+  metric_version: "2.0",
+};
+
+/** Backward-compatible selectors for a rolling backend/frontend deployment. */
+export function detectorLikelihood(result: DetectionResponse): number {
+  return result.verdict.ai_likelihood_percent ?? result.verdict.ai_percent;
+}
+
+export function detectorHumanLikelihood(result: DetectionResponse): number {
+  return (
+    result.verdict.human_likelihood_percent ?? result.verdict.human_percent
+  );
+}
+
+export function detectorContentShare(result: DetectionResponse): number {
+  return (
+    result.verdict.ai_content_share_percent ??
+    Math.round(result.breakdown.ai + result.breakdown.mixed * 0.5)
+  );
+}
+
+const percent = (value: number) => Math.min(100, Math.max(0, Number.isFinite(value) ? value : 0));
+
+/** Runtime boundary for model output: clamps probabilities and drops invalid segments. */
+export function normalizeDetectionResponse(result: DetectionResponse): DetectionResponse {
+  return {
+    ...result,
+    verdict: {
+      ...result.verdict,
+      ai_percent: percent(result.verdict.ai_percent), human_percent: percent(result.verdict.human_percent),
+      ai_likelihood_percent: result.verdict.ai_likelihood_percent === undefined ? undefined : percent(result.verdict.ai_likelihood_percent),
+      human_likelihood_percent: result.verdict.human_likelihood_percent === undefined ? undefined : percent(result.verdict.human_likelihood_percent),
+      confidence: Math.min(1, Math.max(0, result.verdict.confidence || 0)),
+    },
+    breakdown: { ai: percent(result.breakdown.ai), mixed: percent(result.breakdown.mixed), human: percent(result.breakdown.human) },
+    segments: result.segments?.filter((segment) => typeof segment.text === "string" && Number.isFinite(segment.start) && Number.isFinite(segment.end)).map((segment) => ({ ...segment, prob_ai: Math.min(1, Math.max(0, segment.prob_ai || 0)) })),
+  };
+}
+
+export function detectorHumanContentShare(result: DetectionResponse): number {
+  return (
+    result.verdict.human_content_share_percent ??
+    100 - detectorContentShare(result)
+  );
+}
+
+/** The visible gauge follows content composition, never the internal diagnostic. */
+export function detectorPrimaryScore(result: DetectionResponse): number {
+  return detectorContentShare(result);
+}
+
+export function detectorDisagreement(result: DetectionResponse): number {
+  return (
+    result.trust.disagreement_percent ??
+    Math.abs(detectorLikelihood(result) - detectorContentShare(result))
+  );
+}
