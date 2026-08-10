@@ -84,6 +84,7 @@ export default function EssayGeneratorTool() {
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [activeJob, setActiveJob] = useState<string | null>(null);
+  const [generationError, setGenerationError] = useState("");
   const [citationOpen, setCitationOpen] = useState(false);
   const [sourceLabel, setSourceLabel] = useState("");
   const [checkPanel, setCheckPanel] = useState<string | null>(null);
@@ -159,7 +160,7 @@ export default function EssayGeneratorTool() {
 
   async function generateEssay() {
     if (!session || !outline) return;
-    setLoading(true); setProgress(4); setResult(null);
+    setLoading(true); setProgress(4); setResult(null); setDraft(""); setGenerationError("");
     const controller = new AbortController(); abortRef.current = controller;
     try {
       const headers = await requestHeaders();
@@ -175,13 +176,17 @@ export default function EssayGeneratorTool() {
         eventsUrl: `${API}/tools/essay-generator/jobs/${job.job_id}/events`,
         pollUrl: `${API}/tools/essay-generator/jobs/${job.job_id}`,
         headers, signal: controller.signal, timeoutMs: 360_000,
-        parse: (payload) => unwrap(payload), onProgress: (state) => setProgress(state.progress || 0),
+        parse: (payload) => unwrap(payload), onProgress: (state) => setProgress(Math.max(8, state.progress || 0)),
       });
-      setResult(essay); setDraft(essay.plain_text);
+      setProgress(100); setResult(essay); setDraft(essay.plain_text);
       setSession((current) => current ? { ...current, current_revision_id: essay.revision_id, current_text: essay.plain_text, word_count: essay.word_count } : current);
       toast.success("Essay draft generated.");
     } catch (error: any) {
-      if (error?.name !== "AbortError") toast.error(errorMessage(error));
+      if (error?.name !== "AbortError") {
+        const message = errorMessage(error);
+        setGenerationError(message);
+        toast.error(message);
+      }
     } finally { setLoading(false); setActiveJob(null); abortRef.current = null; }
   }
 
@@ -232,6 +237,8 @@ export default function EssayGeneratorTool() {
   }
 
   const targetState = words < targetWords * 0.92 ? "Below target" : words > targetWords * 1.12 ? "Over target" : "On target";
+  const draftPending = step === 4 && loading && !result;
+  const draftReady = Boolean(result && draft.trim());
 
   return (
     <div className="min-h-full bg-[#f5f5f1] px-4 py-6 text-[#24251f] sm:px-6 lg:px-8">
@@ -314,22 +321,40 @@ export default function EssayGeneratorTool() {
           <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <button type="button" onClick={() => goToStep(1)} className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold lg:w-auto"><FiArrowLeft /> Start over</button>
             <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-              <button type="button" onClick={() => void transformSelection("paraphrase")} className="rounded-lg border bg-white px-3 py-2 text-sm font-semibold">Paraphrase</button>
-              <button type="button" onClick={() => void transformSelection("expand")} className="rounded-lg border bg-white px-3 py-2 text-sm font-semibold">Expand</button>
-              <button type="button" onClick={() => void transformSelection("shorten")} className="rounded-lg border bg-white px-3 py-2 text-sm font-semibold">Shorten</button>
-              <button type="button" onClick={() => setCitationOpen(true)} className="inline-flex items-center justify-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm font-semibold"><FiBookOpen /> Citations</button>
-              <button type="button" onClick={undoDraft} className="inline-flex items-center justify-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm font-semibold"><FiRotateCcw /> Undo</button>
-              <button type="button" onClick={saveDraft} className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#24251f] px-4 py-2 text-sm font-bold text-white"><FiCheck /> Save</button>
+              <button type="button" disabled={!draftReady || loading} onClick={() => void transformSelection("paraphrase")} className="rounded-lg border bg-white px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45">Paraphrase</button>
+              <button type="button" disabled={!draftReady || loading} onClick={() => void transformSelection("expand")} className="rounded-lg border bg-white px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45">Expand</button>
+              <button type="button" disabled={!draftReady || loading} onClick={() => void transformSelection("shorten")} className="rounded-lg border bg-white px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45">Shorten</button>
+              <button type="button" disabled={!draftReady || loading} onClick={() => setCitationOpen(true)} className="inline-flex items-center justify-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45"><FiBookOpen /> Citations</button>
+              <button type="button" disabled={!draftReady || loading} onClick={undoDraft} className="inline-flex items-center justify-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45"><FiRotateCcw /> Undo</button>
+              <button type="button" disabled={!draftReady || loading} onClick={saveDraft} className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#24251f] px-4 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-45"><FiCheck /> Save</button>
             </div>
           </div>
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
             <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
               <div className="flex flex-col gap-2 border-b border-gray-100 px-5 py-3 sm:flex-row sm:items-center sm:justify-between"><span className="inline-flex items-center gap-2 text-sm font-bold"><FiEdit3 /> Editable draft</span><span className={`w-fit rounded-full px-3 py-1 text-xs font-bold ${targetState === "On target" ? "bg-emerald-100 text-emerald-800" : targetState === "Over target" ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800"}`}>{words.toLocaleString()} / {targetWords.toLocaleString()} words</span></div>
-              <textarea ref={textRef} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={loading ? "Writing your full essay draft..." : ""} className="min-h-[520px] w-full resize-y p-5 font-serif text-[16px] leading-8 text-gray-800 outline-none sm:min-h-[680px] sm:p-8" />
+              <div className="relative">
+                <textarea ref={textRef} disabled={draftPending} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={generationError ? "Generation did not complete. Go back to preferences and try again." : draftPending ? "Writing your full essay draft..." : ""} className="min-h-[520px] w-full resize-y p-5 font-serif text-[16px] leading-8 text-gray-800 outline-none disabled:resize-none disabled:bg-white sm:min-h-[680px] sm:p-8" />
+                {draftPending && <div className="absolute inset-0 grid place-items-center bg-white/90 p-6 text-center">
+                  <div className="max-w-sm">
+                    <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-[#eeedfe] border-t-[#534ab7]" />
+                    <h3 className="text-base font-bold text-[#24251f]">Generating your essay draft</h3>
+                    <p className="mt-2 text-sm text-gray-500">Keep this screen open. We are polling the job status and will place the draft here as soon as it completes.</p>
+                    <div className="mt-4 overflow-hidden rounded-full bg-gray-200"><div className="h-2 rounded-full bg-[#534ab7] transition-all duration-500" style={{ width: `${Math.max(8, progress)}%` }} /></div>
+                    <p className="mt-2 text-xs font-semibold text-[#534ab7]">{Math.max(8, progress)}% complete</p>
+                  </div>
+                </div>}
+                {!loading && !draftReady && generationError && <div className="absolute inset-0 grid place-items-center bg-white/95 p-6 text-center">
+                  <div className="max-w-sm rounded-xl border border-red-100 bg-red-50 p-5">
+                    <h3 className="text-base font-bold text-red-900">Generation stopped</h3>
+                    <p className="mt-2 text-sm text-red-700">{generationError}</p>
+                    <button type="button" onClick={() => goToStep(3)} className="mt-4 rounded-lg bg-[#534ab7] px-4 py-2 text-sm font-bold text-white">Back to preferences</button>
+                  </div>
+                </div>}
+              </div>
             </div>
             <aside className="space-y-4">
-              <Panel title="Draft checks" icon={<FiFileText />}>{result ? <ul className="space-y-2 text-sm text-gray-600">{result.quality_checks.map((item, index) => <li key={index}>- {item}</li>)}</ul> : <p className="text-sm text-gray-500">Generation is running.</p>}</Panel>
-              <Panel title="Next steps" icon={<FiRefreshCw />}>{result ? <ul className="space-y-2 text-sm text-gray-600">{result.next_steps.map((item, index) => <li key={index}>- {item}</li>)}</ul> : <p className="text-sm text-gray-500">Review, personalize, verify claims, and add real sources before submission.</p>}</Panel>
+              <Panel title="Draft checks" icon={<FiFileText />}>{result ? <ul className="space-y-2 text-sm text-gray-600">{result.quality_checks.map((item, index) => <li key={index}>- {item}</li>)}</ul> : <p className="text-sm text-gray-500">{draftPending ? `Generation is running (${Math.max(8, progress)}%).` : generationError ? "Generation did not complete." : "No draft generated yet."}</p>}</Panel>
+              <Panel title="Next steps" icon={<FiRefreshCw />}>{result ? <ul className="space-y-2 text-sm text-gray-600">{result.next_steps.map((item, index) => <li key={index}>- {item}</li>)}</ul> : <p className="text-sm text-gray-500">{draftPending ? "Please wait until the draft appears before editing, saving, or using handoffs." : "Go back to preferences and try generation again."}</p>}</Panel>
               {result?.citations_note && <Panel title="Citation note" icon={<FiBookOpen />}><p className="text-sm text-gray-600">{result.citations_note}</p></Panel>}
               <Panel title="Handoffs" icon={<FiUsers />}>
                 <div className="space-y-2">
