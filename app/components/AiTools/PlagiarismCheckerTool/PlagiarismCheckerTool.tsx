@@ -32,8 +32,12 @@ function timestamp() {
 }
 
 function errorMessage(error: any): string {
-  if (Number(error?.response?.status) === 413) {
+  const status = Number(error?.response?.status);
+  if (status === 413) {
     return "This document is too large. Upload a file up to 15 MB, or paste up to 10,000 words (80,000 characters).";
+  }
+  if ([429, 502, 503, 504].includes(status)) {
+    return "Quetext is taking longer than usual. Your scan is safe, and status checks will keep retrying.";
   }
   const value = error?.response?.data?.message || error?.response?.data?.error || error?.message;
   return Array.isArray(value) ? value.join(", ") : String(value || "The scan could not be completed.");
@@ -102,7 +106,7 @@ export default function PlagiarismCheckerTool() {
     setPollFailed(false);
     setPollNotice("Your report is processing. You do not need to submit it again.");
     try {
-      for (let attempt = 0; attempt < 120 && alive.current && pollRun.current === run; attempt++) {
+      for (let attempt = 0; attempt < 240 && alive.current && pollRun.current === run; attempt++) {
         await new Promise((resolve) => setTimeout(resolve, delay));
         try {
           const response = await axios.get(`${API}/${scanId}`, {
@@ -112,8 +116,10 @@ export default function PlagiarismCheckerTool() {
           const next = unwrap<PlagiarismScan>(response);
           if (!alive.current || pollRun.current !== run) return;
           transientFailures = 0;
-          delay = 3000;
-          setPollNotice("Your report is processing. You do not need to submit it again.");
+          delay = next.retry_after_seconds ? Math.min(20_000, next.retry_after_seconds * 1000) : 3000;
+          setPollNotice(next.provider_pending
+            ? next.provider_message || "Quetext is still processing this document. We are checking again automatically."
+            : "Your report is processing. You do not need to submit it again.");
           setProgress(next.progress || 0);
           setScan(next);
           if (next.status === "completed" && next.result) {
