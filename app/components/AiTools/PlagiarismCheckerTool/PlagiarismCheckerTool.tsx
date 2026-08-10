@@ -14,6 +14,8 @@ type View = "input" | "progress" | "results";
 type SideView = "overview" | "focus" | "ignore" | "log";
 const API = `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/plagiarism-check`;
 const MAX_WORDS = 10_000;
+const MAX_CHARS = 80_000;
+const MAX_FILE_BYTES = 15 * 1024 * 1024;
 const DEFAULT_SETTINGS: ScanSettings = {
   exclude_bibliography: true,
   exclude_quotes: true,
@@ -30,6 +32,9 @@ function timestamp() {
 }
 
 function errorMessage(error: any): string {
+  if (Number(error?.response?.status) === 413) {
+    return "This document is too large. Upload a file up to 15 MB, or paste up to 10,000 words (80,000 characters).";
+  }
   const value = error?.response?.data?.message || error?.response?.data?.error || error?.message;
   return Array.isArray(value) ? value.join(", ") : String(value || "The scan could not be completed.");
 }
@@ -56,13 +61,18 @@ export default function PlagiarismCheckerTool() {
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [polling, setPolling] = useState(false);
+  const [pollFailed, setPollFailed] = useState(false);
+  const [pollNotice, setPollNotice] = useState("");
   const [revisionVisible, setRevisionVisible] = useState(true);
   const fileInput = useRef<HTMLInputElement>(null);
   const alive = useRef(true);
+  const pollRun = useRef(0);
 
   useEffect(() => {
+    alive.current = true;
     setToken(getAccessToken());
-    return () => { alive.current = false; };
+    return () => { alive.current = false; pollRun.current += 1; };
   }, []);
 
   const headers = useMemo(() => ({ Authorization: `Bearer ${token}` }), [token]);
@@ -85,51 +95,114 @@ export default function PlagiarismCheckerTool() {
     setSettings((current) => ({ ...current, [key]: !current[key] }));
 
   const poll = async (scanId: string) => {
-    for (let attempt = 0; attempt < 120 && alive.current; attempt++) {
-      await new Promise((resolve) => setTimeout(resolve, 2500));
-      const response = await axios.get(`${API}/${scanId}`, { headers });
-      const next = unwrap<PlagiarismScan>(response);
-      if (!alive.current) return;
-      setProgress(next.progress || 0);
-      setScan(next);
-      if (next.status === "completed" && next.result) {
-        setView("results");
-        setProgress(100);
-        setRevisionVisible(true);
-        return;
+    const run = ++pollRun.current;
+    let delay = 3000;
+    let transientFailures = 0;
+    setPolling(true);
+    setPollFailed(false);
+    setPollNotice("Your report is processing. You do not need to submit it again.");
+    try {
+      for (let attempt = 0; attempt < 120 && alive.current && pollRun.current === run; attempt++) {
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        try {
+          const response = await axios.get(`${API}/${scanId}`, {
+            headers: { ...headers, "Cache-Control": "no-cache" },
+            params: { ts: Date.now() },
+          });
+          const next = unwrap<PlagiarismScan>(response);
+          if (!alive.current || pollRun.current !== run) return;
+          transientFailures = 0;
+          delay = 3000;
+          setPollNotice("Your report is processing. You do not need to submit it again.");
+          setProgress(next.progress || 0);
+          setScan(next);
+          if (next.status === "completed" && next.result) {
+            setView("results");
+            setProgress(100);
+            setPollNotice("");
+            setRevisionVisible(true);
+            return;
+          }
+          if (next.status === "failed") throw new Error(next.error || "The scan failed.");
+        } catch (cause: any) {
+          const status = Number(cause?.response?.status || 0);
+          const transient = axios.isAxiosError(cause) && (!status || [429, 502, 503, 504].includes(status));
+          if (!transient) throw cause;
+          transientFailures += 1;
+          const retrySeconds = Number(
+            cause?.response?.data?.retry_after_seconds ||
+            cause?.response?.data?.data?.retry_after_seconds ||
+            0,
+          );
+          delay = retrySeconds > 0
+            ? Math.min(20_000, retrySeconds * 1000)
+            : Math.min(15_000, 3000 * 2 ** Math.min(transientFailures, 2));
+          setPollNotice("Quetext is busy. We’re retrying automatically—your scan is safe.");
+        }
       }
-      if (next.status === "failed") throw new Error(next.error || "The scan failed.");
+      if (alive.current && pollRun.current === run) {
+        throw new Error("The report is taking longer than expected. You can resume this scan without paying again.");
+      }
+    } finally {
+      if (pollRun.current === run) setPolling(false);
     }
-    throw new Error("The scan is taking longer than expected. Please try again.");
   };
 
   const runScan = async (input: string, isRescan = false) => {
     const count = countWords(input);
     if (count < 20) return toast.error("Please provide at least 20 words.");
     if (count > MAX_WORDS) return toast.error(`Please keep the document under ${MAX_WORDS.toLocaleString()} words.`);
-    setError(""); setView("progress"); setProgress(3); setSideView("overview");
+    if (input.length > MAX_CHARS) return toast.error(`Please keep the document under ${MAX_CHARS.toLocaleString()} characters.`);
+    setError(""); setPollFailed(false); setPollNotice(""); setView("progress"); setProgress(3); setSideView("overview");
+    let created: PlagiarismScan | null = null;
     try {
       const response = await axios.post(API, { text: input, title, options: settings }, {
         headers: { ...headers, "Content-Type": "application/json", "Idempotency-Key": crypto.randomUUID() },
       });
-      const created = unwrap<PlagiarismScan>(response);
+      created = unwrap<PlagiarismScan>(response);
       setScan(created);
       trackToolGenerate({ toolName: "Plagiarism Checker" });
       if (isRescan) addLog("Document rechecked against Quetext sources");
-      await poll(created.scan_id);
     } catch (cause) {
       const message = errorMessage(cause);
       setError(message); setView("input"); toast.error(message);
+      return;
+    }
+    if (!created) return;
+    try {
+      await poll(created.scan_id);
+    } catch (cause) {
+      const message = errorMessage(cause);
+      setError(message);
+      setPollNotice("Status checks are paused. Resume this existing scan—do not submit the document again.");
+      setPollFailed(true);
+      toast.error(message);
+    }
+  };
+
+  const resumePolling = async () => {
+    if (!scan?.scan_id || polling) return;
+    setError("");
+    setPollFailed(false);
+    try {
+      await poll(scan.scan_id);
+    } catch (cause) {
+      const message = errorMessage(cause);
+      setError(message);
+      setPollNotice("Status checks are paused. Resume this existing scan—do not submit the document again.");
+      setPollFailed(true);
+      toast.error(message);
     }
   };
 
   const uploadFile = async (file?: File) => {
     if (!file) return;
     if (!/\.(pdf|docx|txt|rtf)$/i.test(file.name)) return toast.error("Upload a PDF, DOCX, TXT, or RTF file.");
+    if (file.size > MAX_FILE_BYTES) return toast.error("This file is over 15 MB. Choose a smaller document and try again.");
     setUploading(true); setError("");
     try {
       const form = new FormData(); form.append("file", file);
-      const response = await axios.post(`${API}/extract`, form, { headers: { ...headers, "Content-Type": "multipart/form-data" } });
+      const response = await axios.post(`${API}/extract`, form, { headers });
       const data = unwrap<{ text: string; title: string; word_count: number }>(response);
       setText(data.text); setTitle(data.title); toast.success("Document text extracted.");
     } catch (cause) { toast.error(errorMessage(cause)); }
@@ -137,9 +210,11 @@ export default function PlagiarismCheckerTool() {
   };
 
   const reset = async () => {
+    pollRun.current += 1;
     if (scan?.scan_id) void axios.delete(`${API}/${scan.scan_id}`, { headers }).catch(() => undefined);
     setText(""); setTitle("Pasted text"); setView("input"); setScan(null); setProgress(0);
     setIgnored(new Set()); setEdits({}); setLog([]); setFocused(null); setError("");
+    setPolling(false); setPollFailed(false); setPollNotice("");
   };
 
   const selectMatch = (match: SimilarityMatch) => {
@@ -241,13 +316,16 @@ export default function PlagiarismCheckerTool() {
             ["contribute_to_database", "Contribute this paper to ScholarlyHelp&apos;s database", "Opt in to future shared-database matching."],
           ] as const).map(([key, label, description]) => <div className={styles.toggleRow} key={key}><div><div className={styles.label}>{label}</div><div className={styles.desc} dangerouslySetInnerHTML={{ __html: description }}/>{key === "contribute_to_database" && <div className={styles.note}>Off by default. Raw paper text is not stored by ScholarlyHelp.</div>}</div><label className={styles.switch}><input type="checkbox" checked={settings[key]} onChange={() => updateSetting(key)}/><span className={styles.slider}/></label></div>)}
         </div>}
-        <div className={styles.meta}>{words.toLocaleString()} / {MAX_WORDS.toLocaleString()} words · {title}</div>
-        <button className={styles.scanButton} disabled={uploading || words < 20 || words > MAX_WORDS} onClick={() => void runScan(text)}>Check for plagiarism</button>
+        <div className={`${styles.meta} ${text.length > MAX_CHARS ? styles.metaError : ""}`}>{words.toLocaleString()} / {MAX_WORDS.toLocaleString()} words · {text.length.toLocaleString()} / {MAX_CHARS.toLocaleString()} characters · {title}</div>
+        <button className={styles.scanButton} disabled={uploading || words < 20 || words > MAX_WORDS || text.length > MAX_CHARS} onClick={() => void runScan(text)}>Check for plagiarism</button>
       </div>}
 
-      {view === "progress" && <div className={styles.progressCard}>
-        <h2>Scanning &quot;{title}&quot;</h2><div className={styles.track}><div className={styles.fill} style={{ width: `${Math.max(4, progress)}%` }}/></div>
+      {view === "progress" && <div className={styles.progressCard} aria-live="polite">
+        <div className={styles.progressHeading}><div><span className={styles.eyebrow}>Similarity check</span><h2>Scanning &quot;{title}&quot;</h2></div><strong className={styles.progressValue}>{Math.max(3, progress)}%</strong></div>
+        <div className={styles.track} role="progressbar" aria-label="Plagiarism scan progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}><div className={styles.fill} style={{ width: `${Math.max(4, progress)}%` }}/></div>
         <div className={styles.steps}>{["Checking web index", "Cross-referencing academic sources", "Running similarity analysis", "Consolidating sources"].map((label, index) => <div key={label} className={`${styles.step} ${index < progressStep ? styles.done : index === progressStep ? styles.active : ""}`}>{index < progressStep ? "✓ " : ""}{label}</div>)}</div>
+        {pollNotice && <div className={`${styles.pollNotice} ${pollFailed ? styles.pollWarning : ""}`}><span className={polling ? styles.pulse : styles.statusDot}/><span>{pollNotice}</span></div>}
+        {pollFailed && <div className={styles.recovery}><button className={`${styles.smallButton} ${styles.filled}`} disabled={polling} onClick={() => void resumePolling()}><FiRefreshCw className={polling ? styles.spinning : ""}/> {polling ? "Checking…" : "Resume this scan"}</button><button className={styles.linkButton} onClick={() => void reset()}>Start over</button></div>}
       </div>}
 
       {view === "results" && result && <>
