@@ -62,6 +62,7 @@ function uniqueFileSourceName(fileName?: string): string {
 
 type StudySourceIngestionProps = {
   variant?: "toolbar" | "onboarding";
+  experience?: "study" | "tutor";
   onContentReady?: () => void;
   /**
    * Called with the id of a session that was just created lazily (on the user's
@@ -73,6 +74,7 @@ type StudySourceIngestionProps = {
 
 export default function StudySourceIngestion({
   variant = "toolbar",
+  experience = "study",
   onContentReady,
   onSessionCreated,
 }: StudySourceIngestionProps) {
@@ -97,6 +99,8 @@ export default function StudySourceIngestion({
   const [displayName, setDisplayName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isStartingRecording, setIsStartingRecording] = useState(false);
+  const [isStartingChat, setIsStartingChat] = useState(false);
+  const [showToolbarUpload, setShowToolbarUpload] = useState(false);
   const [statusByMode, setStatusByMode] = useState<Record<UploadMode, InlineStatus | null>>({
     file: null,
     url: null,
@@ -105,6 +109,21 @@ export default function StudySourceIngestion({
   });
 
   const textLength = useMemo(() => text.trim().length, [text]);
+
+  const startChatWithoutMaterial = async () => {
+    if (!onSessionCreated) return;
+    setIsStartingChat(true);
+    try {
+      const created = await createStudySession("Open tutor chat");
+      if (isGuest()) incrementGuestSessionCount();
+      onSessionCreated(created._id);
+    } catch (error) {
+      console.error("Failed to start tutor chat", error);
+      toast.error("Could not start a tutor chat");
+    } finally {
+      setIsStartingChat(false);
+    }
+  };
 
   const isSourceLoading = isSubmitting || isStartingRecording;
 
@@ -180,6 +199,7 @@ export default function StudySourceIngestion({
         );
       }
       onContentReady?.();
+      setShowToolbarUpload(false);
       setModeStatus("record", {
         tone: "success",
         message:
@@ -348,6 +368,7 @@ export default function StudySourceIngestion({
         );
       }
       onContentReady?.();
+      setShowToolbarUpload(false);
     } catch (error) {
       console.error("Failed to add source", error);
       // The source failed, so the session we just created for it has no content
@@ -777,7 +798,7 @@ export default function StudySourceIngestion({
   // lives in the sidebar — so the in-workspace header stays uncluttered.
   const sessionToolbar = (
     <section className="w-full px-3 pt-3 sm:px-5">
-      <div className="flex items-center">
+      <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
           onClick={goBackToStart}
@@ -785,6 +806,14 @@ export default function StudySourceIngestion({
         >
           <FiArrowLeft className="h-4 w-4" />
           Back to start
+        </button>
+        <button
+          type="button"
+          onClick={() => setShowToolbarUpload((value) => !value)}
+          className="inline-flex items-center gap-2 rounded-lg bg-[#5f70ff] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#4f60eb]"
+        >
+          <FiFolderPlus className="h-4 w-4" />
+          {showToolbarUpload ? "Close material panel" : "Add course material"}
         </button>
       </div>
     </section>
@@ -798,16 +827,29 @@ export default function StudySourceIngestion({
             <div className="w-full max-w-[640px]">
               <div className="mb-3 px-2 text-center sm:mb-4">
                 <h1 className="text-[22px] font-bold leading-tight tracking-tight text-[#1a2033] sm:text-[28px] lg:text-[32px]">
-                  Welcome to AI Study Workspace
+                  {experience === "tutor" ? "Welcome to your AI Tutor" : "Welcome to AI Study Workspace"}
                   {displayName ? `, ${displayName}` : ""}
                 </h1>
                 <p className="mx-auto mt-2 max-w-lg text-xs leading-relaxed text-[#64748b] sm:text-sm">
-                  Let&apos;s create your first study session together, select an option
-                  below to get started.
+                  {experience === "tutor"
+                    ? "Ask anything, or add course material for source-grounded tutoring and personalized practice."
+                    : "Let&apos;s create your first study session together, select an option below to get started."}
                 </p>
               </div>
               <div className="rounded-[28px] bg-white p-3 shadow-[0_8px_40px_rgba(15,23,42,0.06)] sm:rounded-[36px] sm:p-4">
                 {uploadForm}
+                {experience === "tutor" ? (
+                  <div className="mt-3 border-t border-[#eceefa] pt-3 text-center">
+                    <button
+                      type="button"
+                      onClick={startChatWithoutMaterial}
+                      disabled={isStartingChat}
+                      className="rounded-lg border border-[#cfd5ff] bg-[#f7f8ff] px-4 py-2 text-sm font-semibold text-[#4f5dcc] transition hover:bg-[#eef1ff] disabled:opacity-60"
+                    >
+                      {isStartingChat ? "Starting chat…" : "Just chat — no material needed"}
+                    </button>
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>
@@ -816,5 +858,14 @@ export default function StudySourceIngestion({
     );
   }
 
-  return <>{sessionToolbar}</>;
+  return (
+    <>
+      {sessionToolbar}
+      {showToolbarUpload ? (
+        <section className="mx-3 mt-3 rounded-2xl border border-[#dfe3ff] bg-white p-3 shadow-lg sm:mx-5 sm:p-4">
+          {uploadForm}
+        </section>
+      ) : null}
+    </>
+  );
 }

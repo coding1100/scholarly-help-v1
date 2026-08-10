@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { claimGuestSessions } from "@/app/lib/server/study/repo";
-import { fail, getAuthenticatedUserId, ok } from "@/app/lib/server/study/http";
+import { fail, getVerifiedUserId, ok } from "@/app/lib/server/study/http";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       return ok({ migrated: 0 });
     }
 
-    const realUserId = getAuthenticatedUserId(request);
+    const realUserId = getVerifiedUserId(request);
     if (!realUserId) {
       return fail("Unauthorized", 401);
     }

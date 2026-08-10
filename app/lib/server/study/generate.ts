@@ -11,11 +11,15 @@ import {
   mapChunkUserPrompt,
   notesSystemInstruction,
   notesUserPrompt,
+  outlineSystemInstruction,
+  outlineUserPrompt,
   quizSystemInstruction,
   quizUserPrompt,
   reduceSummaryUserPrompt,
   summarySystemInstruction,
   summaryUserPrompt,
+  syllabusSystemInstruction,
+  syllabusUserPrompt,
 } from "@/app/lib/server/study/prompts";
 import { prioritizeSourceText } from "@/app/lib/server/study/sourcePriority";
 import {
@@ -647,6 +651,60 @@ async function buildFlashcards(
   });
 }
 
+async function buildOutline(sourceText: string) {
+  const prepared = prioritizeSourceText(sourceText, "research", [], {
+    charCap: 50000,
+    chunkLimit: 72,
+  });
+  const raw = await generateGeminiText({
+    systemInstruction: outlineSystemInstruction(),
+    userPrompt: outlineUserPrompt(prepared),
+    temperature: 0.2,
+    maxOutputTokens: 5000,
+    responseJson: true,
+  });
+  const parsed = parseJson<{
+    title: string;
+    chapters: Array<{
+      id: string;
+      title: string;
+      summary?: string;
+      topics: Array<{ id: string; title: string }>;
+    }>;
+  }>(raw);
+  assertShape(Array.isArray(parsed?.chapters) && parsed.chapters.length > 0, "outline");
+  return parsed;
+}
+
+async function buildSyllabus(sourceText: string) {
+  const prepared = prioritizeSourceText(sourceText, "exam", [], {
+    charCap: 50000,
+    chunkLimit: 72,
+  });
+  const raw = await generateGeminiText({
+    systemInstruction: syllabusSystemInstruction(),
+    userPrompt: syllabusUserPrompt(prepared),
+    temperature: 0.1,
+    maxOutputTokens: 4000,
+    responseJson: true,
+  });
+  const parsed = parseJson<{
+    gradeComponents: Array<{ name: string; weight: number; evidence?: string }>;
+    deadlines: Array<{
+      title: string;
+      dueDate: string | null;
+      rawDate: string;
+      confidence: "high" | "medium" | "low";
+    }>;
+    warnings?: string[];
+  }>(raw);
+  assertShape(
+    Array.isArray(parsed?.gradeComponents) && Array.isArray(parsed?.deadlines),
+    "syllabus",
+  );
+  return parsed;
+}
+
 function quizOutputTokenBudget(targetQuestions: number): number {
   // ~180 tokens per MCQ item (question + 4 options + explanation + JSON syntax),
   // plus headroom. Clamp so large quizzes aren't truncated mid-array.
@@ -658,13 +716,13 @@ async function buildQuiz(
   mode: StudyLearningMode,
   examTopics: string[],
   previousContent?: unknown,
+  options: GenerateArtifactOptions = {},
 ) {
   // Quiz size scales to ~20% of the source (min 10 questions). Scale off the
   // ORIGINAL source length so the ratio reflects what the student uploaded, not
   // the prioritized slice we actually send to the model.
-  const { target: targetQuestions } = quizTargetQuestionCount(
-    countWords(sourceText),
-  );
+  const computedTarget = quizTargetQuestionCount(countWords(sourceText)).target;
+  const targetQuestions = options.questionCount || computedTarget;
   // Give the model enough of the MOST-RELEVANT source to write that many
   // distinct questions: ~900 chars of prioritized content per target question,
   // bounded so a huge source stays within a sane context/token budget.
@@ -681,7 +739,7 @@ async function buildQuiz(
     const raw = await generateGeminiText({
       systemInstruction: quizSystemInstruction(),
       userPrompt:
-        quizUserPrompt(prepared, mode, examTopics, targetQuestions) +
+        quizUserPrompt(prepared, mode, examTopics, targetQuestions, options) +
         variationHint() +
         avoidPreviousBlock(previousContent, {
           lens: attempt.lens,
@@ -702,6 +760,11 @@ async function buildQuiz(
         explanation: string;
         difficulty?: string;
         questionType?: string;
+        questionFormat?: string;
+        answer?: string;
+        hint?: string;
+        simpleExplanation?: string;
+        topic?: string;
       }>
     >(raw);
     assertShape(
@@ -716,9 +779,11 @@ async function buildQuiz(
       .map((quiz) => ({
         question: String(quiz.question || "").trim(),
         options:
-          Array.isArray(quiz.options) && quiz.options.length === 4
-            ? quiz.options.map((option) => String(option))
-            : ["Option A", "Option B", "Option C", "Option D"],
+          quiz.questionFormat === "short_answer" || quiz.options?.length === 0
+            ? []
+            : Array.isArray(quiz.options) && quiz.options.length === 4
+              ? quiz.options.map((option) => String(option))
+              : ["Option A", "Option B", "Option C", "Option D"],
         correctAnswerIndex:
           typeof quiz.correctAnswerIndex === "number" &&
           quiz.correctAnswerIndex >= 0 &&
@@ -728,6 +793,14 @@ async function buildQuiz(
         explanation: String(quiz.explanation || "").trim(),
         difficulty: quiz.difficulty || "medium",
         questionType: quiz.questionType || "recall",
+        questionFormat:
+          quiz.questionFormat === "short_answer" || quiz.options?.length === 0
+            ? "short_answer"
+            : "mcq",
+        answer: String(quiz.answer || "").trim(),
+        hint: String(quiz.hint || "").trim(),
+        simpleExplanation: String(quiz.simpleExplanation || "").trim(),
+        topic: String(quiz.topic || "General").trim() || "General",
       }))
       .filter((quiz) => {
         if (!quiz.question) return false;
@@ -764,6 +837,10 @@ export async function generateArtifact(
   const previousContent = options.previousContent;
 
   switch (type) {
+    case "outline":
+      return { content: await buildOutline(sourceText) };
+    case "syllabus":
+      return { content: await buildSyllabus(sourceText) };
     case "summary":
       return { content: await buildSummary(sourceText, mode, previousContent) };
     case "notes":
@@ -776,7 +853,7 @@ export async function generateArtifact(
       };
     case "quizzes":
       return {
-        content: await buildQuiz(sourceText, mode, examTopics, previousContent),
+        content: await buildQuiz(sourceText, mode, examTopics, previousContent, options),
       };
     default:
       throw new Error(`Unsupported generation type: ${type}`);

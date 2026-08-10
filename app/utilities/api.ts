@@ -1,19 +1,31 @@
+import { fetchWithAuthRetry } from "@/app/lib/authSession";
+
 const TUTOR_AGENT_ID = "education.personal_tutor";
 const MICRO_LEARNING_AGENT_ID = "education.micro_learning_agent";
 const TUTOR_WORKSPACE_STORAGE_KEY = "sh_tutor_workspace_v1";
 
 const trimTrailingSlash = (url: string) => (url.endsWith("/") ? url.slice(0, -1) : url);
 
+function getTutorGuestId(): string {
+  if (typeof window === "undefined") return "guest_server";
+  const studyId = localStorage.getItem("user_id");
+  if (studyId?.startsWith("guest_")) return studyId;
+  const studyGuestId = localStorage.getItem("sh_guest_study_user_id_v1");
+  if (studyGuestId?.startsWith("guest_")) return studyGuestId;
+  const existing = localStorage.getItem("scholarly_guest_user_id");
+  if (existing) return existing;
+  const guestId = `guest_${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
+  localStorage.setItem("scholarly_guest_user_id", guestId);
+  return guestId;
+}
+
 const getPublicBaseUrl = () => {
-  const url =
-    process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_BASE_URL || "";
+  const url = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_BASE_URL || "";
 
   return trimTrailingSlash(url);
 };
 
 const PUBLIC_BASE_URL = getPublicBaseUrl();
-// No hardcoded fallback: a real key must come from the environment. Shipping a
-// literal key in source exposes it to the browser and to git history.
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY || "";
 
 const assertApiConfig = () => {
@@ -137,23 +149,52 @@ export interface TutorResponse {
   suggested_next_actions?: string[];
 }
 
-/**
- * Send a message to the tutor agent
- */
+export interface SendChatMessageInput {
+  message: string;
+  conversationId?: string | null;
+  documentContext?: string;
+  history?: Array<{ role: "user" | "model"; text: string }>;
+  mode?: string;
+  level?: string;
+  rubric?: string;
+  onChunk?: (fullText: string, updatedConversationId?: string) => void;
+}
+
 export async function sendChatMessage(
-  message: string,
-  conversationId: string | null = null
+  inputOrMessage: string | SendChatMessageInput,
+  conversationId: string | null = null,
+  onChunk?: (fullText: string, updatedConversationId?: string) => void
 ): Promise<ChatResponse> {
-  assertApiConfig();
-  const response = await fetch(`${PUBLIC_BASE_URL}/agents/${TUTOR_AGENT_ID}/chat`, {
+  const isInputObj = typeof inputOrMessage === "object" && inputOrMessage !== null;
+  const message = isInputObj ? inputOrMessage.message : inputOrMessage;
+  const targetConvId = isInputObj ? (inputOrMessage.conversationId ?? conversationId) : conversationId;
+  const chunkCallback = isInputObj ? inputOrMessage.onChunk : onChunk;
+  const documentContext = isInputObj ? inputOrMessage.documentContext : undefined;
+  const history = isInputObj ? inputOrMessage.history : undefined;
+  const mode = isInputObj ? inputOrMessage.mode : undefined;
+  const level = isInputObj ? inputOrMessage.level : undefined;
+  const rubric = isInputObj ? inputOrMessage.rubric : undefined;
+
+  const backendBase =
+    process.env.NEXT_PUBLIC_NGROX_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    "http://localhost:5008/v1";
+  const endpoint = `${trimTrailingSlash(backendBase)}/tools/ai-tutor/chat`;
+
+  const response = await fetchWithAuthRetry(endpoint, {
     method: "POST",
     headers: {
-      "X-API-Key": API_KEY,
       "Content-Type": "application/json",
+      "x-user-id": getTutorGuestId(),
     },
     body: JSON.stringify({
-      conversation_id: conversationId,
-      message: message,
+      sessionId: targetConvId,
+      message,
+      documentContext,
+      history,
+      mode,
+      level,
+      rubric,
     }),
   });
 
@@ -164,37 +205,101 @@ export async function sendChatMessage(
     );
   }
 
-  const text = await response.text();
-  const streamMessage = text
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => line.startsWith("data:"))
-    .map((line) => line.replace(/^data:\s*/, ""))
-    .filter((line) => line && line !== "[DONE]")
-    .map((line) => {
-      try {
-        const data = JSON.parse(line);
-        return data.message || data.content || data.delta || data.text || "";
-      } catch {
-        return line;
-      }
-    })
-    .join("");
+  let finalConversationId = conversationId || "";
+  let fullMessage = "";
 
-  try {
-    const data = JSON.parse(text);
-    return {
-      conversation_id: data.conversation_id || conversationId || "",
-      message: data.message || data.response || streamMessage || text,
-      agent_id: data.agent_id || TUTOR_AGENT_ID,
+  if (response.body && chunkCallback) {
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let doneFullText = "";
+
+    const processEvent = (eventBlock: string) => {
+      const dataLines = eventBlock
+        .replace(/\r/g, "")
+        .split("\n")
+        .filter((line) => line.startsWith("data:"))
+        .map((line) => line.replace(/^data:\s?/, ""));
+      if (dataLines.length === 0) return;
+      const dataStr = dataLines.join("\n").trim();
+      if (!dataStr || dataStr === "[DONE]") return;
+      let data: {
+        conversation_id?: string;
+        sessionId?: string;
+        text?: string;
+        message?: string;
+        content?: string;
+        delta?: string;
+        fullText?: string;
+        error?: string;
+      };
+      try {
+        data = JSON.parse(dataStr);
+      } catch {
+        throw new Error("The Tutor stream returned an invalid event.");
+      }
+      if (data.error) throw new Error(data.error);
+      if (data.conversation_id || data.sessionId) {
+        finalConversationId = data.conversation_id || data.sessionId || finalConversationId;
+      }
+      doneFullText = data.fullText || doneFullText;
+      const delta = data.text || data.message || data.content || data.delta || "";
+      if (delta) {
+        fullMessage += delta;
+        chunkCallback(fullMessage, finalConversationId);
+      }
     };
-  } catch {
-    return {
-      conversation_id: conversationId || "",
-      message: streamMessage || text,
-      agent_id: TUTOR_AGENT_ID,
-    };
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true }).replace(/\r/g, "");
+      const events = buffer.split("\n\n");
+      buffer = events.pop() || "";
+      for (const event of events) {
+        processEvent(event);
+      }
+    }
+    buffer += decoder.decode().replace(/\r/g, "");
+    if (buffer.trim()) processEvent(buffer);
+    if (!fullMessage && doneFullText) {
+      fullMessage = doneFullText;
+      chunkCallback(fullMessage, finalConversationId);
+    }
+    if (!fullMessage) throw new Error("No Tutor response was received.");
+  } else {
+    const text = await response.text();
+    const streamMessage = text
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.startsWith("data:"))
+      .map((line) => line.replace(/^data:\s*/, ""))
+      .filter((line) => line && line !== "[DONE]")
+      .map((line) => {
+        try {
+          const data = JSON.parse(line);
+          if (data.conversation_id) finalConversationId = data.conversation_id;
+          return data.message || data.content || data.delta || data.text || "";
+        } catch {
+          return line;
+        }
+      })
+      .join("");
+
+    try {
+      const data = JSON.parse(text);
+      finalConversationId = data.conversation_id || finalConversationId;
+      fullMessage = data.message || data.response || streamMessage || text;
+    } catch {
+      fullMessage = streamMessage || text;
+    }
   }
+
+  return {
+    conversation_id: finalConversationId,
+    message: fullMessage,
+    agent_id: TUTOR_AGENT_ID,
+  };
 }
 
 /**
@@ -372,22 +477,11 @@ export function parseQuiz(quizText: string): ParsedQuestion[] {
 
 /**
  * Parse quiz response from API in "Question X:" or "Question X of Y" format
- * Handles formats like:
- * **Question 1:** or **Question 1 of 2**
- * [question text with possible code blocks]
- * A) [option]
- * B) [option]
- * C) [option]
- * D) [option]
- * **Answer:** [letter]
  */
 export function parseQuizFromResponse(quizText: string): ParsedQuestion[] {
   const questions: ParsedQuestion[] = [];
 
-  // Normalize literal \n to actual newlines first
   const normalizedText = quizText.replace(/\\n/g, '\n');
-
-  // Try both formats: "Question X:" and "Question X of Y"
   const questionRegex = /\*\*Question (\d+)(?:\s+of\s+(\d+))?:\*\*/g;
   const questionMatches = Array.from(normalizedText.matchAll(questionRegex));
 
@@ -403,16 +497,11 @@ export function parseQuizFromResponse(quizText: string): ParsedQuestion[] {
       : normalizedText.length;
 
     const questionBlock = normalizedText.substring(startIndex, endIndex).trim();
-
-    // Extract question text (everything before the first option)
-    // Options start with A), B), C), or D) on a new line
     const optionStartRegex = /\n([A-D])\)/;
     const optionStartMatch = questionBlock.match(optionStartRegex);
     
     if (!optionStartMatch) {
-      // Try without newline (options might be on same line)
-      const optionStartRegexInline = /([A-D])\)/;
-      const optionStartMatchInline = questionBlock.match(optionStartRegexInline);
+      const optionStartMatchInline = questionBlock.match(/([A-D])\)/);
       if (!optionStartMatchInline) return;
     }
 
@@ -422,18 +511,14 @@ export function parseQuizFromResponse(quizText: string): ParsedQuestion[] {
     
     let questionText = questionBlock.substring(0, optionStartIndex).trim();
     
-    // Clean up question text (remove extra markdown formatting)
     questionText = questionText
-      .replace(/^###?\s*/, '') // Remove ### headers
-      .replace(/\*\*/g, '') // Remove bold markers
-      .replace(/---+/g, '') // Remove horizontal rules
-      .replace(/^Question \d+:\s*/, '') // Remove "Question X:" prefix if still present
+      .replace(/^###?\s*/, '')
+      .replace(/\*\*/g, '')
+      .replace(/---+/g, '')
+      .replace(/^Question \d+:\s*/, '')
       .trim();
 
-    // Extract options - find everything between question and answer
     const options: { letter: string; text: string }[] = [];
-    
-    // Find where the answer section starts
     const answerStartIndex = questionBlock.search(/\*\*Answer:\*\*/i);
     const optionsSection = answerStartIndex > -1 
       ? questionBlock.substring(0, answerStartIndex)
@@ -449,7 +534,6 @@ export function parseQuizFromResponse(quizText: string): ParsedQuestion[] {
       });
     }
 
-    // Try to find answer
     const answerMatch = questionBlock.match(/\*\*Answer:\*\*\s*([A-D])/i);
     const answer = answerMatch ? answerMatch[1] : '';
 
@@ -458,7 +542,7 @@ export function parseQuizFromResponse(quizText: string): ParsedQuestion[] {
         number: questionNumber,
         question: questionText,
         options: options,
-        answer: answer, // May be empty if not provided in response
+        answer: answer,
       });
     }
   });

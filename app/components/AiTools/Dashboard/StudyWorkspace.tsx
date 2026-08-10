@@ -79,7 +79,7 @@ const GENERATION_TABS: WorkspaceTab[] = [
   "quizzes",
 ];
 
-function isGenerationTab(tab: WorkspaceTab): tab is StudyArtifactType {
+function isGenerationTab(tab: WorkspaceTab): tab is Exclude<WorkspaceTab, "original"> {
   return GENERATION_TABS.includes(tab);
 }
 
@@ -556,7 +556,7 @@ export default function StudyWorkspace() {
   const [tutorInput, setTutorInput] = useState("");
   const [flashcardIndex, setFlashcardIndex] = useState(0);
   const [flashcardFlipped, setFlashcardFlipped] = useState(false);
-  const [quizSelections, setQuizSelections] = useState<Record<string, number>>({});
+  const [quizSelections, setQuizSelections] = useState<Record<string, number | string>>({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [refreshTick, setRefreshTick] = useState(0);
   const [recordingSnapshot, setRecordingSnapshot] = useState<StudyRecordingSnapshot>(
@@ -764,7 +764,7 @@ export default function StudyWorkspace() {
       const parsed = JSON.parse(raw) as {
         flashcardIndex?: number;
         flashcardFlipped?: boolean;
-        quizSelections?: Record<string, number>;
+        quizSelections?: Record<string, number | string>;
         quizSubmitted?: boolean;
       };
       if (typeof parsed.flashcardIndex === "number") {
@@ -1001,6 +1001,8 @@ export default function StudyWorkspace() {
       return;
     }
     const labels: Record<StudyArtifactType, string> = {
+      outline: "Outline",
+      syllabus: "Syllabus",
       notes: "Study notes",
       summary: "Summary",
       flashcards: "Flashcards",

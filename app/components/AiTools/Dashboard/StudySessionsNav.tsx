@@ -13,7 +13,7 @@ import {
 } from "@/app/utils/studyApiClient";
 import { incrementGuestSessionCount, isGuest } from "@/app/lib/client/guestStudyLimits";
 
-const STUDY_WORKSPACE_PATH = "/tools/study-workspace";
+const STUDY_WORKSPACE_PATHS = new Set(["/tools/study-workspace", "/tools/tutor"]);
 
 type SessionListItem = Pick<StudySessionDto, "_id" | "title">;
 
@@ -62,7 +62,9 @@ export default function StudySessionsNav({ onNavigate }: { onNavigate?: () => vo
     () => (pathname?.endsWith("/") ? pathname.slice(0, -1) : pathname),
     [pathname],
   );
-  const isStudyWorkspaceRoute = normalizedRoute === STUDY_WORKSPACE_PATH;
+  const isStudyWorkspaceRoute = STUDY_WORKSPACE_PATHS.has(normalizedRoute || "");
+  const activeWorkspacePath =
+    normalizedRoute === "/tools/tutor" ? "/tools/tutor" : "/tools/study-workspace";
 
   const refreshSessions = useCallback(async () => {
     try {
@@ -97,7 +99,7 @@ export default function StudySessionsNav({ onNavigate }: { onNavigate?: () => vo
       setActiveStudySessionId(sessionId);
       const params = new URLSearchParams(searchParams.toString());
       params.set("sessionId", sessionId);
-      router.replace(`${STUDY_WORKSPACE_PATH}?${params.toString()}`);
+      router.replace(`${activeWorkspacePath}?${params.toString()}`);
       if (typeof window !== "undefined") {
         window.dispatchEvent(
           new CustomEvent("study-session-changed", { detail: { sessionId } }),
@@ -105,7 +107,7 @@ export default function StudySessionsNav({ onNavigate }: { onNavigate?: () => vo
       }
       onNavigate?.();
     },
-    [router, searchParams, onNavigate],
+    [activeWorkspacePath, router, searchParams, onNavigate],
   );
 
   const handleCreate = useCallback(async () => {
@@ -131,6 +133,8 @@ export default function StudySessionsNav({ onNavigate }: { onNavigate?: () => vo
         if (typeof window !== "undefined") {
           window.localStorage.removeItem(`study_saved_recordings_${sessionId}`);
           window.localStorage.removeItem(`study_workspace_state_${sessionId}`);
+          window.localStorage.removeItem(`tutor_preferences_${sessionId}`);
+          window.localStorage.removeItem(`tutor_mastery_${sessionId}`);
         }
         const list = await listStudySessions();
         setSessions(list.map((item) => ({ _id: item._id, title: item.title })));

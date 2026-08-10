@@ -2,6 +2,7 @@ import { fetchWithAuthRetry } from "@/app/lib/authSession";
 
 const STUDY_API_BASE = "/api/study";
 const ACTIVE_STUDY_SESSION_KEY = "sh_active_study_session_id_v1";
+const GUEST_STUDY_USER_KEY = "sh_guest_study_user_id_v1";
 
 export interface StudySessionDto {
   _id: string;
@@ -9,6 +10,7 @@ export interface StudySessionDto {
   title: string;
   createdAt: string;
   updatedAt: string;
+  tutorState?: Record<string, unknown>;
 }
 
 export type StudySourceKind = "text" | "url" | "file" | "youtube";
@@ -37,13 +39,25 @@ export interface StudySourceDto {
   indexedAt?: string;
 }
 
-export type StudyArtifactType = "notes" | "summary" | "flashcards" | "quizzes";
+export type StudyArtifactType =
+  | "outline"
+  | "syllabus"
+  | "notes"
+  | "summary"
+  | "flashcards"
+  | "quizzes";
 
 export type StudyLearningMode = "research" | "quiz" | "exam";
 
 export interface GenerateStudyArtifactOptions {
   mode?: StudyLearningMode;
   examTopics?: string[];
+  difficulty?: "easy" | "medium" | "hard" | "adaptive";
+  questionFormat?: "mcq" | "short_answer" | "mixed";
+  questionCount?: number;
+  preAssessment?: boolean;
+  academicLevel?: "high_school" | "college" | "phd";
+  rubric?: string;
 }
 
 export type TutorMessageImageDto = {
@@ -100,12 +114,15 @@ interface ApiEnvelope<T> {
 function getUserId() {
   if (typeof window === "undefined") return "anonymous";
   const existing = localStorage.getItem("user_id");
-  if (existing) return existing;
+  if (existing?.startsWith("guest_")) return existing;
   // Mint a stable per-guest id so guest Study data is isolated and can be
   // migrated to the real account on sign-up. Overwritten with the real
   // user_id at login (see auth/callback).
+  const savedGuestId = localStorage.getItem(GUEST_STUDY_USER_KEY);
+  if (savedGuestId?.startsWith("guest_")) return savedGuestId;
   const guestId = `guest_${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
-  localStorage.setItem("user_id", guestId);
+  localStorage.setItem(GUEST_STUDY_USER_KEY, guestId);
+  if (!existing) localStorage.setItem("user_id", guestId);
   return guestId;
 }
 
@@ -264,6 +281,16 @@ export async function updateStudySessionTitle(sessionId: string, title: string) 
   });
 }
 
+export async function updateStudySessionTutorState(
+  sessionId: string,
+  tutorState: Record<string, unknown>,
+) {
+  return callStudyApi<{ session: StudySessionDto }>(`/sessions/${sessionId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ tutorState }),
+  });
+}
+
 export async function deleteStudySession(sessionId: string) {
   return callStudyApi<{ deleted: boolean }>(`/sessions/${sessionId}`, {
     method: "DELETE",
@@ -291,6 +318,12 @@ export async function generateStudyArtifact(
       body: JSON.stringify({
         mode: options.mode || "research",
         examTopics: options.examTopics || [],
+        difficulty: options.difficulty || "adaptive",
+        questionFormat: options.questionFormat || "mcq",
+        questionCount: options.questionCount,
+        preAssessment: Boolean(options.preAssessment),
+        academicLevel: options.academicLevel || "college",
+        rubric: options.rubric || "",
       }),
     },
   );
@@ -321,6 +354,7 @@ export async function streamStudyTutor(
   options: {
     mode?: StudyLearningMode;
     examTopics?: string[];
+    tutorContext?: string;
   } | undefined,
   handlers: {
     onChunk: (text: string) => void;
@@ -343,6 +377,7 @@ export async function streamStudyTutor(
       stream: true,
       mode: options?.mode || "research",
       examTopics: options?.examTopics || [],
+      tutorContext: options?.tutorContext || "",
     }),
   });
   if (!res.ok || !res.body) {

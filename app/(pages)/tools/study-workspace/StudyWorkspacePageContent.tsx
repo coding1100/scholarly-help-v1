@@ -27,7 +27,11 @@ import {
   takePendingGuestMigrationId,
 } from "@/app/lib/client/guestStudyLimits";
 
-export default function StudyWorkspacePageContent() {
+export default function StudyWorkspacePageContent({
+  basePath = "/tools/study-workspace",
+}: {
+  basePath?: "/tools/study-workspace" | "/tools/tutor";
+}) {
   const [flag, setFlag] = useState<boolean>(false);
   const [hasSessionContent, setHasSessionContent] = useState<boolean | null>(null);
   // True until bootstrap has finished looking for an EXISTING session. A
@@ -144,7 +148,7 @@ export default function StudyWorkspacePageContent() {
       if (nextParams.get("sessionId") !== resolvedSession._id) {
         nextParams.set("sessionId", resolvedSession._id);
         const nextHref = appendQueryString(
-          pathname || "/tools/study-workspace",
+          pathname || basePath,
           nextParams.toString(),
         );
         router.replace(nextHref);
@@ -173,7 +177,7 @@ export default function StudyWorkspacePageContent() {
       nextParams.set("sessionId", createdSessionId);
       router.replace(
         appendQueryString(
-          pathname || "/tools/study-workspace",
+          pathname || basePath,
           nextParams.toString(),
         ),
       );
@@ -203,6 +207,8 @@ export default function StudyWorkspacePageContent() {
           window.localStorage.removeItem(
             `study_workspace_state_${previousSessionId}`,
           );
+          window.localStorage.removeItem(`tutor_preferences_${previousSessionId}`);
+          window.localStorage.removeItem(`tutor_mastery_${previousSessionId}`);
         }
       }
 
@@ -218,7 +224,7 @@ export default function StudyWorkspacePageContent() {
       nextParams.delete("sessionId");
       router.replace(
         appendQueryString(
-          pathname || "/tools/study-workspace",
+          pathname || basePath,
           nextParams.toString(),
         ),
       );
@@ -232,12 +238,14 @@ export default function StudyWorkspacePageContent() {
   const refreshSessionContentState = useCallback(async (targetSessionId: string) => {
     try {
       const details = await getStudySessionDetails(targetSessionId);
-      setHasSessionContent(details.sources.length > 0);
+      setHasSessionContent(
+        basePath === "/tools/tutor" || details.sources.length > 0,
+      );
     } catch (error) {
       console.error("Failed to load study session details", error);
       setHasSessionContent(false);
     }
-  }, []);
+  }, [basePath]);
 
   useEffect(() => {
     if (!sessionId) {
@@ -252,7 +260,11 @@ export default function StudyWorkspacePageContent() {
 
     getStudySessionDetails(sessionId)
       .then((details) => {
-        if (active) setHasSessionContent(details.sources.length > 0);
+        if (active) {
+          setHasSessionContent(
+            basePath === "/tools/tutor" || details.sources.length > 0,
+          );
+        }
       })
       .catch((error) => {
         console.error("Failed to load study session details", error);
@@ -262,7 +274,7 @@ export default function StudyWorkspacePageContent() {
     return () => {
       active = false;
     };
-  }, [sessionId]);
+  }, [basePath, sessionId]);
 
   useEffect(() => {
     setIsRecording(getStudyRecordingSnapshot().status !== "idle");
@@ -345,6 +357,7 @@ export default function StudyWorkspacePageContent() {
           <>
             <StudySourceIngestion
               variant={showOnboarding ? "onboarding" : "toolbar"}
+              experience={basePath === "/tools/tutor" ? "tutor" : "study"}
               onSessionCreated={adoptCreatedSession}
               onContentReady={() => {
                 setForceStart(false);
@@ -364,7 +377,7 @@ export default function StudyWorkspacePageContent() {
           <StudyAuthGateModal
             open={gateOpen}
             reason={gateReason}
-            returnUrl={`${pathname || "/tools/study-workspace"}${
+            returnUrl={`${pathname || basePath}${
               sessionId ? `?sessionId=${sessionId}` : ""
             }`}
             onClose={() => setGateOpen(false)}

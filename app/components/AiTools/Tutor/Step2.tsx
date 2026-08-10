@@ -39,7 +39,7 @@ export default function Step2({ onContinue, isLoading = false }: Step2Props) {
             {/* Subtitle */}
             <p className="text-gray-600 text-center mb-8 text-sm">
               What subject would you like to learn today? Enter any subject and
-              I'll help you get started!
+              I&apos;ll help you get started!
             </p>
 
             {/* Input and Button Section - Side by Side */}

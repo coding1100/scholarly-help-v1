@@ -20,19 +20,37 @@ type TokenPayload = {
 };
 
 export function getAuthenticatedUserId(request: NextRequest) {
-  const headerFallback =
-    request.headers.get("x-user-id") ||
-    request.nextUrl.searchParams.get("userId") ||
-    null;
   const authHeader = request.headers.get("authorization") || "";
   const token = authHeader.startsWith("Bearer ")
     ? authHeader.slice("Bearer ".length).trim()
     : "";
 
-  if (!token) return headerFallback;
+  if (token) return verifyUserIdFromToken(token);
+
+  const guestId = request.headers.get("x-user-id")?.trim() || "";
+  if (/^guest_[a-z0-9]{12,80}$/i.test(guestId)) return guestId;
+
+  const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "anonymous";
+  return `guest:${ip.split(",")[0].trim()}`;
+}
+
+/** Registered-user identity must always come from a valid bearer token. */
+export function getVerifiedUserId(request: NextRequest): string | null {
+  const authHeader = request.headers.get("authorization") || "";
+  const token = authHeader.startsWith("Bearer ")
+    ? authHeader.slice("Bearer ".length).trim()
+    : "";
+  return token ? verifyUserIdFromToken(token) : null;
+}
+
+function verifyUserIdFromToken(token: string): string | null {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    console.error("study.auth: JWT_SECRET is not configured");
+    return null;
+  }
 
   try {
-    const secret = process.env.JWT_SECRET || "default-secret";
     const decoded = jwt.verify(token, secret) as TokenPayload | string;
     if (typeof decoded === "string") return decoded;
     const nestedUser = decoded.user || {};
@@ -53,7 +71,7 @@ export function getAuthenticatedUserId(request: NextRequest) {
       null
     );
   } catch {
-    return headerFallback;
+    return null;
   }
 }
 

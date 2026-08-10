@@ -1,11 +1,11 @@
 import { Embedder } from "@/app/lib/server/rag/types";
 
 const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta";
-// text-embedding-004 was shut down 2026-01-14 and now 404s. gemini-embedding-001
-// is also scheduled for shutdown (2026-07-14), so we default to the current
-// recommended model, gemini-embedding-2. Override with GEMINI_EMBED_MODEL.
-const DEFAULT_EMBED_MODEL = "gemini-embedding-2";
-// gemini-embedding-2 outputs 3072-dim vectors by default, but supports
+// text-embedding-004 was shut down 2026-01-14 and now 404s. This Tutor RAG path
+// is text-only, so Google's lower-cost stable text model is the right fit.
+// Override with GEMINI_EMBED_MODEL.
+export const DEFAULT_GEMINI_EMBED_MODEL = "gemini-embedding-001";
+// gemini-embedding-001 outputs 3072-dim vectors by default, but supports
 // Matryoshka scaling: we request 768 dims (via outputDimensionality) to stay
 // compatible with the existing vector store / Atlas index and keep costs down.
 const EMBED_DIMENSIONS = 768;
@@ -25,7 +25,7 @@ function getApiKey(): string {
 }
 
 function getModel(): string {
-  return process.env.GEMINI_EMBED_MODEL || DEFAULT_EMBED_MODEL;
+  return process.env.GEMINI_EMBED_MODEL || DEFAULT_GEMINI_EMBED_MODEL;
 }
 
 /**
