@@ -428,7 +428,7 @@ export default function EssayGraderTool() {
                   <Pills label="Grading strictness" value={strictness} onChange={setStrictness} options={["lenient", "standard", "strict"]} />
                 </div>
                 {advanced && (
-                  <div className="mt-5 border-t border-gray-200 pt-5 dark:border-gray-700">
+                  <div className="mt-5 space-y-5 border-t border-gray-200 pt-5 dark:border-gray-700">
                     <div className="grid gap-4 md:grid-cols-2">
                       <Field label="Target school or scholarship" value={school} onChange={setSchool} placeholder="e.g. Yale University" />
                       <Field label="Benchmark" value={benchmark} onChange={setBenchmark} placeholder="e.g. top-tier admissions benchmark" />
@@ -692,11 +692,11 @@ function MiniTab({ children, active, onClick }: { children: React.ReactNode; act
 }
 
 function Field({ label, value, onChange, placeholder, type = "text" }: { label: string; value: string; onChange: (value: string) => void; placeholder?: string; type?: string }) {
-  return <label className="mb-4 block"><span className="mb-2 block text-xs font-semibold text-gray-600 dark:text-gray-300">{label}</span><input type={type} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="w-full rounded-lg border border-gray-300 bg-white p-3 text-sm text-gray-900 outline-none transition focus:border-primary-400 focus:ring-2 focus:ring-primary-400/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" /></label>;
+  return <label className="block"><span className="mb-2 block text-xs font-semibold text-gray-600 dark:text-gray-300">{label}</span><input type={type} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="w-full rounded-lg border border-gray-300 bg-white p-3 text-sm text-gray-900 outline-none transition focus:border-primary-400 focus:ring-2 focus:ring-primary-400/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" /></label>;
 }
 
 function Area({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (value: string) => void; placeholder?: string }) {
-  return <label className="mb-4 block"><span className="mb-2 block text-xs font-semibold text-gray-600 dark:text-gray-300">{label}</span><textarea value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="min-h-[92px] w-full rounded-lg border border-gray-300 bg-white p-3 text-sm text-gray-900 outline-none transition focus:border-primary-400 focus:ring-2 focus:ring-primary-400/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" /></label>;
+  return <label className="block"><span className="mb-2 block text-xs font-semibold text-gray-600 dark:text-gray-300">{label}</span><textarea value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="min-h-[92px] w-full rounded-lg border border-gray-300 bg-white p-3 text-sm text-gray-900 outline-none transition focus:border-primary-400 focus:ring-2 focus:ring-primary-400/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" /></label>;
 }
 
 function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: string[][] }) {
