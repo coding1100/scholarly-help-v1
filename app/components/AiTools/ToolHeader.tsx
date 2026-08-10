@@ -55,6 +55,8 @@ const ToolHeader: React.FC = () => {
                                   ? "AI Study Workspace"
                                 : normalizedPath === "/tools/cgpa-calculator"
                                   ? "CGPA Calculator"
+                                  : normalizedPath === "/tools/plagiarism-checker"
+                                    ? "Plagiarism Checker"
                                   : ""}
       </h1>
 

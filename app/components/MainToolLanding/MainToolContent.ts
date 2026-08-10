@@ -59,6 +59,14 @@ const defaultPickTabTools: Record<string, PickToolItem[]> = {
       buttonText: "Check for AI",
       link: "/tools/ai-detector-tool",
     },
+    {
+      iconKey: "tmIcon3",
+      tag: "New",
+      heading: "Plagiarism Checker",
+      description: "Check academic writing for matching text and review the original sources.",
+      buttonText: "Check plagiarism",
+      link: "/tools/plagiarism-checker",
+    },
   ],
   research: [
     {
