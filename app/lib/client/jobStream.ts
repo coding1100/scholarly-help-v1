@@ -6,13 +6,14 @@ export type JobStatus<T> = {
 };
 
 type Options<T> = {
-  eventsUrl: string;
+  eventsUrl?: string;
   pollUrl: string;
   headers?: HeadersInit;
   signal: AbortSignal;
   parse: (payload: unknown) => JobStatus<T>;
   onProgress?: (job: JobStatus<T>) => void;
   timeoutMs?: number;
+  fetcher?: typeof fetch;
 };
 
 async function consumeSse<T>(response: Response, options: Options<T>): Promise<T> {
@@ -43,17 +44,20 @@ async function consumeSse<T>(response: Response, options: Options<T>): Promise<T
 /** Uses SSE when available, falling back to bounded adaptive polling. */
 export async function waitForJob<T>(options: Options<T>): Promise<T> {
   const deadline = Date.now() + (options.timeoutMs ?? 240_000);
-  try {
-    const response = await fetch(options.eventsUrl, {
-      headers: { Accept: "text/event-stream", ...options.headers },
-      signal: options.signal,
-      cache: "no-store",
-    });
-    if (response.ok && response.headers.get("content-type")?.includes("text/event-stream")) {
-      return await consumeSse(response, options);
+  const fetcher = options.fetcher ?? fetch;
+  if (options.eventsUrl) {
+    try {
+      const response = await fetcher(options.eventsUrl, {
+        headers: { Accept: "text/event-stream", ...options.headers },
+        signal: options.signal,
+        cache: "no-store",
+      });
+      if (response.ok && response.headers.get("content-type")?.includes("text/event-stream")) {
+        return await consumeSse(response, options);
+      }
+    } catch (error) {
+      if (options.signal.aborted) throw error;
     }
-  } catch (error) {
-    if (options.signal.aborted) throw error;
   }
 
   let delay = 1500;
@@ -63,7 +67,7 @@ export async function waitForJob<T>(options: Options<T>): Promise<T> {
       const timer = setTimeout(() => { options.signal.removeEventListener("abort", onAbort); resolve(); }, delay);
       options.signal.addEventListener("abort", onAbort, { once: true });
     });
-    const response = await fetch(options.pollUrl, {
+    const response = await fetcher(options.pollUrl, {
       headers: options.headers,
       signal: options.signal,
       cache: "no-store",
@@ -79,8 +83,12 @@ export async function waitForJob<T>(options: Options<T>): Promise<T> {
   throw new Error("The job timed out. You can safely try again.");
 }
 
-export async function cancelJob(url: string, headers?: HeadersInit) {
-  const response = await fetch(url, { method: "DELETE", headers, keepalive: true });
+export async function cancelJob(
+  url: string,
+  headers?: HeadersInit,
+  fetcher: typeof fetch = fetch,
+) {
+  const response = await fetcher(url, { method: "DELETE", headers, keepalive: true });
   if (!response.ok && response.status !== 404 && response.status !== 405) {
     throw new Error("The server could not cancel this job.");
   }

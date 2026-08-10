@@ -19,7 +19,7 @@ import {
   type DetectSegment,
 } from "@/app/components/AiTools/AiDetectorTool/types";
 import { useDetectorConfig } from "@/app/components/AiTools/AiDetectorTool/useDetectorConfig";
-import { getAccessToken } from "@/app/lib/authSession";
+import { fetchWithAuthRetry, getAccessToken } from "@/app/lib/authSession";
 import { cancelJob, waitForJob } from "@/app/lib/client/jobStream";
 
 type HumanizerTone = "natural" | "simple" | "polished" | "academic" | "custom";
@@ -320,9 +320,9 @@ const HumanizerTool: React.FC = () => {
         jobRef.current?.controller.abort();
         jobRef.current = { id: createdJob.job_id, controller };
         const humanizerResult = await waitForJob<HumanizerResponse>({
-          eventsUrl: `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/humanizer/jobs/${createdJob.job_id}/events`,
           pollUrl: `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/humanizer/jobs/${createdJob.job_id}`,
           headers, signal: controller.signal,
+          fetcher: fetchWithAuthRetry,
           parse: (payload) => {
             const job = unwrapData<HumanizerJobResponse>(payload);
             return { ...job, result: job.result ?? undefined, error: job.error ?? undefined };
@@ -549,7 +549,7 @@ const HumanizerTool: React.FC = () => {
           />
           {loading && jobRef.current && <button type="button" className="mx-4 mb-3 rounded-md border border-red-200 px-4 py-2 text-sm font-medium text-red-700" onClick={() => {
             const job = jobRef.current; if (!job) return; job.controller.abort(); jobRef.current = null; setLoading(false);
-            void cancelJob(`${process.env.NEXT_PUBLIC_NGROX_URL}/tools/humanizer/jobs/${job.id}`, { Authorization: `Bearer ${token}` }).catch(() => undefined);
+            void cancelJob(`${process.env.NEXT_PUBLIC_NGROX_URL}/tools/humanizer/jobs/${job.id}`, { Authorization: `Bearer ${token}` }, fetchWithAuthRetry).catch(() => undefined);
           }}>Cancel humanizing</button>}
         </div>
 
