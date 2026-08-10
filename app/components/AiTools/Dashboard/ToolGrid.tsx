@@ -101,6 +101,16 @@ const tools: ToolCardData[] = [
     cta: "Generate essay",
   },
   {
+    name: "Essay Grader",
+    description:
+      "Score an essay against academic, admissions, scholarship, or custom rubrics and revise exact-text issues.",
+    href: "/tools/essay-grader",
+    icon: FiCheckCircle,
+    badge: "New",
+    category: "essay-writing",
+    cta: "Grade my essay",
+  },
+  {
     name: "AI Paraphraser",
     description: "Rephrase sentences to sound clearer and more academic.",
     href: "/tools/paraphraser-tool",
