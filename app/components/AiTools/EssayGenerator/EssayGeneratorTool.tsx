@@ -161,17 +161,20 @@ export default function EssayGeneratorTool() {
   async function generateEssay() {
     if (!session || !outline) return;
     setLoading(true); setProgress(4); setResult(null); setDraft(""); setGenerationError("");
+    goToStep(4);
     const controller = new AbortController(); abortRef.current = controller;
     try {
       const headers = await requestHeaders();
       const apiOutline = cleanOutlineForApi(outline);
+      setProgress(10);
       await axios.patch(`${API}/tools/essay-generator/sessions/${session.session_id}/outline`, { outline: apiOutline }, { headers });
+      setProgress(18);
       const queued = await axios.post(`${API}/tools/essay-generator/sessions/${session.session_id}/generate`, {
         outline: apiOutline, tone, custom_tone: tone === "custom" ? customTone : undefined, target_words: targetWords,
         citation_style: citationStyle, key_terms: keyTerms || undefined, avoid_phrases: avoidPhrases || undefined,
         avoid_first_person: avoidFirstPerson, block_ai_buzzwords: blockBuzzwords, include_subheadings: includeSubheadings,
       }, { headers: { ...headers, "Idempotency-Key": `essay-${crypto.randomUUID()}` } });
-      const job = unwrap<{ job_id: string }>(queued.data); setActiveJob(job.job_id); goToStep(4);
+      const job = unwrap<{ job_id: string }>(queued.data); setActiveJob(job.job_id); setProgress(24);
       const essay = await waitForJob<EssayResult>({
         eventsUrl: `${API}/tools/essay-generator/jobs/${job.job_id}/events`,
         pollUrl: `${API}/tools/essay-generator/jobs/${job.job_id}`,

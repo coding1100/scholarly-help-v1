@@ -22,6 +22,7 @@ import {
   createStudySession,
   getStudySessionDetails,
   listStudySessions,
+  setActiveStudySessionId,
   streamStudyTutor,
 } from "@/app/utils/studyApiClient";
 import MarkDown from "@/app/components/MarkDown/MarkDown";
@@ -308,10 +309,14 @@ export default function AiTutorChat({ initialSessionId }: { initialSessionId?: s
 
   // Backend session & loading state
   const [sessionId, setSessionId] = useState<string>("");
+  const [sessionStatus, setSessionStatus] = useState<
+    "initializing" | "ready" | "error"
+  >("initializing");
   const [isStreaming, setIsStreaming] = useState<boolean>(false);
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [uploadStatus, setUploadStatus] = useState<string>("");
   const [backendSessions, setBackendSessions] = useState<BackendSession[]>([]);
+  const uploadInFlightRef = useRef(false);
 
   // Scheduler Ref
   const scheduledTasksRef = useRef<Set<number>>(new Set());
@@ -525,10 +530,18 @@ export default function AiTutorChat({ initialSessionId }: { initialSessionId?: s
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
   const startRef = useRef(start);
   startRef.current = start;
+  const sessionIdRef = useRef("");
+  const sessionInitPromiseRef = useRef<Promise<{
+    id: string;
+    restored: boolean;
+  }> | null>(null);
+  const initialFlowStartedRef = useRef(false);
 
   const loadBackendSession = useCallback(async (id: string) => {
     const details = await getStudySessionDetails(id);
+    sessionIdRef.current = id;
     setSessionId(id);
+    setActiveStudySessionId(id);
     setCourseChip(details.session.title ? `· ${details.session.title}` : "");
     setUploadedSourceText(
       details.sources.map((source) => source.text || "").filter(Boolean).join("\n\n"),
@@ -548,6 +561,69 @@ export default function AiTutorChat({ initialSessionId }: { initialSessionId?: s
     return false;
   }, []);
 
+  /**
+   * One shared bootstrap for every Tutor action. React state is intentionally
+   * not used as the source of truth here: callbacks created while the initial
+   * request is in flight can otherwise retain an empty sessionId. Keeping the
+   * in-flight promise and resolved id in refs makes upload/drop/send safe even
+   * when the user acts immediately after the UI appears.
+   */
+  const ensureBackendSession = useCallback(() => {
+    if (sessionIdRef.current) {
+      return Promise.resolve({ id: sessionIdRef.current, restored: true });
+    }
+    if (sessionInitPromiseRef.current) return sessionInitPromiseRef.current;
+
+    setSessionStatus("initializing");
+    const task = (async () => {
+      const sessions = await listStudySessions();
+      const normalized = sessions.map((session) => ({
+        id: session._id,
+        title: session.title,
+        updatedAt: session.updatedAt,
+      }));
+      setBackendSessions(normalized);
+
+      if (normalized.length > 0) {
+        const selected =
+          normalized.find((session) => session.id === initialSessionId) ||
+          normalized[0];
+        const restored = await loadBackendSession(selected.id);
+        setSessionStatus("ready");
+        setMessages((prev) =>
+          prev.filter((message) => message.tag !== "session-init-error"),
+        );
+        return { id: selected.id, restored };
+      }
+
+      const created = await createStudySession("AI Tutor Session");
+      sessionIdRef.current = created._id;
+      setSessionId(created._id);
+      setActiveStudySessionId(created._id);
+      setBackendSessions([
+        {
+          id: created._id,
+          title: created.title,
+          updatedAt: created.updatedAt,
+        },
+      ]);
+      setSessionStatus("ready");
+      setMessages((prev) =>
+        prev.filter((message) => message.tag !== "session-init-error"),
+      );
+      return { id: created._id, restored: false };
+    })();
+
+    sessionInitPromiseRef.current = task;
+    void task.catch(() => {
+      if (sessionInitPromiseRef.current === task) {
+        sessionInitPromiseRef.current = null;
+      }
+      setSessionStatus("error");
+    });
+    return task;
+  }, [initialSessionId, loadBackendSession]);
+
   // Auto-scroll internal chat thread safely
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -563,41 +639,51 @@ export default function AiTutorChat({ initialSessionId }: { initialSessionId?: s
     let cancelled = false;
     async function initBackendSession() {
       try {
-        const sessions = await listStudySessions();
-        if (cancelled) return;
-        const normalized = sessions.map((session) => ({
-          id: session._id,
-          title: session.title,
-          updatedAt: session.updatedAt,
-        }));
-        setBackendSessions(normalized);
-        if (normalized.length > 0) {
-          const selected = normalized.find((session) => session.id === initialSessionId) || normalized[0];
-          const restored = await loadBackendSession(selected.id);
-          if (!restored && !cancelled) startRef.current();
-          return;
+        const result = await ensureBackendSession();
+        if (
+          !cancelled &&
+          !result.restored &&
+          !initialFlowStartedRef.current
+        ) {
+          initialFlowStartedRef.current = true;
+          startRef.current();
         }
-
-        const created = await createStudySession("AI Tutor Session");
-        if (cancelled) return;
-        setSessionId(created._id);
-        setBackendSessions([{
-          id: created._id,
-          title: created.title,
-          updatedAt: created.updatedAt,
-        }]);
-        startRef.current();
       } catch (e) {
         console.error("Failed to initialize backend session", e);
         if (!cancelled) {
-          addBotMessage("The Tutor workspace could not be initialized. Refresh the page to try again.");
+          addBotMessage(
+            "The Tutor workspace could not be initialized. Check your connection and try again.",
+            "session-init-error",
+          );
+          setReplies([
+            {
+              label: "Retry workspace",
+              desc: "Reconnect without losing your current page",
+              action: () => {
+                void ensureBackendSession()
+                  .then((result) => {
+                    if (!result.restored && !initialFlowStartedRef.current) {
+                      initialFlowStartedRef.current = true;
+                      startRef.current();
+                    }
+                  })
+                  .catch((retryError) => {
+                    console.error("Tutor workspace retry failed", retryError);
+                    addBotMessage(
+                      "The Tutor workspace still could not connect. Please check your connection and retry.",
+                      "session-init-error",
+                    );
+                  });
+              },
+            },
+          ]);
         }
       }
     }
 
     void initBackendSession();
     return () => { cancelled = true; };
-  }, [initialSessionId, loadBackendSession]);
+  }, [ensureBackendSession]);
 
   // Drawer accessibility - Escape key handler
   useEffect(() => {
@@ -629,19 +715,21 @@ export default function AiTutorChat({ initialSessionId }: { initialSessionId?: s
     setIsDraggingOver(false);
     const files = e.dataTransfer.files;
     if (!files || files.length === 0) return;
-    uploadFileToBackend(files[0]);
+    void uploadFileToBackend(files[0]);
   };
 
   const handleDocFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
-    uploadFileToBackend(file);
+    void uploadFileToBackend(file);
   };
 
   const handleAudioFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
-    uploadFileToBackend(file);
+    void uploadFileToBackend(file);
   };
 
   // Helper for friendly error messaging
@@ -666,10 +754,8 @@ export default function AiTutorChat({ initialSessionId }: { initialSessionId?: s
 
   // Real Backend File & Text Source Ingestion (`POST /api/study/sessions/[id]/sources`)
   const uploadFileToBackend = async (file: File) => {
-    if (!sessionId) {
-      addBotMessage("Your Tutor workspace is still initializing. Please try the upload again in a moment.");
-      return;
-    }
+    if (uploadInFlightRef.current) return;
+    uploadInFlightRef.current = true;
     const isAudio = file.type.startsWith("audio/") || /\.(mp3|wav|m4a|webm|ogg|aac|flac|mp4)$/i.test(file.name);
     const courseLabel = tutorState._pendingCourseLabel || file.name.replace(/\.[^/.]+$/, "");
 
@@ -689,6 +775,7 @@ export default function AiTutorChat({ initialSessionId }: { initialSessionId?: s
     }
 
     try {
+      const targetSessionId = (await ensureBackendSession()).id;
       if (isAudio) {
         // ── AUDIO PATH: Gemini STT via /api/study/transcribe ─────────────────
         if (file.size > 20 * 1024 * 1024) {
@@ -736,7 +823,7 @@ export default function AiTutorChat({ initialSessionId }: { initialSessionId?: s
         const headers = getApiHeaders();
         delete headers["Content-Type"]; // Let browser set multipart boundary
 
-        const res = await fetchWithAuthRetry(`/api/study/sessions/${sessionId}/sources`, {
+        const res = await fetchWithAuthRetry(`/api/study/sessions/${targetSessionId}/sources`, {
           method: "POST",
           headers,
           body: formData,
@@ -763,6 +850,7 @@ export default function AiTutorChat({ initialSessionId }: { initialSessionId?: s
       console.error("uploadFileToBackend error", e);
       renderFriendlyErrorMessage("The material could not be uploaded. Please try again.", 500);
     } finally {
+      uploadInFlightRef.current = false;
       setIsUploading(false);
       setUploadStatus("");
     }
@@ -772,9 +860,9 @@ export default function AiTutorChat({ initialSessionId }: { initialSessionId?: s
     if (text) {
       setUploadedSourceText(text);
     }
-    if (!sessionId) return false;
     try {
-      const response = await fetchWithAuthRetry(`/api/study/sessions/${sessionId}/sources`, {
+      const targetSessionId = (await ensureBackendSession()).id;
+      const response = await fetchWithAuthRetry(`/api/study/sessions/${targetSessionId}/sources`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -797,9 +885,9 @@ export default function AiTutorChat({ initialSessionId }: { initialSessionId?: s
 
   // Real Backend Dynamic Quiz Generation (`POST /api/study/sessions/[id]/generate/quizzes`)
   const generateQuizFromBackend = async (chapterKey: string) => {
-    if (!sessionId) return null;
     try {
-      const res = await fetchWithAuthRetry(`/api/study/sessions/${sessionId}/generate/quizzes`, {
+      const targetSessionId = (await ensureBackendSession()).id;
+      const res = await fetchWithAuthRetry(`/api/study/sessions/${targetSessionId}/generate/quizzes`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -863,10 +951,6 @@ export default function AiTutorChat({ initialSessionId }: { initialSessionId?: s
 
   // 100% Production-Grade Native Gemini AI Streaming Responder (Primary In-House Backend Engine)
   const sendQueryToBackendTutor = async (userPrompt: string) => {
-    if (!sessionId) {
-      addBotMessage("Your Tutor workspace is still initializing. Please try again in a moment.");
-      return;
-    }
     setIsStreaming(true);
 
     const botMsgId = Math.random().toString(36).substr(2, 9);
@@ -880,9 +964,10 @@ export default function AiTutorChat({ initialSessionId }: { initialSessionId?: s
     ]);
 
     try {
+      const targetSessionId = (await ensureBackendSession()).id;
       let streamedText = "";
       await streamStudyTutor(
-        sessionId,
+        targetSessionId,
         userPrompt,
         undefined,
         {
@@ -929,15 +1014,21 @@ export default function AiTutorChat({ initialSessionId }: { initialSessionId?: s
 
   // Helper to append bot text bubble
   const addBotMessage = (html: string, tag?: string) => {
-    setMessages((prev) => [
-      ...prev,
-      {
+    setMessages((prev) => {
+      const message: Message = {
         id: Math.random().toString(36).substr(2, 9),
         sender: "bot",
         html,
         tag,
-      },
-    ]);
+      };
+      if (!tag) return [...prev, message];
+
+      const existingIndex = prev.findIndex((item) => item.tag === tag);
+      if (existingIndex < 0) return [...prev, message];
+      return prev.map((item, index) =>
+        index === existingIndex ? { ...message, id: item.id } : item,
+      );
+    });
   };
 
   // Helper to append user bubble
@@ -1024,6 +1115,8 @@ export default function AiTutorChat({ initialSessionId }: { initialSessionId?: s
   // -------------------------------------------------------------
 
   function startNewChat() {
+    if (sessionStatus !== "ready") return;
+    initialFlowStartedRef.current = true;
     clearScheduledTasks();
     setMessages([]);
     setOutlineMeta({});
@@ -1100,7 +1193,8 @@ export default function AiTutorChat({ initialSessionId }: { initialSessionId?: s
     addCrumb("Upload", () => askForMaterial(courseLabel));
 
     addBotMessage(
-      "Paste your notes, upload a document file (PDF, Doc, Image), or drop in a lecture recording (English Speech-to-Text supported)."
+      "Paste your notes, upload a document file (PDF, Doc, Image), or drop in a lecture recording (English Speech-to-Text supported).",
+      "material-request",
     );
 
     setReplies([
@@ -1152,9 +1246,21 @@ export default function AiTutorChat({ initialSessionId }: { initialSessionId?: s
     pastedContent?: string,
     alreadyPersisted = false,
   ) {
+    let targetSessionId: string;
+    try {
+      targetSessionId = (await ensureBackendSession()).id;
+    } catch (error) {
+      console.error("Tutor session initialization failed", error);
+      renderFriendlyErrorMessage(
+        "Your Tutor workspace could not be prepared. Check your connection and try again.",
+        500,
+      );
+      return;
+    }
+
     if (pastedContent) {
       setUploadedSourceText(pastedContent);
-      if (sessionId && !alreadyPersisted) {
+      if (!alreadyPersisted) {
         const persisted = await uploadTextSourceToBackend(pastedContent, courseLabel);
         if (!persisted) return;
       }
@@ -1179,9 +1285,8 @@ export default function AiTutorChat({ initialSessionId }: { initialSessionId?: s
     // DYNAMIC BACKEND OUTLINE GENERATION WITH SMART FALLBACK
     let generatedSuccessfully = false;
 
-    if (sessionId) {
-      try {
-        const res = await fetchWithAuthRetry(`/api/study/sessions/${sessionId}/generate/outline`, {
+    try {
+        const res = await fetchWithAuthRetry(`/api/study/sessions/${targetSessionId}/generate/outline`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -1225,9 +1330,8 @@ export default function AiTutorChat({ initialSessionId }: { initialSessionId?: s
           const err = await res.json().catch(() => ({}));
           renderFriendlyErrorMessage(err?.error || err?.message || "Outline generation issue", res.status);
         }
-      } catch (e) {
-        console.error("Outline generation error", e);
-      }
+    } catch (e) {
+      console.error("Outline generation error", e);
     }
 
     setShowNotesToggle(true);
@@ -1855,8 +1959,9 @@ export default function AiTutorChat({ initialSessionId }: { initialSessionId?: s
         <button
           type="button"
           onClick={startNewChat}
-          className="flex flex-col items-center justify-center rounded-xl p-2 text-[#646987] transition hover:bg-[#5f70ff]/10 hover:text-[#5f70ff]"
-          title="New Chat"
+          disabled={sessionStatus !== "ready"}
+          className="flex flex-col items-center justify-center rounded-xl p-2 text-[#646987] transition hover:bg-[#5f70ff]/10 hover:text-[#5f70ff] disabled:cursor-wait disabled:opacity-40"
+          title={sessionStatus === "ready" ? "New Chat" : "Preparing Tutor workspace"}
         >
           <FiPlus className="h-5 w-5" />
           <span className="mt-1 text-[10px] font-semibold">New</span>
@@ -2082,12 +2187,13 @@ export default function AiTutorChat({ initialSessionId }: { initialSessionId?: s
                 <button
                   key={opt.label}
                   type="button"
+                  disabled={isUploading}
                   onClick={() => {
                     clearReplies();
                     addUserMessage(opt.label);
                     opt.action();
                   }}
-                  className="rounded-xl border border-[#dfe3ff] bg-white px-4 py-2.5 text-left text-xs font-semibold text-[#242842] shadow-sm transition hover:border-[#5f70ff] hover:bg-[#eef1ff] hover:text-[#5f70ff]"
+                  className="rounded-xl border border-[#dfe3ff] bg-white px-4 py-2.5 text-left text-xs font-semibold text-[#242842] shadow-sm transition hover:border-[#5f70ff] hover:bg-[#eef1ff] hover:text-[#5f70ff] disabled:cursor-wait disabled:opacity-50"
                 >
                   <div>{opt.label}</div>
                   {opt.desc && <div className="mt-0.5 text-[11px] font-normal text-[#9398b8]">{opt.desc}</div>}
@@ -2158,7 +2264,8 @@ export default function AiTutorChat({ initialSessionId }: { initialSessionId?: s
               <button
                 type="button"
                 onClick={() => askForMaterial("Course Material")}
-                className="inline-flex items-center gap-1 rounded-full border border-[#dfe3f7] bg-[#f8f9ff] px-2.5 py-1 text-[11px] font-semibold text-[#5f6483] transition hover:border-[#5f70ff] hover:bg-[#eef1ff] hover:text-[#5f70ff]"
+                disabled={sessionStatus !== "ready" || isUploading}
+                className="inline-flex items-center gap-1 rounded-full border border-[#dfe3f7] bg-[#f8f9ff] px-2.5 py-1 text-[11px] font-semibold text-[#5f6483] transition hover:border-[#5f70ff] hover:bg-[#eef1ff] hover:text-[#5f70ff] disabled:cursor-wait disabled:opacity-40"
               >
                 <FiPaperclip className="h-3 w-3" /> Attach note
               </button>
