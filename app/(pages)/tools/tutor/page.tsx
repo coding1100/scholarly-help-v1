@@ -1,44 +1,72 @@
-﻿"use client";
+"use client";
 
-import TutorFlow from "@/app/components/AiTools/Tutor/TutorFlow";
-import { ChatProvider } from "@/app/context/ChatContext";
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import ToolsLayout from "@/app/components/AiTools/ToolsLayout";
-import AIParaphraser from "@/app/components/AiTools/AIParaphraser-tool";
+import AiTutorChat from "@/app/components/AiTools/Tutor/AiTutorChat";
 import { ToolsSuspenseFallback } from "@/app/components/AiTools/ToolsApiLoader";
 import ToolWithExplore from "@/app/components/AiTools/ToolWithExplore";
 import ProductSchema from "@/app/components/ProductSchema";
-// import ThemeToggle from "@/app/components/AiLandingPage/ThemeToggle";
+import StudyAuthGateModal from "@/app/components/AiTools/StudyWorkspace/StudyAuthGateModal";
 
-export default function TutorPage() {
+function TutorPageContent() {
   const [flag, setFlag] = useState<boolean>(false);
+  const [gateOpen, setGateOpen] = useState(false);
+  const [gateReason, setGateReason] = useState<"query" | "session">("query");
+
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const sessionId = searchParams.get("sessionId");
+
   const rawBaseUrl =
     process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
   const baseUrl = rawBaseUrl.endsWith("/")
     ? rawBaseUrl.slice(0, -1)
     : rawBaseUrl;
 
+  useEffect(() => {
+    const onAuthGate = (e: Event) => {
+      const reason =
+        (e as CustomEvent<{ reason?: "query" | "session" }>).detail?.reason ||
+        "query";
+      setGateReason(reason);
+      setGateOpen(true);
+    };
+    window.addEventListener("study:auth-gate", onAuthGate);
+    return () => window.removeEventListener("study:auth-gate", onAuthGate);
+  }, []);
+
   return (
-    <Suspense
-      fallback={
-        <ToolsSuspenseFallback />
-      }
-    >
+    <>
       <ProductSchema
         productTitle="AI Tutor - Scholarly Help"
-        metaDescription="Get instant, step-by-step help on any subject from Scholarly Help's AI tutor."
+        metaDescription="Learn from your course material with source-grounded tutoring, adaptive practice, and progress tracking."
         pageUrl={`${baseUrl}/tools/tutor`}
       />
-      {/* <ThemeToggle top="top-12" /> */}
       <ToolsLayout setFlag={setFlag} flag={flag}>
-        <ChatProvider>
-          <ToolWithExplore>
-            <div className="">
-              <TutorFlow />
-            </div>
-          </ToolWithExplore>
-        </ChatProvider>
+        <ToolWithExplore>
+          <AiTutorChat initialSessionId={sessionId || undefined} />
+        </ToolWithExplore>
       </ToolsLayout>
+
+      {gateOpen ? (
+        <StudyAuthGateModal
+          open={gateOpen}
+          reason={gateReason}
+          returnUrl={`${pathname || "/tools/tutor"}${
+            sessionId ? `?sessionId=${sessionId}` : ""
+          }`}
+          onClose={() => setGateOpen(false)}
+        />
+      ) : null}
+    </>
+  );
+}
+
+export default function TutorPage() {
+  return (
+    <Suspense fallback={<ToolsSuspenseFallback />}>
+      <TutorPageContent />
     </Suspense>
   );
 }

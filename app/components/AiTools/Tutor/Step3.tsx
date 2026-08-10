@@ -63,7 +63,7 @@ export default function Step3({
 
               {/* Subtitle */}
               <p className="text-gray-600 text-center mb-8 text-sm">
-                How would you rate your child's current {subject.toLowerCase()}{" "}
+                How would you rate your child&apos;s current {subject.toLowerCase()}{" "}
                 proficiency?
               </p>
 

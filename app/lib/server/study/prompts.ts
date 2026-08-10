@@ -35,6 +35,7 @@ export function buildTutorUserPrompt(input: {
   hasRelevantContext: boolean;
   mode: StudyLearningMode;
   examTopics?: string[];
+  tutorContext?: string;
 }): string {
   const topicsLine =
     input.examTopics && input.examTopics.length > 0
@@ -58,6 +59,7 @@ export function buildTutorUserPrompt(input: {
   return [
     "QUESTION:",
     input.question,
+    input.tutorContext ? `STUDENT PREFERENCES:\n${input.tutorContext}` : "",
     topicsLine,
     explainHint,
     examHint,
@@ -288,11 +290,55 @@ export function quizSystemInstruction(): string {
   return `${STUDENT_TUTOR_VOICE} Create quiz questions that help students practice for tests. Return valid JSON only without markdown fences.`;
 }
 
+export function outlineSystemInstruction(): string {
+  return `${STUDENT_TUTOR_VOICE} Organize course material into a faithful chapter and topic hierarchy. Return valid JSON only without markdown fences.`;
+}
+
+export function outlineUserPrompt(sourceText: string): string {
+  return [
+    'Return: { "title": "string", "chapters": [{ "id": "chapter-1", "title": "string", "summary": "string", "topics": [{ "id": "topic-1", "title": "string" }] }] }',
+    "Rules:",
+    "- Use only structure and concepts supported by the source",
+    "- Prefer explicit chapter or section headings; otherwise group related ideas conservatively",
+    "- Keep the original teaching order unless it is clearly unusable",
+    "- Include 1-8 useful topics per chapter",
+    "- Do not invent grade weights or dates",
+    "",
+    "SOURCE TEXT:",
+    sourceText,
+  ].join("\n");
+}
+
+export function syllabusSystemInstruction(): string {
+  return `${STUDENT_TUTOR_VOICE} Extract grading weights and deadlines from course material. Return valid JSON only without markdown fences. Never invent missing values.`;
+}
+
+export function syllabusUserPrompt(sourceText: string): string {
+  return [
+    'Return: { "gradeComponents": [{ "name": "string", "weight": number, "evidence": "short source wording" }], "deadlines": [{ "title": "string", "dueDate": "YYYY-MM-DD or null", "rawDate": "string", "confidence": "high" | "medium" | "low" }], "warnings": ["string"] }',
+    "Rules:",
+    "- Extract only explicitly stated weights and dates",
+    "- Keep dueDate null when the year or exact date cannot be normalized safely",
+    "- Put ambiguity, a missing year, and totals not equal to 100 in warnings",
+    "- Evidence must be a short supporting phrase",
+    "",
+    "SOURCE TEXT:",
+    sourceText,
+  ].join("\n");
+}
+
 export function quizUserPrompt(
   sourceText: string,
   mode: StudyLearningMode,
   examTopics: string[],
   targetQuestionCount: number,
+  config: {
+    difficulty?: "easy" | "medium" | "hard" | "adaptive";
+    questionFormat?: "mcq" | "short_answer" | "mixed";
+    preAssessment?: boolean;
+    academicLevel?: "high_school" | "college" | "phd";
+    rubric?: string;
+  } = {},
 ): string {
   const topicsBlock =
     examTopics.length > 0
@@ -301,19 +347,32 @@ export function quizUserPrompt(
 
   // Ask for exactly the computed target (≈20% coverage of the source, min 10),
   // with a small band so the model can land naturally without padding.
-  const target = Math.max(10, Math.round(targetQuestionCount));
-  const lower = Math.max(10, target - 1);
+  const target = Math.max(config.preAssessment ? 2 : 10, Math.round(targetQuestionCount));
+  const lower = Math.max(config.preAssessment ? 2 : 10, target - 1);
   const upper = target + 2;
+  const requestedDifficulty = config.difficulty || "adaptive";
+  const requestedFormat = config.questionFormat || "mcq";
 
   return [
     `JSON array of ${lower} to ${upper} items (aim for ${target}):`,
-    '{ "id": "quiz-1", "question": "string", "options": ["A","B","C","D"], "correctAnswerIndex": 0, "explanation": "string", "difficulty": "easy" | "medium" | "hard", "questionType": "recall" | "application" | "analysis" }',
+    '{ "id": "quiz-1", "question": "string", "options": ["A","B","C","D"] or [], "correctAnswerIndex": 0, "answer": "string", "explanation": "string", "hint": "string", "simpleExplanation": "string", "topic": "string", "difficulty": "easy" | "medium" | "hard", "questionType": "recall" | "application" | "analysis", "questionFormat": "mcq" | "short_answer" }',
     "Rules:",
-    `- Generate ${target} questions drawn from the MOST IMPORTANT and relevant ~20% of the material (core concepts, definitions, and high-yield facts) — never fewer than 10.`,
-    "- Exactly 4 options each; correctAnswerIndex 0-3",
+    config.preAssessment
+      ? `- Generate about ${target} diagnostic questions across distinct core topics.`
+      : `- Generate ${target} questions drawn from the MOST IMPORTANT and relevant ~20% of the material (core concepts, definitions, and high-yield facts) — never fewer than 10.`,
+    requestedFormat === "mcq"
+      ? "- Every item is multiple choice with exactly 4 options; correctAnswerIndex 0-3"
+      : requestedFormat === "short_answer"
+        ? "- Every item is short answer: options must be [], and answer must contain a concise model answer"
+        : "- Mix multiple-choice and short-answer items. MCQs have exactly 4 options; short answers have options: []",
     "- Mix recall, application, and at least one 'which is NOT true' style question",
     "- Student-friendly wording; explanations teach why the answer is right",
-    "- Vary difficulty across easy/medium/hard",
+    requestedDifficulty === "adaptive"
+      ? "- Create a balanced easy/medium/hard pool suitable for adaptive delivery"
+      : `- Keep questions at ${requestedDifficulty} difficulty`,
+    config.preAssessment ? "- This is a placement check: sample distinct core topics and avoid obscure details" : "",
+    config.academicLevel ? `- Match ${config.academicLevel.replace("_", " ")} academic depth` : "",
+    config.rubric ? `- Apply this instructor/rubric focus: ${config.rubric}` : "",
     "- No duplicate or near-duplicate questions",
     "- Source-grounded only",
     topicsBlock,

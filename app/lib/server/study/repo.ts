@@ -98,11 +98,16 @@ function createMemoryId(prefix: string) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function toObjectId(id: string) {
-  if (!ObjectId.isValid(id)) {
-    throw new Error("Invalid session id");
+function toObjectId(id: string): ObjectId {
+  if (id && typeof id === "string" && ObjectId.isValid(id) && id.length === 24) {
+    return new ObjectId(id);
   }
-  return new ObjectId(id);
+  const hex = Array.from(id || "session")
+    .map((c) => c.charCodeAt(0).toString(16))
+    .join("")
+    .padEnd(24, "0")
+    .slice(0, 24);
+  return new ObjectId(hex);
 }
 
 export async function createSession(userId: string, title: string) {
@@ -186,7 +191,9 @@ export async function getSession(
   const session = await db
     .collection(COLLECTIONS.sessions)
     .findOne({ _id: toObjectId(sessionId) });
-  if (!session) return null;
+  if (!session) {
+    return memoryStore.sessions.get(sessionId) || null;
+  }
   return { ...(session as unknown as StudySession), _id: session._id.toString() };
 }
 
@@ -221,6 +228,30 @@ export async function updateSessionTitle(sessionId: string, title: string) {
 
   if (!updated) return null;
   return { ...updated, _id: updated._id.toString() };
+}
+
+export async function updateSessionTutorState(
+  sessionId: string,
+  tutorState: Record<string, unknown>,
+) {
+  const db = await getDbSafe();
+  const now = new Date();
+  if (!db) {
+    const existing = memoryStore.sessions.get(sessionId);
+    if (!existing) return null;
+    const updated = { ...existing, tutorState, updatedAt: now };
+    memoryStore.sessions.set(sessionId, updated);
+    return updated;
+  }
+
+  await db.collection(COLLECTIONS.sessions).updateOne(
+    { _id: toObjectId(sessionId) },
+    { $set: { tutorState, updatedAt: now } },
+  );
+  const updated = await db
+    .collection(COLLECTIONS.sessions)
+    .findOne({ _id: toObjectId(sessionId) });
+  return updated ? { ...updated, _id: updated._id.toString() } : null;
 }
 
 export async function deleteSession(sessionId: string) {
@@ -317,7 +348,7 @@ export async function addSource(
   reindexCleanUntil.delete(sessionId);
 
   const payload = {
-    sessionId: db ? toObjectId(sessionId) : sessionId,
+    sessionId: toObjectId(sessionId),
     kind,
     name: normalizeText(name || "Source"),
     text: normalizedText,
@@ -367,6 +398,7 @@ export async function addSource(
       sessionId,
       kind,
       name: payload.name,
+      text: normalizedText,
       chunkCount: chunks.length,
       createdAt: now,
       indexStatus: "pending" as StudySourceIndexStatus,
@@ -400,6 +432,7 @@ export async function addSource(
     sessionId,
     kind,
     name: payload.name,
+    text: normalizedText,
     chunkCount: chunks.length,
     createdAt: now,
     indexStatus: "pending" as StudySourceIndexStatus,

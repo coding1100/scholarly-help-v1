@@ -2,9 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { getMongoDb } from "@/app/lib/mongodb";
 import {
   generateGeminiText,
+  getGeminiModelName,
   GeminiConfigError,
 } from "@/app/lib/server/ai/gemini";
-import { embedQuery } from "@/app/lib/server/rag/embedders/gemini";
+import {
+  currentEmbedderId,
+  embedQuery,
+} from "@/app/lib/server/rag/embedders/gemini";
 
 export const dynamic = "force-dynamic";
 
@@ -42,12 +46,8 @@ export async function GET(request: NextRequest) {
     env: {
       GEMINI_API_KEY: Boolean(process.env.GEMINI_API_KEY?.trim()),
       DATABASE_URL: Boolean(process.env.DATABASE_URL?.trim()),
-      GEMINI_MODEL:
-        process.env.GEMINI_MODEL_ID ||
-        process.env.GEMINI_MODEL ||
-        "gemini-2.5-flash (default)",
-      GEMINI_EMBED_MODEL:
-        process.env.GEMINI_EMBED_MODEL || "gemini-embedding-2 (default)",
+      GEMINI_MODEL: getGeminiModelName(),
+      GEMINI_EMBED_MODEL: currentEmbedderId().replace(/^gemini:/, ""),
     },
   };
 

@@ -13,10 +13,13 @@ import {
   StudyArtifactType,
   StudyLearningMode,
 } from "@/app/lib/server/study/types";
+import { consumeStudyAiQuota } from "@/app/lib/server/study/rateLimit";
 
 export const dynamic = "force-dynamic";
 
 const ALLOWED_TYPES = new Set<StudyArtifactType>([
+  "outline",
+  "syllabus",
   "notes",
   "summary",
   "flashcards",
@@ -39,6 +42,15 @@ export async function POST(
     if (session.userId !== userId) {
       return fail("Forbidden", 403);
     }
+    const isGuest = userId.startsWith("guest_") || userId.startsWith("guest:");
+    const quota = consumeStudyAiQuota({
+      key: `generate:${userId}`,
+      limit: isGuest ? 8 : 60,
+      windowMs: 60 * 60 * 1000,
+    });
+    if (!quota.allowed) {
+      return fail(`Generation rate limit reached. Try again in ${quota.retryAfterSeconds} seconds.`, 429);
+    }
 
     const type = params.type as StudyArtifactType;
     if (!ALLOWED_TYPES.has(type)) {
@@ -54,7 +66,16 @@ export async function POST(
       return fail("No source text found for this session");
     }
 
-    let body: { mode?: StudyLearningMode; examTopics?: string[] } = {};
+    let body: {
+      mode?: StudyLearningMode;
+      examTopics?: string[];
+      difficulty?: "easy" | "medium" | "hard" | "adaptive";
+      questionFormat?: "mcq" | "short_answer" | "mixed";
+      questionCount?: number;
+      preAssessment?: boolean;
+      academicLevel?: "high_school" | "college" | "phd";
+      rubric?: string;
+    } = {};
     const rawBody = await request.text();
     if (rawBody.trim()) {
       try {
@@ -92,6 +113,15 @@ export async function POST(
     const { content } = await generateArtifact(type, mergedText, {
       mode,
       examTopics,
+      difficulty: body.difficulty,
+      questionFormat: body.questionFormat,
+      questionCount:
+        typeof body.questionCount === "number"
+          ? Math.max(2, Math.min(30, Math.round(body.questionCount)))
+          : undefined,
+      preAssessment: Boolean(body.preAssessment),
+      academicLevel: body.academicLevel,
+      rubric: String(body.rubric || "").trim().slice(0, 2000),
       previousContent,
     });
     // Generation is always live AI now (no offline stub), so a returned result

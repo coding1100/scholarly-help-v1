@@ -34,6 +34,7 @@ async function consumeSse<T>(response: Response, options: Options<T>): Promise<T
       options.onProgress?.(job);
       if (job.status === "completed" && job.result !== undefined) return job.result;
       if (job.status === "failed") throw new Error(job.error || "Job failed.");
+      if (job.status === "cancelled") throw new DOMException("Job cancelled.", "AbortError");
     }
   }
   throw new Error("Event stream ended before the job completed.");
@@ -72,6 +73,7 @@ export async function waitForJob<T>(options: Options<T>): Promise<T> {
     options.onProgress?.(job);
     if (job.status === "completed" && job.result !== undefined) return job.result;
     if (job.status === "failed") throw new Error(job.error || "Job failed.");
+    if (job.status === "cancelled") throw new DOMException("Job cancelled.", "AbortError");
     delay = Math.min(8000, Math.round(delay * 1.35));
   }
   throw new Error("The job timed out. You can safely try again.");

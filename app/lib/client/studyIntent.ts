@@ -50,7 +50,9 @@ export function intentSuggestedMode(intent: StudyChatIntent): StudyLearningMode 
   return null;
 }
 
-export function intentTargetTab(intent: StudyChatIntent): StudyArtifactType | null {
+export function intentTargetTab(
+  intent: StudyChatIntent,
+): Exclude<StudyArtifactType, "outline" | "syllabus"> | null {
   if (intent.type === "exam_notes") return "notes";
   if (intent.type === "exam_summary") return "summary";
   if (intent.type === "generate_quiz") return "quizzes";

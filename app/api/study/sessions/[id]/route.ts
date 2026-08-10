@@ -6,6 +6,7 @@ import {
   listSources,
   listTutorMessages,
   updateSessionTitle,
+  updateSessionTutorState,
 } from "@/app/lib/server/study/repo";
 import { fail, getAuthenticatedUserId, ok } from "@/app/lib/server/study/http";
 
@@ -62,7 +63,17 @@ export async function PATCH(
       return fail("Forbidden", 403);
     }
 
-    const body = (await request.json()) as { title?: string };
+    const body = (await request.json()) as {
+      title?: string;
+      tutorState?: Record<string, unknown>;
+    };
+    if (body.tutorState && typeof body.tutorState === "object") {
+      const encoded = JSON.stringify(body.tutorState);
+      if (encoded.length > 200_000) return fail("Tutor state is too large");
+      const session = await updateSessionTutorState(params.id, body.tutorState);
+      if (!session) return fail("Session not found", 404);
+      return ok({ session });
+    }
     const title = (body?.title || "").trim();
     if (!title) {
       return fail("title is required");

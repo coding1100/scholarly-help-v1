@@ -135,7 +135,13 @@ function SentenceHighlightedText({ segments }: { segments: DetectSegment[] }) {
 /** Shape returned by POST /tools/humanizer/jobs and GET /tools/humanizer/jobs/:id. */
 type HumanizerJobResponse = {
   job_id: string;
-  status: "queued" | "processing" | "completed" | "failed";
+  status:
+    | "queued"
+    | "processing"
+    | "finalizing"
+    | "completed"
+    | "failed"
+    | "cancelled";
   progress: number;
   result: HumanizerResponse | null;
   error: string | null;

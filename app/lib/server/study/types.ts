@@ -1,4 +1,6 @@
 export type StudyArtifactType =
+  | "outline"
+  | "syllabus"
   | "notes"
   | "summary"
   | "flashcards"
@@ -26,6 +28,7 @@ export interface StudySession {
   title: string;
   createdAt: Date;
   updatedAt: Date;
+  tutorState?: Record<string, unknown>;
 }
 
 export interface StudySource {
@@ -73,6 +76,12 @@ export interface TutorMessage {
 export interface GenerateArtifactOptions {
   mode?: StudyLearningMode;
   examTopics?: string[];
+  difficulty?: "easy" | "medium" | "hard" | "adaptive";
+  questionFormat?: "mcq" | "short_answer" | "mixed";
+  questionCount?: number;
+  preAssessment?: boolean;
+  academicLevel?: "high_school" | "college" | "phd";
+  rubric?: string;
   /**
    * The artifact content from the previous generation of the same type, if any.
    * When present, the user pressed "Regenerate" because they didn't like it —

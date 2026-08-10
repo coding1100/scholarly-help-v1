@@ -97,23 +97,24 @@ const MarkDown = ({ content }) => {
           },
           table({ children, ...props }) {
             return (
-              <table
-                style={{
-                  borderCollapse: "collapse",
-                  width: "100%",
-                  fontFamily: "Arial, sans-serif",
-                  fontSize: "36px",
-                  lineHeight: "20px",
-                }}
-                {...props}
-              >
-                {children}
-              </table>
+              <div className="my-3 overflow-x-auto rounded-xl border border-[#dfe3ff]">
+                <table
+                  style={{
+                    borderCollapse: "collapse",
+                    width: "100%",
+                    fontSize: "13px",
+                    lineHeight: "1.5",
+                  }}
+                  {...props}
+                >
+                  {children}
+                </table>
+              </div>
             );
           },
           tr({ children, ...props }) {
             return (
-              <tr style={{ backgroundColor: "#f8f8f8" }} {...props}>
+              <tr style={{ backgroundColor: "#ffffff" }} className="even:bg-[#f8f9ff]" {...props}>
                 {children}
               </tr>
             );
@@ -122,9 +123,11 @@ const MarkDown = ({ content }) => {
             return (
               <td
                 style={{
-                  padding: "8px",
-                  border: "1px solid #ddd",
-                  fontSize: "16px",
+                  padding: "10px 12px",
+                  border: "1px solid #dfe3ff",
+                  fontSize: "13px",
+                  lineHeight: "1.5",
+                  verticalAlign: "top",
                 }}
                 {...props}
               >
@@ -136,11 +139,14 @@ const MarkDown = ({ content }) => {
             return (
               <th
                 style={{
-                  padding: "8px",
-                  border: "1px solid #ddd",
-                  fontWeight: 600,
+                  padding: "10px 12px",
+                  border: "1px solid #dfe3ff",
+                  fontWeight: 700,
                   textAlign: "left",
-                  fontSize: "16px",
+                  fontSize: "13px",
+                  lineHeight: "1.5",
+                  backgroundColor: "#eef1ff",
+                  color: "#242842",
                 }}
                 {...props}
               >

@@ -1,5 +1,5 @@
 const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta";
-const DEFAULT_MODEL = "gemini-2.5-flash";
+export const DEFAULT_GEMINI_MODEL = "gemini-3.5-flash-lite";
 
 type GeminiPart = { text: string };
 type GeminiInlinePart = {
@@ -47,8 +47,12 @@ function extractStreamedTextFromSsePayload(payloadRaw: string) {
   }
 }
 
-function getModelName() {
-  return process.env.GEMINI_MODEL_ID || process.env.GEMINI_MODEL || DEFAULT_MODEL;
+export function getGeminiModelName() {
+  return (
+    process.env.GEMINI_MODEL_ID ||
+    process.env.GEMINI_MODEL ||
+    DEFAULT_GEMINI_MODEL
+  );
 }
 
 /**
@@ -128,7 +132,7 @@ type GenerateInput = {
 
 async function callGeminiGenerateOnce(input: GenerateInput): Promise<string> {
   const apiKey = getApiKey();
-  const model = getModelName();
+  const model = getGeminiModelName();
   const thinkingConfig = thinkingConfigFor(model);
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 90000);
@@ -295,7 +299,7 @@ export async function* streamGeminiText(input: {
   streamMetaOut?: { finishReason?: string };
 }) {
   const apiKey = getApiKey();
-  const model = getModelName();
+  const model = getGeminiModelName();
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 120000);
   try {
@@ -322,8 +326,8 @@ export async function* streamGeminiText(input: {
             maxOutputTokens: input.maxOutputTokens ?? 4096,
             // Same rationale as generateContent: don't let silent thinking
             // consume the visible-output budget (and add latency) on flash.
-            ...(thinkingConfigFor(getModelName())
-              ? { thinkingConfig: thinkingConfigFor(getModelName()) }
+            ...(thinkingConfigFor(model)
+              ? { thinkingConfig: thinkingConfigFor(model) }
               : {}),
           },
         }),

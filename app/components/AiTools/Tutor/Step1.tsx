@@ -38,7 +38,7 @@ export default function Step1({ onContinue, isLoading = false }: Step1Props) {
 
             {/* Subtitle */}
             <p className="text-gray-600 text-center mb-8 text-sm">
-              Let's start by getting to know your child better.
+              Let&apos;s start by getting to know your child better.
             </p>
 
             {/* Input Section */}
@@ -47,7 +47,7 @@ export default function Step1({ onContinue, isLoading = false }: Step1Props) {
                 htmlFor="childName"
                 className="block text-black font-semibold mb-1 text-sm"
               >
-                Child's Name
+                Child&apos;s Name
               </label>
 
               <input

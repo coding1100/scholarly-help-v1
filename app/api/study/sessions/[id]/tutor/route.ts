@@ -19,6 +19,7 @@ import {
   TUTOR_MARKDOWN_RULES,
 } from "@/app/lib/server/study/prompts";
 import { StudyLearningMode } from "@/app/lib/server/study/types";
+import { consumeStudyAiQuota } from "@/app/lib/server/study/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -98,6 +99,15 @@ export async function POST(
     if (session.userId !== userId) {
       return fail("Forbidden", 403);
     }
+    const isGuest = userId.startsWith("guest_") || userId.startsWith("guest:");
+    const quota = consumeStudyAiQuota({
+      key: `tutor:${userId}`,
+      limit: isGuest ? 10 : 120,
+      windowMs: 60 * 60 * 1000,
+    });
+    if (!quota.allowed) {
+      return fail(`Tutor rate limit reached. Try again in ${quota.retryAfterSeconds} seconds.`, 429);
+    }
 
     const body = (await request.json()) as {
       message?: string;
@@ -105,11 +115,13 @@ export async function POST(
       attachments?: TutorAttachment[];
       mode?: StudyLearningMode;
       examTopics?: string[];
+      tutorContext?: string;
     };
     const learningMode = resolveLearningMode(body.mode);
     const examTopics = Array.isArray(body.examTopics)
       ? body.examTopics.map((t) => String(t).trim()).filter(Boolean).slice(0, 12)
       : [];
+    const tutorContext = String(body.tutorContext || "").trim().slice(0, 2500);
     const message = (body?.message || "").trim();
     const useStream = Boolean(body?.stream);
     const imageAttachments = Array.isArray(body?.attachments)
@@ -283,6 +295,7 @@ export async function POST(
                   hasRelevantContext,
                   mode: learningMode,
                   examTopics,
+                  tutorContext,
                 }),
                 temperature: 0.25,
                 maxOutputTokens: TUTOR_MAX_OUTPUT_TOKENS,
@@ -338,6 +351,7 @@ export async function POST(
                   hasRelevantContext,
                   mode: learningMode,
                   examTopics,
+                  tutorContext,
                 }),
                 temperature: 0.25,
                 maxOutputTokens: TUTOR_MAX_OUTPUT_TOKENS,
@@ -421,6 +435,7 @@ export async function POST(
           hasRelevantContext,
           mode: learningMode,
           examTopics,
+          tutorContext,
         }),
         temperature: 0.25,
         maxOutputTokens: TUTOR_MAX_OUTPUT_TOKENS,
@@ -435,6 +450,7 @@ export async function POST(
           hasRelevantContext,
           mode: learningMode,
           examTopics,
+          tutorContext,
         }),
         temperature: 0.25,
         maxOutputTokens: TUTOR_MAX_OUTPUT_TOKENS,
