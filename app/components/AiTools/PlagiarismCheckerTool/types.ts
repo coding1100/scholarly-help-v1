@@ -46,6 +46,9 @@ export interface PlagiarismScan {
   result?: SimilarityResult;
   error?: string;
   provider: "quetext";
+  provider_pending?: boolean;
+  provider_message?: string;
+  retry_after_seconds?: number;
 }
 
 export interface ScanSettings {
