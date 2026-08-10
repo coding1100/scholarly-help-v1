@@ -147,6 +147,16 @@ const tools: ToolCardData[] = [
     cta: "Check for AI",
   },
   {
+    name: "Plagiarism Checker",
+    description:
+      "Find matching passages across web and academic sources with detailed reports.",
+    href: "/tools/plagiarism-checker",
+    icon: FiSearch,
+    badge: "New",
+    category: "essay-writing",
+    cta: "Check originality",
+  },
+  {
     name: "Grammar Checker",
     description:
       "Fix grammar, tense, clarity, and tone with inline explanations.",
