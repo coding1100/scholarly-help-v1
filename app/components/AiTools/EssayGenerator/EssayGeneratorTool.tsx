@@ -46,6 +46,18 @@ const levels = [["high_school", "High school"], ["undergraduate", "Undergraduate
 const essayTypes = [["argumentative", "Argumentative"], ["analytical", "Analytical"], ["expository", "Expository"], ["persuasive", "Persuasive"], ["descriptive", "Descriptive"], ["narrative", "Narrative"], ["compare_contrast", "Compare & contrast"], ["cause_effect", "Cause & effect"]];
 const tones = [["formal_academic", "Formal academic"], ["conversational", "Conversational & engaging"], ["objective", "Objective & neutral"], ["persuasive", "Direct & persuasive"], ["custom", "Custom tone"]];
 const citations = [["apa7", "APA 7th edition"], ["mla9", "MLA 9th edition"], ["chicago17", "Chicago 17th edition"], ["harvard", "Harvard"], ["none", "No citations"]];
+const wizardSteps = ["Setup", "Outline", "Preferences", "Draft"];
+
+function cleanOutlineForApi(outline: Outline): Outline {
+  return {
+    intro: outline.intro.map((point) => ({ text: point.text })),
+    body: outline.body.map((section) => ({
+      title: section.title,
+      points: section.points.map((point) => ({ text: point.text })),
+    })),
+    conclusion: outline.conclusion.map((point) => ({ text: point.text })),
+  };
+}
 
 export default function EssayGeneratorTool() {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
@@ -75,6 +87,7 @@ export default function EssayGeneratorTool() {
   const [citationOpen, setCitationOpen] = useState(false);
   const [sourceLabel, setSourceLabel] = useState("");
   const [checkPanel, setCheckPanel] = useState<string | null>(null);
+  const wizardTopRef = useRef<HTMLDivElement | null>(null);
   const textRef = useRef<HTMLTextAreaElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const { gateOpen, closeGate, guardAiClick } = useGuestGate();
@@ -84,6 +97,14 @@ export default function EssayGeneratorTool() {
     abortRef.current?.abort();
     if (activeJob) void requestHeaders().then((headers) => cancelJob(`${API}/tools/essay-generator/jobs/${activeJob}`, headers)).catch(() => undefined);
   }, [activeJob]);
+
+  useEffect(() => {
+    wizardTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [step]);
+
+  function goToStep(nextStep: 1 | 2 | 3 | 4) {
+    setStep(nextStep);
+  }
 
   async function requestHeaders(json = true): Promise<Record<string, string>> {
     const token = await getOrRefreshAccessToken();
@@ -104,7 +125,7 @@ export default function EssayGeneratorTool() {
       setSession(current); setProgress(45);
       const response = await axios.post(`${API}/tools/essay-generator/sessions/${current.session_id}/outline`, {}, { headers: { ...headers, "Idempotency-Key": `outline-${crypto.randomUUID()}` } });
       const payload = unwrap<{ session: Session; outline: Outline }>(response.data);
-      setSession(payload.session); setOutline(payload.outline); setStep(2); setProgress(100);
+      setSession(payload.session); setOutline(payload.outline); goToStep(2); setProgress(100);
       toast.success("Outline ready to review.");
     } catch (error) { toast.error(errorMessage(error)); }
     finally { setLoading(false); setProgress(0); }
@@ -142,13 +163,14 @@ export default function EssayGeneratorTool() {
     const controller = new AbortController(); abortRef.current = controller;
     try {
       const headers = await requestHeaders();
-      await axios.patch(`${API}/tools/essay-generator/sessions/${session.session_id}/outline`, { outline }, { headers });
+      const apiOutline = cleanOutlineForApi(outline);
+      await axios.patch(`${API}/tools/essay-generator/sessions/${session.session_id}/outline`, { outline: apiOutline }, { headers });
       const queued = await axios.post(`${API}/tools/essay-generator/sessions/${session.session_id}/generate`, {
-        outline, tone, custom_tone: tone === "custom" ? customTone : undefined, target_words: targetWords,
+        outline: apiOutline, tone, custom_tone: tone === "custom" ? customTone : undefined, target_words: targetWords,
         citation_style: citationStyle, key_terms: keyTerms || undefined, avoid_phrases: avoidPhrases || undefined,
         avoid_first_person: avoidFirstPerson, block_ai_buzzwords: blockBuzzwords, include_subheadings: includeSubheadings,
       }, { headers: { ...headers, "Idempotency-Key": `essay-${crypto.randomUUID()}` } });
-      const job = unwrap<{ job_id: string }>(queued.data); setActiveJob(job.job_id); setStep(4);
+      const job = unwrap<{ job_id: string }>(queued.data); setActiveJob(job.job_id); goToStep(4);
       const essay = await waitForJob<EssayResult>({
         eventsUrl: `${API}/tools/essay-generator/jobs/${job.job_id}/events`,
         pollUrl: `${API}/tools/essay-generator/jobs/${job.job_id}`,
@@ -212,18 +234,24 @@ export default function EssayGeneratorTool() {
   const targetState = words < targetWords * 0.92 ? "Below target" : words > targetWords * 1.12 ? "Over target" : "On target";
 
   return (
-    <div className="min-h-full bg-[#f5f5f1] px-4 py-8 sm:px-8">
-      <div className="mx-auto max-w-5xl">
-        <div className="mb-5 flex items-center justify-between gap-3">
-          <h1 className="text-xl font-bold text-[#24251f]">Scholarly AI Essay Studio</h1>
-          <span className="rounded-full bg-[#eeedfe] px-3 py-1 text-xs font-bold text-[#534ab7]">Step {step} of 4</span>
+    <div className="min-h-full bg-[#f5f5f1] px-4 py-6 text-[#24251f] sm:px-6 lg:px-8">
+      <div ref={wizardTopRef} className="mx-auto max-w-6xl scroll-mt-6">
+        <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-sm font-medium text-gray-500">Essay Generator / <span className="font-semibold text-[#24251f]">{session?.title || "New draft"}</span></p>
+            <h1 className="mt-1 text-2xl font-bold">Scholarly AI Essay Studio</h1>
+          </div>
+          <span className="w-fit rounded-full bg-[#eeedfe] px-3 py-1 text-xs font-bold text-[#534ab7]">Step {step} of 4</span>
         </div>
 
-        {loading && <div className="mb-5 overflow-hidden rounded-full bg-gray-200"><div className="h-2 bg-[#534ab7] transition-all" style={{ width: `${Math.max(4, progress)}%` }} /></div>}
+        <Stepper step={step} loading={loading} progress={progress} />
 
-        {step === 1 && <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="text-base font-bold">Assignment setup</h2>
-          <p className="mb-5 mt-1 text-sm text-gray-500">Tell us about the essay. The outline and draft will follow these constraints.</p>
+        {step === 1 && <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+          <div className="mb-5">
+            <h2 className="text-base font-bold">Assignment setup</h2>
+            <p className="mt-1 text-sm text-gray-500">Tell us about the essay. The outline and draft will follow these constraints.</p>
+          </div>
+          <div className="space-y-5">
           <Field label="Essay topic / title" value={title} onChange={setTitle} placeholder="e.g. The impact of social media on teen mental health" />
           <div className="grid gap-4 md:grid-cols-3">
             <Select label="Academic level" value={level} onChange={setLevel} options={levels} />
@@ -232,63 +260,72 @@ export default function EssayGeneratorTool() {
           </div>
           <Area label="Assignment prompt" value={assignmentPrompt} onChange={setAssignmentPrompt} placeholder="Paste the exact assignment question if you have it." />
           <Area label="Rubric / syllabus notes" value={rubricNotes} onChange={setRubricNotes} placeholder="Paste grading requirements, professor instructions, or must-cover points." />
-          <label className="mb-5 flex items-start gap-3 rounded-lg border border-gray-200 p-4 text-sm"><input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-1" /><span><b>Help improve essay generation quality</b><small className="mt-1 block text-gray-500">Off by default. Output quality is the same either way.</small></span></label>
-          <div className="flex justify-end"><button disabled={loading} onClick={() => guardAiClick(generateOutline)} className="inline-flex items-center gap-2 rounded-lg bg-[#534ab7] px-5 py-3 text-sm font-bold text-white disabled:opacity-60">Generate outline <FiArrowRight /></button></div>
+          <label className="flex items-start gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm"><input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-1" /><span><b>Help improve essay generation quality</b><small className="mt-1 block text-gray-500">Off by default. Output quality is the same either way.</small></span></label>
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"><button type="button" disabled={loading} onClick={() => guardAiClick(generateOutline)} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#534ab7] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#44399f] disabled:opacity-60 sm:w-auto">Generate outline <FiArrowRight /></button></div>
+          </div>
         </section>}
 
-        {step === 2 && outline && <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="text-base font-bold">Review your outline</h2>
-          <p className="mb-5 mt-1 text-sm text-gray-500">Edit any point directly. Reorder body paragraphs before drafting.</p>
+        {step === 2 && outline && <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+          <div className="mb-5">
+            <h2 className="text-base font-bold">Review your outline</h2>
+            <p className="mt-1 text-sm text-gray-500">Edit any point directly. Reorder body paragraphs before drafting.</p>
+          </div>
           <OutlineBlock title="1. Introduction" points={outline.intro} onPoint={(i, v) => editPoint("intro", i, v)} />
           <div className="space-y-3">
             {outline.body.map((section, index) => <div key={section.id || index} className="rounded-lg border border-gray-200 p-4">
-              <div className="mb-3 flex items-center gap-2">
-                <button aria-label="Move up" onClick={() => moveBody(index, -1)} className="rounded border p-1 text-gray-500 hover:bg-gray-50"><FiChevronUp /></button>
-                <button aria-label="Move down" onClick={() => moveBody(index, 1)} className="rounded border p-1 text-gray-500 hover:bg-gray-50"><FiChevronDown /></button>
+              <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+                <div className="flex gap-2">
+                <button type="button" aria-label="Move up" onClick={() => moveBody(index, -1)} className="rounded border p-2 text-gray-500 hover:bg-gray-50 disabled:opacity-40" disabled={index === 0}><FiChevronUp /></button>
+                <button type="button" aria-label="Move down" onClick={() => moveBody(index, 1)} className="rounded border p-2 text-gray-500 hover:bg-gray-50 disabled:opacity-40" disabled={index === outline.body.length - 1}><FiChevronDown /></button>
+                </div>
                 <input value={section.title} onChange={(e) => editBody(index, null, e.target.value)} className="flex-1 rounded border border-gray-200 p-2 text-sm font-semibold text-[#3c3489]" />
               </div>
-              {section.points.map((point, pointIndex) => <input key={pointIndex} value={point.text} onChange={(e) => editBody(index, pointIndex, e.target.value)} className="mb-2 w-full rounded border border-gray-200 p-2 text-sm" />)}
+              <div className="space-y-2">{section.points.map((point, pointIndex) => <input key={pointIndex} value={point.text} onChange={(e) => editBody(index, pointIndex, e.target.value)} className="w-full rounded border border-gray-200 p-2 text-sm" />)}</div>
             </div>)}
           </div>
           <OutlineBlock title={`${outline.body.length + 2}. Conclusion`} points={outline.conclusion} onPoint={(i, v) => editPoint("conclusion", i, v)} />
-          <div className="mt-6 flex justify-between"><button onClick={() => setStep(1)} className="inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold"><FiArrowLeft /> Back</button><button onClick={() => setStep(3)} className="inline-flex items-center gap-2 rounded-lg bg-[#534ab7] px-5 py-3 text-sm font-bold text-white">Next: preferences <FiArrowRight /></button></div>
+          <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between"><button type="button" onClick={() => goToStep(1)} className="inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold"><FiArrowLeft /> Back</button><button type="button" onClick={() => goToStep(3)} className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#534ab7] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#44399f]">Next: preferences <FiArrowRight /></button></div>
         </section>}
 
-        {step === 3 && <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="text-base font-bold">Essay preferences</h2>
-          <p className="mb-5 mt-1 text-sm text-gray-500">Tune style, formatting, word count, and citation expectations.</p>
-          <div className="grid gap-4 md:grid-cols-3">
+        {step === 3 && <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+          <div className="mb-5">
+            <h2 className="text-base font-bold">Essay preferences</h2>
+            <p className="mt-1 text-sm text-gray-500">Tune style, formatting, word count, and citation expectations.</p>
+          </div>
+          <div className="space-y-5">
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_390px]">
             <Select label="Tone of voice" value={tone} onChange={setTone} options={tones} />
             <Select label="Citation style" value={citationStyle} onChange={setCitationStyle} options={citations} />
-            <div><span className="mb-2 block text-xs font-bold text-gray-600">Target word count</span><div className="grid grid-cols-3 gap-2">{[500, 1000, 1500].map((count) => <button key={count} onClick={() => setTargetWords(count)} className={`rounded-lg border px-3 py-3 text-sm font-bold ${targetWords === count ? "border-[#534ab7] bg-[#534ab7] text-white" : "border-gray-200 text-gray-600"}`}>~{count}</button>)}</div></div>
+            <div><span className="mb-2 block text-xs font-bold text-gray-600">Target word count</span><div className="grid grid-cols-3 gap-2">{[500, 1000, 1500].map((count) => <button type="button" key={count} onClick={() => setTargetWords(count)} className={`rounded-lg border px-3 py-3 text-sm font-bold transition ${targetWords === count ? "border-[#534ab7] bg-[#534ab7] text-white" : "border-gray-200 text-gray-600 hover:border-[#534ab7]"}`}>~{count}</button>)}</div></div>
           </div>
           {tone === "custom" && <Field label="Describe your custom tone" value={customTone} onChange={setCustomTone} placeholder="e.g. authoritative yet approachable" />}
           <Field label="Key terms to include" value={keyTerms} onChange={setKeyTerms} placeholder="e.g. neuroplasticity, CBT, neural pathways" />
           <Field label="Words or phrases to avoid" value={avoidPhrases} onChange={setAvoidPhrases} placeholder="e.g. delve, tapestry, moreover" />
-          <div className="mb-6 flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-3">
             <Toggle checked={avoidFirstPerson} onChange={setAvoidFirstPerson} label='Avoid first person ("I", "me", "my")' />
             <Toggle checked={blockBuzzwords} onChange={setBlockBuzzwords} label="Block common AI buzzwords" />
             <Toggle checked={includeSubheadings} onChange={setIncludeSubheadings} label="Include section subheadings" />
           </div>
-          <div className="flex justify-between"><button onClick={() => setStep(2)} className="inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold"><FiArrowLeft /> Back</button><button disabled={loading} onClick={() => guardAiClick(generateEssay)} className="inline-flex items-center gap-2 rounded-lg bg-[#534ab7] px-5 py-3 text-sm font-bold text-white disabled:opacity-60"><FiZap /> Generate full essay</button></div>
+          <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-between"><button type="button" onClick={() => goToStep(2)} className="inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold"><FiArrowLeft /> Back</button><button type="button" disabled={loading} onClick={() => guardAiClick(generateEssay)} className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#534ab7] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#44399f] disabled:opacity-60"><FiZap /> Generate full essay</button></div>
+          </div>
         </section>}
 
         {step === 4 && <section>
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <button onClick={() => setStep(1)} className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold"><FiArrowLeft /> Start over</button>
-            <div className="flex flex-wrap gap-2">
-              <button onClick={() => void transformSelection("paraphrase")} className="rounded-lg border bg-white px-3 py-2 text-sm font-semibold">Paraphrase</button>
-              <button onClick={() => void transformSelection("expand")} className="rounded-lg border bg-white px-3 py-2 text-sm font-semibold">Expand</button>
-              <button onClick={() => void transformSelection("shorten")} className="rounded-lg border bg-white px-3 py-2 text-sm font-semibold">Shorten</button>
-              <button onClick={() => setCitationOpen(true)} className="inline-flex items-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm font-semibold"><FiBookOpen /> Citations</button>
-              <button onClick={undoDraft} className="inline-flex items-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm font-semibold"><FiRotateCcw /> Undo</button>
-              <button onClick={saveDraft} className="inline-flex items-center gap-2 rounded-lg bg-[#24251f] px-4 py-2 text-sm font-bold text-white"><FiCheck /> Save</button>
+          <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <button type="button" onClick={() => goToStep(1)} className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold lg:w-auto"><FiArrowLeft /> Start over</button>
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+              <button type="button" onClick={() => void transformSelection("paraphrase")} className="rounded-lg border bg-white px-3 py-2 text-sm font-semibold">Paraphrase</button>
+              <button type="button" onClick={() => void transformSelection("expand")} className="rounded-lg border bg-white px-3 py-2 text-sm font-semibold">Expand</button>
+              <button type="button" onClick={() => void transformSelection("shorten")} className="rounded-lg border bg-white px-3 py-2 text-sm font-semibold">Shorten</button>
+              <button type="button" onClick={() => setCitationOpen(true)} className="inline-flex items-center justify-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm font-semibold"><FiBookOpen /> Citations</button>
+              <button type="button" onClick={undoDraft} className="inline-flex items-center justify-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm font-semibold"><FiRotateCcw /> Undo</button>
+              <button type="button" onClick={saveDraft} className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#24251f] px-4 py-2 text-sm font-bold text-white"><FiCheck /> Save</button>
             </div>
           </div>
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
             <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-              <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3"><span className="inline-flex items-center gap-2 text-sm font-bold"><FiEdit3 /> Editable draft</span><span className={`rounded-full px-3 py-1 text-xs font-bold ${targetState === "On target" ? "bg-emerald-100 text-emerald-800" : targetState === "Over target" ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800"}`}>{words.toLocaleString()} / {targetWords.toLocaleString()} words</span></div>
-              <textarea ref={textRef} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={loading ? "Writing your full essay draft..." : ""} className="min-h-[680px] w-full resize-y p-8 font-serif text-[16px] leading-8 text-gray-800 outline-none" />
+              <div className="flex flex-col gap-2 border-b border-gray-100 px-5 py-3 sm:flex-row sm:items-center sm:justify-between"><span className="inline-flex items-center gap-2 text-sm font-bold"><FiEdit3 /> Editable draft</span><span className={`w-fit rounded-full px-3 py-1 text-xs font-bold ${targetState === "On target" ? "bg-emerald-100 text-emerald-800" : targetState === "Over target" ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800"}`}>{words.toLocaleString()} / {targetWords.toLocaleString()} words</span></div>
+              <textarea ref={textRef} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={loading ? "Writing your full essay draft..." : ""} className="min-h-[520px] w-full resize-y p-5 font-serif text-[16px] leading-8 text-gray-800 outline-none sm:min-h-[680px] sm:p-8" />
             </div>
             <aside className="space-y-4">
               <Panel title="Draft checks" icon={<FiFileText />}>{result ? <ul className="space-y-2 text-sm text-gray-600">{result.quality_checks.map((item, index) => <li key={index}>- {item}</li>)}</ul> : <p className="text-sm text-gray-500">Generation is running.</p>}</Panel>
@@ -296,8 +333,8 @@ export default function EssayGeneratorTool() {
               {result?.citations_note && <Panel title="Citation note" icon={<FiBookOpen />}><p className="text-sm text-gray-600">{result.citations_note}</p></Panel>}
               <Panel title="Handoffs" icon={<FiUsers />}>
                 <div className="space-y-2">
-                  <button onClick={() => setCheckPanel("AI Detector handoff ready. Save this draft, then open AI Detector from the tools dashboard to scan it.")} className="flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold"><FiSearch /> Check with AI Detector</button>
-                  <button onClick={() => setCheckPanel("Humanizer handoff ready. Save this draft, then run it through Humanizer for sentence-level variation.")} className="flex w-full items-center gap-2 rounded-lg border border-[#534ab7] bg-[#eeedfe] px-3 py-2 text-sm font-semibold text-[#3c3489]"><FiZap /> Humanize with Humanizer</button>
+                  <button type="button" onClick={() => setCheckPanel("AI Detector handoff ready. Save this draft, then open AI Detector from the tools dashboard to scan it.")} className="flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold"><FiSearch /> Check with AI Detector</button>
+                  <button type="button" onClick={() => setCheckPanel("Humanizer handoff ready. Save this draft, then run it through Humanizer for sentence-level variation.")} className="flex w-full items-center gap-2 rounded-lg border border-[#534ab7] bg-[#eeedfe] px-3 py-2 text-sm font-semibold text-[#3c3489]"><FiZap /> Humanize with Humanizer</button>
                 </div>
                 {checkPanel && <p className="mt-3 rounded-lg bg-gray-50 p-3 text-xs text-gray-600">{checkPanel}</p>}
               </Panel>
@@ -306,32 +343,59 @@ export default function EssayGeneratorTool() {
         </section>}
       </div>
 
-      {citationOpen && <div className="fixed inset-0 z-50 flex justify-end bg-black/20"><aside className="h-full w-full max-w-sm bg-white p-6 shadow-xl"><div className="mb-5 flex items-center justify-between"><b>Add a citation</b><button onClick={() => setCitationOpen(false)} aria-label="Close citation drawer"><FiX /></button></div><Field label="Source label, URL, DOI, or filename" value={sourceLabel} onChange={setSourceLabel} placeholder="e.g. Smith, 2024 or https://doi.org/..." /><label className="mb-4 block rounded-lg border border-dashed border-gray-300 p-4 text-center text-sm text-gray-500"><FiUpload className="mx-auto mb-2" /> PDF upload handoff uses the citation tool source library.</label><button onClick={insertCitation} className="w-full rounded-lg bg-[#534ab7] px-4 py-3 text-sm font-bold text-white">Insert citation marker</button></aside></div>}
+      {citationOpen && <div className="fixed inset-0 z-50 flex justify-end bg-black/20"><aside className="h-full w-full max-w-sm bg-white p-6 shadow-xl"><div className="mb-5 flex items-center justify-between"><b>Add a citation</b><button type="button" onClick={() => setCitationOpen(false)} aria-label="Close citation drawer"><FiX /></button></div><div className="space-y-5"><Field label="Source label, URL, DOI, or filename" value={sourceLabel} onChange={setSourceLabel} placeholder="e.g. Smith, 2024 or https://doi.org/..." /><label className="block rounded-lg border border-dashed border-gray-300 p-4 text-center text-sm text-gray-500"><FiUpload className="mx-auto mb-2" /> PDF upload handoff uses the citation tool source library.</label><button type="button" onClick={insertCitation} className="w-full rounded-lg bg-[#534ab7] px-4 py-3 text-sm font-bold text-white">Insert citation marker</button></div></aside></div>}
       <GuestAuthGateModal open={gateOpen} onClose={closeGate} heading="Create a free account to continue generating essays." />
     </div>
   );
 }
 
 function Field({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (value: string) => void; placeholder?: string }) {
-  return <label className="mb-4 block"><span className="mb-2 block text-xs font-bold text-gray-600">{label}</span><input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="w-full rounded-lg border border-gray-200 p-3 text-sm outline-none focus:border-[#534ab7]" /></label>;
+  return <label className="block"><span className="mb-2 block text-xs font-bold text-gray-600">{label}</span><input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="w-full rounded-lg border border-gray-200 p-3 text-sm outline-none transition focus:border-[#534ab7] focus:ring-2 focus:ring-[#534ab7]/15" /></label>;
 }
 
 function Area({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (value: string) => void; placeholder?: string }) {
-  return <label className="mb-4 block"><span className="mb-2 block text-xs font-bold text-gray-600">{label}</span><textarea value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="min-h-[95px] w-full rounded-lg border border-gray-200 p-3 text-sm outline-none focus:border-[#534ab7]" /></label>;
+  return <label className="block"><span className="mb-2 block text-xs font-bold text-gray-600">{label}</span><textarea value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="min-h-[95px] w-full rounded-lg border border-gray-200 p-3 text-sm outline-none transition focus:border-[#534ab7] focus:ring-2 focus:ring-[#534ab7]/15" /></label>;
 }
 
 function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: string[][] }) {
-  return <label className="block"><span className="mb-2 block text-xs font-bold text-gray-600">{label}</span><select value={value} onChange={(e) => onChange(e.target.value)} className="w-full rounded-lg border border-gray-200 bg-white p-3 text-sm outline-none focus:border-[#534ab7]">{options.map(([optionValue, labelText]) => <option key={optionValue} value={optionValue}>{labelText}</option>)}</select></label>;
+  return <label className="block"><span className="mb-2 block text-xs font-bold text-gray-600">{label}</span><select value={value} onChange={(e) => onChange(e.target.value)} className="w-full rounded-lg border border-gray-200 bg-white p-3 text-sm outline-none transition focus:border-[#534ab7] focus:ring-2 focus:ring-[#534ab7]/15">{options.map(([optionValue, labelText]) => <option key={optionValue} value={optionValue}>{labelText}</option>)}</select></label>;
 }
 
 function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (checked: boolean) => void; label: string }) {
-  return <label className="flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-xs font-semibold"><input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />{label}</label>;
+  return <label className="flex w-full items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-xs font-semibold sm:w-auto"><input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />{label}</label>;
 }
 
 function OutlineBlock({ title, points, onPoint }: { title: string; points: Point[]; onPoint: (index: number, value: string) => void }) {
-  return <div className="mb-4 rounded-lg border border-gray-200 bg-[#f9fafb] p-4"><div className="mb-2 text-xs font-bold uppercase tracking-wider text-gray-500">{title}</div>{points.map((point, index) => <input key={index} value={point.text} onChange={(e) => onPoint(index, e.target.value)} className="mb-2 w-full rounded border border-gray-200 bg-white p-2 text-sm" />)}</div>;
+  return <div className="my-4 rounded-lg border border-gray-200 bg-[#f9fafb] p-4"><div className="mb-2 text-xs font-bold uppercase tracking-wider text-gray-500">{title}</div><div className="space-y-2">{points.map((point, index) => <input key={index} value={point.text} onChange={(e) => onPoint(index, e.target.value)} className="w-full rounded border border-gray-200 bg-white p-2 text-sm" />)}</div></div>;
 }
 
 function Panel({ title, icon, children }: { title: string; icon: ReactNode; children: ReactNode }) {
   return <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"><h2 className="mb-3 flex items-center gap-2 text-sm font-bold text-[#24251f]">{icon}{title}</h2>{children}</div>;
+}
+
+function Stepper({ step, loading, progress }: { step: number; loading: boolean; progress: number }) {
+  const barWidth = loading ? Math.max(((step - 1) / 3) * 100, Math.min(100, progress)) : ((step - 1) / 3) * 100;
+
+  return (
+    <div className="mb-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+      <div className="relative">
+        <div className="absolute left-0 right-0 top-4 hidden h-1 rounded-full bg-gray-200 sm:block" />
+        <div className="absolute left-0 top-4 hidden h-1 rounded-full bg-[#534ab7] transition-all duration-500 sm:block" style={{ width: `${barWidth}%` }} />
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {wizardSteps.map((label, index) => {
+            const itemStep = index + 1;
+            const done = itemStep < step;
+            const active = itemStep === step;
+            return (
+              <div key={label} className="relative z-10 flex items-center gap-3 rounded-lg border border-gray-100 bg-white p-2 sm:flex-col sm:border-0 sm:p-0">
+                <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-full text-xs font-bold transition ${done || active ? "bg-[#534ab7] text-white" : "bg-gray-200 text-gray-500"}`}>{done ? <FiCheck /> : itemStep}</span>
+                <span className={`text-xs font-bold ${active ? "text-[#534ab7]" : done ? "text-[#24251f]" : "text-gray-400"}`}>{label}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      {loading && <div className="mt-4 overflow-hidden rounded-full bg-gray-200"><div className="h-2 rounded-full bg-[#534ab7] transition-all duration-500" style={{ width: `${Math.max(6, progress)}%` }} /></div>}
+    </div>
+  );
 }
