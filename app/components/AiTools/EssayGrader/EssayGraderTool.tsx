@@ -295,7 +295,6 @@ export default function EssayGraderTool() {
       activeJobRef.current = job.job_id;
 
       const grade = await waitForJob<GradeResult>({
-        eventsUrl: `${API}/tools/essay-grader/jobs/${job.job_id}/events`,
         pollUrl: `${API}/tools/essay-grader/jobs/${job.job_id}`,
         headers,
         signal: controller.signal,

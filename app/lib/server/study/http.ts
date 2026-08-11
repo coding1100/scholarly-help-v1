@@ -38,7 +38,10 @@ export async function getAuthenticatedUserId(request: NextRequest) {
     ? authHeader.slice("Bearer ".length).trim()
     : "";
 
-  if (token) return verifyUserIdFromToken(token);
+  if (token) {
+    const verifiedUserId = await verifyUserIdFromToken(token);
+    if (verifiedUserId) return verifiedUserId;
+  }
 
   const guestId = request.headers.get("x-user-id")?.trim() || "";
   if (/^guest_[a-z0-9]{12,80}$/i.test(guestId)) return guestId;
