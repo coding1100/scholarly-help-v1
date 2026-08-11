@@ -83,7 +83,6 @@ export default function EssayGeneratorTool() {
   const [result, setResult] = useState<EssayResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [activeJob, setActiveJob] = useState<string | null>(null);
   const [generationError, setGenerationError] = useState("");
   const [citationOpen, setCitationOpen] = useState(false);
   const [sourceLabel, setSourceLabel] = useState("");
@@ -91,13 +90,15 @@ export default function EssayGeneratorTool() {
   const wizardTopRef = useRef<HTMLDivElement | null>(null);
   const textRef = useRef<HTMLTextAreaElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const activeJobRef = useRef<string | null>(null);
   const { gateOpen, closeGate, guardAiClick } = useGuestGate();
   const words = useMemo(() => countWords(draft), [draft]);
 
   useEffect(() => () => {
     abortRef.current?.abort();
-    if (activeJob) void requestHeaders().then((headers) => cancelJob(`${API}/tools/essay-generator/jobs/${activeJob}`, headers)).catch(() => undefined);
-  }, [activeJob]);
+    const jobId = activeJobRef.current;
+    if (jobId) void requestHeaders().then((headers) => cancelJob(`${API}/tools/essay-generator/jobs/${jobId}`, headers)).catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     wizardTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -174,7 +175,7 @@ export default function EssayGeneratorTool() {
         citation_style: citationStyle, key_terms: keyTerms || undefined, avoid_phrases: avoidPhrases || undefined,
         avoid_first_person: avoidFirstPerson, block_ai_buzzwords: blockBuzzwords, include_subheadings: includeSubheadings,
       }, { headers: { ...headers, "Idempotency-Key": `essay-${crypto.randomUUID()}` } });
-      const job = unwrap<{ job_id: string }>(queued.data); setActiveJob(job.job_id); setProgress(24);
+      const job = unwrap<{ job_id: string }>(queued.data); activeJobRef.current = job.job_id; setProgress(24);
       const essay = await waitForJob<EssayResult>({
         pollUrl: `${API}/tools/essay-generator/jobs/${job.job_id}`,
         headers, signal: controller.signal, timeoutMs: 360_000,
@@ -189,7 +190,7 @@ export default function EssayGeneratorTool() {
         setGenerationError(message);
         toast.error(message);
       }
-    } finally { setLoading(false); setActiveJob(null); abortRef.current = null; }
+    } finally { setLoading(false); activeJobRef.current = null; abortRef.current = null; }
   }
 
   async function saveDraft() {

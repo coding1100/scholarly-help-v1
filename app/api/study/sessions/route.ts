@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
-    const userId = getAuthenticatedUserId(request);
+    const userId = await getAuthenticatedUserId(request);
     if (!userId) {
       return fail("Unauthorized", 401);
     }
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
       return fail("title is required");
     }
 
-    const userId = getAuthenticatedUserId(request);
+    const userId = await getAuthenticatedUserId(request);
     if (!userId) {
       return fail("Unauthorized", 401);
     }

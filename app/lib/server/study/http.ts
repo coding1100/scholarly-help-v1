@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
+import { createHash } from "crypto";
 
 type TokenPayload = {
   userId?: string;
@@ -19,7 +19,20 @@ type TokenPayload = {
   };
 };
 
-export function getAuthenticatedUserId(request: NextRequest) {
+type TokenVerificationResponse = {
+  valid?: boolean;
+  user?: TokenPayload;
+};
+
+const TOKEN_CACHE_TTL_MS = 30_000;
+const TOKEN_CACHE_MAX_ENTRIES = 256;
+const verifiedTokenCache = new Map<
+  string,
+  { userId: string; expiresAt: number }
+>();
+const tokenVerificationInFlight = new Map<string, Promise<string | null>>();
+
+export async function getAuthenticatedUserId(request: NextRequest) {
   const authHeader = request.headers.get("authorization") || "";
   const token = authHeader.startsWith("Bearer ")
     ? authHeader.slice("Bearer ".length).trim()
@@ -35,7 +48,9 @@ export function getAuthenticatedUserId(request: NextRequest) {
 }
 
 /** Registered-user identity must always come from a valid bearer token. */
-export function getVerifiedUserId(request: NextRequest): string | null {
+export async function getVerifiedUserId(
+  request: NextRequest,
+): Promise<string | null> {
   const authHeader = request.headers.get("authorization") || "";
   const token = authHeader.startsWith("Bearer ")
     ? authHeader.slice("Bearer ".length).trim()
@@ -43,35 +58,112 @@ export function getVerifiedUserId(request: NextRequest): string | null {
   return token ? verifyUserIdFromToken(token) : null;
 }
 
-function verifyUserIdFromToken(token: string): string | null {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    console.error("study.auth: JWT_SECRET is not configured");
-    return null;
-  }
+function getAuthApiBaseUrl(): string {
+  return String(
+    process.env.AUTH_API_BASE_URL ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      process.env.NEXT_PUBLIC_NGROX_URL ||
+      "",
+  ).replace(/\/$/, "");
+}
 
+function tokenCacheKey(token: string): string {
+  return createHash("sha256").update(token).digest("hex");
+}
+
+function readUserId(payload: TokenPayload | string | undefined): string | null {
+  if (!payload) return null;
+  if (typeof payload === "string") return payload;
+  const nestedUser = payload.user || {};
+  return (
+    payload.userId ||
+    payload.user_id ||
+    payload.uid ||
+    payload.id ||
+    payload.username ||
+    payload.name ||
+    payload.sub ||
+    payload.email ||
+    nestedUser.userId ||
+    nestedUser.user_id ||
+    nestedUser.id ||
+    nestedUser.username ||
+    nestedUser.email ||
+    null
+  );
+}
+
+function cacheVerifiedUser(cacheKey: string, userId: string): void {
+  if (verifiedTokenCache.size >= TOKEN_CACHE_MAX_ENTRIES) {
+    const oldestKey = verifiedTokenCache.keys().next().value as
+      | string
+      | undefined;
+    if (oldestKey) verifiedTokenCache.delete(oldestKey);
+  }
+  verifiedTokenCache.set(cacheKey, {
+    userId,
+    expiresAt: Date.now() + TOKEN_CACHE_TTL_MS,
+  });
+}
+
+/**
+ * Access tokens are issued by the Nest/Supabase authentication service, not by
+ * the Next.js admin JWT issuer. Validate them with the same authoritative
+ * backend used by login and refresh. The short bounded cache avoids adding an
+ * authentication round trip to every Study API call while keeping revocation
+ * propagation prompt.
+ */
+async function verifyUserIdFromToken(token: string): Promise<string | null> {
+  const cacheKey = tokenCacheKey(token);
+  const cached = verifiedTokenCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.userId;
+  if (cached) verifiedTokenCache.delete(cacheKey);
+
+  const existing = tokenVerificationInFlight.get(cacheKey);
+  if (existing) return existing;
+
+  const verification = (async () => {
+    const apiBase = getAuthApiBaseUrl();
+    if (!apiBase) {
+      console.error(
+        "study.auth: AUTH_API_BASE_URL or NEXT_PUBLIC_API_URL is not configured",
+      );
+      return null;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8_000);
+    try {
+      const response = await fetch(`${apiBase}/auth/verify-token`, {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+        signal: controller.signal,
+      });
+      if (!response.ok) return null;
+
+      const payload = (await response.json()) as TokenVerificationResponse;
+      if (!payload.valid) return null;
+      const userId = readUserId(payload.user);
+      if (!userId) return null;
+      cacheVerifiedUser(cacheKey, userId);
+      return userId;
+    } catch (error) {
+      console.error(
+        "study.auth: token verification service unavailable",
+        error instanceof Error ? error.message : String(error),
+      );
+      return null;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  })();
+
+  tokenVerificationInFlight.set(cacheKey, verification);
   try {
-    const decoded = jwt.verify(token, secret) as TokenPayload | string;
-    if (typeof decoded === "string") return decoded;
-    const nestedUser = decoded.user || {};
-    return (
-      decoded.userId ||
-      decoded.user_id ||
-      decoded.uid ||
-      decoded.id ||
-      decoded.username ||
-      decoded.name ||
-      decoded.sub ||
-      decoded.email ||
-      nestedUser.userId ||
-      nestedUser.user_id ||
-      nestedUser.id ||
-      nestedUser.username ||
-      nestedUser.email ||
-      null
-    );
-  } catch {
-    return null;
+    return await verification;
+  } finally {
+    tokenVerificationInFlight.delete(cacheKey);
   }
 }
 

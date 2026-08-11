@@ -26,6 +26,9 @@ jobs:
       - name: Build Next.js application
         run: npm run build
         env:
+          # Server-side Study API routes validate access tokens against the
+          # same backend auth authority that issues and refreshes them.
+          AUTH_API_BASE_URL: https://api.scholarlyhelp.com/v1
           NEXT_PUBLIC_API_URL: https://api.scholarlyhelp.com/v1
           NEXT_PUBLIC_COMPANY_PHONE_NUMBER: +1 646 480 6092
           NEXT_PUBLIC_SITE_URL: https://scholarlyhelp.com/
@@ -68,6 +71,7 @@ jobs:
           EC2_USER: ${{ secrets.EC2_USER }}
           EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
           APP_DIR: ${{ secrets.APP_DIR }}
+          AUTH_API_BASE_URL: https://api.scholarlyhelp.com/v1
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL_ID: ${{ secrets.GEMINI_MODEL_ID }}
           GOOGLE_CLIENT_TOOL_EMAIL: ${{ secrets.GOOGLE_CLIENT_TOOL_EMAIL }}
@@ -84,7 +88,7 @@ jobs:
           scp -i ~/.ssh/deploy_key deploy.tar.gz $EC2_USER@$EC2_HOST:/tmp/
 
           # Execute deployment commands on EC2
-          ssh -i ~/.ssh/deploy_key $EC2_USER@$EC2_HOST "APP_DIR='$APP_DIR' GEMINI_API_KEY='$GEMINI_API_KEY' GEMINI_MODEL_ID='$GEMINI_MODEL_ID' GOOGLE_CLIENT_TOOL_EMAIL='$GOOGLE_CLIENT_TOOL_EMAIL' GOOGLE_PRIVATE_TOOL_KEY='$GOOGLE_PRIVATE_TOOL_KEY' GOOGLE_SHEET_TOOL_ID='$GOOGLE_SHEET_TOOL_ID' bash -s" << 'EOF'
+          ssh -i ~/.ssh/deploy_key $EC2_USER@$EC2_HOST "APP_DIR='$APP_DIR' AUTH_API_BASE_URL='$AUTH_API_BASE_URL' GEMINI_API_KEY='$GEMINI_API_KEY' GEMINI_MODEL_ID='$GEMINI_MODEL_ID' GOOGLE_CLIENT_TOOL_EMAIL='$GOOGLE_CLIENT_TOOL_EMAIL' GOOGLE_PRIVATE_TOOL_KEY='$GOOGLE_PRIVATE_TOOL_KEY' GOOGLE_SHEET_TOOL_ID='$GOOGLE_SHEET_TOOL_ID' bash -s" << 'EOF'
             # Ensure PATH includes where pm2 is installed
             export PATH=$PATH:/home/ubuntu/.nvm/versions/node/v24.12.0/bin
             
@@ -109,12 +113,14 @@ jobs:
             # server-side API calls. These are read at runtime (not NEXT_PUBLIC),
             # so they must live in the .env that `next start` loads on the server.
             touch .env
+            sed -i '/^AUTH_API_BASE_URL=/d' .env
             sed -i '/^GEMINI_API_KEY=/d' .env
             sed -i '/^GEMINI_MODEL_ID=/d' .env
             sed -i '/^GOOGLE_CLIENT_TOOL_EMAIL=/d' .env
             sed -i '/^GOOGLE_PRIVATE_TOOL_KEY=/d' .env
             sed -i '/^GOOGLE_SHEET_TOOL_ID=/d' .env
             {
+              echo "AUTH_API_BASE_URL=$AUTH_API_BASE_URL"
               echo "GEMINI_API_KEY=$GEMINI_API_KEY"
               echo "GEMINI_MODEL_ID=$GEMINI_MODEL_ID"
               echo "GOOGLE_CLIENT_TOOL_EMAIL=$GOOGLE_CLIENT_TOOL_EMAIL"
@@ -127,6 +133,7 @@ jobs:
             # runtime vars into this shell first — a fresh `pm2 start` (the app
             # was pm2-deleted above) captures the environment of the shell that
             # starts it, injecting these into the running process.
+            export AUTH_API_BASE_URL="$AUTH_API_BASE_URL"
             export GEMINI_API_KEY="$GEMINI_API_KEY"
             export GEMINI_MODEL_ID="$GEMINI_MODEL_ID"
             export GOOGLE_CLIENT_TOOL_EMAIL="$GOOGLE_CLIENT_TOOL_EMAIL"
