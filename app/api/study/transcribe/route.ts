@@ -42,7 +42,7 @@ function resolveMimeType(file: File): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const userId = getVerifiedUserId(request);
+    const userId = await getVerifiedUserId(request);
     if (!userId) {
       return NextResponse.json(
         { success: false, error: "Authentication is required for transcription." },

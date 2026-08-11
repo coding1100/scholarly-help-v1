@@ -31,7 +31,7 @@ export async function POST(
   { params }: { params: { id: string; type: string } },
 ) {
   try {
-    const userId = getAuthenticatedUserId(request);
+    const userId = await getAuthenticatedUserId(request);
     if (!userId) {
       return fail("Unauthorized", 401);
     }

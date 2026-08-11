@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       return ok({ migrated: 0 });
     }
 
-    const realUserId = getVerifiedUserId(request);
+    const realUserId = await getVerifiedUserId(request);
     if (!realUserId) {
       return fail("Unauthorized", 401);
     }

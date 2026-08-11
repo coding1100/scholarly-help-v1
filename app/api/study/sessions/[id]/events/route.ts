@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
-  const userId = getAuthenticatedUserId(request);
+  const userId = await getAuthenticatedUserId(request);
   const session = userId ? await getSession(params.id) : null;
   if (!session || session.userId !== userId) return new Response("Unauthorized", { status: 401 });
   const encoder = new TextEncoder();
