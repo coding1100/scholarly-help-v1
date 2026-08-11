@@ -176,7 +176,6 @@ export default function EssayGeneratorTool() {
       }, { headers: { ...headers, "Idempotency-Key": `essay-${crypto.randomUUID()}` } });
       const job = unwrap<{ job_id: string }>(queued.data); setActiveJob(job.job_id); setProgress(24);
       const essay = await waitForJob<EssayResult>({
-        eventsUrl: `${API}/tools/essay-generator/jobs/${job.job_id}/events`,
         pollUrl: `${API}/tools/essay-generator/jobs/${job.job_id}`,
         headers, signal: controller.signal, timeoutMs: 360_000,
         parse: (payload) => unwrap(payload), onProgress: (state) => setProgress(Math.max(8, state.progress || 0)),
