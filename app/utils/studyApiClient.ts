@@ -127,7 +127,7 @@ function getUserId() {
 }
 
 async function callStudyApi<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetchWithAuthRetry(`${STUDY_API_BASE}${path}`, {
+  const res = await fetchWithAuthRetry(studyApiUrl(path), {
     ...init,
     headers: {
       "Content-Type": "application/json",
@@ -141,6 +141,13 @@ async function callStudyApi<T>(path: string, init?: RequestInit): Promise<T> {
     throw new Error(payload.error || `Study API failed for ${path}`);
   }
   return payload.data;
+}
+
+function studyApiUrl(path: string) {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${STUDY_API_BASE}${
+    normalizedPath.endsWith("/") ? normalizedPath : `${normalizedPath}/`
+  }`;
 }
 
 export function getActiveStudySessionId() {
@@ -231,7 +238,7 @@ export async function addStudySourceFile(
   form.set("name", input.name);
   form.set("file", input.file);
 
-  const res = await fetchWithAuthRetry(`${STUDY_API_BASE}/sessions/${sessionId}/sources`, {
+  const res = await fetchWithAuthRetry(studyApiUrl(`/sessions/${sessionId}/sources`), {
     method: "POST",
     headers: {
       "x-user-id": getUserId(),
@@ -257,7 +264,7 @@ export async function streamStudySourceStatuses(
   onStatuses: (statuses: Array<{ id: string; name: string; indexStatus?: StudySourceIndexStatus }>) => void,
   signal: AbortSignal,
 ) {
-  const response = await fetchWithAuthRetry(`${STUDY_API_BASE}/sessions/${sessionId}/events`, {
+  const response = await fetchWithAuthRetry(studyApiUrl(`/sessions/${sessionId}/events`), {
     headers: { "x-user-id": getUserId(), Accept: "text/event-stream" }, signal, cache: "no-store",
   });
   if (!response.ok || !response.body) throw new Error("Could not open source status stream.");
@@ -365,7 +372,7 @@ export async function streamStudyTutor(
     onError?: (message: string) => void;
   },
 ) {
-  const res = await fetchWithAuthRetry(`${STUDY_API_BASE}/sessions/${sessionId}/tutor`, {
+  const res = await fetchWithAuthRetry(studyApiUrl(`/sessions/${sessionId}/tutor`), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
