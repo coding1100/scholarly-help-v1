@@ -124,7 +124,6 @@ export default function EssayGraderTool() {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [activeJob, setActiveJob] = useState<string | null>(null);
   const [purpose, setPurpose] = useState("personal_statement");
   const [level, setLevel] = useState("high_school");
   const [genre, setGenre] = useState("narrative");
@@ -141,6 +140,7 @@ export default function EssayGraderTool() {
   const [criteria, setCriteria] = useState<CustomCriterion[]>([]);
   const [draftCriterion, setDraftCriterion] = useState<CustomCriterion>({ title: "", instruction: "", weight: 25 });
   const abortRef = useRef<AbortController | null>(null);
+  const activeJobRef = useRef<string | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const inspectorRef = useRef<HTMLDivElement | null>(null);
   const { gateOpen, closeGate, guardAiClick } = useGuestGate();
@@ -174,10 +174,11 @@ export default function EssayGraderTool() {
 
   useEffect(() => () => {
     abortRef.current?.abort();
-    if (activeJob) {
-      void requestHeaders().then((headers) => cancelJob(`${API}/tools/essay-grader/jobs/${activeJob}`, headers)).catch(() => undefined);
+    const jobId = activeJobRef.current;
+    if (jobId) {
+      void requestHeaders().then((headers) => cancelJob(`${API}/tools/essay-grader/jobs/${jobId}`, headers)).catch(() => undefined);
     }
-  }, [activeJob, requestHeaders]);
+  }, [requestHeaders]);
 
   async function loadSession(sessionId: string) {
     try {
@@ -291,7 +292,7 @@ export default function EssayGraderTool() {
         headers: { ...headers, "Idempotency-Key": `grade-${crypto.randomUUID()}` },
       });
       const job = unwrap<{ job_id: string }>(queued.data);
-      setActiveJob(job.job_id);
+      activeJobRef.current = job.job_id;
 
       const grade = await waitForJob<GradeResult>({
         eventsUrl: `${API}/tools/essay-grader/jobs/${job.job_id}/events`,
@@ -311,7 +312,7 @@ export default function EssayGraderTool() {
       if (error?.name !== "AbortError") toast.error(errorMessage(error));
     } finally {
       setLoading(false);
-      setActiveJob(null);
+      activeJobRef.current = null;
       abortRef.current = null;
     }
   }
