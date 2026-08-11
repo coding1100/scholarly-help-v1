@@ -122,7 +122,7 @@ export const howItWorksContent = {
 export const watchVideoContent = {
   eyebrow: "WATCH VIDEO",
   title: "See how the ScholarlyHelp Grammar Checker works",
-  youtubeEmbedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+  youtubeEmbedUrl: "https://www.youtube.com/embed/jfGRzQdKMT0",
 };
 
 export const whyItWorksContent = {
