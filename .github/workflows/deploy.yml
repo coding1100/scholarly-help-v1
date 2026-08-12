@@ -81,6 +81,10 @@ jobs:
           GOOGLE_CLIENT_TOOL_EMAIL: ${{ secrets.GOOGLE_CLIENT_TOOL_EMAIL }}
           GOOGLE_PRIVATE_TOOL_KEY: ${{ secrets.GOOGLE_PRIVATE_TOOL_KEY }}
           GOOGLE_SHEET_TOOL_ID: ${{ secrets.GOOGLE_SHEET_TOOL_ID }}
+          REPORT_ADMIN_USERNAME: admin@scholarly.com
+          REPORT_ADMIN_PASSWORD: admin12345
+          JWT_SECRET: local-report-admin-session-secret-change-before-production-2026
+          TOOL_USAGE_DATABASE_NAME: scholarlyhelp_prod
         run: |
           # Setup SSH
           mkdir -p ~/.ssh
@@ -92,7 +96,7 @@ jobs:
           scp -i ~/.ssh/deploy_key deploy.tar.gz $EC2_USER@$EC2_HOST:/tmp/
 
           # Execute deployment commands on EC2
-          ssh -i ~/.ssh/deploy_key $EC2_USER@$EC2_HOST "APP_DIR='$APP_DIR' AUTH_API_BASE_URL='$AUTH_API_BASE_URL' GEMINI_API_KEY='$GEMINI_API_KEY' GEMINI_MODEL_ID='$GEMINI_MODEL_ID' GOOGLE_CLIENT_TOOL_EMAIL='$GOOGLE_CLIENT_TOOL_EMAIL' GOOGLE_PRIVATE_TOOL_KEY='$GOOGLE_PRIVATE_TOOL_KEY' GOOGLE_SHEET_TOOL_ID='$GOOGLE_SHEET_TOOL_ID' bash -s" << 'EOF'
+          ssh -i ~/.ssh/deploy_key $EC2_USER@$EC2_HOST "APP_DIR='$APP_DIR' AUTH_API_BASE_URL='$AUTH_API_BASE_URL' GEMINI_API_KEY='$GEMINI_API_KEY' GEMINI_MODEL_ID='$GEMINI_MODEL_ID' GOOGLE_CLIENT_TOOL_EMAIL='$GOOGLE_CLIENT_TOOL_EMAIL' GOOGLE_PRIVATE_TOOL_KEY='$GOOGLE_PRIVATE_TOOL_KEY' GOOGLE_SHEET_TOOL_ID='$GOOGLE_SHEET_TOOL_ID' REPORT_ADMIN_USERNAME='$REPORT_ADMIN_USERNAME' REPORT_ADMIN_PASSWORD='$REPORT_ADMIN_PASSWORD' JWT_SECRET='$JWT_SECRET' TOOL_USAGE_DATABASE_NAME='$TOOL_USAGE_DATABASE_NAME' bash -s" << 'EOF'
             # Ensure PATH includes where pm2 is installed
             export PATH=$PATH:/home/ubuntu/.nvm/versions/node/v24.12.0/bin
             
@@ -113,7 +117,7 @@ jobs:
               cp ../.env .env
             fi
 
-            # Ensure Gemini + Google Sheets (TOOL) runtime keys exist for
+            # Ensure Gemini + Google Sheets (TOOL) + Admin Auth runtime keys exist for
             # server-side API calls. These are read at runtime (not NEXT_PUBLIC),
             # so they must live in the .env that `next start` loads on the server.
             touch .env
@@ -123,6 +127,10 @@ jobs:
             sed -i '/^GOOGLE_CLIENT_TOOL_EMAIL=/d' .env
             sed -i '/^GOOGLE_PRIVATE_TOOL_KEY=/d' .env
             sed -i '/^GOOGLE_SHEET_TOOL_ID=/d' .env
+            sed -i '/^REPORT_ADMIN_USERNAME=/d' .env
+            sed -i '/^REPORT_ADMIN_PASSWORD=/d' .env
+            sed -i '/^JWT_SECRET=/d' .env
+            sed -i '/^TOOL_USAGE_DATABASE_NAME=/d' .env
             {
               echo "AUTH_API_BASE_URL=$AUTH_API_BASE_URL"
               echo "GEMINI_API_KEY=$GEMINI_API_KEY"
@@ -130,6 +138,10 @@ jobs:
               echo "GOOGLE_CLIENT_TOOL_EMAIL=$GOOGLE_CLIENT_TOOL_EMAIL"
               echo "GOOGLE_PRIVATE_TOOL_KEY=$GOOGLE_PRIVATE_TOOL_KEY"
               echo "GOOGLE_SHEET_TOOL_ID=$GOOGLE_SHEET_TOOL_ID"
+              echo "REPORT_ADMIN_USERNAME=$REPORT_ADMIN_USERNAME"
+              echo "REPORT_ADMIN_PASSWORD=$REPORT_ADMIN_PASSWORD"
+              echo "JWT_SECRET=$JWT_SECRET"
+              echo "TOOL_USAGE_DATABASE_NAME=$TOOL_USAGE_DATABASE_NAME"
             } >> .env
 
             # Start the application with PM2.
@@ -143,6 +155,10 @@ jobs:
             export GOOGLE_CLIENT_TOOL_EMAIL="$GOOGLE_CLIENT_TOOL_EMAIL"
             export GOOGLE_PRIVATE_TOOL_KEY="$GOOGLE_PRIVATE_TOOL_KEY"
             export GOOGLE_SHEET_TOOL_ID="$GOOGLE_SHEET_TOOL_ID"
+            export REPORT_ADMIN_USERNAME="$REPORT_ADMIN_USERNAME"
+            export REPORT_ADMIN_PASSWORD="$REPORT_ADMIN_PASSWORD"
+            export JWT_SECRET="$JWT_SECRET"
+            export TOOL_USAGE_DATABASE_NAME="$TOOL_USAGE_DATABASE_NAME"
             pm2 start npm --name "scholarly-help" -- start
             pm2 save
 
