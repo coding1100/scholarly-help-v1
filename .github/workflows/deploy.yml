@@ -36,6 +36,8 @@ jobs:
           NEXT_PUBLIC_NGROX_URL: https://api.scholarlyhelp.com/v1
           REPORT_ADMIN_USERNAME: admin@scholarly.com
           REPORT_ADMIN_PASSWORD: admin12345
+          JWT_SECRET: local-report-admin-session-secret-change-before-production-2026
+          TOOL_USAGE_DATABASE_NAME: scholarlyhelp_prod
           # Agentic platform (powers Tutor / Micro Learning / Exam Prep agents).
           # NEXT_PUBLIC_* are inlined at build time, so they must be present here.
           NEXT_PUBLIC_BASE_URL: ${{ secrets.NEXT_PUBLIC_BASE_URL }}
