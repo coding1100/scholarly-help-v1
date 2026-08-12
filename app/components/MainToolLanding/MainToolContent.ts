@@ -21,7 +21,7 @@ const defaultPickTabTools: Record<string, PickToolItem[]> = {
       description:
         "Rewrite any text instantly while preserving its meaning, improving clarity and originality without losing your argument.",
       buttonText: "Paraphrase text",
-      link: "/tools/paraphraser-tool",
+      link: "https://scholarlyhelp.com/tools/ai-paraphraser/",
     },
     {
       iconKey: "tmIcon3",
@@ -48,7 +48,7 @@ const defaultPickTabTools: Record<string, PickToolItem[]> = {
       description:
         "Make AI-generated text sound more natural and human while keeping your original meaning intact.",
       buttonText: "Humanize text",
-      link: "/tools/humanizer-tool",
+      link: "https://scholarlyhelp.com/tools/ai-humanizer/",
     },
     {
       iconKey: "tmIcon2",
@@ -57,7 +57,7 @@ const defaultPickTabTools: Record<string, PickToolItem[]> = {
       description:
         "Check whether text reads as AI-generated, human-written, or mixed — with sentence-level highlights and clear explanations.",
       buttonText: "Check for AI",
-      link: "/tools/ai-detector-tool",
+      link: "https://scholarlyhelp.com/tools/ai-detector/",
     },
     {
       iconKey: "tmIcon3",
@@ -103,7 +103,7 @@ const defaultPickTabTools: Record<string, PickToolItem[]> = {
       description:
         "Create accurate citations instantly in APA, MLA, Chicago, Harvard, and more. One click, no manual formatting.",
       buttonText: "Generate citation",
-      link: "/tools/citation-tool",
+      link: "https://scholarlyhelp.com/tools/citation-generator/",
     },
   ],
   "math-science": [
@@ -114,7 +114,7 @@ const defaultPickTabTools: Record<string, PickToolItem[]> = {
       description:
         "Instant triangle problem solutions with step-by-step working shown. Understand the method, not just the answer.",
       buttonText: "Solve equation",
-      link: "/tools/math-solver",
+      link: "https://scholarlyhelp.com/tools/ai-math-solver/",
     },
   ],
   "study-tools": [
@@ -125,7 +125,7 @@ const defaultPickTabTools: Record<string, PickToolItem[]> = {
       description:
         "Condense long papers, PDFs, or articles into clear, digestible key points in seconds. Perfect for research and study notes.",
       buttonText: "Summarize now",
-      link: "/tools/summarizer-tool",
+      link: "https://scholarlyhelp.com/tools/ai-summarizer/",
     },
     {
       iconKey: "tmIcon2",
