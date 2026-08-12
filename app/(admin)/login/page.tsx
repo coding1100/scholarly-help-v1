@@ -27,7 +27,7 @@ export default function AdminLogin() {
       const data = await res.json();
 
       if (data.success) {
-        router.push('/admin');
+        router.push(typeof data.redirectTo === 'string' ? data.redirectTo : '/admin');
       } else {
         setError(data.error || 'Invalid credentials');
       }

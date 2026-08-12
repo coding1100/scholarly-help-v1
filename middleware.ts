@@ -14,11 +14,28 @@ function decodeBase64Url(value: string): ArrayBuffer {
   ).buffer as ArrayBuffer;
 }
 
-async function verifyAdminSession(token: string | undefined): Promise<boolean> {
+type AdminSessionRole = "admin" | "report_admin";
+
+const REPORT_ADMIN_ALLOWED_PATHS = [
+  "/admin/tool-usage",
+  "/api/admin/tool-usage",
+  "/api/admin/session",
+  "/api/admin/logout",
+] as const;
+
+function isReportAdminAllowedPath(pathname: string): boolean {
+  return REPORT_ADMIN_ALLOWED_PATHS.some(
+    (path) => pathname === path || pathname.startsWith(`${path}/`),
+  );
+}
+
+async function getAdminSessionRole(
+  token: string | undefined,
+): Promise<AdminSessionRole | null> {
   const secret = process.env.JWT_SECRET;
-  if (!token || !secret) return false;
+  if (!token || !secret) return null;
   const parts = token.split(".");
-  if (parts.length !== 3) return false;
+  if (parts.length !== 3) return null;
   try {
     const key = await crypto.subtle.importKey(
       "raw",
@@ -33,16 +50,20 @@ async function verifyAdminSession(token: string | undefined): Promise<boolean> {
       decodeBase64Url(parts[2]),
       new TextEncoder().encode(`${parts[0]}.${parts[1]}`),
     );
-    if (!validSignature) return false;
+    if (!validSignature) return null;
     const payload = JSON.parse(new TextDecoder().decode(decodeBase64Url(parts[1])));
-    return (
-      payload?.role === "admin" &&
+    const validRole = payload?.role === "admin" || payload?.role === "report_admin";
+    if (
+      validRole &&
       payload?.iss === "scholarlyhelp-admin" &&
       payload?.aud === "scholarlyhelp-admin-panel" &&
       Number(payload?.exp) * 1000 > Date.now()
-    );
+    ) {
+      return payload.role;
+    }
+    return null;
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -65,16 +86,26 @@ function maybeRewriteDynamicLanding(
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-  const isAdminLogin = pathname === "/admin/login" || pathname === "/api/admin/login";
+  const isAdminLogin =
+    pathname === "/admin/login" ||
+    pathname === "/admin/login/" ||
+    pathname === "/api/admin/login" ||
+    pathname === "/api/admin/login/";
   const isAdminPath = pathname.startsWith("/admin") || pathname.startsWith("/api/admin/");
   if (isAdminPath && !isAdminLogin) {
-    const valid = await verifyAdminSession(request.cookies.get("sh_admin_session")?.value);
-    if (!valid) {
+    const role = await getAdminSessionRole(request.cookies.get("sh_admin_session")?.value);
+    if (!role) {
       if (pathname.startsWith("/api/")) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
       const loginUrl = new URL("/admin/login", request.url);
       return NextResponse.redirect(loginUrl);
+    }
+    if (role === "report_admin" && !isReportAdminAllowedPath(pathname)) {
+      if (pathname.startsWith("/api/")) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+      return NextResponse.redirect(new URL("/admin/tool-usage", request.url));
     }
   }
   // All AI tools are now usable by guests. Guest usage is bounded per-visitor by

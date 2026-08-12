@@ -52,6 +52,7 @@ type Props = {
   setPagesOpen: (open: boolean) => void;
   duplicateNavMain: { name: string; href: string }[];
   duplicateNavPages: { name: string; href: string }[];
+  role?: "admin" | "report_admin";
   onNavigate?: () => void;
 };
 
@@ -61,8 +62,27 @@ export default function AdminSidebarNav({
   setPagesOpen,
   duplicateNavMain,
   duplicateNavPages,
+  role = "admin",
   onNavigate,
 }: Props) {
+  if (role === "report_admin") {
+    const isActive = isAdminNavLinkActive(pathname, "/admin/tool-usage");
+    const Icon = getMainNavIcon("/admin/tool-usage");
+    return (
+      <nav className="admin-sidebar-scroll flex-1 space-y-1 overflow-x-hidden overflow-y-auto px-3 py-5 min-h-0">
+        <p className="admin-nav-section">Reports</p>
+        <Link
+          href="/admin/tool-usage"
+          className={adminNavLinkClass(isActive)}
+          onClick={onNavigate}
+        >
+          <Icon />
+          <span>Tool Usage</span>
+        </Link>
+      </nav>
+    );
+  }
+
   const pagesGroupActive =
     pagesNavigation.some((item) => isAdminNavLinkActive(pathname, item.href)) ||
     duplicateNavPages.some((item) => isAdminNavLinkActive(pathname, item.href));

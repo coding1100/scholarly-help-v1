@@ -34,6 +34,8 @@ jobs:
           NEXT_PUBLIC_SITE_URL: https://scholarlyhelp.com/
           NEXT_PUBLIC_GOOGLE_CLIENT_ID: 772400319491-nvr9lgmaphm8cs8udslad1opjct0mam5.apps.googleusercontent.com
           NEXT_PUBLIC_NGROX_URL: https://api.scholarlyhelp.com/v1
+          REPORT_ADMIN_USERNAME: admin@scholarly.com
+          REPORT_ADMIN_PASSWORD: admin12345
           # Agentic platform (powers Tutor / Micro Learning / Exam Prep agents).
           # NEXT_PUBLIC_* are inlined at build time, so they must be present here.
           NEXT_PUBLIC_BASE_URL: ${{ secrets.NEXT_PUBLIC_BASE_URL }}

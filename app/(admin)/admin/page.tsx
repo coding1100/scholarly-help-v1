@@ -54,7 +54,7 @@ const cards = [
   {
     title: "Analytics",
     subtitle: "View Stats",
-    href: null,
+    href: "/admin/tool-usage",
     icon: (
       <path
         strokeLinecap="round"
@@ -65,8 +65,7 @@ const cards = [
     ),
     iconBg: "bg-[#eef0f8]",
     iconColor: "text-[#727780]",
-    cta: "Coming soon",
-    disabled: true,
+    cta: "View usage",
   },
 ];
 

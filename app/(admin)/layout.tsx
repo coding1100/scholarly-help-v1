@@ -30,6 +30,7 @@ function AdminLayoutShell({
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [adminRole, setAdminRole] = useState<'admin' | 'report_admin'>('admin');
   const [pagesOpen, setPagesOpen] = useState(false);
   const [duplicateNavMain, setDuplicateNavMain] = useState<{ name: string; href: string }[]>([]);
   const [duplicateNavPages, setDuplicateNavPages] = useState<{ name: string; href: string }[]>([]);
@@ -70,10 +71,13 @@ function AdminLayoutShell({
     }
 
     let active = true;
-    void fetch('/api/admin/session', { cache: 'no-store' }).then((response) => {
+    void fetch('/api/admin/session', { cache: 'no-store' }).then(async (response) => {
       if (!active) return;
-      if (response.ok) setIsAuthenticated(true);
-      else router.push('/admin/login');
+      if (response.ok) {
+        const data = await response.json().catch(() => ({}));
+        setAdminRole(data?.role === 'report_admin' ? 'report_admin' : 'admin');
+        setIsAuthenticated(true);
+      } else router.push('/admin/login');
     }).catch(() => {
       if (active) router.push('/admin/login');
     });
@@ -136,6 +140,7 @@ function AdminLayoutShell({
     setPagesOpen,
     duplicateNavMain,
     duplicateNavPages,
+    role: adminRole,
   };
 
   return (

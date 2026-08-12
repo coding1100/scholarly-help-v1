@@ -55,24 +55,33 @@ if (uri) {
     clientPromise = Promise.reject(new Error('DATABASE_URL is not set'));
 }
 
-// Get database instance
-async function getDb(): Promise<Db | null> {
+async function getConnectedClient(): Promise<MongoClient | null> {
     if (!uri) return null;
     try {
         // Connect only when DB is actually requested.
         if (!globalWithMongo._mongoClientPromise) {
             globalWithMongo._mongoClientPromise = connectWithRetry();
         }
-        const connectedClient = await globalWithMongo._mongoClientPromise;
-        return connectedClient.db('scholarly_help');
+        return await globalWithMongo._mongoClientPromise;
     } catch (error) {
         console.error('Failed to get MongoDB connection:', error);
         return null;
     }
 }
 
+// Get database instance
+async function getDb(): Promise<Db | null> {
+    const connectedClient = await getConnectedClient();
+    return connectedClient?.db('scholarly_help') ?? null;
+}
+
 export async function getMongoDb(): Promise<Db | null> {
     return getDb();
+}
+
+export async function getMongoDatabase(databaseName: string): Promise<Db | null> {
+    const connectedClient = await getConnectedClient();
+    return connectedClient?.db(databaseName) ?? null;
 }
 
 // Cached home data fetcher - dramatically improves TTFB
