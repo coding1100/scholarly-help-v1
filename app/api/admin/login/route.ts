@@ -15,25 +15,43 @@ export async function POST(request: NextRequest) {
     const { username, password } = await request.json();
     const configuredUsername = process.env.ADMIN_USERNAME;
     const configuredPassword = process.env.ADMIN_PASSWORD;
+    const reportUsername = process.env.REPORT_ADMIN_USERNAME;
+    const reportPassword = process.env.REPORT_ADMIN_PASSWORD;
     const jwtSecret = process.env.JWT_SECRET;
-    if (!configuredUsername || !configuredPassword || !jwtSecret) {
+    const adminConfigured = Boolean(configuredUsername && configuredPassword);
+    const reportConfigured = Boolean(reportUsername && reportPassword);
+    if ((!adminConfigured && !reportConfigured) || !jwtSecret) {
       return NextResponse.json({ error: "Admin authentication is not configured" }, { status: 503 });
     }
-    if (
-      typeof username !== "string" ||
-      typeof password !== "string" ||
-      !safeEqual(username, configuredUsername) ||
-      !safeEqual(password, configuredPassword)
-    ) {
+
+    if (typeof username !== "string" || typeof password !== "string") {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
 
-    const token = jwt.sign({ username: configuredUsername, role: "admin" }, jwtSecret, {
+    const isAdmin =
+      adminConfigured &&
+      safeEqual(username, configuredUsername as string) &&
+      safeEqual(password, configuredPassword as string);
+    const isReportAdmin =
+      reportConfigured &&
+      safeEqual(username, reportUsername as string) &&
+      safeEqual(password, reportPassword as string);
+
+    if (!isAdmin && !isReportAdmin) {
+      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+    }
+
+    const role = isAdmin ? "admin" : "report_admin";
+    const token = jwt.sign({ username, role }, jwtSecret, {
       expiresIn: "1h",
       issuer: "scholarlyhelp-admin",
       audience: "scholarlyhelp-admin-panel",
     });
-    const response = NextResponse.json({ success: true });
+    const response = NextResponse.json({
+      success: true,
+      role,
+      redirectTo: role === "report_admin" ? "/admin/tool-usage" : "/admin",
+    });
     response.cookies.set("sh_admin_session", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
