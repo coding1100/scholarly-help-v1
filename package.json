@@ -33,6 +33,7 @@
     "clsx": "^2.1.1",
     "dayjs": "^1.11.10",
     "docx": "^9.6.1",
+    "exceljs": "^4.4.0",
     "google-libphonenumber": "^3.2.34",
     "googleapis": "^171.4.0",
     "html2canvas": "^1.4.1",
