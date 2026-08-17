@@ -3,7 +3,6 @@ import MainLayout from "@/app/MainLayout";
 import HeroSection from "@/app/components/LandingPage/HeroSection";
 import HeroHeading from "@/app/components/LandingPage/HeroHeading";
 import CardCarousel from "@/app/components/LandingPage/CardCarousel";
-import Description from "@/app/components/LandingPage/Description";
 import CustomerReviews from "@/app/components/LandingPage/CustomerReviews";
 import Success from "@/app/components/LandingPage/Success";
 import { TakeMyClassDataProvider } from "../TakeMyClassDataProvider";
@@ -74,14 +73,13 @@ const TakeMyClass2 = async () => {
             ) : undefined
           }
         />
+        {/* 10,000+ A-Grades Delivered On banner & platform logos */}
+        <DeliveredOn noNegativeMargin headingOutside />
         <DelayedBelowFold>
-          {/* 10,000+ A-Grades Delivered On banner & platform logos */}
-          <DeliveredOn />
           <CardCarousel />
-          {/* "What a Smooth Online Class Experience Looks Like" (Description) placed above "How Students Rate Us!" (CustomerReviews) */}
-          <Description />
-          <CustomerReviews />
           <Success />
+          {/* "How Students Rate Us!" (CustomerReviews) placed at the bottom */}
+          <CustomerReviews />
         </DelayedBelowFold>
       </MainLayout>
     </TakeMyClassDataProvider>
