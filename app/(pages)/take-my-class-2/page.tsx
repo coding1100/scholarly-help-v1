@@ -21,7 +21,8 @@ const fetchTakeMyClass2Data = cache(async () => {
     const query = {
       $or: [{ id: "take-my-class-2" }, { id: "take-my-class" }],
     };
-    return await getPageData("pages", query, { readPreference: "primary" });
+    const data = await getPageData("pages", query, { readPreference: "primary" });
+    return data ? JSON.parse(JSON.stringify(data)) : null;
   } catch (error) {
     console.error("Error fetching take-my-class-2 data:", error);
     return null;
