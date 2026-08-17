@@ -67,7 +67,11 @@ const fallbackCardData = [
   // },
 ];
 
-export default function CardCarousel() {
+interface CardCarouselProps {
+  hideHeader?: boolean;
+}
+
+export default function CardCarousel({ hideHeader }: CardCarouselProps = {}) {
   const data = usePageData();
   const cardCarousel = data?.cardCarousel;
   const sliderRef = useRef<Slider | null>(null);
@@ -172,16 +176,18 @@ export default function CardCarousel() {
     <section className="w-full pt-[15px] px-4 text-[#171717] bg-white">
       <div ref={carouselRootRef} className={styles.carouselRoot}>
         {/* Header */}
-        <div className="text-center mb-12 mx-auto max-w-[740px]">
-          <h2 className="text-[42px] max-[768px]:text-[28px] text-[#000] font-bold   mb-3">
-            {cardCarousel?.mainHeading ||
-              "The Academic Pressure You're Facing Every Day"}
-          </h2>
-          <p className="sm:text-lg text-sm text-gray-600 max-w-3xl mx-auto">
-            {cardCarousel?.description ||
-              "We understand the weight on your shoulders — and we're here to lighten the load."}
-          </p>
-        </div>
+        {!hideHeader && (
+          <div className="text-center mb-12 mx-auto max-w-[740px]">
+            <h2 className="text-[42px] max-[768px]:text-[28px] text-[#000] font-bold   mb-3">
+              {cardCarousel?.mainHeading ||
+                "The Academic Pressure You're Facing Every Day"}
+            </h2>
+            <p className="sm:text-lg text-sm text-gray-600 max-w-3xl mx-auto">
+              {cardCarousel?.description ||
+                "We understand the weight on your shoulders — and we're here to lighten the load."}
+            </p>
+          </div>
+        )}
 
         <Slider ref={sliderRef} {...settings}>
           {cards.map((card: CardType, index: number) => {

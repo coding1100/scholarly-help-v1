@@ -42,14 +42,20 @@ const WhatsApp = () => {
     }
   };
 
-  if (hideWhatsapp || currentPage === "/order/") {
+  if (
+    hideWhatsapp ||
+    currentPage === "/order/" ||
+    currentPage?.includes("take-my-class-2")
+  ) {
     return null;
   }
 
   return (
     <>
       {/* Whatsapp module */}
-      {currentPage !== "/take-my-class-3/" && currentPage !== "/take-my-class/" && (
+      {currentPage !== "/take-my-class-3/" &&
+        currentPage !== "/take-my-class/" &&
+        !currentPage?.includes("take-my-class-2") && (
  
         <div>
           <button

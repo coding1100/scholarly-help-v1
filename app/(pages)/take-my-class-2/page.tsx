@@ -76,7 +76,7 @@ const TakeMyClass2 = async () => {
         {/* 10,000+ A-Grades Delivered On banner & platform logos */}
         <DeliveredOn noNegativeMargin headingOutside />
         <DelayedBelowFold>
-          <CardCarousel />
+          <CardCarousel hideHeader />
           <Success />
           {/* "How Students Rate Us!" (CustomerReviews) placed at the bottom */}
           <CustomerReviews />
