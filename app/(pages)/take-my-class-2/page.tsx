@@ -2,7 +2,6 @@ import { cache } from "react";
 import MainLayout from "@/app/MainLayout";
 import HeroSection from "@/app/components/LandingPage/HeroSection";
 import HeroHeading from "@/app/components/LandingPage/HeroHeading";
-import CardCarousel from "@/app/components/LandingPage/CardCarousel";
 import CustomerReviews from "@/app/components/LandingPage/CustomerReviews";
 import Success from "@/app/components/LandingPage/Success";
 import { TakeMyClassDataProvider } from "../TakeMyClassDataProvider";
@@ -77,7 +76,6 @@ const TakeMyClass2 = async () => {
         {/* 10,000+ A-Grades Delivered On banner & platform logos */}
         <DeliveredOn noNegativeMargin headingOutside />
         <DelayedBelowFold>
-          <CardCarousel hideHeader />
           <Success />
           {/* "How Students Rate Us!" (CustomerReviews) placed at the bottom */}
           <CustomerReviews />
