@@ -6,16 +6,37 @@ import Cengage from "@/app/assets/Images/cengage.png";
 import Moodle from "@/app/assets/Images/moodle.png";
 import Image from "next/image";
 
-export default function DeliveredOn() {
+interface DeliveredOnProps {
+  noNegativeMargin?: boolean;
+  headingOutside?: boolean;
+  className?: string;
+}
+
+export default function DeliveredOn({
+  noNegativeMargin,
+  headingOutside,
+  className = "",
+}: DeliveredOnProps = {}) {
   return (
-    <div className="xl:flex justify-center py-8 mt-[-96px]">
+    <div
+      className={`xl:flex flex-col items-center py-8 ${
+        noNegativeMargin ? "mt-0" : "mt-[-96px]"
+      } ${className}`}
+    >
+      {headingOutside && (
+        <p className="md:text-3xl text-2xl font-bold text-center mb-6 text-[#171717]">
+          10,000+ A-Grades Delivered On
+        </p>
+      )}
       <div
         className="w-full max-w-7xl container py-6 px-12 rounded-lg bg-[#fff]"
         style={{ boxShadow: " 0px 11px 32px 0px #DFE5FF " }}
       >
-        <p className="md:text-3xl text-2xl font-bold text-center mb-8">
-          10,000+ A-Grades Delivered On
-        </p>
+        {!headingOutside && (
+          <p className="md:text-3xl text-2xl font-bold text-center mb-8">
+            10,000+ A-Grades Delivered On
+          </p>
+        )}
         <div className="w-full flex-wrap flex justify-between items-center gap-6 ">
           {/* <div className=" flex justify-between items-center gap-6"> */}
           <Image
