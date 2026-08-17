@@ -40,7 +40,8 @@ export default function RootLayout({
 
 
         {/* Force HTTPS for all resources in production only */}
-        {process.env.NODE_ENV === "production" && (
+        {process.env.NODE_ENV === "production" &&
+          process.env.DISABLE_HTTPS_HEADERS !== "true" && (
           <meta httpEquiv="Content-Security-Policy" content="upgrade-insecure-requests" />
         )}
       </head>

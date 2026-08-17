@@ -1,6 +1,7 @@
 import { cache } from "react";
 import MainLayout from "@/app/MainLayout";
 import HeroSection from "@/app/components/LandingPage/HeroSection";
+import HeroHeading from "@/app/components/LandingPage/HeroHeading";
 import BelowFoldLanding from "@/app/components/LandingPage/BelowFoldLanding";
 import { MetaData } from "@/app/metadata/metadata";
 import { TakeMyClassDataProvider } from "../TakeMyClassDataProvider";
@@ -41,6 +42,9 @@ const Page = async () => {
     pageData?.meta?.description || MetaData.takeMyClass.description;
   const pageUrl =
     pageData?.meta?.canonicalUrl || `${baseUrl}/${MetaData.takeMyClass.url}`;
+  // LCP is this H1. Rendering it here (server component) instead of inside the
+  // "use client" HeroSection removes the ~2.5s element render delay.
+  const mainHeading = pageData?.heroSection?.mainHeading ?? "";
 
   return (
     <TakeMyClassDataProvider data={pageData}>
@@ -49,8 +53,34 @@ const Page = async () => {
         metaDescription={metaDescription}
         pageUrl={pageUrl}
       />
+      {/* Hand-inlined critical CSS for the LCP element (hero H1) so it paints
+          styled before the external stylesheet finishes loading. Values must
+          stay in sync with the Tailwind classes on that H1 in HeroLead.tsx. */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+            #hero-section{background:#F5F6FA}
+            .tmc-hero-heading{font-weight:600;font-size:30px;line-height:1.1;color:#000}
+            @media (min-width:768px){.tmc-hero-heading{font-size:48px}}
+          `,
+        }}
+      />
       <MainLayout>
-        <HeroSection useHeroForm2 />
+        <HeroSection
+          useHeroForm2
+          headingSlot={
+            mainHeading ? (
+              // max-w-2xl mirrors HeroLead's own wrapper so the heading keeps
+              // its previous width constraint on single-column (mobile) layout.
+              <div className="max-w-2xl">
+                <HeroHeading
+                  mainHeading={mainHeading}
+                  spanClassName="md:pt-5 block"
+                />
+              </div>
+            ) : undefined
+          }
+        />
         <DelayedBelowFold>
           <BelowFoldLanding />
         </DelayedBelowFold>

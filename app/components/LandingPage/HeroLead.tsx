@@ -182,7 +182,9 @@ const HeroLead: FC<HeroLeadProps> = ({ heroContent, hideHeading }) => {
   return (
     <div className="max-w-2xl">
       {!hideHeading && (
-        <h1 className="font-semibold text-[30px] md:text-[48px] leading-[1.1] text-black">
+        <h1
+          className={`font-semibold text-[30px] md:text-[48px] leading-[1.1] text-black${isTakeMyClassPage ? " tmc-hero-heading" : ""}`}
+        >
           {heroContent?.mainHeading ? (
             <span
               className={isTakeMyClassPage ? "md:pt-5 block" : undefined}
