@@ -1,40 +1,33 @@
+import { cache } from "react";
 import MainLayout from "@/app/MainLayout";
 import HeroSection from "@/app/components/LandingPage/HeroSection";
-import ProcessSection from "@/app/components/LandingPage/ProcessSection";
-import Success from "@/app/components/LandingPage/Success";
-import AcademicPartners from "@/app/components/LandingPage/AcademicPartners";
-import Faq from "@/app/components/LandingPage/Faq";
-import CustomerReviews from "@/app/components/LandingPage/CustomerReviews";
+import HeroHeading from "@/app/components/LandingPage/HeroHeading";
 import CardCarousel from "@/app/components/LandingPage/CardCarousel";
 import Description from "@/app/components/LandingPage/Description";
-import { HomeDataProvider } from "../HomeDataProvider";
-import dynamicImport from "next/dynamic";
+import CustomerReviews from "@/app/components/LandingPage/CustomerReviews";
+import Success from "@/app/components/LandingPage/Success";
+import { TakeMyClassDataProvider } from "../TakeMyClassDataProvider";
 import { getPageData } from "@/app/lib/mongodb";
 import ProductSchema from "@/app/components/ProductSchema";
+import DeliveredOn from "../take-my-class/DeliveredOn";
+import DelayedBelowFold from "@/app/components/LandingPage/DelayedBelowFold";
+import type { Metadata } from "next";
 
-const GetQouteDynamic = dynamicImport(
-  () => import("@/app/components/LandingPage/GetQoute"),
-  { ssr: false },
-);
-
-// Force dynamic rendering to prevent caching
+// Force dynamic rendering to ensure fresh content
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-async function fetchTakeMyClass2Data() {
+const fetchTakeMyClass2Data = cache(async () => {
   try {
-    // Query for take-my-class-2 page using id or pageType
     const query = {
-      $or: [{ id: "take-my-class-2" }, { pageType: "take-my-class-2" }],
+      $or: [{ id: "take-my-class-2" }, { id: "take-my-class" }],
     };
     return await getPageData("pages", query, { readPreference: "primary" });
   } catch (error) {
     console.error("Error fetching take-my-class-2 data:", error);
     return null;
   }
-}
-
-import DelayedBelowFold from "@/app/components/LandingPage/DelayedBelowFold";
+});
 
 const TakeMyClass2 = async () => {
   const pageData = await fetchTakeMyClass2Data();
@@ -49,47 +42,53 @@ const TakeMyClass2 = async () => {
     pageData?.meta?.description ||
     "Struggling with online classes, exams, assignments or essays? Scholarly Help provides professional academic writing services tailored to your needs. Get timely, plagiarism-free solutions crafted by experts. Your success starts here!";
   const pageUrl = pageData?.meta?.canonicalUrl || `${baseUrl}/take-my-class-2`;
+  const mainHeading = pageData?.heroSection?.mainHeading ?? "";
 
   return (
-    <HomeDataProvider data={pageData}>
+    <TakeMyClassDataProvider data={pageData}>
       <ProductSchema
         productTitle={productTitle}
         metaDescription={metaDescription}
         pageUrl={pageUrl}
       />
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+            #hero-section{background:#F5F6FA}
+            .tmc-hero-heading{font-weight:600;font-size:30px;line-height:1.1;color:#000}
+            @media (min-width:768px){.tmc-hero-heading{font-size:48px}}
+          `,
+        }}
+      />
       <MainLayout>
-        <HeroSection />
+        <HeroSection
+          useHeroForm2
+          headingSlot={
+            mainHeading ? (
+              <div className="max-w-2xl">
+                <HeroHeading
+                  mainHeading={mainHeading}
+                  spanClassName="md:pt-5 block"
+                />
+              </div>
+            ) : undefined
+          }
+        />
         <DelayedBelowFold>
-          {/* <Ratings /> */}
+          {/* 10,000+ A-Grades Delivered On banner & platform logos */}
           <DeliveredOn />
           <CardCarousel />
+          {/* "What a Smooth Online Class Experience Looks Like" (Description) placed above "How Students Rate Us!" (CustomerReviews) */}
           <Description />
           <CustomerReviews />
-          <ProcessSection />
           <Success />
-
-          {/* <GuaranteedBlock /> */}
-          {/* <WhySlider /> */}
-          {/* <Subjects defaultSubjects={onlineClassSubjects} /> */}
-          {/* <OnlinePlatform /> */}
-
-          <AcademicPartners />
-
-          {/* <Subjects /> */}
-          {/* <GetQouteDynamic /> */}
-
-          {/* <PriceSection /> */}
-          <Faq />
         </DelayedBelowFold>
       </MainLayout>
-    </HomeDataProvider>
+    </TakeMyClassDataProvider>
   );
 };
 
 export default TakeMyClass2;
-
-import type { Metadata } from "next";
-import DeliveredOn from "../take-my-class/DeliveredOn";
 
 export async function generateMetadata(): Promise<Metadata> {
   try {
