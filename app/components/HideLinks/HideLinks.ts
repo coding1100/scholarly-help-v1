@@ -29,6 +29,8 @@ export const hideWhatsappModule = [
   "/pay-for-someone-to-write-my-paper/",
   "/thank-you",
   "/thank-you/",
+  "/take-my-class-2",
+  "/take-my-class-2/",
 ];
 // export const hideTalktoModule = ["/pay-for-someone-to-write-my-paper/"];
 
