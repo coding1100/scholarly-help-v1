@@ -26,8 +26,10 @@ const ForgotPassword = () => {
     setSentMessage(null);
     const newEmail = email.trim().toLowerCase();
     try {
+      const rawBaseUrl = (process.env.NEXT_PUBLIC_NGROX_URL || process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
+      const apiBase = rawBaseUrl.endsWith("/v1") ? rawBaseUrl : `${rawBaseUrl}/v1`;
       const res = await axios.post(
-        `${process.env.NEXT_PUBLIC_NGROX_URL}/v1/auth/forgot-password`,
+        `${apiBase}/auth/forgot-password`,
         { email: newEmail }
       );
       const msg = res?.data?.message || "If an account with that email exists, a password reset link has been sent.";
