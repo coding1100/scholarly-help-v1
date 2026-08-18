@@ -97,8 +97,10 @@ const ChangePassword = () => {
 
     setLoading(true);
     try {
+      const rawBaseUrl = (process.env.NEXT_PUBLIC_NGROX_URL || process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
+      const apiBase = rawBaseUrl.endsWith("/v1") ? rawBaseUrl : `${rawBaseUrl}/v1`;
       const res = await axios.post(
-        `${process.env.NEXT_PUBLIC_NGROX_URL}/v1/auth/update-password`,
+        `${apiBase}/auth/update-password`,
         { newPassword },
         {
           headers: {
