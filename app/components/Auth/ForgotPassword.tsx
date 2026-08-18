@@ -14,6 +14,8 @@ const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [sentMessage, setSentMessage] = useState<string | null>(null);
+
   const router = useRouter();
   const qs =
     typeof window !== "undefined" ? window.location.search.slice(1) : "";
@@ -21,14 +23,16 @@ const ForgotPassword = () => {
   const handleRecover = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const newEmail = email.toLowerCase();
+    setSentMessage(null);
+    const newEmail = email.trim().toLowerCase();
     try {
-      // Replace with your forgot password API endpoint
       const res = await axios.post(
-        `${process.env.NEXT_PUBLIC_NGROX_URL}/auth/forgot-password`,
+        `${process.env.NEXT_PUBLIC_NGROX_URL}/v1/auth/forgot-password`,
         { email: newEmail }
       );
-      toast.success(res?.data?.message || "Reset link sent to your email.");
+      const msg = res?.data?.message || "If an account with that email exists, a password reset link has been sent.";
+      toast.success(msg);
+      setSentMessage(msg);
       setEmail("");
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Something went wrong.");
@@ -51,6 +55,11 @@ const ForgotPassword = () => {
       <h1 className="font-semibold text-2xl flex justify-center ">
         Forgot Password
       </h1>
+      {sentMessage && (
+        <div className="bg-green-50 border border-green-200 text-green-700 text-sm p-3 rounded-lg text-center">
+          {sentMessage}
+        </div>
+      )}
       <form className="flex flex-col gap-5" onSubmit={handleRecover}>
         <div>
           <label className="text-sm font-medium">Email</label>
