@@ -1,6 +1,7 @@
+import AuthLayout from "@/app/components/Auth/AuthLayout";
 import ChangePassword from "@/app/components/Auth/ChangePassword";
 import ProductSchema from "@/app/components/ProductSchema";
-import React from "react";
+import React, { Suspense } from "react";
 
 const page = () => {
   const rawBaseUrl =
@@ -16,7 +17,11 @@ const page = () => {
         metaDescription="Set a new password for your Scholarly Help account. Choose a strong password to keep your account secure and get back to your studies."
         pageUrl={`${baseUrl}/reset-password/`}
       />
-      <ChangePassword />
+      <AuthLayout>
+        <Suspense fallback={null}>
+          <ChangePassword />
+        </Suspense>
+      </AuthLayout>
     </div>
   );
 };

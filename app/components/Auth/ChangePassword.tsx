@@ -124,150 +124,142 @@ const ChangePassword = () => {
     }
   };
   return (
-    <div className="flex min-h-screen justify-center items-center bg-gray-100">
-      <div className="h-full">
-        <div className="bg-[#9F92EC] -rotate-12 w-fit rounded-3xl h-full">
-          <div className="bg-white rotate-12 h-full px-[40px] py-6 rounded-xl w-[432px]">
-            <div className="z-10 space-y-6 text-[#2B1C50] w-full max-w-md">
-              <div className="flex items-center justify-center">
-                <Image
-                  src={Logo}
-                  alt="logo is here"
-                  width={225}
-                  height={56}
-                  className="object-cover"
-                />
-              </div>
+    <div className="z-10 space-y-6 text-[#2B1C50] w-full">
+      <div className="flex items-center justify-center">
+        <Image
+          src={Logo}
+          alt="logo is here"
+          width={225}
+          height={56}
+          className="object-cover"
+        />
+      </div>
+      <h1 className="font-semibold text-2xl flex justify-center">
+        Reset Password
+      </h1>
 
-              {tokenError ? (
-                <div className="space-y-4 text-center">
-                  <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
-                    {tokenError}
-                  </div>
-                  <button
-                    type="button"
-                    className="w-full bg-[#ff641a] text-white font-semibold py-2 rounded-lg hover:bg-[#ff641a]/80 transition duration-300"
-                    onClick={() => {
-                      router.push(
-                        buildHrefWithSameQuery(
-                          "/forgot-password/",
-                          new URLSearchParams(qs),
-                        ),
-                      );
-                    }}
-                  >
-                    Request New Reset Link
-                  </button>
-                </div>
-              ) : (
-                <form
-                  className="flex flex-col gap-5"
-                  onSubmit={handleChangePassword}
-                >
-                  <div>
-                    <label className="text-sm font-medium">New Password</label>
-                    <div className="relative">
-                      <input
-                        type={showNewPassword ? "text" : "password"}
-                        placeholder="Enter new password"
-                        className="w-full mt-2 px-4 py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-10"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        required
-                      />
-                      <button
-                        type="button"
-                        className="absolute right-3 top-[56%] transform -translate-y-1/2 text-gray-500"
-                        tabIndex={-1}
-                        onClick={() => setShowNewPassword((prev) => !prev)}
-                        aria-label={
-                          showNewPassword ? "Hide password" : "Show password"
-                        }
-                      >
-                        {showNewPassword ? (
-                          <FiEyeOff size={24} />
-                        ) : (
-                          <FiEye size={24} />
-                        )}
-                      </button>
-                    </div>
-                    <div
-                      className={`text-xs mt-1 ${
-                        getPasswordValidationMsg(newPassword) ===
-                        "Password looks good!"
-                          ? "text-green-600"
-                          : "text-[#fb2c36]"
-                      }`}
-                    >
-                      {getPasswordValidationMsg(newPassword)}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">
-                      Confirm New Password
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showConfirmPassword ? "text" : "password"}
-                        placeholder="Confirm new password"
-                        className="w-full mt-2 px-4 py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-10"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        required
-                      />
-                      <button
-                        type="button"
-                        className="absolute right-3 top-[56%] transform -translate-y-1/2 text-gray-500"
-                        tabIndex={-1}
-                        onClick={() => setShowConfirmPassword((prev) => !prev)}
-                        aria-label={
-                          showConfirmPassword ? "Hide password" : "Show password"
-                        }
-                      >
-                        {showConfirmPassword ? (
-                          <FiEyeOff size={24} />
-                        ) : (
-                          <FiEye size={24} />
-                        )}
-                      </button>
-                    </div>
-                    <div
-                      className={`text-xs mt-1 ${
-                        getConfirmValidationMsg() === "Passwords match!"
-                          ? "text-green-600"
-                          : "text-[#fb2c36]"
-                      }`}
-                    >
-                      {getConfirmValidationMsg()}
-                    </div>
-                  </div>
-                  {error && <div className="text-[#fb2c36] text-sm">{error}</div>}
-                  {success && (
-                    <div className="text-green-600 text-sm">{success}</div>
-                  )}
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full bg-orange-500 text-white font-semibold h-[39px] px-4 rounded-lg hover:bg-orange-600 transition duration-300 flex items-center justify-center gap-2"
-                  >
-                    {loading ? (
-                      <ColorRing
-                        height="24"
-                        width="24"
-                        ariaLabel="color-ring-loading"
-                        colors={["white", "white", "white", "white", "white"]}
-                      />
-                    ) : (
-                      "Change Password"
-                    )}
-                    <FaArrowRight />
-                  </button>
-                </form>
-              )}
+      {tokenError ? (
+        <div className="space-y-4 text-center">
+          <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
+            {tokenError}
+          </div>
+          <button
+            type="button"
+            className="w-full bg-[#ff641a] text-white font-semibold py-3 px-4 rounded-lg hover:bg-[#ff641a]/80 transition duration-300 flex items-center justify-center gap-2"
+            onClick={() => {
+              router.push(
+                buildHrefWithSameQuery(
+                  "/forgot-password/",
+                  new URLSearchParams(qs),
+                ),
+              );
+            }}
+          >
+            Request New Reset Link
+          </button>
+        </div>
+      ) : (
+        <form className="flex flex-col gap-5" onSubmit={handleChangePassword}>
+          <div>
+            <label className="text-sm font-medium">New Password</label>
+            <div className="relative mt-2">
+              <input
+                type={showNewPassword ? "text" : "password"}
+                placeholder="Enter new password"
+                className="w-full px-4 py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-10"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                tabIndex={-1}
+                onClick={() => setShowNewPassword((prev) => !prev)}
+                aria-label={
+                  showNewPassword ? "Hide password" : "Show password"
+                }
+              >
+                {showNewPassword ? (
+                  <FiEyeOff size={20} />
+                ) : (
+                  <FiEye size={20} />
+                )}
+              </button>
+            </div>
+            <div
+              className={`text-xs mt-1 ${
+                getPasswordValidationMsg(newPassword) ===
+                "Password looks good!"
+                  ? "text-green-600"
+                  : "text-[#fb2c36]"
+              }`}
+            >
+              {getPasswordValidationMsg(newPassword)}
             </div>
           </div>
-        </div>
-      </div>
+          <div>
+            <label className="text-sm font-medium">
+              Confirm New Password
+            </label>
+            <div className="relative mt-2">
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="Confirm new password"
+                className="w-full px-4 py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-10"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                tabIndex={-1}
+                onClick={() => setShowConfirmPassword((prev) => !prev)}
+                aria-label={
+                  showConfirmPassword ? "Hide password" : "Show password"
+                }
+              >
+                {showConfirmPassword ? (
+                  <FiEyeOff size={20} />
+                ) : (
+                  <FiEye size={20} />
+                )}
+              </button>
+            </div>
+            <div
+              className={`text-xs mt-1 ${
+                getConfirmValidationMsg() === "Passwords match!"
+                  ? "text-green-600"
+                  : "text-[#fb2c36]"
+              }`}
+            >
+              {getConfirmValidationMsg()}
+            </div>
+          </div>
+          {error && <div className="text-[#fb2c36] text-sm">{error}</div>}
+          {success && (
+            <div className="text-green-600 text-sm">{success}</div>
+          )}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-[#ff641a] text-white font-semibold h-[42px] px-4 rounded-lg hover:bg-[#ff641a]/80 transition duration-300 flex items-center justify-center gap-2 mt-2"
+          >
+            {loading ? (
+              <ColorRing
+                height="24"
+                width="24"
+                ariaLabel="color-ring-loading"
+                colors={["white", "white", "white", "white", "white"]}
+              />
+            ) : (
+              "Change Password"
+            )}
+            <FaArrowRight />
+          </button>
+        </form>
+      )}
     </div>
   );
 };
