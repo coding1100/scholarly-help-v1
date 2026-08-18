@@ -458,19 +458,6 @@ export default function Header() {
               </span>
               <span>+1 646 480 6092</span>
             </a>
-            {/* Mobile: "Text Us" that opens the SMS app (sms:, not tel:).
-                On /take-my-class, an fbclid tap logs a Send SMS Tracking row and
-                pre-fills the body with a Reference ID (offline-conversion match).
-                Hidden on /take-my-class mobile only (centered-logo header). */}
-            {!isTakeMyClassExact && (
-              <a
-                href={`sms:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER || "16464806092"}`}
-                aria-label="Text us"
-                className="sm:hidden flex items-center bg-[#9F92EC] rounded-full px-4 py-1 text-white transition"
-              >
-                Text Us
-              </a>
-            )}
           </div>
         )}
         {/* {isTakeMyClass3 && (
@@ -566,7 +553,7 @@ export default function Header() {
               </nav>
             )}
             {!isTakeMyClass3 && (
-              <div>
+              <div className="hidden sm:block">
                  {/* <button
            
            className="rounded-md sm:px-3 px-2 cursor-pointer bg-[#ff641a] text-white border border-transparent transition duration-300 sm:text-xs text-[10px] font-medium flex items-center justify-center hover:bg-white hover:text-[#ff641a] hover:border-[#ff641a] h-[40px] w-full"
@@ -587,7 +574,6 @@ export default function Header() {
                     />
                   </span>
                   <span className="sm:block hidden">+1 646 480 6092</span>
-                  <span className="sm:hidden block text-white">Text Us</span>
                 </a>
               </div>
             )}
