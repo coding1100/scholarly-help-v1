@@ -572,7 +572,7 @@ const Footer: FC<FooterProps> = ({}) => {
               onClick={apiCall}
             >
               <a
-                href={`sms:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER}`}
+                href={`sms:${process.env.NEXT_PUBLIC_TEXT_US_PHONE_NUMBER || "14108445419"}`}
                 className="fixed flex font-normal justify-between z-[98] bottom-[80px] left-0 text-[15px] py-[10px] px-[20px] no-underline bg-[#36454F] ml-[5px] rounded-[50px] items-center min-w-[44px] min-h-[44px]"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -592,7 +592,7 @@ const Footer: FC<FooterProps> = ({}) => {
               onClick={apiCall}
             >
               <a
-                href={`sms:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER}`}
+                href={`sms:${process.env.NEXT_PUBLIC_TEXT_US_PHONE_NUMBER || "14108445419"}`}
                 className="fixed flex font-normal justify-between z-[98] bottom-[55px] left-0 text-[15px] py-0 px-[5px] no-underline ml-[5px] rounded-[50px] items-center min-w-[44px] min-h-[44px]"
                 target="_blank"
                 rel="noopener noreferrer"

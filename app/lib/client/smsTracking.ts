@@ -28,8 +28,9 @@ function sanitizeNumber(raw: string): string {
 }
 
 export const SMS_NUMBER =
-  sanitizeNumber(process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER || "") ||
-  "16464806092";
+  sanitizeNumber(
+    process.env.NEXT_PUBLIC_TEXT_US_PHONE_NUMBER || "",
+  ) || "14108445419";
 
 function isBrowser(): boolean {
   return typeof window !== "undefined";
