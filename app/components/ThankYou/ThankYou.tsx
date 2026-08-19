@@ -230,7 +230,7 @@ const ThankYou: FC<ThankYouProps> = ({}) => {
 
               <div onClick={apiCall}>
                 <a
-                  href={`sms:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER}`}
+                  href={`sms:${process.env.NEXT_PUBLIC_TEXT_US_PHONE_NUMBER || "14108445419"}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
