@@ -54,6 +54,9 @@ const WhatsApp = () => {
     <>
       {/* Whatsapp module */}
       {currentPage !== "/take-my-class-3/" &&
+        currentPage !== "/take-my-class-4/" &&
+        currentPage !== "/take-my-class-5/" &&
+        currentPage !== "/take-my-class-6/" &&
         currentPage !== "/take-my-class/" &&
         !currentPage?.includes("take-my-class-2") && (
  

@@ -166,7 +166,7 @@ export default function BelowFoldLanding({ children }: BelowFoldLandingProps) {
       isHomeworkPage ||
       isEssayWritingPage ||
       currentPath === "/" ? (
-        <DeliveredOn />
+        <DeliveredOn noNegativeMargin headingOutside />
       ) : (
         <Ratings />
       )}{" "}

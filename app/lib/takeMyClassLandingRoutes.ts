@@ -9,10 +9,16 @@ export const TAKE_MY_CLASS_SAVING_YOUR_FUTURE_PATH =
   "/take-my-class-saving-your-future";
 export const TAKE_MY_CLASS_PATH = "/take-my-class";
 export const TAKE_MY_CLASS_3_PATH = "/take-my-class-3";
+export const TAKE_MY_CLASS_4_PATH = "/take-my-class-4";
+export const TAKE_MY_CLASS_5_PATH = "/take-my-class-5";
+export const TAKE_MY_CLASS_6_PATH = "/take-my-class-6";
 
 const LANDING_PAGE_PATHS = [
   TAKE_MY_CLASS_PATH,
   TAKE_MY_CLASS_3_PATH,
+  TAKE_MY_CLASS_4_PATH,
+  TAKE_MY_CLASS_5_PATH,
+  TAKE_MY_CLASS_6_PATH,
   TAKE_MY_CLASS_PROFESSOR_PATH,
   TAKE_MY_CLASS_STILL_DOING_PATH,
   TAKE_MY_CLASS_PROTECT_GPA_PATH,
@@ -75,6 +81,18 @@ export function isTakeMyClass3LandingPage(pathname: string | null | undefined): 
   return normalizePathname(pathname) === TAKE_MY_CLASS_3_PATH;
 }
 
+/** take-my-class-4/5/6 (hero-copy-only duplicates of take-my-class-3). */
+export function isTakeMyClassHeroCopyVariant(
+  pathname: string | null | undefined,
+): boolean {
+  const path = normalizePathname(pathname);
+  return (
+    path === TAKE_MY_CLASS_4_PATH ||
+    path === TAKE_MY_CLASS_5_PATH ||
+    path === TAKE_MY_CLASS_6_PATH
+  );
+}
+
 /** Professor variant only. */
 export function isTakeMyClassProfessorLandingPage(
   pathname: string | null | undefined,
@@ -132,7 +150,14 @@ export function usesHeroForm2Layout(
   pathname: string | null | undefined,
 ): boolean {
   const path = normalizePathname(pathname);
-  if (path === TAKE_MY_CLASS_PATH || path === TAKE_MY_CLASS_3_PATH) return true;
+  if (
+    path === TAKE_MY_CLASS_PATH ||
+    path === TAKE_MY_CLASS_3_PATH ||
+    path === TAKE_MY_CLASS_4_PATH ||
+    path === TAKE_MY_CLASS_5_PATH ||
+    path === TAKE_MY_CLASS_6_PATH
+  )
+    return true;
   return isTakeMyClassEmailOnlyHeroFormPage(pathname);
 }
 

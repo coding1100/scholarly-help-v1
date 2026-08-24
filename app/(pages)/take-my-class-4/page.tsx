@@ -13,41 +13,41 @@ import DelayedBelowFold from "@/app/components/LandingPage/DelayedBelowFold";
 // so the rest of the page matches it exactly, not generic site-wide defaults.
 const heroContent = {
   mainHeading:
-    "Get a Guaranteed A or B in Your Online Class—Or You Don't Pay a Dime.",
+    "Save 20+ Hours a Week and Never Stress Over an Online Class Again.",
   description:
-    "Stop risking your GPA and future. Our US-based experts handle 100% of your coursework—from weekly discussions to finals—completely anonymously.",
+    "Stop sacrificing your nights, weekends, and sanity. Our US-based experts take 100% of the discussions, quizzes, and finals off your plate so you can live your life.",
   btn1: "",
   btn2: "",
   formBackImg2: undefined as any,
 };
 
-const PAGE_TITLE = "Guaranteed A or B Online Class Help | ScholarlyHelp";
+const PAGE_TITLE = "Save 20+ Hours a Week Online Class Help | ScholarlyHelp";
 const PAGE_DESCRIPTION =
-  "Get a guaranteed A or B in your online class or you don't pay. US-based experts handle 100% of your coursework anonymously.";
+  "Stop sacrificing your nights and weekends. US-based experts take 100% of the discussions, quizzes, and finals off your plate.";
 
-// Prefer a take-my-class-3-specific CMS doc if one is ever created; otherwise
+// Prefer a take-my-class-4-specific CMS doc if one is ever created; otherwise
 // reuse the real /take-my-class content for every non-hero section.
-const fetchTakeMyClass3Data = cache(async () => {
+const fetchTakeMyClass4Data = cache(async () => {
   try {
     const query = {
-      $or: [{ id: "take-my-class-3" }, { id: "take-my-class" }],
+      $or: [{ id: "take-my-class-4" }, { id: "take-my-class" }],
     };
     const data = await getPageData("pages", query, { readPreference: "primary" });
     return data ? JSON.parse(JSON.stringify(data)) : null;
   } catch (error) {
-    console.error("Error fetching take-my-class-3 data:", error);
+    console.error("Error fetching take-my-class-4 data:", error);
     return null;
   }
 });
 
 const Page = async () => {
-  const pageData = await fetchTakeMyClass3Data();
+  const pageData = await fetchTakeMyClass4Data();
   const rawBaseUrl =
     process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
   const baseUrl = rawBaseUrl.endsWith("/")
     ? rawBaseUrl.slice(0, -1)
     : rawBaseUrl;
-  const pageUrl = `${baseUrl}/take-my-class-3/`;
+  const pageUrl = `${baseUrl}/take-my-class-4/`;
 
   return (
     <TakeMyClassDataProvider data={pageData}>
@@ -70,7 +70,7 @@ export default Page;
 export async function generateMetadata({}): Promise<Metadata> {
   const baseUrl =
     process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com/";
-  const canonicalUrl = `${baseUrl}take-my-class-3/`;
+  const canonicalUrl = `${baseUrl}take-my-class-4/`;
   return {
     title: PAGE_TITLE,
     description: PAGE_DESCRIPTION,
