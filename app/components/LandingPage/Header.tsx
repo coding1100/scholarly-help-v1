@@ -438,9 +438,9 @@ export default function Header() {
           </div>
         )}
 
-        {/* Phone Number - Shown for special routes (take-my-class, take-my-exam): always show number on mobile */}
+        {/* Phone Number - Shown for special routes (take-my-class, take-my-exam, take-my-class-3): always show number on mobile */}
 
-        {isSpecialRoute && (
+        {isSpecialRoute3 && (
           <div>
             {/* Desktop: phone number that opens the dialer (call). */}
             <a
