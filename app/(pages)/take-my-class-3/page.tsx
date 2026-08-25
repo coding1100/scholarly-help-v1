@@ -1,6 +1,7 @@
 import { cache } from "react";
 import MainLayout from "@/app/MainLayout";
 import HeroSection from "@/app/components/LandingPage/HeroSection";
+import HeroHeading from "@/app/components/LandingPage/HeroHeading";
 import BelowFoldLanding from "@/app/components/LandingPage/BelowFoldLanding";
 import { TakeMyClassDataProvider } from "../TakeMyClassDataProvider";
 import type { Metadata } from "next";
@@ -20,6 +21,18 @@ const heroContent = {
   btn2: "",
   formBackImg2: undefined as any,
 };
+
+// LCP is this H1. Rendering it here (server component) instead of inside the
+// "use client" HeroSection removes the ~2.5s element render delay — mirrors
+// /take-my-class's pattern.
+// The clause after the em dash is wrapped in the same orange span
+// /take-my-class uses for its highlighted clause (text-[#F56200]) so the two
+// headings match visually — text itself is unchanged, only the emphasis
+// styling is added.
+const mainHeading = heroContent.mainHeading.replace(
+  "—Or You Don't Pay a Dime.",
+  '—<span class="text-[#F56200]">Or You Don\'t Pay a Dime.</span>',
+);
 
 const PAGE_TITLE = "Guaranteed A or B Online Class Help | ScholarlyHelp";
 const PAGE_DESCRIPTION =
@@ -56,8 +69,33 @@ const Page = async () => {
         metaDescription={PAGE_DESCRIPTION}
         pageUrl={pageUrl}
       />
+      {/* Hand-inlined critical CSS for the LCP element (hero H1) so it paints
+          styled before the external stylesheet finishes loading. Values must
+          stay in sync with the Tailwind classes on that H1 in HeroLead.tsx. */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+            #hero-section{background:#F5F6FA}
+            .tmc-hero-heading{font-weight:600;font-size:30px;line-height:1.1;color:#000}
+            @media (min-width:768px){.tmc-hero-heading{font-size:48px}}
+          `,
+        }}
+      />
       <MainLayout>
-        <HeroSection useHeroForm2 heroContent={heroContent} />
+        <HeroSection
+          useHeroForm2
+          heroContent={heroContent}
+          headingSlot={
+            // max-w-2xl mirrors HeroLead's own wrapper so the heading keeps
+            // its previous width constraint on single-column (mobile) layout.
+            <div className="max-w-2xl">
+              <HeroHeading
+                mainHeading={mainHeading}
+                spanClassName="md:pt-5 block"
+              />
+            </div>
+          }
+        />
         <DelayedBelowFold>
           <BelowFoldLanding />
         </DelayedBelowFold>
