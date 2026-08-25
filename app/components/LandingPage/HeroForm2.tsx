@@ -153,6 +153,18 @@ const HeroForm2: FC<ZohoForm2Props> = ({
           }),
         }).catch(() => {});
 
+        void fetch("/api/tmc-lp-landing-sheet", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email,
+            formType: "email-only",
+            fbclid: FBCLID,
+            gclid: GCLID,
+            landingPage,
+          }),
+        }).catch(() => {});
+
         await axiosInstance.post(`/order/take-my-class/`, {
           phoneNumber: "",
           PageURL: wholeUrl,
@@ -178,6 +190,20 @@ const HeroForm2: FC<ZohoForm2Props> = ({
       if (formData.Email) fd.append("email", formData.Email);
       if (formData.Phone) fd.append("phone_number", formData.Phone);
       if (formData.Description) fd.append("instructions", formData.Description);
+
+      void fetch("/api/tmc-lp-landing-sheet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: formData.Email,
+          phone: formData.Phone,
+          instructions: formData.Description,
+          formType: "full-form",
+          fbclid: FBCLID,
+          gclid: GCLID,
+          landingPage: pathname || "",
+        }),
+      }).catch(() => {});
 
       await axiosInstance.post(`/order/quote`, fd);
       setFormData({
