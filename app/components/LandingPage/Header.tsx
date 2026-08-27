@@ -11,6 +11,7 @@ import Phone from "@/app/assets/Icons/phone.webp";
 import {
   isTakeMyClass3LandingPage,
   isTakeMyClassHeaderRoute,
+  isTakeMyClassHeroCopyVariant,
 } from "@/app/lib/takeMyClassLandingRoutes";
 import { rememberFbclidFromUrl } from "@/app/lib/client/smsTracking";
 
@@ -32,7 +33,11 @@ export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const prefetchedRoutesRef = useRef<Set<string>>(new Set());
-  const isTakeMyClass3 = isTakeMyClass3LandingPage(pathname);
+  // take-my-class-3's centered landing header is shared by the -4/-5/-6
+  // hero-copy variants too (same layout, just a different headline).
+  const isTakeMyClass3 =
+    isTakeMyClass3LandingPage(pathname) ||
+    isTakeMyClassHeroCopyVariant(pathname);
   const isTakeMyClass = isTakeMyClassHeaderRoute(pathname);
   const isTakeMyExam =
     pathname === "/take-my-exam/" || pathname === "/take-my-exam";
@@ -438,9 +443,9 @@ export default function Header() {
           </div>
         )}
 
-        {/* Phone Number - Shown for special routes (take-my-class, take-my-exam): always show number on mobile */}
+        {/* Phone Number - Shown for special routes (take-my-class, take-my-exam, take-my-class-3): always show number on mobile */}
 
-        {isSpecialRoute && (
+        {isSpecialRoute3 && (
           <div>
             {/* Desktop: phone number that opens the dialer (call). */}
             <a
