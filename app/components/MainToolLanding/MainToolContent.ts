@@ -172,6 +172,15 @@ const defaultPickTabTools: Record<string, PickToolItem[]> = {
       buttonText: "Start learning",
       link: "/tools/micro-learning",
     },
+    {
+      iconKey: "tmIcon3",
+      tag: "New",
+      heading: "AI Course Planner",
+      description:
+        "Build a conflict-free semester schedule, track attendance, and manage coursework in one workspace.",
+      buttonText: "Plan my semester",
+      link: "/tools/course-planner",
+    },
   ],
 };
 

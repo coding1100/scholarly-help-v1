@@ -5,6 +5,7 @@ import {
   FiAlignLeft,
   FiBarChart,
   FiBookmark,
+  FiCalendar,
   FiCheckCircle,
   FiFileText,
   FiList,
@@ -88,6 +89,16 @@ const tools: ToolCardData[] = [
     badge: "New",
     category: "study-tools",
     cta: "Start learning",
+  },
+  {
+    name: "AI Course Planner",
+    description:
+      "Build a conflict-free semester schedule, track attendance, and manage coursework in one workspace.",
+    href: "/tools/course-planner",
+    icon: FiCalendar,
+    badge: "New",
+    category: "study-tools",
+    cta: "Plan my semester",
   },
 
   // Essay writing

@@ -64,6 +64,7 @@ const MTSidebar = ({
     : currentRoute;
   const tools = [
     { name: "Explore Tools", href: "/tools/dashboard" },
+    { name: "AI Course Planner", href: "/tools/course-planner" },
     // { name: "Academic Research Assistant", href: "/tools/academic-research-assistant" },
     // { name: "Paraphraser Tool", href: "/tools/paraphraser-tool" },
     // { name: "Summarizer Tool", href: "/tools/summarizer-tool" },
