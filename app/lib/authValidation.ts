@@ -22,14 +22,6 @@ export function validateEmail(email: string): string {
   return "";
 }
 
-export function validateName(name: string): string {
-  const value = name.trim();
-  if (!value) return "Name is required.";
-  if (value.length < 3) return "Name must be at least 3 characters long.";
-  if (value.length > 60) return "Name must be 60 characters or fewer.";
-  return "";
-}
-
 export function validatePassword(password: string): string {
   if (!password) return "Password is required.";
   if (password.length < 8) return "At least 8 characters required.";

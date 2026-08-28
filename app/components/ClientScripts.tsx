@@ -3,9 +3,40 @@
 import { usePathname } from "next/navigation";
 import { useEffect, useCallback } from "react";
 import Script from "next/script";
+import axios from "axios";
+import toast from "react-hot-toast";
 import { Toaster } from "react-hot-toast";
 import { initializeAuthSession, installAxiosAuthRefresh } from "@/app/lib/authSession";
 import { hasRefreshSessionHint } from "@/app/lib/accessTokenStore";
+
+const FREE_RUN_LIMIT_TOAST_ID = "free-run-limit-exceeded";
+
+/**
+ * Global handler for the backend's post-login free-run quota (see
+ * free-run-quota.decorator.ts). Installed once here instead of in every tool
+ * component's catch block, since every tool route can return this same 403.
+ * A dedicated toast id prevents stacking duplicate toasts if several requests
+ * fail around the same time.
+ */
+function installFreeRunQuotaHandler(): () => void {
+  const interceptor = axios.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      if (
+        error?.response?.status === 403 &&
+        error.response?.data?.code === "FREE_RUN_LIMIT_EXCEEDED"
+      ) {
+        toast.error(
+          error.response.data?.message ||
+            "You've used all your free tool runs. Upgrading isn't available yet — please check back soon.",
+          { id: FREE_RUN_LIMIT_TOAST_ID },
+        );
+      }
+      return Promise.reject(error);
+    },
+  );
+  return () => axios.interceptors.response.eject(interceptor);
+}
 
 declare global {
   interface Window {
@@ -29,7 +60,8 @@ export default function ClientScripts() {
   const ShowLiveChat = isHomePage;
 
   useEffect(() => {
-    const uninstall = installAxiosAuthRefresh();
+    const uninstallAuthRefresh = installAxiosAuthRefresh();
+    const uninstallFreeRunQuotaHandler = installFreeRunQuotaHandler();
     // Only bootstrap a session for visitors who have signed in on this device.
     // Without the hint the refresh is guaranteed to fail, and it still costs a
     // cross-origin DNS + TLS + CORS preflight (~1150ms in) on anonymous landing
@@ -37,7 +69,10 @@ export default function ClientScripts() {
     // access token is persisted. Any real backend request still refreshes on
     // demand through the axios interceptor installed above.
     if (hasRefreshSessionHint()) void initializeAuthSession();
-    return uninstall;
+    return () => {
+      uninstallAuthRefresh();
+      uninstallFreeRunQuotaHandler();
+    };
   }, []);
 
   // Memoize functions to prevent unnecessary re-renders

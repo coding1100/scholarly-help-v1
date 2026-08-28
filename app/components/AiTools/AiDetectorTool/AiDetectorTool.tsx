@@ -20,6 +20,8 @@ import {
 } from "./types";
 import { useDetectorConfig } from "./useDetectorConfig";
 import { getAccessToken } from "@/app/lib/authSession";
+import { useGuestGate } from "@/app/lib/client/useGuestGate";
+import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 
 type Filter = "all" | Exclude<SegmentLabel, "neutral">;
 
@@ -62,6 +64,7 @@ const AiDetectorTool: React.FC = () => {
   const [downloadingReport, setDownloadingReport] = useState(false);
   const [rescanNeeded, setRescanNeeded] = useState(false);
   const [log, setLog] = useState<string[]>([]);
+  const { gateOpen, closeGate, guardAiClick } = useGuestGate();
   const detectorConfig = useDetectorConfig();
   const feedbackQueueRef = useRef<Set<string>>(new Set());
   const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -199,8 +202,10 @@ const AiDetectorTool: React.FC = () => {
 
   const handleDetect = () => {
     if (!validate(text)) return;
-    trackToolGenerate({ toolName: "AI Detector Tool" });
-    void runDetection(text, false);
+    guardAiClick(() => {
+      trackToolGenerate({ toolName: "AI Detector Tool" });
+      void runDetection(text, false);
+    });
   };
 
   const currentDocText = () => segments.map((s) => s.text).join(" ");
@@ -208,8 +213,10 @@ const AiDetectorTool: React.FC = () => {
   const handleRescan = () => {
     const rebuilt = currentDocText();
     if (!validate(rebuilt)) return;
-    setText(rebuilt);
-    void runDetection(rebuilt, true);
+    guardAiClick(() => {
+      setText(rebuilt);
+      void runDetection(rebuilt, true);
+    });
   };
 
   const handleUploadDocument = async (file: File) => {
@@ -522,6 +529,8 @@ const AiDetectorTool: React.FC = () => {
           </div>
         </div>
       )}
+
+      <GuestAuthGateModal open={gateOpen} onClose={closeGate} />
     </div>
   );
 };

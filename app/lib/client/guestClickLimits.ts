@@ -10,14 +10,14 @@ import { hasRefreshSessionHint } from "@/app/lib/accessTokenStore";
  * the sign-in / sign-up gate instead of calling the AI.
  *
  * The allowance is GLOBAL: a single lifetime counter shared across every tool
- * (4 clicks total anywhere; the 5th anywhere gates). It is stored in
+ * (1 click total anywhere; the 2nd anywhere gates). It is stored in
  * localStorage and never resets — an intentionally simple, client-only scheme.
  * If this ever needs to be tamper-proof, swap the bodies here for a
  * server-backed counter; the rest of the app only depends on this public API.
  */
 
 /** Free AI clicks a guest may perform across all tools before the gate. */
-export const GUEST_CLICK_LIMIT = 4;
+export const GUEST_CLICK_LIMIT = 1;
 
 const CLICK_KEY = "guest_ai_click_count";
 
