@@ -225,7 +225,7 @@ export const defaultAcademicResearchContent = {
       "Math & Science",
       "Study tools",
     ],
-    showAllButtonText: "Show all 16 tools",
+    showAllButtonText: `Show all ${flattenPickTools(defaultPickTabTools).length} tools`,
     showLessButtonText: "Show less",
     tools: flattenPickTools(defaultPickTabTools),
     tabTools: defaultPickTabTools,

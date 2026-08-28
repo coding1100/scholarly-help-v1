@@ -7,16 +7,11 @@ import Image from "next/image";
 import Logo from "@/app/assets/Images/logo.png";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { CgRename } from "react-icons/cg";
 import axios from "axios";
 import AuthButtonSpinner from "./AuthButtonSpinner";
 import SocialAuthButtons from "./SocialAuthButtons";
 import { buildHrefWithSameQuery } from "@/app/utils/url";
-import {
-  validateEmail,
-  validateName,
-  validatePassword,
-} from "@/app/lib/authValidation";
+import { validateEmail, validatePassword } from "@/app/lib/authValidation";
 
 interface SignUpCardProps {
   switchAuthForm?: string;
@@ -35,13 +30,11 @@ const SignUpCard: FC<SignUpCardProps> = ({
   const qs =
     typeof window !== "undefined" ? window.location.search.slice(1) : "";
 
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [nameError, setNameError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -70,29 +63,28 @@ const SignUpCard: FC<SignUpCardProps> = ({
   };
 
   // Button is enabled only when every field passes its validator.
-  const isFormValid =
-    !validateName(name) && !validateEmail(email) && !validatePassword(password);
+  const isFormValid = !validateEmail(email) && !validatePassword(password);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
 
     // Validate all fields on submit; surface every error at once.
-    const nameMsg = validateName(name);
     const emailMsg = validateEmail(email);
     const passwordMsg = validatePassword(password);
-    setNameError(nameMsg || null);
     setEmailError(emailMsg || null);
     setPasswordError(passwordMsg || null);
-    if (nameMsg || emailMsg || passwordMsg) return;
+    if (emailMsg || passwordMsg) return;
 
     const newEmail = email.trim().toLowerCase();
+    // No name field — the backend defaults userData.name to "User" when
+    // it's absent (auth.controller.ts signup handler), so omitting it here
+    // is a fully supported, intentional path, not a partial payload.
     let payload: any = {
       email: newEmail,
       password,
       userData: {
         email: newEmail,
-        name,
       },
     };
     setLoading(true);
@@ -103,11 +95,9 @@ const SignUpCard: FC<SignUpCardProps> = ({
         payload,
       );
       // Only proceed if response is OK
-      localStorage.setItem("user_name", name.trim());
       localStorage.setItem("user_email", newEmail);
       localStorage.setItem("user_password", password);
 
-      setName("");
       setEmail("");
       setPassword("");
       const otpParams = new URLSearchParams(qs);
@@ -143,33 +133,6 @@ const SignUpCard: FC<SignUpCardProps> = ({
       )}
 
       <form className="flex flex-col gap-2 md:gap-5" onSubmit={handleSubmit}>
-        <div>
-          <label className="text-sm font-medium t">Name</label>
-          <div className="relative mt-2">
-            <CgRename className="absolute left-3 top-1/2 -translate-y-1/2 " />
-            <input
-              type="text"
-              placeholder="Enter your full name"
-              className={`w-full pl-10 pr-4 py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 ${
-                nameError
-                  ? "ring-2 ring-[#ff641a] focus:ring-[#ff641a]"
-                  : "focus:ring-indigo-500"
-              }`}
-              value={name}
-              onChange={(e) => {
-                setName(e.target.value);
-                setNameError(liveError(validateName, e.target.value) || null);
-              }}
-              onBlur={() => setNameError(validateName(name) || null)}
-              aria-invalid={!!nameError}
-              autoComplete="name"
-              required
-            />
-          </div>
-          {nameError && (
-            <p className="text-[#ff641a] text-xs mt-1">{nameError}</p>
-          )}
-        </div>
         <div>
           <label className="text-sm font-medium t">Email</label>
           <div className="relative mt-2">

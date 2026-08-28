@@ -7,6 +7,8 @@ import { FiDownload, FiExternalLink, FiFileText, FiRefreshCw, FiSettings, FiUplo
 import { getAccessToken } from "@/app/lib/authSession";
 import { countWords } from "@/app/utils/text";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
+import { useGuestGate } from "@/app/lib/client/useGuestGate";
+import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 import styles from "./PlagiarismCheckerTool.module.css";
 import type { PlagiarismScan, ScanSettings, SimilarityMatch } from "./types";
 
@@ -72,6 +74,7 @@ export default function PlagiarismCheckerTool() {
   const fileInput = useRef<HTMLInputElement>(null);
   const alive = useRef(true);
   const pollRun = useRef(0);
+  const { gateOpen, closeGate, guardAiClick } = useGuestGate();
 
   useEffect(() => {
     alive.current = true;
@@ -251,8 +254,10 @@ export default function PlagiarismCheckerTool() {
   };
 
   const rescan = () => {
-    const rebuilt = rebuiltText(); setText(rebuilt); setEdits({}); setIgnored(new Set());
-    void runScan(rebuilt, true);
+    guardAiClick(() => {
+      const rebuilt = rebuiltText(); setText(rebuilt); setEdits({}); setIgnored(new Set());
+      void runScan(rebuilt, true);
+    });
   };
 
   const download = async () => {
@@ -323,7 +328,7 @@ export default function PlagiarismCheckerTool() {
           ] as const).map(([key, label, description]) => <div className={styles.toggleRow} key={key}><div><div className={styles.label}>{label}</div><div className={styles.desc} dangerouslySetInnerHTML={{ __html: description }}/>{key === "contribute_to_database" && <div className={styles.note}>Off by default. Raw paper text is not stored by ScholarlyHelp.</div>}</div><label className={styles.switch}><input type="checkbox" checked={settings[key]} onChange={() => updateSetting(key)}/><span className={styles.slider}/></label></div>)}
         </div>}
         <div className={`${styles.meta} ${text.length > MAX_CHARS ? styles.metaError : ""}`}>{words.toLocaleString()} / {MAX_WORDS.toLocaleString()} words · {text.length.toLocaleString()} / {MAX_CHARS.toLocaleString()} characters · {title}</div>
-        <button className={styles.scanButton} disabled={uploading || words < 20 || words > MAX_WORDS || text.length > MAX_CHARS} onClick={() => void runScan(text)}>Check for plagiarism</button>
+        <button className={styles.scanButton} disabled={uploading || words < 20 || words > MAX_WORDS || text.length > MAX_CHARS} onClick={() => guardAiClick(async () => { await runScan(text); })}>Check for plagiarism</button>
       </div>}
 
       {view === "progress" && <div className={styles.progressCard} aria-live="polite">
@@ -349,6 +354,8 @@ export default function PlagiarismCheckerTool() {
           {sideView === "log" && <div className={styles.sideCard}><button className={styles.back} onClick={() => setSideView("overview")}>← Back to overview</button><div className={styles.cardTitle}>Activity log</div>{log.length ? log.map((entry) => <div className={styles.logEntry} key={entry}>{entry}</div>) : <div className={styles.empty}>No activity yet.</div>}</div>}
         </aside></div>
       </>}
+
+      <GuestAuthGateModal open={gateOpen} onClose={closeGate} />
     </section>
   );
 }

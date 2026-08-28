@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Semester, CourseCatalogItem, ScheduleOption, SchedulePreferences, PolicyPreset } from "@/app/lib/client/coursePlanner/types";
 import { CoursePlannerService } from "@/app/lib/client/coursePlanner/service";
+import { useGuestGate } from "@/app/lib/client/useGuestGate";
+import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 import { Step1SemesterInfo } from "./Step1SemesterInfo";
 import { Step2CoursePool } from "./Step2CoursePool";
 import { Step3CatalogSections } from "./Step3CatalogSections";
@@ -32,6 +34,7 @@ export const SetupWizard: React.FC<Props> = ({ activeSemester, priorSemesters, o
   // a way to disable its own submit button during a real network call.
   const [wizardError, setWizardError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { gateOpen, closeGate, guardAiClick } = useGuestGate();
 
   // Returns true on success, false on failure — callers that need to know
   // whether their own follow-up action (e.g. clearing a form) is safe to
@@ -124,17 +127,20 @@ export const SetupWizard: React.FC<Props> = ({ activeSemester, priorSemesters, o
       setCourses((prev) => [...prev, ...imported]);
     });
 
-  // Step 4: Schedule preferences submit
+  // Step 4: Schedule preferences submit — this is the wizard's actual AI
+  // generation call, so guests get gated here just like every other tool.
   const handleStep4 = (newPrefs: SchedulePreferences) =>
-    runStep(async () => {
-      if (!currentSemesterId) return;
-      setPrefs(newPrefs);
-      const options = await CoursePlannerService.generateSchedules(currentSemesterId, newPrefs);
-      setScheduleOptions(options);
-      if (options.length > 0) {
-        setSelectedOption(options[0]);
-      }
-      setStep(5);
+    guardAiClick(async () => {
+      await runStep(async () => {
+        if (!currentSemesterId) return;
+        setPrefs(newPrefs);
+        const options = await CoursePlannerService.generateSchedules(currentSemesterId, newPrefs);
+        setScheduleOptions(options);
+        if (options.length > 0) {
+          setSelectedOption(options[0]);
+        }
+        setStep(5);
+      });
     });
 
   // Step 5: Option selected
@@ -249,6 +255,8 @@ export const SetupWizard: React.FC<Props> = ({ activeSemester, priorSemesters, o
           isSubmitting={isSubmitting}
         />
       )}
+
+      <GuestAuthGateModal open={gateOpen} onClose={closeGate} />
     </div>
   );
 };

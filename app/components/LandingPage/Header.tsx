@@ -14,6 +14,7 @@ import {
   isTakeMyClassHeroCopyVariant,
 } from "@/app/lib/takeMyClassLandingRoutes";
 import { rememberFbclidFromUrl } from "@/app/lib/client/smsTracking";
+import { hasRefreshSessionHint } from "@/app/lib/accessTokenStore";
 
 const Star: React.FC<{ className?: string }> = ({ className }) => (
   <svg
@@ -59,6 +60,22 @@ export default function Header() {
   const [mobileActiveIndex, setMobileActiveIndex] = useState<number | null>(
     null,
   );
+
+  // Signed-in users see a "Student AI Dashboard" button here instead of the
+  // phone CTA. Read the localStorage hint after mount (not during SSR/first
+  // paint) so the server-rendered markup always matches hydration, then stay
+  // in sync with login/logout happening in another tab or component.
+  const [isSignedIn, setIsSignedIn] = useState(false);
+  useEffect(() => {
+    setIsSignedIn(hasRefreshSessionHint());
+    const onAuthChange = () => setIsSignedIn(hasRefreshSessionHint());
+    window.addEventListener("sh:auth-session-changed", onAuthChange);
+    window.addEventListener("storage", onAuthChange);
+    return () => {
+      window.removeEventListener("sh:auth-session-changed", onAuthChange);
+      window.removeEventListener("storage", onAuthChange);
+    };
+  }, []);
 
   const navItems = [
     {
@@ -558,13 +575,21 @@ export default function Header() {
               </nav>
             )}
             {!isTakeMyClass3 && (
-              <div className="hidden sm:block">
+              <div className="hidden sm:flex items-center gap-3">
                  {/* <button
-           
+
            className="rounded-md sm:px-3 px-2 cursor-pointer bg-[#ff641a] text-white border border-transparent transition duration-300 sm:text-xs text-[10px] font-medium flex items-center justify-center hover:bg-white hover:text-[#ff641a] hover:border-[#ff641a] h-[40px] w-full"
          >
            Secure My "A" or "B" Grades
          </button> */}
+                {isSignedIn && (
+                  <Link
+                    href="/tools/dashboard"
+                    className="rounded-md px-3 py-2 cursor-pointer bg-[#ff641a] text-white border border-transparent transition duration-300 text-sm font-medium flex items-center justify-center whitespace-nowrap hover:bg-white hover:text-[#ff641a] hover:border-[#ff641a]"
+                  >
+                    Student AI Dashboard
+                  </Link>
+                )}
                 <a
                   href={`tel:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER || "17167081869"}`}
                   className="flex items-center sm:text-primary-400 sm:text-[#565add] transition sm:bg-white bg-[#9F92EC] sm:rounded-none rounded-full sm:px-0 px-4 sm:py-0 py-1"
