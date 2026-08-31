@@ -17,7 +17,7 @@ import CopyRight from "./CopyRight";
 import LogoNormal from "@/app/assets/Images/logo.svg";
 import cellPhone from "@/app/assets/Images/cellphone.png";
 import { usePathname } from "next/navigation";
-import { hideFooterLinks, smsHide, showSmsModule } from "../HideLinks/HideLinks";
+import { hideFooterLinks, smsHide } from "../HideLinks/HideLinks";
 // import "./footer.css";
 // import ChatBubble from "@/app/assets/Icons/ChatBubble";
 import chatBubble from "@/app/assets/Images/chatBubble.png";
@@ -30,8 +30,6 @@ const Footer: FC<FooterProps> = ({}) => {
   const currentPage = usePathname();
   const hidelinksfooter = hideFooterLinks.includes(currentPage);
   const hideSMS = smsHide.includes(currentPage);
-  // The "Text Us" SMS button is shown ONLY on the thank-you pages.
-  const showTextUsSms = showSmsModule.includes(currentPage);
   const [GCLID, setGCLID] = useState("");
   const [url, setUrl] = useState("");
   const [isFooterInView, setIsFooterInView] = useState(false);
@@ -563,50 +561,6 @@ const Footer: FC<FooterProps> = ({}) => {
           </div>
         </div>
         <CopyRight />
-        {showTextUsSms && (
-          <div>
-            {/* sms module - desktop */}
-            <button
-              id="sms-chat"
-              className="fixed flex justify-between z-[98] left-0 bg-transparent border-none hidden md:flex"
-              onClick={apiCall}
-            >
-              <a
-                href={`sms:${process.env.NEXT_PUBLIC_TEXT_US_PHONE_NUMBER || "14108445419"}`}
-                className="fixed flex font-normal justify-between z-[98] bottom-[80px] left-0 text-[15px] py-[10px] px-[20px] no-underline bg-[#36454F] ml-[5px] rounded-[50px] items-center min-w-[44px] min-h-[44px]"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Send us an SMS"
-              >
-                <Image src={chatBubble} alt="SMS" className="w-[35px]" />
-                <span className="pl-[10px] ml-[15px] font-bold text-white relative -left-[14px]">
-                  Text Us
-                </span>
-              </a>
-            </button>
-
-            {/* sms module - mobile */}
-            <button
-              id="sms-chat2"
-              className="fixed flex justify-between z-[98] left-0 bg-transparent border-none md:hidden flex z-[99999]"
-              onClick={apiCall}
-            >
-              <a
-                href={`sms:${process.env.NEXT_PUBLIC_TEXT_US_PHONE_NUMBER || "14108445419"}`}
-                className="fixed flex font-normal justify-between z-[98] bottom-[55px] left-0 text-[15px] py-0 px-[5px] no-underline ml-[5px] rounded-[50px] items-center min-w-[44px] min-h-[44px]"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Send us an SMS"
-              >
-                <Image
-                  src={cellPhone}
-                  alt="SMS"
-                  className="w-[45px] max-[768px]:w-[37px]"
-                />
-              </a>
-            </button>
-          </div>
-        )}
       </div>
     );
   }
