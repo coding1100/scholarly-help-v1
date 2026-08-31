@@ -100,18 +100,6 @@ export const smsHide = [
   "/take-my-proctored-exam-for-me/",
 ];
 
-// The dark-grey "Text Us" SMS button (behind the WhatsApp button) is shown ONLY
-// on the thank-you pages; hidden everywhere else. Trailing-slash variants
-// included because the route may render with or without one.
-export const showSmsModule = [
-  "/thank-you",
-  "/thank-you/",
-  "/thank-you-2",
-  "/thank-you-2/",
-  "/thank-you-3",
-  "/thank-you-3/",
-];
-
 export const phoneEmail = ["/pay-for-someone-to-write-my-paper/"];
 
 // export const detailsAndMsgForm = ["/take-my-class/"];

@@ -300,7 +300,7 @@ const Footer: FC<FooterProps> = () => {
           <button id="whatsapp-chat" className="whatsapp-chat" onClick={apiCall}>
             <a
               className="blantershow-chat"
-              href="https://wa.me/17167081869?text=Hi%20There!%20We are here for you!"
+              href="https://api.whatsapp.com/send?phone=14108445419"
               target="_blank"
               rel="noopener"
             >
@@ -311,7 +311,7 @@ const Footer: FC<FooterProps> = () => {
           <button id="whatsapp-chat-2" className="whatsapp-chat" onClick={apiCall}>
             <a
               className="blantershow-chat2"
-              href="https://wa.me/17167081869?text=Hi%20There!%20We are here for you!"
+              href="https://api.whatsapp.com/send?phone=14108445419"
               target="_blank"
               rel="noopener"
             >

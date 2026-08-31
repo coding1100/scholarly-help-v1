@@ -68,7 +68,7 @@ const WhatsApp = () => {
           >
             <a
               className="fixed flex font-normal justify-between z-[98] bottom-[60px] left-0 text-[15px] py-[10px] px-[20px] no-underline bg-[#128C7E] ml-[5px] rounded-[50px] items-center min-w-[44px] min-h-[44px]"
-              href="https://wa.me/17167081869?text=Hi%20There!%20We are here for you!"
+              href="https://api.whatsapp.com/send?phone=14108445419"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Chat with us on WhatsApp"
@@ -91,7 +91,7 @@ const WhatsApp = () => {
           >
             <a
               className="fixed flex font-normal justify-between z-[98] bottom-[20px] left-0 text-[15px] py-0 px-[5px] no-underline ml-[5px] rounded-[50px] items-center min-w-[44px] min-h-[44px]"
-              href="https://wa.me/17167081869?text=Hi%20There!%20We are here for you!"
+              href="https://api.whatsapp.com/send?phone=14108445419"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Chat with us on WhatsApp"

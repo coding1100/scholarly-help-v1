@@ -217,25 +217,14 @@ const ThankYou: FC<ThankYouProps> = ({}) => {
                 </Button>
               </a> */}
 
-              {/* <div onClick={apiCall}>
-                <a
-                  href="https://wa.me/17167081869?text=Hi%20There!%20We are here for you!"
-                  target="_blank"
-                >
-                  <Button className="bg-[#118C7E] w-full text-xl">
-                    Connect on Whatsapp
-                  </Button>
-                </a>
-              </div> */}
-
               <div onClick={apiCall}>
                 <a
-                  href={`sms:${process.env.NEXT_PUBLIC_TEXT_US_PHONE_NUMBER || "14108445419"}`}
+                  href="https://api.whatsapp.com/send?phone=14108445419"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <Button className="bg-[#36454F] w-full text-xl">
-                    Text Us
+                  <Button className="bg-[#118C7E] w-full text-xl">
+                    Free Quote On Whatsapp
                   </Button>
                 </a>
               </div>
