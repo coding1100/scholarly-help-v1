@@ -23,6 +23,7 @@ import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import SummarizerChat from "@/app/components/AiTools/SummarizerChat/SummarizerChat";
 import { sanitizeHtml } from "@/app/utils/sanitizeHtml";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
+import { useToolDraftPersistence } from "@/app/lib/client/useToolDraftPersistence";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 import { getAccessToken } from "@/app/lib/authSession";
 import { cachedRequest, invalidateCachedRequest } from "@/app/lib/client/toolOptimization";
@@ -403,7 +404,27 @@ const SummarizerTool: React.FC<SummarizerToolProps> = ({
   const [editingSlides, setEditingSlides] = useState<EditableSlide[] | null>(null);
   const [isSavingDocument, setIsSavingDocument] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const { gateOpen, closeGate, guardAiClick } = useGuestGate();
+  type SummarizerDraft = {
+    currentInputText: string;
+    summaryStyle: string;
+    detailLevel: string;
+    outputs: OutputType[];
+  };
+
+  const { stashDraft } = useToolDraftPersistence<SummarizerDraft>(
+    "summarizer",
+    (draft) => {
+      if (draft.currentInputText) setCurrentInputText(draft.currentInputText);
+      if (draft.summaryStyle) setSummaryStyle(draft.summaryStyle);
+      if (draft.detailLevel) setDetailLevel(draft.detailLevel);
+      if (draft.outputs && draft.outputs.length) setOutputs(draft.outputs);
+    },
+  );
+
+  const { gateOpen, closeGate, guardAiClick } = useGuestGate<SummarizerDraft>({
+    getDraft: () => ({ currentInputText, summaryStyle, detailLevel, outputs }),
+    stashDraft,
+  });
   const editorRef = useRef<HTMLDivElement | null>(null);
   // Tracks the job currently being polled. A new submit or unmount changes this
   // so stale polls stop updating state / clobbering newer results.

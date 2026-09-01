@@ -11,6 +11,7 @@ import { countWords, looksLikeGibberish } from "@/app/utils/text";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
+import { useToolDraftPersistence } from "@/app/lib/client/useToolDraftPersistence";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 import {
   detectorHumanContentShare,
@@ -177,7 +178,26 @@ const HumanizerTool: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const detectorConfig = useDetectorConfig();
 
-  const { gateOpen, closeGate, guardAiClick } = useGuestGate();
+  type HumanizerDraft = {
+    text: string;
+    intensity: RewriteIntensity;
+    register: RegisterSelection;
+    voiceSample: string;
+  };
+  const { stashDraft } = useToolDraftPersistence<HumanizerDraft>(
+    "humanizer",
+    (draft) => {
+      if (draft.text) setText(draft.text);
+      if (draft.intensity) setIntensity(draft.intensity);
+      if (draft.register) setRegister(draft.register);
+      if (draft.voiceSample) setVoiceSample(draft.voiceSample);
+    },
+  );
+
+  const { gateOpen, closeGate, guardAiClick } = useGuestGate<HumanizerDraft>({
+    getDraft: () => ({ text, intensity, register, voiceSample }),
+    stashDraft,
+  });
 
   useEffect(() => {
     if (typeof window !== "undefined") {

@@ -10,6 +10,7 @@ import toast from "react-hot-toast";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
+import { useToolDraftPersistence } from "@/app/lib/client/useToolDraftPersistence";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 import { getAccessToken } from "@/app/lib/authSession";
 import { useLatestAbortController } from "@/app/lib/client/toolOptimization";
@@ -33,7 +34,25 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag, variant = "default" }) 
   const [isSubmitting, setSubmitting] = useState<boolean>(false);
   const [file, setFile] = useState<File | null>(null);
   const [wordLimitExceeded, setWordLimitExceeded] = useState(false);
-  const { gateOpen, closeGate, guardAiClick } = useGuestGate();
+  type ParaphraserDraft = {
+    inputText: string;
+    toneMode: string;
+    customToneInstructions: string;
+  };
+
+  const { stashDraft } = useToolDraftPersistence<ParaphraserDraft>(
+    "paraphraser",
+    (draft) => {
+      if (draft.inputText) setInputText(draft.inputText);
+      if (draft.toneMode) setToneMode(draft.toneMode);
+      if (draft.customToneInstructions) setCustomToneInstructions(draft.customToneInstructions);
+    },
+  );
+
+  const { gateOpen, closeGate, guardAiClick } = useGuestGate<ParaphraserDraft>({
+    getDraft: () => ({ inputText, toneMode, customToneInstructions }),
+    stashDraft,
+  });
   const nextController = useLatestAbortController();
   const comparison = useMemo(() => {
     const words = (value: string) => new Set(value.toLowerCase().match(/[a-z0-9']+/g) || []);

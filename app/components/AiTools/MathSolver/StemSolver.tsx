@@ -10,6 +10,7 @@ import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import { sanitizeHtml } from "@/app/utils/sanitizeHtml";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
+import { useToolDraftPersistence } from "@/app/lib/client/useToolDraftPersistence";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 import { getAccessToken } from "@/app/lib/authSession";
 
@@ -362,7 +363,20 @@ const StemSolver: FC<{ setFlag: (v: boolean) => void }> = ({ setFlag }) => {
   const [error, setError] = useState<string>("");
   const [showKeyboard, setShowKeyboard] = useState<boolean>(false);
   const [keyboardTab, setKeyboardTab] = useState<string>("basic");
-  const { gateOpen, closeGate, guardAiClick } = useGuestGate();
+  type StemSolverDraft = { problem: string; subject: Subject };
+
+  const { stashDraft } = useToolDraftPersistence<StemSolverDraft>(
+    "math-solver",
+    (draft) => {
+      if (draft.problem) setProblem(draft.problem);
+      if (draft.subject) setSubject(draft.subject);
+    },
+  );
+
+  const { gateOpen, closeGate, guardAiClick } = useGuestGate<StemSolverDraft>({
+    getDraft: () => ({ problem, subject }),
+    stashDraft,
+  });
   const resultRef = useRef<HTMLDivElement>(null);
   const problemRef = useRef<HTMLTextAreaElement>(null);
 

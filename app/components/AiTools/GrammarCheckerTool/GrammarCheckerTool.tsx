@@ -9,6 +9,7 @@ import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGate
 import TextSummarizerInput from "@/app/components/AiTools/TextSummarizerInput";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
+import { useToolDraftPersistence } from "@/app/lib/client/useToolDraftPersistence";
 import { countWords, looksLikeGibberish } from "@/app/utils/text";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import { getAccessToken } from "@/app/lib/authSession";
@@ -88,7 +89,19 @@ const GrammarCheckerTool: React.FC = () => {
   const [settled, setSettled] = useState<string[]>([]);
   const [seenIssueIds, setSeenIssueIds] = useState<string[]>([]);
 
-  const { gateOpen, closeGate, guardAiClick } = useGuestGate();
+  type GrammarCheckerDraft = { text: string };
+
+  const { stashDraft } = useToolDraftPersistence<GrammarCheckerDraft>(
+    "grammar-checker",
+    (draft) => {
+      if (draft.text) setText(draft.text);
+    },
+  );
+
+  const { gateOpen, closeGate, guardAiClick } = useGuestGate<GrammarCheckerDraft>({
+    getDraft: () => ({ text }),
+    stashDraft,
+  });
   const requestControllerRef = useRef<AbortController | null>(null);
   const lastCheckedTextRef = useRef("");
   useEffect(() => () => requestControllerRef.current?.abort(), []);

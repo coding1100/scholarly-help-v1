@@ -19,6 +19,7 @@ import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import DOMPurify from "dompurify";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
+import { useToolDraftPersistence } from "@/app/lib/client/useToolDraftPersistence";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 const SavedCitations = dynamic(() => import("./SavedCitations"), { ssr: false, loading: () => <div className="p-4 text-sm text-gray-500">Loading citation library…</div> });
 import { getAccessToken } from "@/app/lib/authSession";
@@ -222,7 +223,62 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag, variant = "default" }) =
   const [libraryOpen, setLibraryOpen] = useState<boolean>(false);
   const [libraryRefreshKey, setLibraryRefreshKey] = useState<number>(0);
 
-  const { gateOpen, openGate, closeGate, guardAiClick } = useGuestGate();
+  type CitationDraft = {
+    citationStyle: CitationStyle;
+    sourceType: SourceType;
+    authors: AuthorRow[];
+    title: string;
+    publisher: string;
+    journalName: string;
+    websiteName: string;
+    url: string;
+    doi: string;
+    mode: "autofill" | "manual";
+    autofillType: AutofillType;
+    doiInput: string;
+    urlInput: string;
+    searchInput: string;
+  };
+
+  const { stashDraft } = useToolDraftPersistence<CitationDraft>(
+    "citation-generator",
+    (draft) => {
+      if (draft.citationStyle) setCitationStyle(draft.citationStyle);
+      if (draft.sourceType) setSourceType(draft.sourceType);
+      if (draft.authors && draft.authors.length) setAuthors(draft.authors);
+      if (draft.title) setTitle(draft.title);
+      if (draft.publisher) setPublisher(draft.publisher);
+      if (draft.journalName) setJournalName(draft.journalName);
+      if (draft.websiteName) setWebsiteName(draft.websiteName);
+      if (draft.url) setUrl(draft.url);
+      if (draft.doi) setDoi(draft.doi);
+      if (draft.mode) setMode(draft.mode);
+      if (draft.autofillType) setAutofillType(draft.autofillType);
+      if (draft.doiInput) setDoiInput(draft.doiInput);
+      if (draft.urlInput) setUrlInput(draft.urlInput);
+      if (draft.searchInput) setSearchInput(draft.searchInput);
+    },
+  );
+
+  const { gateOpen, openGate, closeGate, guardAiClick } = useGuestGate<CitationDraft>({
+    getDraft: () => ({
+      citationStyle,
+      sourceType,
+      authors,
+      title,
+      publisher,
+      journalName,
+      websiteName,
+      url,
+      doi,
+      mode,
+      autofillType,
+      doiInput,
+      urlInput,
+      searchInput,
+    }),
+    stashDraft,
+  });
 
   useEffect(() => {
     if (typeof window !== "undefined") {

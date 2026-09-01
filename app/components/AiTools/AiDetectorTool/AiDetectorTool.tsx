@@ -21,6 +21,7 @@ import {
 import { useDetectorConfig } from "./useDetectorConfig";
 import { getAccessToken } from "@/app/lib/authSession";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
+import { useToolDraftPersistence } from "@/app/lib/client/useToolDraftPersistence";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 
 type Filter = "all" | Exclude<SegmentLabel, "neutral">;
@@ -64,7 +65,19 @@ const AiDetectorTool: React.FC = () => {
   const [downloadingReport, setDownloadingReport] = useState(false);
   const [rescanNeeded, setRescanNeeded] = useState(false);
   const [log, setLog] = useState<string[]>([]);
-  const { gateOpen, closeGate, guardAiClick } = useGuestGate();
+  type AiDetectorDraft = { text: string };
+
+  const { stashDraft } = useToolDraftPersistence<AiDetectorDraft>(
+    "ai-detector",
+    (draft) => {
+      if (draft.text) setText(draft.text);
+    },
+  );
+
+  const { gateOpen, closeGate, guardAiClick } = useGuestGate<AiDetectorDraft>({
+    getDraft: () => ({ text }),
+    stashDraft,
+  });
   const detectorConfig = useDetectorConfig();
   const feedbackQueueRef = useRef<Set<string>>(new Set());
   const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
