@@ -1,11 +1,21 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   hasReachedGuestClickLimit,
   isGuest,
   tryConsumeGuestClick,
 } from "@/app/lib/client/guestClickLimits";
+
+type UseGuestGateOptions<T extends Record<string, unknown>> = {
+  /**
+   * Called right before the auth gate opens, so the caller's current input
+   * (and anything else worth keeping) can be captured and restored after
+   * sign-in/sign-up via useToolDraftPersistence with the same toolKey.
+   */
+  getDraft?: () => T;
+  stashDraft?: (draft: T) => void;
+};
 
 /**
  * Shared hook that enforces the global guest click limit for a tool.
@@ -21,12 +31,24 @@ import {
  * `guardAiClick(run)` consumes one free guest click and invokes `run()`. If the
  * guest has already used their allowance, it opens the auth gate instead and
  * does NOT invoke `run()`. Signed-in users always pass straight through.
+ *
+ * Pass `getDraft`/`stashDraft` (from useToolDraftPersistence) to automatically
+ * snapshot the tool's current input whenever the gate opens, so it can be
+ * restored when the user lands back on this tool after auth.
  */
-export function useGuestGate() {
+export function useGuestGate<T extends Record<string, unknown> = Record<string, unknown>>(
+  options?: UseGuestGateOptions<T>,
+) {
   const [gateOpen, setGateOpen] = useState(false);
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
 
   const closeGate = useCallback(() => setGateOpen(false), []);
-  const openGate = useCallback(() => setGateOpen(true), []);
+  const openGate = useCallback(() => {
+    const { getDraft, stashDraft } = optionsRef.current || {};
+    if (getDraft && stashDraft) stashDraft(getDraft());
+    setGateOpen(true);
+  }, []);
 
   /**
    * Gate an AI-triggering action. Returns true if the action was allowed to run
@@ -36,13 +58,13 @@ export function useGuestGate() {
   const guardAiClick = useCallback(
     (run: () => void | Promise<void>): boolean => {
       if (!tryConsumeGuestClick()) {
-        setGateOpen(true);
+        openGate();
         return false;
       }
       void run();
       return true;
     },
-    [],
+    [openGate],
   );
 
   /**
@@ -54,11 +76,11 @@ export function useGuestGate() {
    */
   const ensureGuestClick = useCallback((): boolean => {
     if (!tryConsumeGuestClick()) {
-      setGateOpen(true);
+      openGate();
       return false;
     }
     return true;
-  }, []);
+  }, [openGate]);
 
   /**
    * Non-consuming check for AUTOMATIC (non-click) AI features such as inline

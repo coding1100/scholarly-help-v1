@@ -9,6 +9,7 @@ import { FaRegCopy } from "react-icons/fa";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
+import { useToolDraftPersistence } from "@/app/lib/client/useToolDraftPersistence";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 import { getAccessToken } from "@/app/lib/authSession";
 import { rankAcademicText, useLatestAbortController } from "@/app/lib/client/toolOptimization";
@@ -68,14 +69,37 @@ const ThesisGenerator = () => {
   const [token, setToken] = useState<string | null>(null);
   const [theses, setTheses] = useState<ThesisEntry[]>([]);
   const [isSubmitting, setSubmitting] = useState<boolean>(false);
-  const { gateOpen, closeGate, guardAiClick } = useGuestGate();
-  const nextController = useLatestAbortController();
   const [formData, setFormData] = useState({
     topic: "",
     mainIdea: "",
     supportingReason: "",
     audience: "",
   });
+
+  type ThesisGeneratorDraft = {
+    topic: string;
+    mainIdea: string;
+    supportingReason: string;
+    audience: string;
+  };
+
+  const { stashDraft } = useToolDraftPersistence<ThesisGeneratorDraft>(
+    "thesis-generator",
+    (draft) => {
+      setFormData((prev) => ({
+        topic: draft.topic || prev.topic,
+        mainIdea: draft.mainIdea || prev.mainIdea,
+        supportingReason: draft.supportingReason || prev.supportingReason,
+        audience: draft.audience || prev.audience,
+      }));
+    },
+  );
+
+  const { gateOpen, closeGate, guardAiClick } = useGuestGate<ThesisGeneratorDraft>({
+    getDraft: () => ({ ...formData }),
+    stashDraft,
+  });
+  const nextController = useLatestAbortController();
 
   useEffect(() => {
     if (typeof window !== "undefined") {

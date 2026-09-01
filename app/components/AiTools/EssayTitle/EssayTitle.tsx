@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
+import { useToolDraftPersistence } from "@/app/lib/client/useToolDraftPersistence";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 import { getAccessToken } from "@/app/lib/authSession";
 import { rankAcademicText, useLatestAbortController } from "@/app/lib/client/toolOptimization";
@@ -83,7 +84,41 @@ const EssayTitle: FC<EssayTitleProps> = ({ setFlag, variant = "default" }) => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [titles, setTitles] = useState<string[]>([]);
   const [error, setError] = useState<string>("");
-  const { gateOpen, closeGate, guardAiClick } = useGuestGate();
+  type EssayTitleDraft = {
+    topic: string;
+    keywords: string;
+    tone: string;
+    customToneInstructions: string;
+    styleEngagement: string;
+    academicLevel: string;
+    count: number;
+  };
+
+  const { stashDraft } = useToolDraftPersistence<EssayTitleDraft>(
+    "essay-title",
+    (draft) => {
+      if (draft.topic) setTopic(draft.topic);
+      if (draft.keywords) setKeywords(draft.keywords);
+      if (draft.tone) setTone(draft.tone);
+      if (draft.customToneInstructions) setCustomToneInstructions(draft.customToneInstructions);
+      if (draft.styleEngagement) setStyleEngagement(draft.styleEngagement);
+      if (draft.academicLevel) setAcademicLevel(draft.academicLevel);
+      if (draft.count) setCount(draft.count);
+    },
+  );
+
+  const { gateOpen, closeGate, guardAiClick } = useGuestGate<EssayTitleDraft>({
+    getDraft: () => ({
+      topic,
+      keywords,
+      tone,
+      customToneInstructions,
+      styleEngagement,
+      academicLevel,
+      count,
+    }),
+    stashDraft,
+  });
   const nextController = useLatestAbortController();
 
   useEffect(() => {

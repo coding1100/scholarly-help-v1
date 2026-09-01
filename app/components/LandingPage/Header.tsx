@@ -591,7 +591,7 @@ export default function Header() {
                     href="/tools/dashboard"
                     className="rounded-md px-3 py-2 cursor-pointer bg-[#ff641a] text-white border border-transparent transition duration-300 text-sm font-medium flex items-center justify-center whitespace-nowrap hover:bg-white hover:text-[#ff641a] hover:border-[#ff641a]"
                   >
-                    Student AI Dashboard
+                    AI Dashboard
                   </Link>
                 )}
                 {isThankYou ? (
@@ -658,6 +658,20 @@ export default function Header() {
             onClick={(e) => e.stopPropagation()}
           >
             <ul className="flex flex-col divide-y">
+              {isSignedIn && (
+                <li className="p-3">
+                  <Link
+                    href="/tools/dashboard"
+                    className="block rounded-md bg-[#ff641a] px-3 py-2 text-center text-sm font-medium text-white transition duration-300 hover:bg-white hover:text-[#ff641a] hover:border-[#ff641a] border border-transparent"
+                    onClick={() => {
+                      setMobileOpen(false);
+                      setMobileActiveIndex(null);
+                    }}
+                  >
+                    AI Dashboard
+                  </Link>
+                </li>
+              )}
               {navItems.map((item, index) => (
                 <li key={index} className="p-3">
                   {item.submenu ? (

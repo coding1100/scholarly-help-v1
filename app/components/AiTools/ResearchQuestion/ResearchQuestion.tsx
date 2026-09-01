@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
+import { useToolDraftPersistence } from "@/app/lib/client/useToolDraftPersistence";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 import { getAccessToken } from "@/app/lib/authSession";
 import { rankAcademicText, useLatestAbortController } from "@/app/lib/client/toolOptimization";
@@ -85,7 +86,38 @@ const ResearchQuestion: FC<ResearchQuestionProps> = ({
   const [questions, setQuestions] = useState<string[]>([]);
   const [error, setError] = useState<string>("");
 
-  const { gateOpen, closeGate, guardAiClick } = useGuestGate();
+  type ResearchQuestionDraft = {
+    topic: string;
+    keywords: string;
+    researchType: string;
+    questionStyle: string;
+    levelOfSpecificity: string;
+    count: number;
+  };
+
+  const { stashDraft } = useToolDraftPersistence<ResearchQuestionDraft>(
+    "research-question",
+    (draft) => {
+      if (draft.topic) setTopic(draft.topic);
+      if (draft.keywords) setKeywords(draft.keywords);
+      if (draft.researchType) setResearchType(draft.researchType);
+      if (draft.questionStyle) setQuestionStyle(draft.questionStyle);
+      if (draft.levelOfSpecificity) setLevelOfSpecificity(draft.levelOfSpecificity);
+      if (draft.count) setCount(draft.count);
+    },
+  );
+
+  const { gateOpen, closeGate, guardAiClick } = useGuestGate<ResearchQuestionDraft>({
+    getDraft: () => ({
+      topic,
+      keywords,
+      researchType,
+      questionStyle,
+      levelOfSpecificity,
+      count,
+    }),
+    stashDraft,
+  });
   const nextController = useLatestAbortController();
 
   useEffect(() => {
