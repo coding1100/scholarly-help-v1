@@ -10,6 +10,14 @@ import whatsappIcon2 from "@/app/assets/Images/whatsappIcon2.png";
 const WhatsApp = () => {
   const currentPage = usePathname();
   const hideWhatsapp = hideWhatsappModule.includes(currentPage);
+  // The thank-you and take-my-class pages want the round icon-only bubble at
+  // every screen size (no text-label pill), unlike the rest of the site
+  // where the pill shows on desktop and the icon-only bubble is mobile-only.
+  const iconOnly =
+    currentPage === "/thank-you" ||
+    currentPage === "/thank-you/" ||
+    currentPage === "/take-my-class" ||
+    currentPage === "/take-my-class/";
   const [GCLID, setGCLID] = useState("");
   const [url, setUrl] = useState("");
 
@@ -57,36 +65,37 @@ const WhatsApp = () => {
         currentPage !== "/take-my-class-4/" &&
         currentPage !== "/take-my-class-5/" &&
         currentPage !== "/take-my-class-6/" &&
-        currentPage !== "/take-my-class/" &&
         !currentPage?.includes("take-my-class-2") && (
  
         <div>
-          <button
-            id="whatsapp-chat"
-            className="fixed flex justify-between z-[98] left-0 bg-transparent border-none md:flex hidden"
-            onClick={apiCall}
-          >
-            <a
-              className="fixed flex font-normal justify-between z-[98] bottom-[60px] left-0 text-[15px] py-[10px] px-[20px] no-underline bg-[#128C7E] ml-[5px] rounded-[50px] items-center min-w-[44px] min-h-[44px]"
-              href="https://api.whatsapp.com/send?phone=14108445419"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Chat with us on WhatsApp"
+          {!iconOnly && (
+            <button
+              id="whatsapp-chat"
+              className="fixed flex justify-between z-[98] left-0 bg-transparent border-none md:flex hidden"
+              onClick={apiCall}
             >
-              <Image
-                src={whatsappIconFooter}
-                alt="whatsapp"
-                className="w-[35px]"
-              />
-              <span className="pl-[10px] ml-[15px] font-bold text-white relative -left-[14px]">
-                Free Quote On Whatsapp
-              </span>
-            </a>
-          </button>
+              <a
+                className="fixed flex font-normal justify-between z-[98] bottom-[60px] left-0 text-[15px] py-[10px] px-[20px] no-underline bg-[#128C7E] ml-[5px] rounded-[50px] items-center min-w-[44px] min-h-[44px]"
+                href="https://api.whatsapp.com/send?phone=14108445419"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Chat with us on WhatsApp"
+              >
+                <Image
+                  src={whatsappIconFooter}
+                  alt="whatsapp"
+                  className="w-[35px]"
+                />
+                <span className="pl-[10px] ml-[15px] font-bold text-white relative -left-[14px]">
+                  Free Quote On Whatsapp
+                </span>
+              </a>
+            </button>
+          )}
 
           <button
             id="whatsapp-chat-2"
-            className="fixed flex justify-between z-[98] left-0 bg-transparent border-none md:hidden flex z-[99999]"
+            className={`fixed flex justify-between z-[98] left-0 border-none flex z-[99999] ${iconOnly ? "" : "md:hidden"}`}
             onClick={apiCall}
           >
             <a
