@@ -4,7 +4,6 @@ import DownArrow from "@/app/assets/Images/faqDropdown.webp";
 import QuestionMark from "@/app/assets/Images/questionMark.png";
 import Image from "next/image";
 import Button from "../Button/Button";
-import Phone from "@/app/assets/Icons/Phone";
 import DumyImg from "@/app/assets/Images/dumyImg.jpg";
 import LocationIcon from "@/app/assets/Images/location.png";
 import BoxStar from "@/app/assets/Images/boxStar.png";
@@ -228,20 +227,6 @@ const ThankYou: FC<ThankYouProps> = ({}) => {
                   </Button>
                 </a>
               </div>
-            </div>
-            <div className="flex justify-center items-center gap-2">
-              <p className="text-xl font-semibold">Call at</p>
-
-              <a
-                href={`tel:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER}`}
-                className="flex justify-center items-center"
-              >
-                <div className="w-[28px]">
-                  <Phone color="#2B1C50" />
-                </div>
-
-                <p className="text-xl font-semibold">+1 646 480 6092 </p>
-              </a>
             </div>
           </div>
           <div className="lg:flex justify-between items-end pb-14 hidden sm:order-4 order-5">

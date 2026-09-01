@@ -49,6 +49,10 @@ export default function Header() {
   const isTakeMyClassExact =
     pathname === "/take-my-class" || pathname === "/take-my-class/";
 
+  // /thank-you/ has its own "Free Quote On Whatsapp" CTA in-page, so the
+  // header's phone number is redundant there and hidden.
+  const isThankYou = pathname === "/thank-you" || pathname === "/thank-you/";
+
   // Persist fbclid (cookie + sessionStorage) as early as the header mounts, so a
   // later "Text Us" tap can recover it even if the URL query is gone.
   useEffect(() => {
@@ -590,21 +594,32 @@ export default function Header() {
                     Student AI Dashboard
                   </Link>
                 )}
-                <a
-                  href={`tel:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER || "17167081869"}`}
-                  className="flex items-center sm:text-primary-400 sm:text-[#565add] transition sm:bg-white bg-[#9F92EC] sm:rounded-none rounded-full sm:px-0 px-4 sm:py-0 py-1"
-                >
-                  <span className="w-6 mr-1 text-primary-400 sm:block hidden">
-                    <Image
-                      src={Phone}
-                      alt="Phone"
-                      width={22}
-                      height={22}
-                      fetchPriority="high"
-                    />
-                  </span>
-                  <span className="sm:block hidden">+1 646 480 6092</span>
-                </a>
+                {isThankYou ? (
+                  <a
+                    href="https://api.whatsapp.com/send?phone=14108445419"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-md px-3 py-2 cursor-pointer bg-[#118C7E] text-white border border-transparent transition duration-300 text-sm font-medium flex items-center justify-center whitespace-nowrap hover:bg-white hover:text-[#118C7E] hover:border-[#118C7E]"
+                  >
+                    Free Quote On Whatsapp
+                  </a>
+                ) : (
+                  <a
+                    href={`tel:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER || "17167081869"}`}
+                    className="flex items-center sm:text-primary-400 sm:text-[#565add] transition sm:bg-white bg-[#9F92EC] sm:rounded-none rounded-full sm:px-0 px-4 sm:py-0 py-1"
+                  >
+                    <span className="w-6 mr-1 text-primary-400 sm:block hidden">
+                      <Image
+                        src={Phone}
+                        alt="Phone"
+                        width={22}
+                        height={22}
+                        fetchPriority="high"
+                      />
+                    </span>
+                    <span className="sm:block hidden">+1 646 480 6092</span>
+                  </a>
+                )}
               </div>
             )}
           </>
