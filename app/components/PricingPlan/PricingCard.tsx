@@ -39,7 +39,7 @@ const PricingCard: FC<PricingCardProps> = ({ item, index }) => {
         return;
       }
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_NGROX_URL}/v1/billing/create-checkout`,
+        `${process.env.NEXT_PUBLIC_NGROX_URL}/billing/create-checkout`,
         { plan: item.submitPlan },
         {
           headers: {

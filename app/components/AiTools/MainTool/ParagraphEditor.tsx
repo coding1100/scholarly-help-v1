@@ -54,6 +54,7 @@ import {
   updateDocumentContent,
 } from "./academicResearchApi";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
+import { isBillingGateError } from "@/app/lib/client/billingGateCodes";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 
 const MIN_CHARS_BEFORE_CURSOR = 10;
@@ -1352,7 +1353,10 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
         const status = getAxiosStatus(error);
         const backendMessage = pickBackendMessage(error);
 
-        if (status === 403) {
+        if (isBillingGateError(error)) {
+          // The global interceptor (ClientScripts.tsx) already opens the
+          // upgrade popup for this — a toast here would be redundant.
+        } else if (status === 403) {
           toast.error(getAcademicErrorMessage(error, "Token balance exhausted."), {
             id: "cite-status",
             duration: 5200,
@@ -1515,7 +1519,10 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
       } catch (error) {
         const status = getAxiosStatus(error);
         const backendMessage = pickBackendMessage(error);
-        if (status === 403) {
+        if (isBillingGateError(error)) {
+          // The global interceptor (ClientScripts.tsx) already opens the
+          // upgrade popup for this — a toast here would be redundant.
+        } else if (status === 403) {
           toast.error(getAcademicErrorMessage(error, "Token balance exhausted."), {
             id: "rewrite-status",
             duration: 5200,
@@ -1803,7 +1810,10 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
     } catch (error) {
       const status = getAxiosStatus(error);
       const backendMessage = pickBackendMessage(error);
-      if (status === 403) {
+      if (isBillingGateError(error)) {
+        // The global interceptor (ClientScripts.tsx) already opens the
+        // upgrade popup for this — a toast here would be redundant.
+      } else if (status === 403) {
         toast.error(
           getAcademicErrorMessage(error, "Token balance exhausted."),
           {
@@ -1869,7 +1879,10 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
     } catch (error) {
       const status = getAxiosStatus(error);
       const backendMessage = pickBackendMessage(error);
-      if (status === 403) {
+      if (isBillingGateError(error)) {
+        // The global interceptor (ClientScripts.tsx) already opens the
+        // upgrade popup for this — a toast here would be redundant.
+      } else if (status === 403) {
         toast.error(
           getAcademicErrorMessage(error, "Token balance exhausted."),
           {
