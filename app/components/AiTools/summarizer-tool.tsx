@@ -24,6 +24,7 @@ import SummarizerChat from "@/app/components/AiTools/SummarizerChat/SummarizerCh
 import { sanitizeHtml } from "@/app/utils/sanitizeHtml";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import { useToolDraftPersistence } from "@/app/lib/client/useToolDraftPersistence";
+import { useBillingDraftStash } from "@/app/lib/client/useBillingDraftStash";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 import { getAccessToken } from "@/app/lib/authSession";
 import { cachedRequest, invalidateCachedRequest } from "@/app/lib/client/toolOptimization";
@@ -420,6 +421,13 @@ const SummarizerTool: React.FC<SummarizerToolProps> = ({
       if (draft.outputs && draft.outputs.length) setOutputs(draft.outputs);
     },
   );
+
+  useBillingDraftStash<SummarizerDraft>("summarizer", () => ({
+    currentInputText,
+    summaryStyle,
+    detailLevel,
+    outputs,
+  }));
 
   const { gateOpen, closeGate, guardAiClick } = useGuestGate<SummarizerDraft>({
     getDraft: () => ({ currentInputText, summaryStyle, detailLevel, outputs }),

@@ -12,6 +12,7 @@ import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import { useToolDraftPersistence } from "@/app/lib/client/useToolDraftPersistence";
+import { useBillingDraftStash } from "@/app/lib/client/useBillingDraftStash";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 import {
   detectorHumanContentShare,
@@ -22,6 +23,7 @@ import {
 import { useDetectorConfig } from "@/app/components/AiTools/AiDetectorTool/useDetectorConfig";
 import { fetchWithAuthRetry, getAccessToken } from "@/app/lib/authSession";
 import { cancelJob, waitForJob } from "@/app/lib/client/jobStream";
+import { isBillingGateError } from "@/app/lib/client/billingGateCodes";
 
 type HumanizerTone = "natural" | "simple" | "polished" | "academic" | "custom";
 type RewriteIntensity = "normal" | "moderate" | "full";
@@ -194,6 +196,13 @@ const HumanizerTool: React.FC = () => {
     },
   );
 
+  useBillingDraftStash<HumanizerDraft>("humanizer", () => ({
+    text,
+    intensity,
+    register,
+    voiceSample,
+  }));
+
   const { gateOpen, closeGate, guardAiClick } = useGuestGate<HumanizerDraft>({
     getDraft: () => ({ text, intensity, register, voiceSample }),
     stashDraft,
@@ -362,6 +371,9 @@ const HumanizerTool: React.FC = () => {
 
         if (status === 401) {
           toast.error("Session expired. Please sign in again.");
+        } else if (isBillingGateError(err)) {
+          // The global interceptor (ClientScripts.tsx) already opens the
+          // upgrade popup for this — a toast here would be redundant.
         } else if (status === 403) {
           toast.error(
             "You don’t have enough token balance, or the input exceeds limits.",

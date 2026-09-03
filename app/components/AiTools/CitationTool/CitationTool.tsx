@@ -20,6 +20,7 @@ import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import DOMPurify from "dompurify";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import { useToolDraftPersistence } from "@/app/lib/client/useToolDraftPersistence";
+import { useBillingDraftStash } from "@/app/lib/client/useBillingDraftStash";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 const SavedCitations = dynamic(() => import("./SavedCitations"), { ssr: false, loading: () => <div className="p-4 text-sm text-gray-500">Loading citation library…</div> });
 import { getAccessToken } from "@/app/lib/authSession";
@@ -259,6 +260,23 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag, variant = "default" }) =
       if (draft.searchInput) setSearchInput(draft.searchInput);
     },
   );
+
+  useBillingDraftStash<CitationDraft>("citation-generator", () => ({
+    citationStyle,
+    sourceType,
+    authors,
+    title,
+    publisher,
+    journalName,
+    websiteName,
+    url,
+    doi,
+    mode,
+    autofillType,
+    doiInput,
+    urlInput,
+    searchInput,
+  }));
 
   const { gateOpen, openGate, closeGate, guardAiClick } = useGuestGate<CitationDraft>({
     getDraft: () => ({

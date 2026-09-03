@@ -8,6 +8,7 @@ import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import { useToolDraftPersistence } from "@/app/lib/client/useToolDraftPersistence";
+import { useBillingDraftStash } from "@/app/lib/client/useBillingDraftStash";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 import { getAccessToken } from "@/app/lib/authSession";
 import { rankAcademicText, useLatestAbortController } from "@/app/lib/client/toolOptimization";
@@ -106,6 +107,15 @@ const ResearchQuestion: FC<ResearchQuestionProps> = ({
       if (draft.count) setCount(draft.count);
     },
   );
+
+  useBillingDraftStash<ResearchQuestionDraft>("research-question", () => ({
+    topic,
+    keywords,
+    researchType,
+    questionStyle,
+    levelOfSpecificity,
+    count,
+  }));
 
   const { gateOpen, closeGate, guardAiClick } = useGuestGate<ResearchQuestionDraft>({
     getDraft: () => ({
