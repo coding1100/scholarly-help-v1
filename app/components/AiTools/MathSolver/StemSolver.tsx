@@ -11,6 +11,7 @@ import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import { sanitizeHtml } from "@/app/utils/sanitizeHtml";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import { useToolDraftPersistence } from "@/app/lib/client/useToolDraftPersistence";
+import { useBillingDraftStash } from "@/app/lib/client/useBillingDraftStash";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 import { getAccessToken } from "@/app/lib/authSession";
 
@@ -372,6 +373,8 @@ const StemSolver: FC<{ setFlag: (v: boolean) => void }> = ({ setFlag }) => {
       if (draft.subject) setSubject(draft.subject);
     },
   );
+
+  useBillingDraftStash<StemSolverDraft>("math-solver", () => ({ problem, subject }));
 
   const { gateOpen, closeGate, guardAiClick } = useGuestGate<StemSolverDraft>({
     getDraft: () => ({ problem, subject }),

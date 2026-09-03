@@ -22,6 +22,8 @@ import { useDetectorConfig } from "./useDetectorConfig";
 import { getAccessToken } from "@/app/lib/authSession";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import { useToolDraftPersistence } from "@/app/lib/client/useToolDraftPersistence";
+import { useBillingDraftStash } from "@/app/lib/client/useBillingDraftStash";
+import { isBillingGateError } from "@/app/lib/client/billingGateCodes";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 
 type Filter = "all" | Exclude<SegmentLabel, "neutral">;
@@ -73,6 +75,8 @@ const AiDetectorTool: React.FC = () => {
       if (draft.text) setText(draft.text);
     },
   );
+
+  useBillingDraftStash<AiDetectorDraft>("ai-detector", () => ({ text }));
 
   const { gateOpen, closeGate, guardAiClick } = useGuestGate<AiDetectorDraft>({
     getDraft: () => ({ text }),
@@ -199,6 +203,9 @@ const AiDetectorTool: React.FC = () => {
         "Failed to check for AI.";
       if (status === 401) {
         toast.error("Session expired. Please sign in again.");
+      } else if (isBillingGateError(err)) {
+        // The global interceptor (ClientScripts.tsx) already opens the
+        // upgrade popup for this — a toast here would be redundant.
       } else if (status === 403) {
         toast.error(
           "You don't have enough token balance, or the input exceeds limits.",

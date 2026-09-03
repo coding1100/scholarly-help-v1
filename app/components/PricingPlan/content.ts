@@ -23,7 +23,7 @@ export const PricingContent = [
     button: "Upgrade to Starter",
     FeatureHeading: "Everything in Free, plus:",
     Features: [
-      "About $2 of AI tool usage every month",
+      "6,440,000 tokens every month",
       "5 plagiarism scans a month",
       "Full length document scans, up to 10,000 words",
       "Priority access to new tools",
@@ -38,7 +38,7 @@ export const PricingContent = [
     button: "Upgrade to Starter Annual",
     FeatureHeading: "Everything in Starter, plus:",
     Features: [
-      "About $10 of AI tool usage every year",
+      "32,200,000 tokens every year",
       "20 plagiarism scans a year",
       "Full length document scans, up to 10,000 words",
       "Priority access to new tools",
@@ -51,7 +51,7 @@ export const PricingTableContent = {
     {
       option: "AI tool usage",
       free: "Limited free runs",
-      unlimited: "About $2 a month or $10 a year",
+      unlimited: "6,440,000 tokens a month or 32,200,000 a year",
     },
     {
       option: "Plagiarism checker scans",

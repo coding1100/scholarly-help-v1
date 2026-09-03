@@ -10,6 +10,8 @@ import TextSummarizerInput from "@/app/components/AiTools/TextSummarizerInput";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import { useToolDraftPersistence } from "@/app/lib/client/useToolDraftPersistence";
+import { useBillingDraftStash } from "@/app/lib/client/useBillingDraftStash";
+import { isBillingGateError } from "@/app/lib/client/billingGateCodes";
 import { countWords, looksLikeGibberish } from "@/app/utils/text";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import { getAccessToken } from "@/app/lib/authSession";
@@ -97,6 +99,8 @@ const GrammarCheckerTool: React.FC = () => {
       if (draft.text) setText(draft.text);
     },
   );
+
+  useBillingDraftStash<GrammarCheckerDraft>("grammar-checker", () => ({ text }));
 
   const { gateOpen, closeGate, guardAiClick } = useGuestGate<GrammarCheckerDraft>({
     getDraft: () => ({ text }),
@@ -199,6 +203,10 @@ const GrammarCheckerTool: React.FC = () => {
       fallback;
     if (status === 401) {
       toast.error("Session expired. Please sign in again.");
+    } else if (isBillingGateError(err)) {
+      // The global interceptor (ClientScripts.tsx) already opens the
+      // upgrade popup for this — a toast here would be a redundant, dead-end
+      // message on top of the actual next step.
     } else if (status === 403) {
       toast.error(
         "You don't have enough token balance, or the input exceeds limits.",

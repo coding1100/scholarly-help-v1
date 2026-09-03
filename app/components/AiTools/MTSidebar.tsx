@@ -14,7 +14,7 @@ import { BiChevronsLeft } from "react-icons/bi";
 import { usePathname, useRouter } from "next/navigation";
 import axiosInstance from "@/app/axios";
 import toast from "react-hot-toast";
-import { FiTool, FiPlus } from "react-icons/fi";
+import { FiTool, FiPlus, FiChevronDown } from "react-icons/fi";
 import AccountPopover from "./AccountPopover";
 import UsageAndPricing from "./UsageAndPricing";
 import PromptModal from "./PromptModal";
@@ -32,6 +32,7 @@ import { isGuest, stashGuestMigrationId } from "@/app/lib/client/guestStudyLimit
 import { upsertFbclidToolContext } from "@/app/utils/fbclidTracking";
 import { __TOOLS_SHEET_EVENT_NAME__ } from "@/app/utils/toolsSheetClient";
 import type { AssistantPanel } from "./MainTool/AcademicAssistantPanel";
+import { TOOLS, type ToolCategory } from "./Dashboard/toolsData";
 
 interface SidebarProps {
   onToggle?: () => void;
@@ -62,27 +63,50 @@ const MTSidebar = ({
   const normalizedRoute = currentRoute?.endsWith("/")
     ? currentRoute.slice(0, -1)
     : currentRoute;
-  const tools = [
-    { name: "Explore Tools", href: "/tools/dashboard" },
-    { name: "AI Course Planner", href: "/tools/course-planner" },
-    // { name: "Academic Research Assistant", href: "/tools/academic-research-assistant" },
-    // { name: "Paraphraser Tool", href: "/tools/paraphraser-tool" },
-    // { name: "Summarizer Tool", href: "/tools/summarizer-tool" },
-    // { name: "Humanizer Tool", href: "/tools/humanizer-tool" },
-    // { name: "Thesis Generator Tool", href: "/tools/thesis-generator-tool" },
-    // { name: "Essay Outline Tool", href: "/tools/essay-outline-tool" },
-    // { name: "Essay Title Generator", href: "/tools/essay-title" },
-    // { name: "Research Question Generator", href: "/tools/research-question" },
-    // { name: "Math Solver", href: "/tools/math-solver" },
-    // { name: "Citation Tool", href: "/tools/citation-tool" },
-    // { name: "Tutor Tool", href: "/tools/tutor" },
-    // { name: "Micro Learning", href: "/tools/micro-learning" },
-    // { name: "Exam Prep", href: "/tools/exam-prep" },
-    // { name: "Language Practice", href: "/tools/language-practice" },
-    // { name: "CGPA Calculator", href: "/tools/cgpa-calculator" },
-
-    // { name: "Syllabus Importer", href: "/tools/syllabus-importer" },
+  // Single source of truth shared with the dashboard grid (ToolGrid.tsx) —
+  // every live tool, already categorized. Nothing hand-maintained here, so
+  // this list can't silently fall out of sync with what's actually shipped.
+  const tools = TOOLS;
+  const categorySections: Array<{ key: ToolCategory; label: string }> = [
+    { key: "study-tools", label: "Study tools" },
+    { key: "essay-writing", label: "Essay writing" },
+    { key: "research", label: "Research" },
+    { key: "math-science", label: "Math & Science" },
   ];
+  const toolsByCategory = React.useMemo(() => {
+    const grouped = new Map<ToolCategory, typeof tools>();
+    for (const section of categorySections) grouped.set(section.key, []);
+    for (const tool of tools) grouped.get(tool.category)?.push(tool);
+    return grouped;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tools]);
+  const activeToolCategoryKey = React.useMemo(
+    () => tools.find((tool) => tool.href === normalizedRoute)?.category,
+    [tools, normalizedRoute],
+  );
+  // Accordion: the category containing the current tool starts open, every
+  // other section starts collapsed. Navigating to a tool always reveals its
+  // category (this effect only ever ADDS the active category, never removes
+  // anything), so it never hides the page you're on — but it also never
+  // fights a user who collapsed some other section, since it never touches
+  // those.
+  const [openCategories, setOpenCategories] = useState<Set<ToolCategory>>(
+    () => new Set(activeToolCategoryKey ? [activeToolCategoryKey] : ["study-tools"]),
+  );
+  useEffect(() => {
+    if (!activeToolCategoryKey) return;
+    setOpenCategories((prev) =>
+      prev.has(activeToolCategoryKey) ? prev : new Set(prev).add(activeToolCategoryKey),
+    );
+  }, [activeToolCategoryKey]);
+  const toggleCategory = (key: ToolCategory) => {
+    setOpenCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
   const [showTools, setShowTools] = useState(false);
   const [userName, setUserName] = useState("User");
   const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -540,87 +564,88 @@ const MTSidebar = ({
       </div>
 
       <div className="mb-2 min-h-0 flex-1 overflow-y-auto pr-1 scrollbar-hide">
-        {/* <button
-          className="flex w-full items-center gap-3 px-3 py-1 text-sm transition-colors bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-md"
-          onClick={() => setShowTools((prev) => !prev)}
-        >
-          <FiTool className="h-5 w-5" />
-          <span className="text-sm font-semibold">Tools</span>
-        </button> */}
-        {/* {showTools && ( */}
-        <div className="mt-2 flex flex-col gap-1 pl-4">
-          {tools.map((tool, index) => {
-            const isAcademicAssistant =
-              tool.href === "/tools/academic-research-assistant";
-            const isActive = normalizedRoute === tool.href;
-
+        {/* Tools grouped into collapsible categories instead of a flat list
+            behind filter pills — the section containing whichever tool is
+            currently open starts expanded, and expand/collapse choices the
+            user makes stick across navigation. */}
+        <div className="flex flex-col gap-0.5">
+          {categorySections.map((section) => {
+            const sectionTools = toolsByCategory.get(section.key) || [];
+            const isOpen = openCategories.has(section.key);
             return (
-              <div key={index} className="w-full">
-                <Link
-                  href={appendQueryString(
-                    tool.href,
-                    searchParams?.toString() || "",
-                  )}
-                  className={`block w-full rounded-md px-2 py-1 text-left text-sm leading-5 transition-colors ${
-                    isActive
-                      ? "font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30"
-                      : " hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
-                  }`}
+              <div key={section.key} className="w-full">
+                <button
+                  type="button"
+                  aria-expanded={isOpen}
+                  onClick={() => toggleCategory(section.key)}
+                  className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 transition-colors hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700"
                 >
-                  {tool.name}
-                </Link>
-                {isAcademicAssistant && isAssistantRoute && (
-                  <div
-                    data-tour="ara-assistant-panels"
-                    className="mt-1 mb-2 ml-2 space-y-1 border-l border-gray-200 pl-3"
-                  >
-                    <button
-                      type="button"
-                      className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700"
-                      onClick={() =>
-                        onNewDocument
-                          ? onNewDocument()
-                          : setPromptModalOpen(true)
-                      }
-                    >
-                      <FiPlus className="h-4 w-4" />
-                      <span>New</span>
-                    </button>
-                    {assistantActions.map((item) => (
-                      <button
-                        key={item.name}
-                        type="button"
-                        onClick={() => onPanelToggle?.(item.panel)}
-                        className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors ${
-                          activePanel === item.panel
-                            ? "bg-primary-100 font-semibold text-primary-400"
-                            : "text-gray-700 hover:bg-gray-200"
-                        }`}
-                      >
-                        {item.icon}
-                        <span>{item.name}</span>
-                      </button>
-                    ))}
-                    {/* <button
-                      type="button"
-                      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-200"
-                      onClick={() => toast("Tutorials are coming soon.")}
-                    >
-                      <HiOutlineQuestionMarkCircle className="h-4 w-4" />
-                      <span>Tutorials</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-200"
-                      onClick={() =>
-                        toast(
-                          "Shortcut: Shift + ArrowRight accepts AI suggestions.",
-                        )
-                      }
-                    >
-                      <FiTool className="h-4 w-4" />
-                      <span>Shortcuts</span>
-                    </button> */}
+                  <span>{section.label}</span>
+                  <FiChevronDown
+                    className={`h-3.5 w-3.5 shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                  />
+                </button>
+                {isOpen && (
+                  <div className="mt-0.5 flex flex-col gap-1 pb-1">
+                    {sectionTools.map((tool) => {
+                      const isAcademicAssistant =
+                        tool.href === "/tools/academic-research-assistant";
+                      const isActive = normalizedRoute === tool.href;
+                      const ToolIcon = tool.icon;
+
+                      return (
+                        <div key={tool.href} className="w-full">
+                          <Link
+                            href={appendQueryString(
+                              tool.href,
+                              searchParams?.toString() || "",
+                            )}
+                            className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm leading-5 transition-colors ${
+                              isActive
+                                ? "font-semibold text-primary-400 bg-primary-100 dark:bg-primary-500/20"
+                                : "hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                            }`}
+                          >
+                            <ToolIcon className="h-4 w-4 shrink-0" />
+                            <span className="truncate">{tool.name}</span>
+                          </Link>
+                          {isAcademicAssistant && isAssistantRoute && (
+                            <div
+                              data-tour="ara-assistant-panels"
+                              className="mt-1 mb-2 ml-2 space-y-1 border-l border-gray-200 pl-3"
+                            >
+                              <button
+                                type="button"
+                                className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700"
+                                onClick={() =>
+                                  onNewDocument
+                                    ? onNewDocument()
+                                    : setPromptModalOpen(true)
+                                }
+                              >
+                                <FiPlus className="h-4 w-4" />
+                                <span>New</span>
+                              </button>
+                              {assistantActions.map((item) => (
+                                <button
+                                  key={item.name}
+                                  type="button"
+                                  onClick={() => onPanelToggle?.(item.panel)}
+                                  className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors ${
+                                    activePanel === item.panel
+                                      ? "bg-primary-100 font-semibold text-primary-400"
+                                      : "text-gray-700 hover:bg-gray-200"
+                                  }`}
+                                >
+                                  {item.icon}
+                                  <span>{item.name}</span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>

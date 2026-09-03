@@ -8,22 +8,27 @@ import { Toaster } from "react-hot-toast";
 import { initializeAuthSession, installAxiosAuthRefresh } from "@/app/lib/authSession";
 import { hasRefreshSessionHint } from "@/app/lib/accessTokenStore";
 import BillingGate from "@/app/components/AiTools/BillingGate";
+import CheckoutConfirmationOverlay from "@/app/components/AiTools/CheckoutConfirmationOverlay";
 
 /**
- * Global handler for the backend's post-login free-run quota (see
- * free-run-quota.decorator.ts). Installed once here instead of in every tool
- * component's catch block, since every tool route can return this same 403.
- * Dispatches a window event that BillingGate (mounted below) listens for and
- * opens the upgrade popup on — the same event-bridge pattern this app already
- * uses for the Study Workspace's "study:auth-gate".
+ * Global handler for the backend's two "you need to upgrade" gates:
+ * free-run-quota.decorator.ts (FREE_RUN_LIMIT_EXCEEDED, a Free-plan user's
+ * post-login free runs) and billing.service.ts / check-subscription.decorator.ts
+ * (INSUFFICIENT_CREDITS, out of product-credit balance). Installed once here
+ * instead of in every tool component's catch block, since every tool route
+ * can return either 403. Dispatches a window event that BillingGate (mounted
+ * below) listens for and opens the upgrade popup on — the same event-bridge
+ * pattern this app already uses for the Study Workspace's "study:auth-gate".
  */
+const BILLING_GATE_CODES = new Set(["FREE_RUN_LIMIT_EXCEEDED", "INSUFFICIENT_CREDITS"]);
+
 function installFreeRunQuotaHandler(): () => void {
   const interceptor = axios.interceptors.response.use(
     (response) => response,
     (error) => {
       if (
         error?.response?.status === 403 &&
-        error.response?.data?.code === "FREE_RUN_LIMIT_EXCEEDED"
+        BILLING_GATE_CODES.has(error.response?.data?.code)
       ) {
         window.dispatchEvent(new CustomEvent("billing:free-run-limit-exceeded"));
       }
@@ -124,6 +129,10 @@ export default function ClientScripts() {
       {/* Global billing upgrade popup, opened when a signed-in user's free
           runs are exhausted on any tool (see installFreeRunQuotaHandler above). */}
       <BillingGate />
+
+      {/* Confirms a just-completed Stripe checkout eagerly (see the component's
+          own doc comment for why this exists alongside the invoice.paid webhook). */}
+      <CheckoutConfirmationOverlay />
 
       {/* LiveChat - load script only on home page */}
       {ShowLiveChat && (
