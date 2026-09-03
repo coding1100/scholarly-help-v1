@@ -1,4 +1,5 @@
 import { fetchWithAuthRetry } from "@/app/lib/authSession";
+import { dispatchBillingGateEvent, isBillingGateResponseBody } from "@/app/lib/client/billingGateCodes";
 
 const STUDY_API_BASE = "/api/study";
 const ACTIVE_STUDY_SESSION_KEY = "sh_active_study_session_id_v1";
@@ -138,6 +139,7 @@ async function callStudyApi<T>(path: string, init?: RequestInit): Promise<T> {
 
   const payload = (await res.json()) as ApiEnvelope<T>;
   if (!res.ok || !payload.success || payload.data === undefined) {
+    if (isBillingGateResponseBody(res.status, payload)) dispatchBillingGateEvent();
     throw new Error(payload.error || `Study API failed for ${path}`);
   }
   return payload.data;
@@ -248,6 +250,7 @@ export async function addStudySourceFile(
 
   const payload = (await res.json()) as ApiEnvelope<StudySourceDto>;
   if (!res.ok || !payload.success || payload.data === undefined) {
+    if (isBillingGateResponseBody(res.status, payload)) dispatchBillingGateEvent();
     throw new Error(payload.error || "Study file upload failed");
   }
   return payload.data;
@@ -389,6 +392,7 @@ export async function streamStudyTutor(
   });
   if (!res.ok || !res.body) {
     const payload = (await res.json().catch(() => null)) as ApiEnvelope<unknown> | null;
+    if (isBillingGateResponseBody(res.status, payload)) dispatchBillingGateEvent();
     throw new Error(payload?.error || "Tutor streaming request failed");
   }
 

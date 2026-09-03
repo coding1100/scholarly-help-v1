@@ -14,6 +14,7 @@ import {
   StudyLearningMode,
 } from "@/app/lib/server/study/types";
 import { consumeStudyAiQuota } from "@/app/lib/server/study/rateLimit";
+import { checkAndReserveBillingUsage, reportBillingUsage } from "@/app/lib/server/study/billingGate";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,12 @@ const ALLOWED_TYPES = new Set<StudyArtifactType>([
   "flashcards",
   "quizzes",
 ]);
+
+// generate.ts's per-type maxOutputTokens ranges from 700 (quiz) to 5000
+// (summary/flashcards) — a flat, generously-sized estimate keeps this simple
+// per the "use the estimate for now" call, rather than duplicating that
+// per-type budget logic here.
+const GENERATE_ESTIMATED_COMPLETION_TOKENS = 5000;
 
 export async function POST(
   request: NextRequest,
@@ -64,6 +71,23 @@ export async function POST(
     const mergedText = cleanSourceText(storedText);
     if (!mergedText.trim()) {
       return fail("No source text found for this session");
+    }
+
+    // Same free-run-count / credit-balance gate every other tool enforces.
+    // Guests are exempt (their own tighter rate-limit cap above governs them).
+    // Estimate scales with source size (~4 chars/token) since generation
+    // prompts include the full merged source text, capped to a sane ceiling.
+    let billingReservationId: string | null = null;
+    if (!isGuest) {
+      const estimatedPromptTokens = Math.min(200_000, Math.max(500, Math.ceil(mergedText.length / 4)));
+      const gate = await checkAndReserveBillingUsage({
+        request,
+        service: `study.generate.${type}`,
+        estimatedPromptTokens,
+        estimatedCompletionTokens: GENERATE_ESTIMATED_COMPLETION_TOKENS,
+      });
+      if (gate.blocked) return gate.response;
+      billingReservationId = gate.reservationId;
     }
 
     let body: {
@@ -128,6 +152,15 @@ export async function POST(
     // is a real one — persist it. On regeneration this overwrites the previous
     // version with the fresh output.
     await upsertArtifact(params.id, type, content);
+
+    if (!isGuest) {
+      reportBillingUsage({
+        request,
+        reservationId: billingReservationId,
+        promptTokens: Math.min(200_000, Math.max(500, Math.ceil(mergedText.length / 4))),
+        completionTokens: GENERATE_ESTIMATED_COMPLETION_TOKENS,
+      });
+    }
 
     return ok({ type, content });
   } catch (error) {
