@@ -16,3 +16,22 @@ export function isBillingGateError(err: any): boolean {
   const code = err?.response?.data?.code;
   return status === 403 && (code === "FREE_RUN_LIMIT_EXCEEDED" || code === "INSUFFICIENT_CREDITS");
 }
+
+const BILLING_GATE_CODES = new Set(["FREE_RUN_LIMIT_EXCEEDED", "INSUFFICIENT_CREDITS"]);
+
+/**
+ * Same check as isBillingGateError, for callers that use plain fetch instead
+ * of axios (e.g. Study Workspace's studyApiClient.ts) and so never pass
+ * through ClientScripts.tsx's global axios interceptor. Call this from a
+ * fetch response's parsed JSON body on a 403, then dispatch the same event
+ * the interceptor would have via dispatchBillingGateEvent below.
+ */
+export function isBillingGateResponseBody(status: number, body: any): boolean {
+  return status === 403 && BILLING_GATE_CODES.has(body?.code);
+}
+
+/** Opens the global billing popup (see BillingGate.tsx), same event the axios interceptor dispatches. */
+export function dispatchBillingGateEvent(): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent("billing:free-run-limit-exceeded"));
+}
