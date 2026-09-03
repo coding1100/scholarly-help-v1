@@ -59,7 +59,7 @@ const PricingTable: FC = () => {
                   Free
                 </th>
                 <th className="py-4 px-6 text-center font-semibold text-gray-700 border-l border-gray-200">
-                  Unlimited
+                  Starter
                 </th>
               </tr>
             </thead>

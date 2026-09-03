@@ -18,6 +18,7 @@ export interface SimilaritySource {
   domain: string;
   percent: number;
   match_count: number;
+  title?: string;
 }
 
 export interface SimilarityResult {
@@ -27,7 +28,7 @@ export interface SimilarityResult {
   matches: SimilarityMatch[];
   sources: SimilaritySource[];
   breakdown: { copied: number; paraphrased: number; common: number };
-  provider: "quetext";
+  provider: "copyleaks";
 }
 
 export interface PlagiarismScan {
@@ -45,7 +46,7 @@ export interface PlagiarismScan {
   } | null;
   result?: SimilarityResult;
   error?: string;
-  provider: "quetext";
+  provider: "copyleaks";
   provider_pending?: boolean;
   provider_message?: string;
   retry_after_seconds?: number;

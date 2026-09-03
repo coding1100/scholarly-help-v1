@@ -15,10 +15,10 @@ const PricingPage: FC<PricingPageProps> = ({}) => {
   return (
     <div className="px-32 my-24">
       <h1 className="text-4xl text-[#172b4d] text-center mb-2">
-        Simple, transparent pricing{" "}
+        Plans that grow with your work
       </h1>
       <p className="text-center text-[#626f86] mb-5">
-        No credit card required, cancel anytime
+        Start for free, upgrade whenever you are ready, cancel anytime.
       </p>
       <div className="flex justify-center items-start gap-4 mb-6">
         <div className="flex flex-col justify-center items-center gap-2 text-xs text-[#626f86]">

@@ -1,13 +1,16 @@
 "use client";
 
 import axios from "axios";
-import { FC } from "react";
+import { FC, useState } from "react";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 import { IoCheckmarkSharp, IoChevronDownOutline } from "react-icons/io5";
 import { getOrRefreshAccessToken } from "@/app/lib/authSession";
 
 interface PricingCardProps {
   item: {
     plan: string;
+    /** "starter" | "starter_annual" | "none". "none" is the Free plan and never hits checkout. */
     submitPlan: string;
     subTitle: string;
     price: string;
@@ -19,18 +22,25 @@ interface PricingCardProps {
   index: number;
 }
 
-// plans should be quarterly, monthly, yearl
-
 const PricingCard: FC<PricingCardProps> = ({ item, index }) => {
-  const handleStripe = async (submitplan: string) => {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSelect = async () => {
+    if (item.submitPlan === "none") {
+      router.push("/sign-up");
+      return;
+    }
+    setIsLoading(true);
     try {
       const token = await getOrRefreshAccessToken();
-      if (!token) throw new Error("Sign in before selecting a plan");
-      const payload = { plan: submitplan };
-
+      if (!token) {
+        router.push(`/sign-in?returnUrl=/pricing`);
+        return;
+      }
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_NGROX_URL}/v1/billing/create-checkout`,
-        payload,
+        { plan: item.submitPlan },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -38,25 +48,34 @@ const PricingCard: FC<PricingCardProps> = ({ item, index }) => {
           },
         }
       );
-      const redirectTo = response?.data?.url;
+      const responseData = response?.data?.data ?? response?.data;
+      const redirectTo = responseData?.url;
       if (redirectTo) {
         window.location.href = redirectTo;
+      } else {
+        toast.error("Could not start checkout. Please try again.");
       }
-    } catch (error) {
-      // Handle error as needed
-      console.error("Stripe checkout error:", error);
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message || "Could not start checkout. Please try again.";
+      toast.error(Array.isArray(message) ? message.join(", ") : message);
+    } finally {
+      setIsLoading(false);
     }
   };
+  const isFeatured = index === 3;
   return (
     <div
-      className={`w-full ${
-        index === 2 ? "border border-primary-400" : "border"
+      className={`w-full transition-transform duration-200 ${
+        isFeatured
+          ? "border-2 border-primary-400 shadow-lg scale-[1.02]"
+          : "border hover:shadow-md"
       } rounded-2xl overflow-hidden`}
-      style={{ boxShadow: "rgba(0, 0, 0, 0.1) 0px 4px 12px" }}
+      style={{ boxShadow: isFeatured ? undefined : "rgba(0, 0, 0, 0.1) 0px 4px 12px" }}
     >
-      {index === 2 && (
-        <div className="w-full py-2 bg-primary-400 text-center text-white text-xs">
-          <p>Most popular</p>
+      {isFeatured && (
+        <div className="w-full py-2 bg-primary-400 text-center text-white text-xs font-semibold tracking-wide">
+          <p>Best value, two months free</p>
         </div>
       )}
       <div className="py-4 px-6 ">
@@ -65,26 +84,24 @@ const PricingCard: FC<PricingCardProps> = ({ item, index }) => {
           {item.subTitle}
         </p>
         <p className="text-center text-[#172b4d] text-[28px] leading-7">
-          {item.price} {index !== 3 && <span className="text-base">USD</span>}
+          {item.price} <span className="text-base">USD</span>
         </p>
         <p className="text-xs text-[#626f86] text-center mb-4">
           {item.duration}
         </p>
         <div className="w-full flex justify-center mb-9">
           <button
-            onClick={() => handleStripe(item.submitPlan)}
-            className={`w-[80%] ${
-              index === 2
-                ? "bg-primary-400 text-white"
-                : "bg-white text-primary-400"
-            }  border border-primary-400 rounded-full py-2 px-5`}
+            onClick={handleSelect}
+            disabled={isLoading}
+            className={`w-[80%] transition-colors duration-150 ${
+              isFeatured
+                ? "bg-primary-400 text-white hover:bg-primary-500"
+                : "bg-white text-primary-400 hover:bg-primary-50"
+            } border border-primary-400 rounded-full py-2 px-5 disabled:opacity-60`}
           >
-            {item.button}
+            {isLoading ? "Redirecting…" : item.button}
           </button>
         </div>
-        {/* <p className="text-xs font-semibold text-[#2c3e5d] text-center">
-        No credit card required
-      </p> */}
         <p className="text-base font-semibold text-[#172b4d] mb-8">
           {item.FeatureHeading}
         </p>

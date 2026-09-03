@@ -39,7 +39,7 @@ function errorMessage(error: any): string {
     return "This document is too large. Upload a file up to 15 MB, or paste up to 10,000 words (80,000 characters).";
   }
   if ([429, 502, 503, 504].includes(status)) {
-    return "Quetext is taking longer than usual. Your scan is safe, and status checks will keep retrying.";
+    return "The plagiarism checker is taking longer than usual. Your scan is safe, and status checks will keep retrying.";
   }
   const value = error?.response?.data?.message || error?.response?.data?.error || error?.message;
   return Array.isArray(value) ? value.join(", ") : String(value || "The scan could not be completed.");
@@ -121,7 +121,7 @@ export default function PlagiarismCheckerTool() {
           transientFailures = 0;
           delay = next.retry_after_seconds ? Math.min(20_000, next.retry_after_seconds * 1000) : 3000;
           setPollNotice(next.provider_pending
-            ? next.provider_message || "Quetext is still processing this document. We are checking again automatically."
+            ? next.provider_message || "Still processing this document. We are checking again automatically."
             : "Your report is processing. You do not need to submit it again.");
           setProgress(next.progress || 0);
           setScan(next);
@@ -146,7 +146,7 @@ export default function PlagiarismCheckerTool() {
           delay = retrySeconds > 0
             ? Math.min(20_000, retrySeconds * 1000)
             : Math.min(15_000, 3000 * 2 ** Math.min(transientFailures, 2));
-          setPollNotice("Quetext is busy. We’re retrying automatically—your scan is safe.");
+          setPollNotice("The plagiarism checker is busy. We’re retrying automatically—your scan is safe.");
         }
       }
       if (alive.current && pollRun.current === run) {
@@ -171,7 +171,7 @@ export default function PlagiarismCheckerTool() {
       created = unwrap<PlagiarismScan>(response);
       setScan(created);
       trackToolGenerate({ toolName: "Plagiarism Checker" });
-      if (isRescan) addLog("Document rechecked against Quetext sources");
+      if (isRescan) addLog("Document rechecked against Copyleaks sources");
     } catch (cause) {
       const message = errorMessage(cause);
       setError(message); setView("input"); toast.error(message);
@@ -346,7 +346,7 @@ export default function PlagiarismCheckerTool() {
         <div className={styles.toolbar}><div className={styles.chipRow}><button className={`${styles.chip} ${filter === "all" ? styles.selected : ""}`} onClick={() => setFilter("all")}>All text</button><button className={`${styles.chip} ${filter === "flagged" ? styles.selected : ""}`} onClick={() => setFilter("flagged")}>Flagged only</button></div><button className={styles.linkButton} onClick={() => setSideView("log")}>View activity log</button></div>
         {filter === "flagged" && <div className={styles.copyPanel}><div className={styles.copyHead}><span>Showing: flagged text · {activeMatches.length} passages</span><button className={`${styles.smallButton} ${styles.brand}`} onClick={() => void copyMatches()}>Copy all</button></div><div className={styles.copyBody}>{activeMatches.map((match) => <details className={styles.copyItem} key={match.id}><summary className={styles.copyPreview}>{(edits[match.id] ?? match.text).slice(0, 90)}{match.text.length > 90 ? "…" : ""}</summary><p className={styles.copyFull}>{edits[match.id] ?? match.text}</p><div className={styles.sourceMeta}>{match.percent_similar}% match · {match.tier_label}</div><button className={`${styles.smallButton} ${styles.brand}`} onClick={() => selectMatch(match)}>Open in editor</button></details>)}</div></div>}
         <div className={styles.layout}><div className={styles.docPanel}><div className={styles.hint}>💡 Click any highlighted passage for details. Sources appear on the right.</div><div className={styles.docText}>{renderDocument()}</div></div><aside>
-          {sideView === "overview" && <><div className={`${styles.sideCard} ${styles.scoreCard}`}><div className={styles.scoreLabel}>Overall similarity</div><div className={styles.score}>{visibleScore}%</div><div className={styles.scoreSub}>{visibleScore < 15 ? "Low similarity" : visibleScore < 35 ? "Review recommended" : "Needs attention"} · Quetext similarity score</div><div className={styles.breakdown}>{[["Likely copied", result.breakdown.copied, styles.dotHigh], ["Likely paraphrased", result.breakdown.paraphrased, styles.dotMedium], ["Common phrasing", result.breakdown.common, styles.dotLow]].map(([label, value, dot]) => <div className={styles.breakdownRow} key={String(label)}><span className={styles.breakdownLabel}><span className={`${styles.dot} ${dot}`}/>{label}</span><span>{value}%</span></div>)}<div className={styles.breakdownRow}><span className={styles.breakdownLabel}><span className={`${styles.dot} ${styles.dotCited}`}/>Quotes/references</span><span>{settings.exclude_quotes || settings.exclude_bibliography ? "Excluded" : "Included"}</span></div></div></div>
+          {sideView === "overview" && <><div className={`${styles.sideCard} ${styles.scoreCard}`}><div className={styles.scoreLabel}>Overall similarity</div><div className={styles.score}>{visibleScore}%</div><div className={styles.scoreSub}>{visibleScore < 15 ? "Low similarity" : visibleScore < 35 ? "Review recommended" : "Needs attention"} · Copyleaks similarity score</div><div className={styles.breakdown}>{[["Likely copied", result.breakdown.copied, styles.dotHigh], ["Likely paraphrased", result.breakdown.paraphrased, styles.dotMedium], ["Common phrasing", result.breakdown.common, styles.dotLow]].map(([label, value, dot]) => <div className={styles.breakdownRow} key={String(label)}><span className={styles.breakdownLabel}><span className={`${styles.dot} ${dot}`}/>{label}</span><span>{value}%</span></div>)}<div className={styles.breakdownRow}><span className={styles.breakdownLabel}><span className={`${styles.dot} ${styles.dotCited}`}/>Quotes/references</span><span>{settings.exclude_quotes || settings.exclude_bibliography ? "Excluded" : "Included"}</span></div></div></div>
           <div className={styles.sideCard}><div className={styles.cardTitle}>Sources</div>{result.sources.length ? result.sources.map((source, index) => <div className={styles.sourceCard} key={source.id || source.url}><div className={styles.sourceTop}><span>{index + 1}&nbsp; <a className={styles.external} href={source.url} target="_blank" rel="noopener noreferrer">{source.domain}<FiExternalLink style={{display:"inline"}}/></a></span><span>{Math.round(source.percent)}%</span></div><div className={styles.sourceMeta}>{source.match_count} matching passage{source.match_count === 1 ? "" : "s"}</div></div>) : <div className={styles.empty}>No matching source URLs found.</div>}</div>
           <div className={styles.sideCard}><button className={`${styles.smallButton} ${styles.fullButton}`} disabled={downloading || dirty} onClick={() => void download()}><FiDownload/> {downloading ? "Preparing report…" : "Download report"}</button><button className={`${styles.smallButton} ${styles.fullButton}`} onClick={() => { void navigator.clipboard.writeText(window.location.href); toast.success("Private tool link copied."); }}>🔗 Share tool link</button><button className={`${styles.smallButton} ${styles.fullButton}`} onClick={() => void reset()}>New scan</button></div></>}
           {sideView === "focus" && focused && <div className={styles.sideCard}><button className={styles.back} onClick={() => setSideView("overview")}>← Back to overview</button><div className={styles.focusLabel}>Selected passage</div><div className={styles.focusBox}>{focused.text}</div><div className={`${styles.badge} ${focused.tier === "high" ? styles.badgeHigh : focused.tier === "medium" ? styles.badgeMedium : styles.badgeLow}`}>{focused.percent_similar}% match · {focused.tier_label}</div>{focused.source?.url && <div className={styles.sourceMeta}>Source: <a className={styles.external} href={focused.source.url} target="_blank" rel="noopener noreferrer">{focused.source.url}</a></div>}<div className={styles.focusLabel} style={{marginTop:12}}>Rewrite passage</div><textarea className={styles.rewrite} rows={4} value={rewrite} onChange={(event) => setRewrite(event.target.value)}/><button className={`${styles.smallButton} ${styles.brand} ${styles.fullButton}`} onClick={applyRewrite}>Apply rewrite to document</button><button className={`${styles.smallButton} ${styles.fullButton}`} onClick={() => setSideView("ignore")}>× Exclude match</button></div>}

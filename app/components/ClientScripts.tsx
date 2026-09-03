@@ -4,19 +4,18 @@ import { usePathname } from "next/navigation";
 import { useEffect, useCallback } from "react";
 import Script from "next/script";
 import axios from "axios";
-import toast from "react-hot-toast";
 import { Toaster } from "react-hot-toast";
 import { initializeAuthSession, installAxiosAuthRefresh } from "@/app/lib/authSession";
 import { hasRefreshSessionHint } from "@/app/lib/accessTokenStore";
-
-const FREE_RUN_LIMIT_TOAST_ID = "free-run-limit-exceeded";
+import BillingGate from "@/app/components/AiTools/BillingGate";
 
 /**
  * Global handler for the backend's post-login free-run quota (see
  * free-run-quota.decorator.ts). Installed once here instead of in every tool
  * component's catch block, since every tool route can return this same 403.
- * A dedicated toast id prevents stacking duplicate toasts if several requests
- * fail around the same time.
+ * Dispatches a window event that BillingGate (mounted below) listens for and
+ * opens the upgrade popup on — the same event-bridge pattern this app already
+ * uses for the Study Workspace's "study:auth-gate".
  */
 function installFreeRunQuotaHandler(): () => void {
   const interceptor = axios.interceptors.response.use(
@@ -26,11 +25,7 @@ function installFreeRunQuotaHandler(): () => void {
         error?.response?.status === 403 &&
         error.response?.data?.code === "FREE_RUN_LIMIT_EXCEEDED"
       ) {
-        toast.error(
-          error.response.data?.message ||
-            "You've used all your free tool runs. Upgrading isn't available yet — please check back soon.",
-          { id: FREE_RUN_LIMIT_TOAST_ID },
-        );
+        window.dispatchEvent(new CustomEvent("billing:free-run-limit-exceeded"));
       }
       return Promise.reject(error);
     },
@@ -125,6 +120,10 @@ export default function ClientScripts() {
       {/* Global toast host. Mounted once here (a client component present on every
           page) so success/error toasts from any tool are actually rendered. */}
       <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
+
+      {/* Global billing upgrade popup, opened when a signed-in user's free
+          runs are exhausted on any tool (see installFreeRunQuotaHandler above). */}
+      <BillingGate />
 
       {/* LiveChat - load script only on home page */}
       {ShowLiveChat && (
