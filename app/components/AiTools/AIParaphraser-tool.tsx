@@ -12,6 +12,7 @@ import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import { useToolDraftPersistence } from "@/app/lib/client/useToolDraftPersistence";
 import { useBillingDraftStash } from "@/app/lib/client/useBillingDraftStash";
+import { isBillingGateError } from "@/app/lib/client/billingGateCodes";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 import { getAccessToken } from "@/app/lib/authSession";
 import { useLatestAbortController } from "@/app/lib/client/toolOptimization";
@@ -118,6 +119,11 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag, variant = "default" }) 
       toast.success(response.data?.message || "Text paraphrased successfully!");
       setFlag(true);
     } catch (error: any) {
+      if (isBillingGateError(error)) {
+        // The global interceptor (ClientScripts.tsx) already opens the
+        // upgrade popup for this — a toast here would be redundant.
+        return;
+      }
       const msg =
         error?.response?.data?.message ||
         error?.message ||
