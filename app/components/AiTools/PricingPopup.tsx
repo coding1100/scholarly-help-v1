@@ -58,9 +58,16 @@ const PricingPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         setErrorMessage("Please sign in again to continue.");
         return;
       }
+      // Sends the user back to the exact tool page they were on (draft
+      // restored there via useBillingDraftStash + useToolDraftPersistence)
+      // instead of a generic success page.
+      const returnUrl =
+        typeof window !== "undefined"
+          ? `${window.location.pathname}${window.location.search}`
+          : undefined;
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_NGROX_URL}/v1/billing/create-checkout`,
-        { plan: selectedPlan },
+        { plan: selectedPlan, returnUrl },
         {
           headers: {
             Authorization: `Bearer ${authToken}`,

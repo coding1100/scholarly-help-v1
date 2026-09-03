@@ -10,6 +10,7 @@ import TextSummarizerInput from "@/app/components/AiTools/TextSummarizerInput";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import { useToolDraftPersistence } from "@/app/lib/client/useToolDraftPersistence";
+import { useBillingDraftStash } from "@/app/lib/client/useBillingDraftStash";
 import { countWords, looksLikeGibberish } from "@/app/utils/text";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import { getAccessToken } from "@/app/lib/authSession";
@@ -97,6 +98,8 @@ const GrammarCheckerTool: React.FC = () => {
       if (draft.text) setText(draft.text);
     },
   );
+
+  useBillingDraftStash<GrammarCheckerDraft>("grammar-checker", () => ({ text }));
 
   const { gateOpen, closeGate, guardAiClick } = useGuestGate<GrammarCheckerDraft>({
     getDraft: () => ({ text }),

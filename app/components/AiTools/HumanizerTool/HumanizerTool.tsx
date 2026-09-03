@@ -12,6 +12,7 @@ import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import { useToolDraftPersistence } from "@/app/lib/client/useToolDraftPersistence";
+import { useBillingDraftStash } from "@/app/lib/client/useBillingDraftStash";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 import {
   detectorHumanContentShare,
@@ -193,6 +194,13 @@ const HumanizerTool: React.FC = () => {
       if (draft.voiceSample) setVoiceSample(draft.voiceSample);
     },
   );
+
+  useBillingDraftStash<HumanizerDraft>("humanizer", () => ({
+    text,
+    intensity,
+    register,
+    voiceSample,
+  }));
 
   const { gateOpen, closeGate, guardAiClick } = useGuestGate<HumanizerDraft>({
     getDraft: () => ({ text, intensity, register, voiceSample }),
