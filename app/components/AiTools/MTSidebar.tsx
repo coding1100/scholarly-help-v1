@@ -32,6 +32,7 @@ import { isGuest, stashGuestMigrationId } from "@/app/lib/client/guestStudyLimit
 import { upsertFbclidToolContext } from "@/app/utils/fbclidTracking";
 import { __TOOLS_SHEET_EVENT_NAME__ } from "@/app/utils/toolsSheetClient";
 import type { AssistantPanel } from "./MainTool/AcademicAssistantPanel";
+import { TOOLS, type ToolCategory } from "./Dashboard/toolsData";
 
 interface SidebarProps {
   onToggle?: () => void;
@@ -62,27 +63,23 @@ const MTSidebar = ({
   const normalizedRoute = currentRoute?.endsWith("/")
     ? currentRoute.slice(0, -1)
     : currentRoute;
-  const tools = [
-    { name: "Explore Tools", href: "/tools/dashboard" },
-    { name: "AI Course Planner", href: "/tools/course-planner" },
-    // { name: "Academic Research Assistant", href: "/tools/academic-research-assistant" },
-    // { name: "Paraphraser Tool", href: "/tools/paraphraser-tool" },
-    // { name: "Summarizer Tool", href: "/tools/summarizer-tool" },
-    // { name: "Humanizer Tool", href: "/tools/humanizer-tool" },
-    // { name: "Thesis Generator Tool", href: "/tools/thesis-generator-tool" },
-    // { name: "Essay Outline Tool", href: "/tools/essay-outline-tool" },
-    // { name: "Essay Title Generator", href: "/tools/essay-title" },
-    // { name: "Research Question Generator", href: "/tools/research-question" },
-    // { name: "Math Solver", href: "/tools/math-solver" },
-    // { name: "Citation Tool", href: "/tools/citation-tool" },
-    // { name: "Tutor Tool", href: "/tools/tutor" },
-    // { name: "Micro Learning", href: "/tools/micro-learning" },
-    // { name: "Exam Prep", href: "/tools/exam-prep" },
-    // { name: "Language Practice", href: "/tools/language-practice" },
-    // { name: "CGPA Calculator", href: "/tools/cgpa-calculator" },
-
-    // { name: "Syllabus Importer", href: "/tools/syllabus-importer" },
+  // Single source of truth shared with the dashboard grid (ToolGrid.tsx) —
+  // every live tool, already categorized. Nothing hand-maintained here, so
+  // this list can't silently fall out of sync with what's actually shipped.
+  const tools = TOOLS;
+  type CategoryTabKey = "all" | ToolCategory;
+  const categoryTabs: Array<{ key: CategoryTabKey; label: string }> = [
+    { key: "all", label: "All tools" },
+    { key: "essay-writing", label: "Essay writing" },
+    { key: "research", label: "Research" },
+    { key: "math-science", label: "Math & Science" },
+    { key: "study-tools", label: "Study tools" },
   ];
+  const [activeToolCategory, setActiveToolCategory] = useState<CategoryTabKey>("all");
+  const visibleTools =
+    activeToolCategory === "all"
+      ? tools
+      : tools.filter((tool) => tool.category === activeToolCategory);
   const [showTools, setShowTools] = useState(false);
   const [userName, setUserName] = useState("User");
   const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -540,34 +537,56 @@ const MTSidebar = ({
       </div>
 
       <div className="mb-2 min-h-0 flex-1 overflow-y-auto pr-1 scrollbar-hide">
-        {/* <button
-          className="flex w-full items-center gap-3 px-3 py-1 text-sm transition-colors bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-md"
-          onClick={() => setShowTools((prev) => !prev)}
+        {/* Category pills — filters the tool list below. "All tools" plus
+            the same four categories the dashboard grid uses. */}
+        <div
+          role="tablist"
+          aria-label="Tool categories"
+          className="-mx-1 flex flex-wrap gap-1.5 px-1"
         >
-          <FiTool className="h-5 w-5" />
-          <span className="text-sm font-semibold">Tools</span>
-        </button> */}
-        {/* {showTools && ( */}
-        <div className="mt-2 flex flex-col gap-1 pl-4">
-          {tools.map((tool, index) => {
+          {categoryTabs.map((tab) => {
+            const active = activeToolCategory === tab.key;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => setActiveToolCategory(tab.key)}
+                className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
+                  active
+                    ? "border-primary-400 bg-primary-400 text-white"
+                    : "border-gray-300 bg-white text-gray-600 hover:border-primary-300 hover:bg-primary-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
+                }`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="mt-3 flex flex-col gap-1">
+          {visibleTools.map((tool) => {
             const isAcademicAssistant =
               tool.href === "/tools/academic-research-assistant";
             const isActive = normalizedRoute === tool.href;
+            const ToolIcon = tool.icon;
 
             return (
-              <div key={index} className="w-full">
+              <div key={tool.href} className="w-full">
                 <Link
                   href={appendQueryString(
                     tool.href,
                     searchParams?.toString() || "",
                   )}
-                  className={`block w-full rounded-md px-2 py-1 text-left text-sm leading-5 transition-colors ${
+                  className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm leading-5 transition-colors ${
                     isActive
-                      ? "font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30"
-                      : " hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                      ? "font-semibold text-primary-400 bg-primary-100 dark:bg-primary-500/20"
+                      : "hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
                   }`}
                 >
-                  {tool.name}
+                  <ToolIcon className="h-4 w-4 shrink-0" />
+                  <span className="truncate">{tool.name}</span>
                 </Link>
                 {isAcademicAssistant && isAssistantRoute && (
                   <div

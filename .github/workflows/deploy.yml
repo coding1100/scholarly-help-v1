@@ -36,6 +36,8 @@ jobs:
           NEXT_PUBLIC_NGROX_URL: https://api.scholarlyhelp.com/v1
           REPORT_ADMIN_USERNAME: admin@scholarly.com
           REPORT_ADMIN_PASSWORD: admin12345
+          ADMIN_USERNAME: admin-seo@scholarly.com
+          ADMIN_PASSWORD: admin12345
           JWT_SECRET: local-report-admin-session-secret-change-before-production-2026
           TOOL_USAGE_DATABASE_NAME: scholarlyhelp_prod
           # Agentic platform (powers Tutor / Micro Learning / Exam Prep agents).
@@ -82,6 +84,8 @@ jobs:
           GOOGLE_PRIVATE_TOOL_KEY: ${{ secrets.GOOGLE_PRIVATE_TOOL_KEY }}
           GOOGLE_SHEET_TOOL_ID: ${{ secrets.GOOGLE_SHEET_TOOL_ID }}
           REPORT_ADMIN_USERNAME: admin@scholarly.com
+          ADMIN_USERNAME: admin-seo@scholarly.com
+          ADMIN_PASSWORD: admin12345
           REPORT_ADMIN_PASSWORD: admin12345
           JWT_SECRET: local-report-admin-session-secret-change-before-production-2026
           TOOL_USAGE_DATABASE_NAME: scholarlyhelp_prod

@@ -53,7 +53,7 @@ export default function CheckoutConfirmationOverlay() {
       try {
         const token = await getOrRefreshAccessToken();
         if (!token) return; // Not signed in on this tab — nothing we can confirm.
-        await axios.get(`${process.env.NEXT_PUBLIC_NGROX_URL}/v1/billing/confirm-checkout`, {
+        await axios.get(`${process.env.NEXT_PUBLIC_NGROX_URL}/billing/confirm-checkout`, {
           params: { session_id: sessionId },
           headers: { Authorization: `Bearer ${token}` },
         });

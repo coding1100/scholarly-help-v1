@@ -594,7 +594,7 @@ export default function Header() {
                     AI Dashboard
                   </Link>
                 )}
-                {isThankYou ? (
+                {isSignedIn ? null : isThankYou ? (
                   <a
                     href="https://api.whatsapp.com/send?phone=14108445419"
                     target="_blank"
