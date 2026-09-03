@@ -20,6 +20,7 @@ import {
 } from "@/app/lib/server/study/prompts";
 import { StudyLearningMode } from "@/app/lib/server/study/types";
 import { consumeStudyAiQuota } from "@/app/lib/server/study/rateLimit";
+import { checkAndReserveBillingUsage, reportBillingUsage } from "@/app/lib/server/study/billingGate";
 
 export const dynamic = "force-dynamic";
 
@@ -107,6 +108,24 @@ export async function POST(
     });
     if (!quota.allowed) {
       return fail(`Tutor rate limit reached. Try again in ${quota.retryAfterSeconds} seconds.`, 429);
+    }
+
+    // Same free-run-count / credit-balance gate every other tool enforces —
+    // Study Workspace only ever had its own generous rate limiter above, so a
+    // signed-in user with zero free runs left could still use the tutor
+    // indefinitely. Guests are exempt here (their own separate, tighter
+    // rate-limit cap above already governs them), matching every NestJS tool
+    // route's OptionalAuthGuard pattern.
+    let billingReservationId: string | null = null;
+    if (!isGuest) {
+      const gate = await checkAndReserveBillingUsage({
+        request,
+        service: "study.tutor",
+        estimatedPromptTokens: 2000,
+        estimatedCompletionTokens: TUTOR_MAX_OUTPUT_TOKENS,
+      });
+      if (gate.blocked) return gate.response;
+      billingReservationId = gate.reservationId;
     }
 
     const body = (await request.json()) as {
@@ -378,6 +397,14 @@ export async function POST(
               ),
             );
             controller.close();
+            if (!isGuest) {
+              reportBillingUsage({
+                request,
+                reservationId: billingReservationId,
+                promptTokens: 2000,
+                completionTokens: TUTOR_MAX_OUTPUT_TOKENS,
+              });
+            }
           } catch (error) {
             console.error("study.tutor.POST.stream", error);
             const message =
@@ -490,6 +517,15 @@ export async function POST(
         createdAt: now,
       }),
     ]);
+
+    if (!isGuest) {
+      reportBillingUsage({
+        request,
+        reservationId: billingReservationId,
+        promptTokens: 2000,
+        completionTokens: TUTOR_MAX_OUTPUT_TOKENS,
+      });
+    }
 
     return ok({
       answer,
