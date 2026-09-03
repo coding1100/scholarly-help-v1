@@ -22,6 +22,7 @@ import { useDetectorConfig } from "./useDetectorConfig";
 import { getAccessToken } from "@/app/lib/authSession";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import { useToolDraftPersistence } from "@/app/lib/client/useToolDraftPersistence";
+import { useBillingDraftStash } from "@/app/lib/client/useBillingDraftStash";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 
 type Filter = "all" | Exclude<SegmentLabel, "neutral">;
@@ -73,6 +74,8 @@ const AiDetectorTool: React.FC = () => {
       if (draft.text) setText(draft.text);
     },
   );
+
+  useBillingDraftStash<AiDetectorDraft>("ai-detector", () => ({ text }));
 
   const { gateOpen, closeGate, guardAiClick } = useGuestGate<AiDetectorDraft>({
     getDraft: () => ({ text }),

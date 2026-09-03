@@ -11,6 +11,7 @@ import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import { useToolDraftPersistence } from "@/app/lib/client/useToolDraftPersistence";
+import { useBillingDraftStash } from "@/app/lib/client/useBillingDraftStash";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 import { getAccessToken } from "@/app/lib/authSession";
 import { useLatestAbortController } from "@/app/lib/client/toolOptimization";
@@ -48,6 +49,12 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag, variant = "default" }) 
       if (draft.customToneInstructions) setCustomToneInstructions(draft.customToneInstructions);
     },
   );
+
+  useBillingDraftStash<ParaphraserDraft>("paraphraser", () => ({
+    inputText,
+    toneMode,
+    customToneInstructions,
+  }));
 
   const { gateOpen, closeGate, guardAiClick } = useGuestGate<ParaphraserDraft>({
     getDraft: () => ({ inputText, toneMode, customToneInstructions }),

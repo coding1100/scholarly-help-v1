@@ -8,6 +8,7 @@ import { Toaster } from "react-hot-toast";
 import { initializeAuthSession, installAxiosAuthRefresh } from "@/app/lib/authSession";
 import { hasRefreshSessionHint } from "@/app/lib/accessTokenStore";
 import BillingGate from "@/app/components/AiTools/BillingGate";
+import CheckoutConfirmationOverlay from "@/app/components/AiTools/CheckoutConfirmationOverlay";
 
 /**
  * Global handler for the backend's post-login free-run quota (see
@@ -124,6 +125,10 @@ export default function ClientScripts() {
       {/* Global billing upgrade popup, opened when a signed-in user's free
           runs are exhausted on any tool (see installFreeRunQuotaHandler above). */}
       <BillingGate />
+
+      {/* Confirms a just-completed Stripe checkout eagerly (see the component's
+          own doc comment for why this exists alongside the invoice.paid webhook). */}
+      <CheckoutConfirmationOverlay />
 
       {/* LiveChat - load script only on home page */}
       {ShowLiveChat && (
