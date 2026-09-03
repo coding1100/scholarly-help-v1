@@ -14,7 +14,7 @@ import { BiChevronsLeft } from "react-icons/bi";
 import { usePathname, useRouter } from "next/navigation";
 import axiosInstance from "@/app/axios";
 import toast from "react-hot-toast";
-import { FiTool, FiPlus } from "react-icons/fi";
+import { FiTool, FiPlus, FiChevronDown } from "react-icons/fi";
 import AccountPopover from "./AccountPopover";
 import UsageAndPricing from "./UsageAndPricing";
 import PromptModal from "./PromptModal";
@@ -67,19 +67,46 @@ const MTSidebar = ({
   // every live tool, already categorized. Nothing hand-maintained here, so
   // this list can't silently fall out of sync with what's actually shipped.
   const tools = TOOLS;
-  type CategoryTabKey = "all" | ToolCategory;
-  const categoryTabs: Array<{ key: CategoryTabKey; label: string }> = [
-    { key: "all", label: "All tools" },
+  const categorySections: Array<{ key: ToolCategory; label: string }> = [
+    { key: "study-tools", label: "Study tools" },
     { key: "essay-writing", label: "Essay writing" },
     { key: "research", label: "Research" },
     { key: "math-science", label: "Math & Science" },
-    { key: "study-tools", label: "Study tools" },
   ];
-  const [activeToolCategory, setActiveToolCategory] = useState<CategoryTabKey>("all");
-  const visibleTools =
-    activeToolCategory === "all"
-      ? tools
-      : tools.filter((tool) => tool.category === activeToolCategory);
+  const toolsByCategory = React.useMemo(() => {
+    const grouped = new Map<ToolCategory, typeof tools>();
+    for (const section of categorySections) grouped.set(section.key, []);
+    for (const tool of tools) grouped.get(tool.category)?.push(tool);
+    return grouped;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tools]);
+  const activeToolCategoryKey = React.useMemo(
+    () => tools.find((tool) => tool.href === normalizedRoute)?.category,
+    [tools, normalizedRoute],
+  );
+  // Accordion: the category containing the current tool starts open, every
+  // other section starts collapsed. Navigating to a tool always reveals its
+  // category (this effect only ever ADDS the active category, never removes
+  // anything), so it never hides the page you're on — but it also never
+  // fights a user who collapsed some other section, since it never touches
+  // those.
+  const [openCategories, setOpenCategories] = useState<Set<ToolCategory>>(
+    () => new Set(activeToolCategoryKey ? [activeToolCategoryKey] : ["study-tools"]),
+  );
+  useEffect(() => {
+    if (!activeToolCategoryKey) return;
+    setOpenCategories((prev) =>
+      prev.has(activeToolCategoryKey) ? prev : new Set(prev).add(activeToolCategoryKey),
+    );
+  }, [activeToolCategoryKey]);
+  const toggleCategory = (key: ToolCategory) => {
+    setOpenCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
   const [showTools, setShowTools] = useState(false);
   const [userName, setUserName] = useState("User");
   const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -537,109 +564,88 @@ const MTSidebar = ({
       </div>
 
       <div className="mb-2 min-h-0 flex-1 overflow-y-auto pr-1 scrollbar-hide">
-        {/* Category pills — filters the tool list below. "All tools" plus
-            the same four categories the dashboard grid uses. */}
-        <div
-          role="tablist"
-          aria-label="Tool categories"
-          className="-mx-1 flex flex-wrap gap-1.5 px-1"
-        >
-          {categoryTabs.map((tab) => {
-            const active = activeToolCategory === tab.key;
+        {/* Tools grouped into collapsible categories instead of a flat list
+            behind filter pills — the section containing whichever tool is
+            currently open starts expanded, and expand/collapse choices the
+            user makes stick across navigation. */}
+        <div className="flex flex-col gap-0.5">
+          {categorySections.map((section) => {
+            const sectionTools = toolsByCategory.get(section.key) || [];
+            const isOpen = openCategories.has(section.key);
             return (
-              <button
-                key={tab.key}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                onClick={() => setActiveToolCategory(tab.key)}
-                className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
-                  active
-                    ? "border-primary-400 bg-primary-400 text-white"
-                    : "border-gray-300 bg-white text-gray-600 hover:border-primary-300 hover:bg-primary-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
-                }`}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="mt-3 flex flex-col gap-1">
-          {visibleTools.map((tool) => {
-            const isAcademicAssistant =
-              tool.href === "/tools/academic-research-assistant";
-            const isActive = normalizedRoute === tool.href;
-            const ToolIcon = tool.icon;
-
-            return (
-              <div key={tool.href} className="w-full">
-                <Link
-                  href={appendQueryString(
-                    tool.href,
-                    searchParams?.toString() || "",
-                  )}
-                  className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm leading-5 transition-colors ${
-                    isActive
-                      ? "font-semibold text-primary-400 bg-primary-100 dark:bg-primary-500/20"
-                      : "hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
-                  }`}
+              <div key={section.key} className="w-full">
+                <button
+                  type="button"
+                  aria-expanded={isOpen}
+                  onClick={() => toggleCategory(section.key)}
+                  className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 transition-colors hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700"
                 >
-                  <ToolIcon className="h-4 w-4 shrink-0" />
-                  <span className="truncate">{tool.name}</span>
-                </Link>
-                {isAcademicAssistant && isAssistantRoute && (
-                  <div
-                    data-tour="ara-assistant-panels"
-                    className="mt-1 mb-2 ml-2 space-y-1 border-l border-gray-200 pl-3"
-                  >
-                    <button
-                      type="button"
-                      className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700"
-                      onClick={() =>
-                        onNewDocument
-                          ? onNewDocument()
-                          : setPromptModalOpen(true)
-                      }
-                    >
-                      <FiPlus className="h-4 w-4" />
-                      <span>New</span>
-                    </button>
-                    {assistantActions.map((item) => (
-                      <button
-                        key={item.name}
-                        type="button"
-                        onClick={() => onPanelToggle?.(item.panel)}
-                        className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors ${
-                          activePanel === item.panel
-                            ? "bg-primary-100 font-semibold text-primary-400"
-                            : "text-gray-700 hover:bg-gray-200"
-                        }`}
-                      >
-                        {item.icon}
-                        <span>{item.name}</span>
-                      </button>
-                    ))}
-                    {/* <button
-                      type="button"
-                      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-200"
-                      onClick={() => toast("Tutorials are coming soon.")}
-                    >
-                      <HiOutlineQuestionMarkCircle className="h-4 w-4" />
-                      <span>Tutorials</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-200"
-                      onClick={() =>
-                        toast(
-                          "Shortcut: Shift + ArrowRight accepts AI suggestions.",
-                        )
-                      }
-                    >
-                      <FiTool className="h-4 w-4" />
-                      <span>Shortcuts</span>
-                    </button> */}
+                  <span>{section.label}</span>
+                  <FiChevronDown
+                    className={`h-3.5 w-3.5 shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                  />
+                </button>
+                {isOpen && (
+                  <div className="mt-0.5 flex flex-col gap-1 pb-1">
+                    {sectionTools.map((tool) => {
+                      const isAcademicAssistant =
+                        tool.href === "/tools/academic-research-assistant";
+                      const isActive = normalizedRoute === tool.href;
+                      const ToolIcon = tool.icon;
+
+                      return (
+                        <div key={tool.href} className="w-full">
+                          <Link
+                            href={appendQueryString(
+                              tool.href,
+                              searchParams?.toString() || "",
+                            )}
+                            className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm leading-5 transition-colors ${
+                              isActive
+                                ? "font-semibold text-primary-400 bg-primary-100 dark:bg-primary-500/20"
+                                : "hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                            }`}
+                          >
+                            <ToolIcon className="h-4 w-4 shrink-0" />
+                            <span className="truncate">{tool.name}</span>
+                          </Link>
+                          {isAcademicAssistant && isAssistantRoute && (
+                            <div
+                              data-tour="ara-assistant-panels"
+                              className="mt-1 mb-2 ml-2 space-y-1 border-l border-gray-200 pl-3"
+                            >
+                              <button
+                                type="button"
+                                className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700"
+                                onClick={() =>
+                                  onNewDocument
+                                    ? onNewDocument()
+                                    : setPromptModalOpen(true)
+                                }
+                              >
+                                <FiPlus className="h-4 w-4" />
+                                <span>New</span>
+                              </button>
+                              {assistantActions.map((item) => (
+                                <button
+                                  key={item.name}
+                                  type="button"
+                                  onClick={() => onPanelToggle?.(item.panel)}
+                                  className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors ${
+                                    activePanel === item.panel
+                                      ? "bg-primary-100 font-semibold text-primary-400"
+                                      : "text-gray-700 hover:bg-gray-200"
+                                  }`}
+                                >
+                                  {item.icon}
+                                  <span>{item.name}</span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
