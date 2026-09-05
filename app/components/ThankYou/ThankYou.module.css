@@ -1,19 +1,30 @@
+.thankYouRoot {
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Slick Carousel Clean Overrides */
+.thankYouRoot :global(.slick-slider) {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.thankYouRoot :global(.slick-prev),
+.thankYouRoot :global(.slick-next) {
+  font-size: 0 !important;
+  line-height: 0 !important;
+  color: transparent !important;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  cursor: pointer !important;
+}
+
 .thankYouRoot :global(.slick-prev::before),
 .thankYouRoot :global(.slick-next::before) {
+  display: none !important;
   content: "" !important;
-  background-image: url("../../assets/Images/thankyouProofright.png");
-  background-repeat: no-repeat;
-  position: relative;
-  background-size: 100% 100% !important;
-  display: inline-block !important;
-  width: 28px !important;
-  height: 80px !important;
 }
-
-.thankYouRoot :global(.slick-next::before) {
-  transform: rotate(180deg);
-}
-
-.thankYouRoot {
-}
-

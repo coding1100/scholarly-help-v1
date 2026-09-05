@@ -15,12 +15,12 @@ const ClientScripts = dynamic(() => import("./components/ClientScripts"), {
 // The swap repaint was registering as LCP (~3.5s) on slow connections.
 const poppins = Poppins({
   subsets: ["latin"],
-  display: "optional",
+  display: "swap",
   variable: "--font-poppins",
-  weight: ["400", "600", "700"],
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
   preload: true,
-  fallback: ["system-ui", "-apple-system", "Segoe UI", "Arial", "sans-serif"],
-  adjustFontFallback: true,
+  fallback: ["Poppins", "system-ui", "-apple-system", "Segoe UI", "sans-serif"],
+  adjustFontFallback: false,
 });
 
 export const metadata: Metadata = {
@@ -34,10 +34,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={poppins.variable}>
+    <html lang="en" className={`${poppins.variable} font-poppins`}>
       <head>
-        {/* Resource Hints for better performance */}
-
+        {/* Resource Hints for better performance and sharp font loading */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap"
+          rel="stylesheet"
+        />
 
         {/* Force HTTPS for all resources in production only */}
         {process.env.NODE_ENV === "production" &&
@@ -45,7 +54,7 @@ export default function RootLayout({
           <meta httpEquiv="Content-Security-Policy" content="upgrade-insecure-requests" />
         )}
       </head>
-      <body suppressHydrationWarning>
+      <body className={`${poppins.className} font-poppins`} suppressHydrationWarning>
         <OrganizationSchema />
         <main id="main-content">{children}</main>
 
