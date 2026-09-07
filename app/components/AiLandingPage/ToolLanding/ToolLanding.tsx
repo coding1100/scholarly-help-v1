@@ -116,15 +116,15 @@ const ToolLanding = ({ content: c, tool }: ToolLandingProps) => (
             {c.beforeAfter.subtitle}
           </p>
 
-          <div className="mt-12 grid gap-8 md:grid-cols-2">
+          <div className="mt-12 grid min-w-0 gap-8 md:grid-cols-2">
             {/* What you paste */}
-            <div className="flex flex-col rounded-2xl bg-primary-200 p-7 md:p-8">
+            <div className="flex min-w-0 flex-col rounded-2xl bg-primary-200 p-7 md:p-8">
               <p className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.12em] text-gray-800">
                 <span aria-hidden>📄</span> {c.beforeAfter.pasteLabel}
               </p>
-              <div className="mt-6 flex-1 rounded-xl border border-gray-200 bg-white p-6 md:p-8">
+              <div className="mt-6 min-w-0 flex-1 rounded-xl border border-gray-200 bg-white p-6 md:p-8">
                 <p
-                  className="text-base leading-7 text-gray-800 md:text-lg md:leading-8"
+                  className="break-words text-base leading-7 text-gray-800 md:text-lg md:leading-8"
                   dangerouslySetInnerHTML={{
                     __html: c.beforeAfter.pasteHtml || c.beforeAfter.pasteText,
                   }}
@@ -133,23 +133,23 @@ const ToolLanding = ({ content: c, tool }: ToolLandingProps) => (
             </div>
 
             {/* What you get back */}
-            <div className="flex flex-col rounded-2xl bg-primary-400 p-7 md:p-8">
+            <div className="flex min-w-0 flex-col rounded-2xl bg-primary-400 p-7 md:p-8">
               <p className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.12em] text-white">
                 <span aria-hidden>✨</span> {c.beforeAfter.resultLabel}
               </p>
-              <div className="mt-6 flex-1 rounded-xl bg-white p-6 md:p-8">
+              <div className="mt-6 min-w-0 flex-1 rounded-xl bg-white p-6 md:p-8">
                 <div
-                  className="text-base leading-7 text-gray-800 md:text-lg md:leading-8 space-y-2"
+                  className="break-words text-base leading-7 text-gray-800 md:text-lg md:leading-8 space-y-2"
                   dangerouslySetInnerHTML={{
                     __html: c.beforeAfter.resultHtml || c.beforeAfter.resultText,
                   }}
                 />
                 {c.beforeAfter.tags && c.beforeAfter.tags.length > 0 && (
-                  <div className="mt-6 flex flex-nowrap gap-2 md:gap-3">
+                  <div className="mt-6 flex flex-wrap gap-2 md:gap-3">
                     {c.beforeAfter.tags.map((tag) => (
                       <span
                         key={tag.label}
-                        className={`whitespace-nowrap rounded-lg px-2.5 py-2 text-xs font-medium md:px-3 md:text-sm ${tag.className}`}
+                        className={`max-w-full rounded-lg px-2.5 py-2 text-xs font-medium md:px-3 md:text-sm ${tag.className}`}
                       >
                         {tag.label}
                       </span>
