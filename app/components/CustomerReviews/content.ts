@@ -168,6 +168,7 @@ export const desktopReviews = [
   Review10,
 ];
 export const mobileReviews = [
+  mobileReview11,
   mobileReview1,
   mobileReview2,
   mobileReview3,
@@ -178,7 +179,6 @@ export const mobileReviews = [
   mobileReview8,
   mobileReview9,
   mobileReview10,
-  mobileReview11,
   mobileReview12,
   mobileReview13,
   mobileReview14,
