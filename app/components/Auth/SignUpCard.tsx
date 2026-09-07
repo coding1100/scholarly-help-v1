@@ -77,14 +77,15 @@ const SignUpCard: FC<SignUpCardProps> = ({
     if (emailMsg || passwordMsg) return;
 
     const newEmail = email.trim().toLowerCase();
-    // No name field — the backend defaults userData.name to "User" when
-    // it's absent (auth.controller.ts signup handler), so omitting it here
-    // is a fully supported, intentional path, not a partial payload.
+    // No name field on signup — derive a display name from the email's
+    // local part instead of relying on the backend's generic "User" default.
+    const derivedName = newEmail.split("@")[0];
     let payload: any = {
       email: newEmail,
       password,
       userData: {
         email: newEmail,
+        name: derivedName,
       },
     };
     setLoading(true);
@@ -97,6 +98,9 @@ const SignUpCard: FC<SignUpCardProps> = ({
       // Only proceed if response is OK
       localStorage.setItem("user_email", newEmail);
       localStorage.setItem("user_password", password);
+      // No name field on signup; derive a display name from the email's
+      // local part (the OTP screen requires this key to be present).
+      localStorage.setItem("user_name", newEmail.split("@")[0]);
 
       setEmail("");
       setPassword("");

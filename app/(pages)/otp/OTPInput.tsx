@@ -14,13 +14,46 @@ const OTPInput: React.FC<OTPInputProps> = ({ length = 6, onChange }) => {
     e: React.ChangeEvent<HTMLInputElement>,
     idx: number,
   ) => {
-    const val = e.target.value.replace(/\D/g, ""); // Only numbers
-    if (val.length > 1) return;
+    const digits = e.target.value.replace(/\D/g, "");
+    // A multi-digit value here means a paste landed in a single box (some
+    // browsers don't clamp pasted text to maxLength before firing onChange);
+    // distribute it starting at this box instead of dropping it.
+    if (digits.length > 1) {
+      distributeDigits(digits, idx);
+      return;
+    }
+    const val = digits;
     e.target.value = val;
     onChange(inputRefs.current.map((input) => input?.value || "").join(""));
     if (val && idx < length - 1) {
       inputRefs.current[idx + 1]?.focus();
     }
+  };
+
+  const distributeDigits = (digits: string, startIdx: number) => {
+    const chars = digits.split("");
+    let lastFilledIdx = startIdx;
+    for (let i = startIdx; i < length && chars.length > 0; i++) {
+      const char = chars.shift();
+      const input = inputRefs.current[i];
+      if (input && char) {
+        input.value = char;
+        lastFilledIdx = i;
+      }
+    }
+    onChange(inputRefs.current.map((input) => input?.value || "").join(""));
+    const nextIdx = Math.min(lastFilledIdx + 1, length - 1);
+    inputRefs.current[nextIdx]?.focus();
+  };
+
+  const handlePaste = (
+    e: React.ClipboardEvent<HTMLInputElement>,
+    idx: number,
+  ) => {
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "");
+    if (!pasted) return;
+    e.preventDefault();
+    distributeDigits(pasted, idx);
   };
 
   const handleKeyDown = (
@@ -46,6 +79,7 @@ const OTPInput: React.FC<OTPInputProps> = ({ length = 6, onChange }) => {
           }}
           onChange={(e) => handleChange(e, idx)}
           onKeyDown={(e) => handleKeyDown(e, idx)}
+          onPaste={(e) => handlePaste(e, idx)}
         />
       ))}
     </div>
