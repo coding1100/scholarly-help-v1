@@ -287,7 +287,7 @@ const ThankYou: FC<ThankYouProps> = () => {
       </section>
 
       {/* ===================== 3-STEP PROCESS CARDS ===================== */}
-      <section className="py-6 sm:py-12 md:py-16">
+      <section className="py-6 sm:py-12 md:py-16 lg:py-4">
         <div className="container mx-auto max-w-[1160px] px-3 sm:px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-6">
             {/* Step 1 */}
@@ -355,7 +355,7 @@ const ThankYou: FC<ThankYouProps> = () => {
       </section>
 
       {/* ===================== 4 STATS / TRUST SECTION ===================== */}
-      <section className="bg-[#F4F5FA] py-6 sm:py-14 md:py-20 mt-5 sm:mt-10 md:mt-14">
+      <section className="bg-[#F4F5FA] py-6 sm:py-14 md:py-20 lg:py-12 mt-5 sm:mt-10 md:mt-14">
         <div className="container mx-auto max-w-[1240px] px-3 sm:px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4 md:gap-6">
             {/* Stat 1 */}
@@ -425,7 +425,7 @@ const ThankYou: FC<ThankYouProps> = () => {
       </section>
 
       {/* ===================== TRUSTPILOT REVIEWS ===================== */}
-      <section className="py-7 sm:py-16 md:py-24 bg-white">
+      <section className="py-7 sm:py-16 md:py-24 lg:py-4 bg-white">
         <div className="container mx-auto max-w-[1240px] px-3 sm:px-4">
           <h2 className="text-xl sm:text-3xl md:text-[40px] font-bold text-[#111827] text-center mb-1 tracking-[-0.01em]">
             How Student Rate Us!

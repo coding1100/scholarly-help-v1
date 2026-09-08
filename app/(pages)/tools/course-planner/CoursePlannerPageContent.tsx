@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import ToolsLayout from "@/app/components/AiTools/ToolsLayout";
+import ToolWithExplore from "@/app/components/AiTools/ToolWithExplore";
 import { CoursePlannerTool } from "@/app/components/AiTools/CoursePlanner/CoursePlannerTool";
 
 export default function CoursePlannerPageContent() {
@@ -9,9 +10,11 @@ export default function CoursePlannerPageContent() {
 
   return (
     <ToolsLayout flag={flag} setFlag={setFlag}>
-      <div className="h-full w-full overflow-y-auto bg-slate-50">
-        <CoursePlannerTool />
-      </div>
+      <ToolWithExplore>
+        <div className="w-full bg-slate-50">
+          <CoursePlannerTool />
+        </div>
+      </ToolWithExplore>
     </ToolsLayout>
   );
 }
