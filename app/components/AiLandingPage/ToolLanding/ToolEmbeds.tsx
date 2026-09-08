@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import AiDetectorTool from "@/app/components/AiTools/AiDetectorTool/AiDetectorTool";
+import { CoursePlannerTool } from "@/app/components/AiTools/CoursePlanner/CoursePlannerTool";
 import MathSolver from "@/app/components/AiTools/MathSolver/MathSolver";
 
 const embedClassName =
@@ -10,6 +11,12 @@ const embedClassName =
 export const AiDetectorEmbed = () => (
   <div className={embedClassName}>
     <AiDetectorTool />
+  </div>
+);
+
+export const CoursePlannerEmbed = () => (
+  <div className={embedClassName}>
+    <CoursePlannerTool />
   </div>
 );
 
