@@ -38,7 +38,7 @@ const BeforeAfter: FC = () => (
               className="break-words text-base leading-7 text-gray-800 md:text-lg md:leading-8"
               dangerouslySetInnerHTML={{ __html: c.resultHtml || c.resultText }}
             />
-            <div className="mt-6 flex flex-wrap gap-2 md:gap-3">
+            <div className="mt-6 flex flex-wrap gap-2 md:flex-nowrap md:gap-3">
               {c.tags.map((tag) => (
                 <span
                   key={tag.label}

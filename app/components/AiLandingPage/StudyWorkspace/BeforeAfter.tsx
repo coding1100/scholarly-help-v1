@@ -36,7 +36,7 @@ const BeforeAfter: FC = () => (
             <p className="break-words text-base leading-7 text-gray-800 md:text-lg md:leading-8">
               {c.resultText}
             </p>
-            <div className="mt-6 flex flex-wrap gap-2 md:gap-3">
+            <div className="mt-6 flex flex-wrap gap-2 md:flex-nowrap md:gap-3">
               {c.tags.map((tag) => (
                 <span
                   key={tag.label}
