@@ -71,6 +71,7 @@ export async function generateMetadata() {
       return {
         title: metaTitle,
         description: metaDescription,
+        robots: { index: false, follow: false },
         alternates: {
           canonical: canonicalUrl,
         },
@@ -88,6 +89,7 @@ export async function generateMetadata() {
   return {
     title: `${MetaData.homeWork.title}`,
     description: `${MetaData.homeWork.description}`,
+    robots: { index: false, follow: false },
     alternates: {
       canonical: canonicalUrl,
     },
