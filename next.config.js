@@ -140,11 +140,6 @@ const nextConfig = {
         permanent: true,
       },
       {
-        source: '/tools/ai-essay-generator',
-        destination: '/tools/essay-generator',
-        permanent: true,
-      },
-      {
         source: '/pythagoras-solver',
         destination: '/math-solver',
         permanent: true,
