@@ -105,7 +105,7 @@ export const TOOLS: ToolCardData[] = [
   {
     name: "AI Essay Generator",
     description: "Build a structured academic draft from a topic and requirements.",
-    href: "/tools/ai-essay-generator",
+    href: "/tools/essay-generator",
     icon: FiFileText,
     badge: "New",
     category: "essay-writing",
