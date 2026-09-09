@@ -128,13 +128,17 @@ const nextConfig = {
     const movedLandings = [
       'ai-paraphraser',
       'ai-academic-research',
-      'ai-essay-generator',
       'ai-summarizer',
       'ai-thesis-generator',
       'citation-generator',
       'essay-title-generator',
     ];
     return [
+      {
+        source: '/ai-essay-generator',
+        destination: '/tools/essay-generator',
+        permanent: true,
+      },
       {
         source: '/pythagoras-solver',
         destination: '/math-solver',

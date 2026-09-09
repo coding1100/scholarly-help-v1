@@ -42,7 +42,7 @@ export const MainAiLanding = {
     tools: [
       {
         title: "AI Essay Generator sdadsd",
-        description: `Create structured, high-quality essays in minutes with our intelligent essay builder. Our <a href="/tools/ai-essay-generator" class="text-[#323dd6] hover:underline">AI Essay Generator</a> helps you:`,
+        description: `Create structured, high-quality essays in minutes with our intelligent essay builder. Our <a href="/tools/essay-generator" class="text-[#323dd6] hover:underline">AI Essay Generator</a> helps you:`,
         list: [
           "Build strong introductions with a clear focus",
           "Develop organized and logical body paragraphs",

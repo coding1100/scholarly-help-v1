@@ -26,7 +26,7 @@ const AcademicTools: FC<AcademicToolsProps> = ({ content }) => {
   const getToolUrl = (btnText: string, btnUrl?: string) => {
     switch (btnText) {
       case "Generate Your Essay Now":
-        return "/tools/ai-essay-generator";
+        return "/tools/essay-generator";
       case "Paraphrase Your Text Instantly":
         return "/tools/ai-paraphraser";
       case "Summarize Any Text":
