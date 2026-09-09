@@ -1,6 +1,6 @@
 "use client";
 
-import React, { FC, useEffect, useState } from "react";
+import React, { FC, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import axios from "axios";
 import Slider from "react-slick";
@@ -114,8 +114,26 @@ const NextArrow = (props: any) => {
 const ThankYou: FC<ThankYouProps> = () => {
   const [GCLID, setGCLID] = useState("");
   const [url, setUrl] = useState("");
+  // Browsers only allow unmuted playback to start from a real user gesture, so
+  // the video autoplays muted and this button drives the YouTube IFrame API
+  // (postMessage) to unmute + unpause on tap, rather than reloading the iframe.
+  const [videoMuted, setVideoMuted] = useState(true);
+  const videoIframeRef = useRef<HTMLIFrameElement>(null);
 
   const postUrl = `${process.env.NEXT_PUBLIC_API_URL}/order/quote/whatsapp`;
+
+  const unmuteVideo = () => {
+    const player = videoIframeRef.current?.contentWindow;
+    if (!player) return;
+    const send = (func: string) =>
+      player.postMessage(
+        JSON.stringify({ event: "command", func, args: [] }),
+        "*",
+      );
+    send("unMute");
+    send("playVideo");
+    setVideoMuted(false);
+  };
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -203,9 +221,6 @@ const ThankYou: FC<ThankYouProps> = () => {
               <br className="hidden sm:inline" />
               this short video to see what happens next and how to get help faster.
             </p>
-            <p className="text-[#111827] text-xs sm:text-[15px] md:text-base font-bold">
-              Watch this 2-minute video before your academic specialist contacts you.
-            </p>
           </div>
 
           {/* Video Container (Card Frame Matching Figma) */}
@@ -213,13 +228,32 @@ const ThankYou: FC<ThankYouProps> = () => {
             <div className="bg-white p-1.5 sm:p-2.5 md:p-3 rounded-2xl md:rounded-[30px] shadow-[0_12px_36px_-8px_rgba(0,0,0,0.12)] border border-[#E5E7EB]">
               <div className="relative aspect-video w-full rounded-xl md:rounded-[22px] overflow-hidden bg-black">
                 <iframe
+                  ref={videoIframeRef}
                   className="w-full h-full block"
-                  src="https://www.youtube.com/embed/5rSsqxPikBg?rel=0"
+                  src="https://www.youtube.com/embed/pygtLQUsDnI?rel=0&autoplay=1&mute=1&playsinline=1&enablejsapi=1"
                   title="Scholarly Help Welcome Video"
-                  loading="lazy"
+                  loading="eager"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   allowFullScreen
                 />
+                {videoMuted && (
+                  <button
+                    type="button"
+                    onClick={unmuteVideo}
+                    aria-label="Unmute video"
+                    className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 flex items-center gap-1.5 rounded-full bg-black/70 hover:bg-black/85 text-white text-xs sm:text-sm font-medium px-3 py-2 sm:px-4 sm:py-2.5 shadow-lg backdrop-blur-sm transition-colors"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="w-4 h-4 sm:w-5 sm:h-5 shrink-0"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z" />
+                    </svg>
+                    Tap for sound
+                  </button>
+                )}
               </div>
             </div>
           </div>
