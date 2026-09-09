@@ -17,7 +17,7 @@ export default function Page() {
   return (
     <Suspense fallback={<ToolsSuspenseFallback />}>
       <ProductSchema
-        productTitle="Free AI Essay  | Write High-Quality Essays Instantly"
+        productTitle="Free AI Essay Generator | Write High-Quality Essays Instantly"
         metaDescription="Create structured, high-quality essays in minutes with our intelligent AI essay builder. Perfect for academic practice, reflections, and coursework assignments."
         pageUrl={`${normalizedBaseUrl}/tools/ai-essay-generator`}
       />
