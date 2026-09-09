@@ -13,8 +13,10 @@ import {
   FiChevronUp,
   FiEdit3,
   FiFileText,
+  FiLoader,
   FiRefreshCw,
   FiRotateCcw,
+  FiRotateCw,
   FiSearch,
   FiUpload,
   FiUsers,
@@ -87,6 +89,9 @@ export default function EssayGeneratorTool() {
   const [citationOpen, setCitationOpen] = useState(false);
   const [sourceLabel, setSourceLabel] = useState("");
   const [checkPanel, setCheckPanel] = useState<string | null>(null);
+  const [transformingAction, setTransformingAction] = useState<"paraphrase" | "expand" | "shorten" | null>(null);
+  const [historyBusy, setHistoryBusy] = useState<"undo" | "redo" | null>(null);
+  const [citationBusy, setCitationBusy] = useState(false);
   const wizardTopRef = useRef<HTMLDivElement | null>(null);
   const textRef = useRef<HTMLTextAreaElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -203,20 +208,34 @@ export default function EssayGeneratorTool() {
   }
 
   async function undoDraft() {
-    if (!session?.current_revision_id) return;
+    if (!session?.current_revision_id || historyBusy) return;
+    setHistoryBusy("undo");
     try {
       const response = await axios.post(`${API}/tools/essay-generator/sessions/${session.session_id}/undo`, { expected_revision_id: session.current_revision_id }, { headers: await requestHeaders() });
       const updated = unwrap<Session>(response.data); setSession(updated); setDraft(updated.current_text || "");
       toast.success("Undo applied.");
     } catch (error) { toast.error(errorMessage(error)); }
+    finally { setHistoryBusy(null); }
+  }
+
+  async function redoDraft() {
+    if (!session?.current_revision_id || historyBusy) return;
+    setHistoryBusy("redo");
+    try {
+      const response = await axios.post(`${API}/tools/essay-generator/sessions/${session.session_id}/redo`, { expected_revision_id: session.current_revision_id }, { headers: await requestHeaders() });
+      const updated = unwrap<Session>(response.data); setSession(updated); setDraft(updated.current_text || "");
+      toast.success("Redo applied.");
+    } catch (error) { toast.error(errorMessage(error)); }
+    finally { setHistoryBusy(null); }
   }
 
   async function transformSelection(action: "paraphrase" | "expand" | "shorten") {
-    if (!session) return;
+    if (!session || transformingAction) return;
     const area = textRef.current;
     if (!area || area.selectionStart === area.selectionEnd) { toast.error("Select text in the draft first."); return; }
     const start = area.selectionStart; const end = area.selectionEnd;
     const selection = draft.slice(start, end);
+    setTransformingAction(action);
     try {
       const response = await axios.post(`${API}/tools/essay-generator/sessions/${session.session_id}/transform`, {
         action, selection, surrounding_text: draft.slice(Math.max(0, start - 500), Math.min(draft.length, end + 500)), tone, custom_tone: customTone || undefined,
@@ -225,18 +244,27 @@ export default function EssayGeneratorTool() {
       setDraft(draft.slice(0, start) + payload.text + draft.slice(end));
       toast.success(payload.note || "Selection updated.");
     } catch (error) { toast.error(errorMessage(error)); }
+    finally { setTransformingAction(null); }
   }
 
-  function insertCitation() {
-    const label = sourceLabel.trim();
-    if (!label) { toast.error("Add a source label, URL, DOI, or filename first."); return; }
-    const area = textRef.current;
-    const insertion = citationStyle === "mla9" ? ` (${label})` : ` (${label})`;
-    if (area) {
-      const position = area.selectionEnd || draft.length;
-      setDraft(draft.slice(0, position) + insertion + draft.slice(position));
-    } else setDraft(`${draft}${insertion}`);
-    setSourceLabel(""); setCitationOpen(false);
+  async function insertCitation() {
+    const source = sourceLabel.trim();
+    if (!source) { toast.error("Add a source label, URL, DOI, or filename first."); return; }
+    if (!session || citationBusy) return;
+    setCitationBusy(true);
+    try {
+      const response = await axios.post(`${API}/tools/essay-generator/sessions/${session.session_id}/citation`, { source, citation_style: citationStyle }, { headers: await requestHeaders() });
+      const payload = unwrap<{ marker: string; full_citation: string }>(response.data);
+      const insertion = ` ${payload.marker}`;
+      const area = textRef.current;
+      if (area) {
+        const position = area.selectionEnd || draft.length;
+        setDraft(draft.slice(0, position) + insertion + draft.slice(position));
+      } else setDraft(`${draft}${insertion}`);
+      setSourceLabel(""); setCitationOpen(false);
+      toast.success("Citation inserted.");
+    } catch (error) { toast.error(errorMessage(error)); }
+    finally { setCitationBusy(false); }
   }
 
   const targetState = words < targetWords * 0.92 ? "Below target" : words > targetWords * 1.12 ? "Over target" : "On target";
@@ -324,11 +352,12 @@ export default function EssayGeneratorTool() {
           <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <button type="button" onClick={() => goToStep(1)} className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold lg:w-auto"><FiArrowLeft /> Start over</button>
             <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-              <button type="button" disabled={!draftReady || loading} onClick={() => void transformSelection("paraphrase")} className="rounded-lg border bg-white px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45">Paraphrase</button>
-              <button type="button" disabled={!draftReady || loading} onClick={() => void transformSelection("expand")} className="rounded-lg border bg-white px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45">Expand</button>
-              <button type="button" disabled={!draftReady || loading} onClick={() => void transformSelection("shorten")} className="rounded-lg border bg-white px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45">Shorten</button>
+              <button type="button" disabled={!draftReady || loading || Boolean(transformingAction)} onClick={() => void transformSelection("paraphrase")} className="inline-flex items-center justify-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45">{transformingAction === "paraphrase" && <FiLoader className="animate-spin" />} Paraphrase</button>
+              <button type="button" disabled={!draftReady || loading || Boolean(transformingAction)} onClick={() => void transformSelection("expand")} className="inline-flex items-center justify-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45">{transformingAction === "expand" && <FiLoader className="animate-spin" />} Expand</button>
+              <button type="button" disabled={!draftReady || loading || Boolean(transformingAction)} onClick={() => void transformSelection("shorten")} className="inline-flex items-center justify-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45">{transformingAction === "shorten" && <FiLoader className="animate-spin" />} Shorten</button>
               <button type="button" disabled={!draftReady || loading} onClick={() => setCitationOpen(true)} className="inline-flex items-center justify-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45"><FiBookOpen /> Citations</button>
-              <button type="button" disabled={!draftReady || loading} onClick={undoDraft} className="inline-flex items-center justify-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45"><FiRotateCcw /> Undo</button>
+              <button type="button" disabled={!draftReady || loading || Boolean(historyBusy)} onClick={undoDraft} className="inline-flex items-center justify-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45">{historyBusy === "undo" ? <FiLoader className="animate-spin" /> : <FiRotateCcw />} Undo</button>
+              <button type="button" disabled={!draftReady || loading || Boolean(historyBusy)} onClick={redoDraft} className="inline-flex items-center justify-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45">{historyBusy === "redo" ? <FiLoader className="animate-spin" /> : <FiRotateCw />} Redo</button>
               <button type="button" disabled={!draftReady || loading} onClick={saveDraft} className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#24251f] px-4 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-45"><FiCheck /> Save</button>
             </div>
           </div>
@@ -371,7 +400,7 @@ export default function EssayGeneratorTool() {
         </section>}
       </div>
 
-      {citationOpen && <div className="fixed inset-0 z-50 flex justify-end bg-black/20"><aside className="h-full w-full max-w-sm bg-white p-6 shadow-xl"><div className="mb-5 flex items-center justify-between"><b>Add a citation</b><button type="button" onClick={() => setCitationOpen(false)} aria-label="Close citation drawer"><FiX /></button></div><div className="space-y-5"><Field label="Source label, URL, DOI, or filename" value={sourceLabel} onChange={setSourceLabel} placeholder="e.g. Smith, 2024 or https://doi.org/..." /><label className="block rounded-lg border border-dashed border-gray-300 p-4 text-center text-sm text-gray-500"><FiUpload className="mx-auto mb-2" /> PDF upload handoff uses the citation tool source library.</label><button type="button" onClick={insertCitation} className="w-full rounded-lg bg-[#534ab7] px-4 py-3 text-sm font-bold text-white">Insert citation marker</button></div></aside></div>}
+      {citationOpen && <div className="fixed inset-0 z-50 flex justify-end bg-black/20"><aside className="h-full w-full max-w-sm bg-white p-6 shadow-xl"><div className="mb-5 flex items-center justify-between"><b>Add a citation</b><button type="button" onClick={() => setCitationOpen(false)} aria-label="Close citation drawer"><FiX /></button></div><div className="space-y-5"><Field label="Source label, URL, DOI, or filename" value={sourceLabel} onChange={setSourceLabel} placeholder="e.g. Smith, 2024, Effects of X or https://doi.org/..." /><label className="block rounded-lg border border-dashed border-gray-300 p-4 text-center text-sm text-gray-500"><FiUpload className="mx-auto mb-2" /> PDF upload handoff uses the citation tool source library.</label><button type="button" disabled={citationBusy} onClick={() => void insertCitation()} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#534ab7] px-4 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-60">{citationBusy && <FiLoader className="animate-spin" />} Insert citation</button></div></aside></div>}
       <GuestAuthGateModal open={gateOpen} onClose={closeGate} heading="Create a free account to continue generating essays." />
     </div>
   );
