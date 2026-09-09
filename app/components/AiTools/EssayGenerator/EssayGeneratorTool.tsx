@@ -61,7 +61,7 @@ function cleanOutlineForApi(outline: Outline): Outline {
   };
 }
 
-export default function EssayGeneratorTool() {
+export default function EssayGeneratorTool({ embedded = false }: { embedded?: boolean }) {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [session, setSession] = useState<Session | null>(null);
   const [title, setTitle] = useState("");
@@ -93,6 +93,7 @@ export default function EssayGeneratorTool() {
   const [historyBusy, setHistoryBusy] = useState<"undo" | "redo" | null>(null);
   const [citationBusy, setCitationBusy] = useState(false);
   const wizardTopRef = useRef<HTMLDivElement | null>(null);
+  const previousStepRef = useRef(step);
   const textRef = useRef<HTMLTextAreaElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const activeJobRef = useRef<string | null>(null);
@@ -106,8 +107,11 @@ export default function EssayGeneratorTool() {
   }, []);
 
   useEffect(() => {
+    // Keep the landing hero visible on load; scroll only when its wizard advances.
+    if (embedded && previousStepRef.current === step) return;
+    previousStepRef.current = step;
     wizardTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [step]);
+  }, [step, embedded]);
 
   function goToStep(nextStep: 1 | 2 | 3 | 4) {
     setStep(nextStep);
@@ -273,7 +277,7 @@ export default function EssayGeneratorTool() {
 
   return (
     <div className="min-h-full bg-[#f5f5f1] px-4 py-6 text-[#24251f] sm:px-6 lg:px-8">
-      <div ref={wizardTopRef} className="mx-auto max-w-6xl scroll-mt-6">
+      <div ref={wizardTopRef} className={`mx-auto max-w-6xl ${embedded ? "scroll-mt-24" : "scroll-mt-6"}`}>
         <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-sm font-medium text-gray-500">Essay Generator / <span className="font-semibold text-[#24251f]">{session?.title || "New draft"}</span></p>
