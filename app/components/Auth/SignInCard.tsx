@@ -254,13 +254,13 @@ const SignInCard: FC<SignInCardProps> = ({
         {switchAuthForm === "" ? (
           <Link
             href={buildHrefWithSameQuery("/sign-up/", new URLSearchParams(qs))}
-            className="hover:underline pl-1"
+            className="text-[#ff641a] hover:text-[#d94f0f] hover:underline pl-1"
           >
             Sign up Here
           </Link>
         ) : (
           <span
-            className="hover:underline pl-1 cursor-pointer"
+            className="text-[#ff641a] hover:text-[#d94f0f] hover:underline pl-1 cursor-pointer"
             onClick={() => setSwitchAuthForm?.("signup") || undefined}
           >
             Sign up Here
