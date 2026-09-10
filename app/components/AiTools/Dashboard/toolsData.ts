@@ -2,6 +2,7 @@ import {
   FiAlignLeft,
   FiBarChart,
   FiBookmark,
+  FiBookOpen,
   FiCalendar,
   FiCheckCircle,
   FiFileText,
@@ -53,6 +54,16 @@ export const TOOLS: ToolCardData[] = [
     badge: "New",
     category: "study-tools",
     cta: "Ask a question",
+  },
+  {
+    name: "Homework Helper",
+    description:
+      "Upload or paste any question and work through it step-by-step, Socratically, or check your own attempt — any subject.",
+    href: "/tools/homework-helper",
+    icon: FiBookOpen,
+    badge: "New",
+    category: "study-tools",
+    cta: "Get help",
   },
   {
     name: "CGPA Calculator",

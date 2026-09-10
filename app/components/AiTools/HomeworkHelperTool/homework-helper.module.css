@@ -1,0 +1,212 @@
+/*
+ * Design tokens mapped onto the platform's real Tailwind palette
+ * (tailwind.config.ts: primary #565add/#2B1C50, secondary #f97316/#ff641a,
+ * gray/emerald/amber/red scales) — not the prototype's own bespoke "paper"
+ * palette. The prototype's semantic roles (an ink/accent/warning/success/gold
+ * system) are kept, but every value below traces back to a real platform
+ * token so this tool reads as the same product as Grammar Checker / Essay
+ * Grader, not a visually distinct one-off.
+ */
+/*
+ * Every text/background pair below is verified >=4.5:1 (WCAG AA, normal
+ * text) except where noted as decorative-only. --pen is for text/borders;
+ * --pen-btn is a separate, slightly different shade used ONLY as a solid
+ * button background under white text, since one shade cannot satisfy both
+ * "readable as text on --pen-soft" and "readable as a background under
+ * white" at the same time in dark mode.
+ */
+.wrap {
+  --paper: #ffffff;
+  --paper-raised: #ffffff;
+  --ink: #111827; /* gray-900 */
+  --ink-soft: #4b5563; /* gray-600 — 7.56:1 on white */
+  --ink-faint: #6b7280; /* gray-500 — 4.83:1 on white */
+  --line: #e5e7eb; /* gray-200 */
+  --line-soft: #f3f4f6; /* gray-100 */
+  --pen: #565add; /* primary-400 — 4.60:1 on --pen-soft */
+  --pen-strong: #2b1c50; /* primary-500 */
+  --pen-soft: #ececfb; /* primary-200 */
+  --pen-btn: #565add; /* 5.38:1 with white text */
+  --red: #b91c1c; /* red-700 — 5.30:1 on --red-soft (red-600 was 3.95:1, AA fail) */
+  --red-soft: #fee2e2; /* red-100 */
+  --green: #047857; /* emerald-700 — 4.84:1 on --green-soft (emerald-600 was 3.32:1, AA fail) */
+  --green-soft: #d1fae5; /* emerald-100 */
+  --gold: #b45309; /* amber-700 — 4.51:1 on --gold-soft */
+  --gold-soft: #fef3c7; /* amber-100 */
+  --radius: 12px;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+:global(.dark) .wrap {
+  --paper: #111827; /* gray-900 */
+  --paper-raised: #1f2937; /* gray-800 */
+  --ink: #f3f4f6; /* gray-100 */
+  --ink-soft: #d1d5db; /* gray-300 */
+  --ink-faint: #9ca3af; /* gray-400 — 5.78:1 on --paper-raised (gray-500 was 3.04:1, AA fail) */
+  --line: #374151; /* gray-700 */
+  --line-soft: #1f2937; /* gray-800 */
+  --pen: #d1d1f7; /* primary-300 — 8.92:1 on --pen-soft (previous shade was 4.18:1, AA fail) */
+  --pen-strong: #d1d1f7; /* primary-300 */
+  --pen-soft: #2a2c55;
+  --pen-btn: #6266c9; /* 4.93:1 with white text (--pen itself is too light to use as a button fill) */
+  --red: #f87171; /* red-400 */
+  --red-soft: #3a1f1f;
+  --green: #34d399; /* emerald-400 */
+  --green-soft: #17332a;
+  --gold: #fbbf24; /* amber-400 */
+  --gold-soft: #3a2f14;
+}
+
+.serif {
+  font-family: var(--hh-serif, ui-serif, Georgia, serif);
+}
+.mono {
+  font-family: var(--hh-mono, ui-monospace, monospace);
+}
+
+.card {
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 1px 2px rgba(17, 24, 39, 0.04);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.stepCardCurrent {
+  border-color: var(--pen);
+  box-shadow: 0 2px 12px rgba(86, 90, 221, 0.16);
+}
+:global(.dark) .stepCardCurrent {
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.45);
+}
+
+.pill {
+  font-family: var(--hh-mono, ui-monospace, monospace);
+  border: 1px solid var(--line);
+  color: var(--ink-soft);
+  background: var(--paper-raised);
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.pillLevel {
+  color: var(--pen);
+  border-color: var(--pen-soft);
+  background: var(--pen-soft);
+}
+
+.aiBubble {
+  background: var(--pen-soft);
+  color: var(--pen-strong);
+  border-radius: 14px 14px 14px 4px;
+}
+:global(.dark) .aiBubble {
+  color: var(--pen);
+}
+
+.whyBox {
+  background: var(--red-soft);
+  border-left: 2px solid var(--red);
+  color: var(--red);
+}
+
+.feedbackCorrect {
+  background: var(--green-soft);
+  color: var(--green);
+  border: 1px solid var(--green-soft);
+}
+.feedbackPartial {
+  background: var(--gold-soft);
+  color: var(--gold);
+  border: 1px solid var(--gold-soft);
+}
+.feedbackWrong {
+  background: var(--red-soft);
+  color: var(--red);
+  border: 1px solid var(--red-soft);
+}
+
+.uploadTile {
+  border: 1.5px dashed var(--line);
+  border-radius: var(--radius);
+  background: var(--paper-raised);
+  color: var(--ink-faint);
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+.uploadTile:hover {
+  border-color: var(--pen);
+  background: var(--pen-soft);
+  color: var(--pen);
+  transform: translateY(-1px);
+}
+.uploadTile:active {
+  transform: translateY(0);
+}
+
+.formula {
+  font-family: var(--hh-mono, ui-monospace, monospace);
+  background: var(--paper);
+  border: 1px solid var(--line-soft);
+  color: var(--pen);
+  white-space: pre-wrap;
+}
+
+.spin {
+  border: 3px solid var(--line);
+  border-top-color: var(--pen);
+  animation: hh-spin 0.9s linear infinite;
+}
+@keyframes hh-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Smooth, consistent motion for every interactive element in this tool. */
+.wrap button,
+.wrap a {
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease,
+    box-shadow 0.15s ease, transform 0.1s ease, opacity 0.15s ease;
+}
+.wrap button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.wrap button:disabled {
+  cursor: not-allowed;
+}
+.wrap input,
+.wrap textarea {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.wrap input:focus-visible,
+.wrap textarea:focus-visible,
+.wrap button:focus-visible {
+  outline: 2px solid var(--pen);
+  outline-offset: 2px;
+}
+
+/* Screen transitions: each screen fades/slides in so mode changes feel like
+   navigation, not an abrupt content swap. */
+.screenEnter {
+  animation: hh-screen-in 0.22s ease both;
+}
+@keyframes hh-screen-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spin,
+  .screenEnter,
+  .wrap button,
+  .wrap a,
+  .uploadTile {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
