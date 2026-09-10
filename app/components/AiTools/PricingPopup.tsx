@@ -246,8 +246,8 @@ export default function PricingPopup({ onClose }: { onClose: () => void }) {
               </span>
               <span className="mt-2 block text-xs">
                 {plan === "starter"
-                  ? "6,440,000 credits ($2 AI usage) and 5 scans per month"
-                  : "32,200,000 credits ($10 AI usage) and 20 scans per year"}
+                  ? "6,440,000 credits and 5 plagiarism scans per month"
+                  : "32,200,000 credits and 20 plagiarism scans per year"}
               </span>
             </button>
           ))}
