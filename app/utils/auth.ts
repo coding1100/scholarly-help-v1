@@ -45,6 +45,7 @@ export function clearAuthSession(): void {
     localStorage.removeItem(key);
   }
   clearMemoryAccessToken();
+  window.dispatchEvent(new CustomEvent("sh:auth-cleared"));
   // Expire the middleware cookie too, so SSR/route guards see the logout.
   document.cookie = "access_token=; path=/; max-age=0";
 }

@@ -1,8 +1,13 @@
-import { fetchWithAuthRetry, getOrRefreshAccessToken } from "@/app/lib/authSession";
+import {
+  fetchWithAuthRetry,
+  getOrRefreshAccessToken,
+} from "@/app/lib/authSession";
 
 export type TokenUsageSnapshot = {
   totalTokens: number;
   usedTokens: number;
+  availableCredits: number | null;
+  paidPlan: boolean;
   loading: boolean;
   lastUpdatedAt: number | null;
 };
@@ -12,6 +17,8 @@ type Listener = (snapshot: TokenUsageSnapshot) => void;
 const DEFAULT_SNAPSHOT: TokenUsageSnapshot = {
   totalTokens: 0,
   usedTokens: 0,
+  availableCredits: null,
+  paidPlan: false,
   loading: false,
   lastUpdatedAt: null,
 };
@@ -20,6 +27,29 @@ let snapshot: TokenUsageSnapshot = DEFAULT_SNAPSHOT;
 const listeners = new Set<Listener>();
 
 let initialized = false;
+let accountEpoch = 0;
+let authEventsInstalled = false;
+
+function installAuthEvents() {
+  if (authEventsInstalled || typeof window === "undefined") return;
+  authEventsInstalled = true;
+  const reset = () => {
+    accountEpoch++;
+    inFlight = null;
+    snapshot = { ...DEFAULT_SNAPSHOT };
+    emit();
+  };
+  window.addEventListener("sh:auth-session-changed", reset);
+  window.addEventListener("sh:session-expired", reset);
+  window.addEventListener("sh:auth-cleared", reset);
+  window.addEventListener("billing:confirmed", () =>
+    requestTokenUsageRefresh(0),
+  );
+  window.addEventListener("focus", () => requestTokenUsageRefresh(0));
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) requestTokenUsageRefresh(0);
+  });
+}
 let inFlight: Promise<void> | null = null;
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 let autoRefreshTimers: Array<ReturnType<typeof setTimeout>> = [];
@@ -37,6 +67,8 @@ function setSnapshot(patch: Partial<TokenUsageSnapshot>) {
 async function fetchTokenUsage(accessToken: string): Promise<{
   total_tokens: number;
   usedTokens: number;
+  availableCredits: number | null;
+  paidPlan: boolean;
 }> {
   const base = process.env.NEXT_PUBLIC_NGROX_URL;
   if (!base) throw new Error("Missing NEXT_PUBLIC_NGROX_URL");
@@ -59,10 +91,17 @@ async function fetchTokenUsage(accessToken: string): Promise<{
   return {
     total_tokens: Number(data?.total_tokens ?? 0),
     usedTokens: Number(data?.usedTokens ?? 0),
+    availableCredits:
+      typeof data?.tokens_remaining === "number" &&
+      Number.isFinite(data.tokens_remaining)
+        ? Math.max(0, data.tokens_remaining)
+        : null,
+    paidPlan: data?.plan === "Premium",
   };
 }
 
 export function subscribeTokenUsage(listener: Listener) {
+  installAuthEvents();
   listeners.add(listener);
   // push current snapshot immediately
   listener(snapshot);
@@ -80,17 +119,23 @@ export async function refreshTokenUsageNow(opts?: {
 }) {
   if (typeof window === "undefined") return;
 
+  installAuthEvents();
   const accessToken = await getOrRefreshAccessToken();
   if (!accessToken) return;
 
   if (inFlight) return inFlight;
+  const epoch = accountEpoch;
 
   inFlight = (async () => {
     setSnapshot({ loading: true });
     try {
-      const { total_tokens, usedTokens } = await fetchTokenUsage(accessToken);
+      const { total_tokens, usedTokens, availableCredits, paidPlan } =
+        await fetchTokenUsage(accessToken);
+      if (epoch !== accountEpoch) return;
       setSnapshot({
         totalTokens: total_tokens,
+        availableCredits,
+        paidPlan,
         usedTokens,
         loading: false,
         lastUpdatedAt: Date.now(),
@@ -101,6 +146,7 @@ export async function refreshTokenUsageNow(opts?: {
         // ignore
       }
     } catch (e: any) {
+      if (epoch !== accountEpoch) return;
       if (e?.status === 401 && typeof window !== "undefined") {
         try {
           window.dispatchEvent(
@@ -110,10 +156,10 @@ export async function refreshTokenUsageNow(opts?: {
           // ignore
         }
       }
-      setSnapshot({ loading: false });
+      setSnapshot({ loading: false, availableCredits: null });
       throw e;
     } finally {
-      inFlight = null;
+      if (epoch === accountEpoch) inFlight = null;
     }
   })();
 

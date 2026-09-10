@@ -34,6 +34,10 @@ declare global {
  */
 type CheckoutConfirmation = {
   provisioned?: boolean;
+  transaction_id?: string;
+  status?: string;
+  action?: string;
+  url?: string;
   amount_total?: number | null;
   currency?: string | null;
   plan?: string;
@@ -43,6 +47,7 @@ type CheckoutConfirmation = {
 function pushPurchaseConversion(sessionId: string, confirmData?: CheckoutConfirmation | null) {
   if (confirmData?.provisioned !== true) return;
 
+  const transactionId = confirmData.transaction_id || sessionId;
   const currency = confirmData.currency?.toUpperCase();
   let value: number | undefined;
   if (
@@ -65,13 +70,18 @@ function pushPurchaseConversion(sessionId: string, confirmData?: CheckoutConfirm
   }
 
   window.dataLayer = window.dataLayer || [];
+  if (window.dataLayer.some(event => event.event === "tool_purchase" && event.transaction_id === transactionId)) return;
+  const trackingKey = `billing:purchase-queued:${transactionId}`;
+  try { if (window.sessionStorage.getItem(trackingKey)) return; } catch { /* Storage may be unavailable. */ }
   window.dataLayer.push({
     event: "tool_purchase",
-    transaction_id: sessionId,
+    transaction_id: transactionId,
+    event_id: transactionId,
     value,
     currency,
     plan: confirmData?.plan_id ?? confirmData?.plan ?? undefined,
   });
+  try { window.sessionStorage.setItem(trackingKey, "1"); } catch { /* The dataLayer queue still works. */ }
 }
 
 /**
@@ -94,22 +104,25 @@ function pushPurchaseConversion(sessionId: string, confirmData?: CheckoutConfirm
 export default function CheckoutConfirmationOverlay() {
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
-    if (params.get("upgraded") !== "1") return;
+    const operationId = params.get("billing_operation");
+    if (params.get("upgraded") !== "1" && !operationId) return;
     const sessionId = params.get("session_id");
 
     const stripParams = () => {
       params.delete("upgraded");
       params.delete("session_id");
+      params.delete("billing_operation");
       const nextSearch = params.toString();
       const nextUrl = `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ""}${window.location.hash}`;
       window.history.replaceState(null, "", nextUrl);
     };
 
-    if (!sessionId) {
+    if (!sessionId && !operationId) {
       setError("Your checkout reference is missing. Please contact support to check your plan.");
       return;
     }
@@ -128,9 +141,10 @@ export default function CheckoutConfirmationOverlay() {
               throw new Error("Please sign in with the account you used at checkout, then retry confirmation.");
             }
             const { data } = await axios.get(
-              `${process.env.NEXT_PUBLIC_NGROX_URL}/billing/confirm-checkout`,
+              operationId ? `${process.env.NEXT_PUBLIC_NGROX_URL}/billing/operations/${encodeURIComponent(operationId)}`
+                : `${process.env.NEXT_PUBLIC_NGROX_URL}/billing/confirm-checkout`,
               {
-                params: { session_id: sessionId },
+                params: operationId ? undefined : { session_id: sessionId },
                 headers: { Authorization: `Bearer ${token}` },
                 signal: controller.signal,
                 timeout: 20000,
@@ -146,11 +160,21 @@ export default function CheckoutConfirmationOverlay() {
           }),
         ]);
         if (cancelled) return;
-        if (confirmation?.provisioned !== true) {
-          setError("Your plan is not confirmed yet. Please retry in a moment.");
+        if (confirmation?.status === "completed" && confirmation.action === "schedule_change") {
+          stripParams();
+          toast.success("Your plan change is scheduled for your next renewal.");
+          window.dispatchEvent(new CustomEvent("billing:confirmed"));
           return;
         }
-        pushPurchaseConversion(sessionId, confirmation);
+        if (confirmation?.provisioned !== true) {
+          if (confirmation?.url && confirmation.status === "payment_pending") setPaymentUrl(confirmation.url);
+          setError(confirmation?.status === "review" ? "Your billing operation needs review. Please contact support." :
+            confirmation?.status === "expired" ? "This payment expired. Open Manage plan to start a new purchase." :
+              "Your plan is not confirmed yet. Please complete any pending payment, then retry.");
+          return;
+        }
+        pushPurchaseConversion(sessionId || operationId!, confirmation);
+        window.dispatchEvent(new CustomEvent("billing:confirmed"));
         stripParams();
         toast.success("You're all set. Welcome to your new plan.");
       } catch (failure) {
@@ -180,7 +204,8 @@ export default function CheckoutConfirmationOverlay() {
       <div role="alert" className="fixed bottom-6 left-1/2 z-[10000] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-xl border border-amber-200 bg-white p-5 shadow-xl">
         <h2 className="font-semibold text-gray-900">We need to confirm your plan</h2>
         <p className="mt-2 text-sm text-gray-700">{error}</p>
-        <div className="mt-4 flex gap-3">
+        <div className="mt-4 flex flex-wrap gap-3">
+          {paymentUrl && <a href={paymentUrl} className="rounded-lg bg-[#4f39f6] px-4 py-2 text-sm font-medium text-white">Complete payment</a>}
           <button type="button" onClick={() => window.location.reload()} className="rounded-lg bg-[#4f39f6] px-4 py-2 text-sm font-medium text-white">
             Retry confirmation
           </button>
@@ -195,7 +220,7 @@ export default function CheckoutConfirmationOverlay() {
   return (
     <div role="status" className="fixed inset-0 z-[10000] flex flex-col items-center justify-center gap-4 bg-white/90 backdrop-blur-sm">
       <div aria-hidden="true" className="h-10 w-10 animate-spin rounded-full border-4 border-[#e3e7ff] border-t-[#4f39f6]" />
-      <p className="text-sm font-medium text-gray-600">Setting up your new plan?</p>
+      <p className="text-sm font-medium text-gray-600">Setting up your new plan...</p>
     </div>
   );
 }
