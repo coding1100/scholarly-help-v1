@@ -206,25 +206,21 @@ const SignUpCard: FC<SignUpCardProps> = ({
         <button
           type="submit"
           disabled={loading || !isFormValid}
-          className={`lg:w-[90%] bg-[#ff641a] text-white font-semibold min-h-[39px] px-4 py-2 rounded-lg hover:bg-[#ff641a]/80 transition duration-300 flex items-center justify-center gap-2 ${
-            submitError ? "flex-col text-center gap-1" : ""
-          } ${!isFormValid || loading ? "opacity-50 cursor-not-allowed" : ""}`}
+          className={`lg:w-[90%] bg-[#ff641a] text-white font-semibold min-h-[39px] px-4 py-2 rounded-lg hover:bg-[#ff641a]/80 transition duration-300 flex items-center justify-center gap-2 ${!isFormValid || loading ? "opacity-50 cursor-not-allowed" : ""}`}
           aria-live="polite"
         >
           {loading ? (
             <AuthButtonSpinner />
           ) : (
-            <>
-              <span>Sign Up</span>
-              {submitError && (
-                <span className="text-xs font-normal leading-tight opacity-95">
-                  {submitError}
-                </span>
-              )}
-            </>
+            <span>Sign Up</span>
           )}
           {!submitError && <FaArrowRight />}
         </button>
+        {submitError && (
+          <p role="alert" className="lg:w-[90%] text-center text-xs font-normal leading-tight text-[#F73032]">
+            {submitError}
+          </p>
+        )}
         <SocialAuthButtons authAction="sign_up" returnUrl={returnUrl} />
       </form>
       <p className="text-center text-sm  mt-8 relative">
