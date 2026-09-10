@@ -21,24 +21,55 @@ declare global {
  * Stripe session and can't double-fire on refresh (stripParams() removes the
  * query params that gate this whole effect).
  *
- * `value`/`currency`/`plan` come straight from the backend's confirm-checkout
+ * `value`/`currency`/`plan` come from the backend's confirm-checkout
  * response (amount_total/currency/plan on WebhookService.confirmCheckoutSession
  * — Stripe's own values off the Checkout Session, amount in the smallest
- * currency unit e.g. cents). If that call fails or returns an older shape
- * without these fields, they're simply omitted from the push rather than
- * blocking the event.
+ * currency unit e.g. cents). Convert amount_total to major currency units
+ * for analytics. A response must explicitly confirm provisioned: true;
+ * missing monetary fields are omitted rather than blocking the event.
  * Ads Manager: build the Google Ads / Meta conversion tags in GTM off this
  * "tool_purchase" dataLayer event (named to avoid colliding with an existing
  * "purchase" event already used elsewhere in GTM) — no further app code
  * changes needed for that.
  */
-function pushPurchaseConversion(sessionId: string, confirmData: any) {
+type CheckoutConfirmation = {
+  provisioned?: boolean;
+  amount_total?: number | null;
+  currency?: string | null;
+  plan?: string;
+  plan_id?: string;
+};
+
+function pushPurchaseConversion(sessionId: string, confirmData?: CheckoutConfirmation | null) {
+  if (confirmData?.provisioned !== true) return;
+
+  const currency = confirmData.currency?.toUpperCase();
+  let value: number | undefined;
+  if (
+    currency &&
+    typeof confirmData.amount_total === "number" &&
+    Number.isSafeInteger(confirmData.amount_total) &&
+    confirmData.amount_total >= 0
+  ) {
+    try {
+      // Stripe charges use hundredths for these currencies regardless of
+      // display/payout rounding rules: https://docs.stripe.com/currencies
+      const decimals = ["ISK", "UGX", "HUF", "TWD"].includes(currency)
+        ? 2
+        : new Intl.NumberFormat("en", { style: "currency", currency })
+            .resolvedOptions().maximumFractionDigits ?? 2;
+      value = confirmData.amount_total / 10 ** decimals;
+    } catch {
+      // An invalid currency must not produce a guessed conversion value.
+    }
+  }
+
   window.dataLayer = window.dataLayer || [];
   window.dataLayer.push({
     event: "tool_purchase",
     transaction_id: sessionId,
-    value: confirmData?.amount_total ?? confirmData?.value ?? undefined,
-    currency: confirmData?.currency ?? undefined,
+    value,
+    currency,
     plan: confirmData?.plan_id ?? confirmData?.plan ?? undefined,
   });
 }
@@ -57,11 +88,12 @@ function pushPurchaseConversion(sessionId: string, confirmData: any) {
  * closes the narrow window where a user could land back on their tool and
  * immediately get gated again because the webhook was still in flight.
  *
- * Strips both query params once done, success or not, so a page refresh
- * never repeats this.
+ * Removes checkout parameters only after confirmed success. Failed attempts
+ * retain them so retrying or refreshing can finish confirmation.
  */
 export default function CheckoutConfirmationOverlay() {
   const [confirming, setConfirming] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -78,54 +110,92 @@ export default function CheckoutConfirmationOverlay() {
     };
 
     if (!sessionId) {
-      // No session id to confirm with (e.g. an older link) — fall back to
-      // trusting the webhook, same as before this overlay existed. There is
-      // nothing here to key a dataLayer conversion event to, so none fires.
-      toast.success("You're all set. Welcome to your new plan.");
-      stripParams();
+      setError("Your checkout reference is missing. Please contact support to check your plan.");
       return;
     }
 
     let cancelled = false;
+    const controller = new AbortController();
+    let timeout: ReturnType<typeof setTimeout>;
     setConfirming(true);
     (async () => {
       try {
-        const token = await getOrRefreshAccessToken();
-        if (!token) return; // Not signed in on this tab — nothing we can confirm.
-        const { data } = await axios.get(
-          `${process.env.NEXT_PUBLIC_NGROX_URL}/billing/confirm-checkout`,
-          {
-            params: { session_id: sessionId },
-            headers: { Authorization: `Bearer ${token}` },
-          },
-        );
-        pushPurchaseConversion(sessionId, data?.data ?? data);
-      } catch {
-        // Best-effort: the invoice.paid webhook is still the system of
-        // record and will provision this shortly regardless. Deliberately no
-        // conversion event here — this request failing doesn't mean the
-        // payment failed, but firing on an unconfirmed session risks a false
-        // conversion, and the webhook path has no client-side hook to fire from.
-      } finally {
-        if (!cancelled) {
-          toast.success("You're all set. Welcome to your new plan.");
-          stripParams();
-          setConfirming(false);
+        const confirmation = await Promise.race([
+          (async () => {
+            const token = await getOrRefreshAccessToken();
+            if (cancelled || controller.signal.aborted) return null;
+            if (!token) {
+              throw new Error("Please sign in with the account you used at checkout, then retry confirmation.");
+            }
+            const { data } = await axios.get(
+              `${process.env.NEXT_PUBLIC_NGROX_URL}/billing/confirm-checkout`,
+              {
+                params: { session_id: sessionId },
+                headers: { Authorization: `Bearer ${token}` },
+                signal: controller.signal,
+                timeout: 20000,
+              },
+            );
+            return (data?.data ?? data) as CheckoutConfirmation;
+          })(),
+          new Promise<never>((_, reject) => {
+            timeout = setTimeout(() => {
+              reject(new Error("Confirmation is taking longer than expected. Please retry."));
+              controller.abort();
+            }, 20000);
+          }),
+        ]);
+        if (cancelled) return;
+        if (confirmation?.provisioned !== true) {
+          setError("Your plan is not confirmed yet. Please retry in a moment.");
+          return;
         }
+        pushPurchaseConversion(sessionId, confirmation);
+        stripParams();
+        toast.success("You're all set. Welcome to your new plan.");
+      } catch (failure) {
+        if (!cancelled) {
+          // Do not expose API payloads or checkout identifiers in the UI/logs.
+          const message = failure instanceof Error && !axios.isAxiosError(failure)
+            ? failure.message
+            : "We couldn't confirm your plan. Please retry. This does not mean your payment failed.";
+          setError(message);
+        }
+      } finally {
+        clearTimeout(timeout!);
+        if (!cancelled) setConfirming(false);
       }
     })();
 
     return () => {
       cancelled = true;
+      controller.abort();
+      clearTimeout(timeout!);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  if (error) {
+    return (
+      <div role="alert" className="fixed bottom-6 left-1/2 z-[10000] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-xl border border-amber-200 bg-white p-5 shadow-xl">
+        <h2 className="font-semibold text-gray-900">We need to confirm your plan</h2>
+        <p className="mt-2 text-sm text-gray-700">{error}</p>
+        <div className="mt-4 flex gap-3">
+          <button type="button" onClick={() => window.location.reload()} className="rounded-lg bg-[#4f39f6] px-4 py-2 text-sm font-medium text-white">
+            Retry confirmation
+          </button>
+          <button type="button" onClick={() => setError(null)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700">
+            Dismiss
+          </button>
+        </div>
+      </div>
+    );
+  }
   if (!confirming) return null;
   return (
-    <div className="fixed inset-0 z-[10000] flex flex-col items-center justify-center gap-4 bg-white/90 backdrop-blur-sm">
-      <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#e3e7ff] border-t-[#4f39f6]" />
-      <p className="text-sm font-medium text-gray-600">Setting up your new plan…</p>
+    <div role="status" className="fixed inset-0 z-[10000] flex flex-col items-center justify-center gap-4 bg-white/90 backdrop-blur-sm">
+      <div aria-hidden="true" className="h-10 w-10 animate-spin rounded-full border-4 border-[#e3e7ff] border-t-[#4f39f6]" />
+      <p className="text-sm font-medium text-gray-600">Setting up your new plan?</p>
     </div>
   );
 }
