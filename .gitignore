@@ -47,3 +47,8 @@ next-env.d.ts
 /sidebar-auth-bottom-desktop.png
 /study-workspace-guest-sidebar.png
 /toolgrid-mobile-375.png
+
+# Local agent/skill tooling (installed per-machine, not shared product code)
+.agents/
+.claude/
+skills-lock.json
