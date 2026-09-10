@@ -11,6 +11,7 @@ import {
   setActiveStudySessionId,
 } from "@/app/utils/studyApiClient";
 import { initializeAuthSession } from "@/app/lib/authSession";
+import LowCreditBanner from "@/app/components/AiTools/Dashboard/LowCreditBanner";
 
 export default function DashboardPageContent() {
   const [flag, setFlag] = useState<boolean>(false);
@@ -62,6 +63,7 @@ export default function DashboardPageContent() {
 
   return (
     <ToolsLayout setFlag={setFlag} flag={flag}>
+      <LowCreditBanner />
       <DashboardGate mode="inline" />
     </ToolsLayout>
   );

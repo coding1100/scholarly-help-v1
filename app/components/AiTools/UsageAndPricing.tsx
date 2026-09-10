@@ -13,7 +13,6 @@ import {
   subscribeTokenUsage,
   __TOKEN_USAGE_UNAUTHORIZED_EVENT__,
 } from "@/app/utils/tokenUsageClient";
-import { getAccessToken } from "@/app/lib/authSession";
 
 interface UsageAndPricingProps {
   setFlag: (value: boolean) => void;
@@ -27,21 +26,7 @@ const UsageAndPricing: React.FC<UsageAndPricingProps> = ({ setFlag, flag }) => {
     typeof window !== "undefined" ? window.location.search.slice(1) : "";
 
   const [showPricing, setShowPricing] = useState(false);
-  const [totalTokens, setTotalTokens] = useState<number>(
-    getTokenUsageSnapshot().totalTokens,
-  );
-  const [usedTokens, setUsedTokens] = useState<number>(
-    getTokenUsageSnapshot().usedTokens,
-  );
-  let accessToken: string | null = null;
-  if (typeof window !== "undefined") {
-    accessToken = getAccessToken();
-  }
-
-  // Calculate usage percentage with proper fallbacks
-  const usagePercentage =
-    totalTokens > 0 ? Math.min((usedTokens / totalTokens) * 100, 100) : 0;
-
+  const [availableCredits, setAvailableCredits] = useState<number | null>(getTokenUsageSnapshot().availableCredits);
   const redirectToSignIn = useCallback(() => {
     const signInBase = currentQs ? `/sign-in?${currentQs}` : "/sign-in";
     router.push(
@@ -57,8 +42,7 @@ const UsageAndPricing: React.FC<UsageAndPricingProps> = ({ setFlag, flag }) => {
     const onUnauthorized = () => redirectToSignIn();
     window.addEventListener(__TOKEN_USAGE_UNAUTHORIZED_EVENT__, onUnauthorized);
     const unsub = subscribeTokenUsage((snap) => {
-      setTotalTokens(snap.totalTokens);
-      setUsedTokens(snap.usedTokens);
+      setAvailableCredits(snap.availableCredits);
     });
     // initial fetch on mount
     void refreshTokenUsageNow().catch((e: any) => {
@@ -81,20 +65,9 @@ const UsageAndPricing: React.FC<UsageAndPricingProps> = ({ setFlag, flag }) => {
 
   return (
     <div className="mt-4 flex flex-col gap-4">
-      {/* Token Limit Section */}
-      <div>
-        <div className="mb-1 flex items-center justify-between text-sm">
-          <span className="font-medium text-gray-700">Token limit</span>
-          <span className="text-gray-500">
-            {usedTokens.toLocaleString()}/{totalTokens.toLocaleString()}
-          </span>
-        </div>
-        <div className="h-2 w-full rounded-full bg-gray-200">
-          <div
-            className="h-full rounded-full bg-gray-400"
-            style={{ width: `${usagePercentage}%` }}
-          />
-        </div>
+      <div className="text-sm">
+        <span className="block font-medium text-gray-700 dark:text-gray-200">Available credits</span>
+        <span className="mt-1 block text-gray-600 dark:text-gray-300">{availableCredits === null ? "Loading balance..." : availableCredits.toLocaleString()}</span>
       </div>
 
       {/* See Pricing Button */}

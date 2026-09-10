@@ -20,6 +20,7 @@ async function checkout(response, { token = "test-token", fail = false, cancel =
   const result = { url: search, successes: 0, states: [], requests: 0, reloads: 0 };
   const window = {
     location: { search, pathname: "/tools/citation-tool/", hash: "#draft", reload() { result.reloads++; } },
+    dispatchEvent() {},
     history: { replaceState(state, unused, url) { result.url = url; } },
   };
   let effect;
@@ -46,7 +47,7 @@ async function checkout(response, { token = "test-token", fail = false, cancel =
   };
   const exports = {};
   vm.runInNewContext(compiled, {
-    exports, window, URLSearchParams, Intl, AbortController, Error,
+    exports, window, URLSearchParams, Intl, AbortController, Error, CustomEvent,
     setTimeout(fn) { timer = fn; return 1; }, clearTimeout() { timer = undefined; },
     process: { env: { NEXT_PUBLIC_NGROX_URL: "https://test.invalid" } },
     require(name) { assert.ok(name in mocks, `Unexpected dependency: ${name}`); return mocks[name]; },
@@ -106,7 +107,7 @@ for (const options of [{ fail: true }, { token: null }, { hang: true }]) {
   assert.equal(events.details.view.props.role, "alert");
   assert.equal(events.details.states[0], false);
   assert.doesNotMatch(events.details.states[1], /Private API/);
-  const buttons = events.details.view.props.children[2].props.children;
+  const buttons = events.details.view.props.children[2].props.children.filter(child => child?.type === "button");
   buttons[0].props.onClick();
   assert.equal(events.details.reloads, 1);
   buttons[1].props.onClick();
