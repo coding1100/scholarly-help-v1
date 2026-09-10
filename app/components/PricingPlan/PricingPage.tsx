@@ -60,8 +60,8 @@ const PricingPage: FC<PricingPageProps> = ({}) => {
           </p>
         </div>
       </div>
-      <div className="grid grid-cols-3 gap-8 items-end mb-14">
-        {PricingContent.map((item, index) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-end mb-14">
+        {PricingContent.filter((item) => item.submitPlan !== "starter_annual").map((item, index) => (
           <div key={index} className="col-span-1">
             <PricingCard item={item} index={index + 1} />
           </div>

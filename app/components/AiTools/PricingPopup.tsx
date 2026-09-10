@@ -41,7 +41,7 @@ const features = [
 ];
 
 const PricingPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-  const [selectedPlan, setSelectedPlan] = React.useState<PackageType>("starter_annual");
+  const [selectedPlan, setSelectedPlan] = React.useState<PackageType>("starter");
   const [isLoading, setIsLoading] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
@@ -118,8 +118,8 @@ const PricingPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         </p>
 
         {/* Plan picker */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {plans.map((plan) => {
+        <div className="grid grid-cols-1 gap-3">
+          {plans.filter((plan) => plan.key !== "starter_annual").map((plan) => {
             const active = selectedPlan === plan.key;
             return (
               <button
