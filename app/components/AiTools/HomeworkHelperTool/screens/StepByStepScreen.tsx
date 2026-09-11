@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useState } from "react";
+import MathProse from "@/app/components/AiTools/shared/MathProse";
 import styles from "../homework-helper.module.css";
 import QuestionHeader from "../components/QuestionHeader";
 import type { HomeworkSessionDTO } from "../types";
@@ -107,9 +108,10 @@ const StepByStepScreen: React.FC<StepByStepScreenProps> = ({
             </div>
           )}
           {proposeResponse && (
-            <div className="mt-2.5 px-3 py-2 rounded-md text-[13.5px] leading-relaxed bg-[var(--paper-raised)]">
-              {proposeResponse}
-            </div>
+            <MathProse
+              text={proposeResponse}
+              className="block mt-2.5 px-3 py-2 rounded-md text-[13.5px] leading-relaxed bg-[var(--paper-raised)]"
+            />
           )}
         </div>
       )}
@@ -141,13 +143,14 @@ const StepByStepScreen: React.FC<StepByStepScreenProps> = ({
                 {isDone && <span className="sr-only">Completed:</span>}
                 <span className={`${styles.serif} font-semibold text-[16px]`}>{step.title}</span>
               </div>
-              <div
-                className="text-[14.5px] leading-relaxed pl-[29px]"
-                dangerouslySetInnerHTML={{ __html: step.body }}
+              <MathProse
+                text={step.body}
+                allowHtml
+                className="block text-[14.5px] leading-relaxed pl-[29px]"
               />
               {step.formula && (
                 <div className={`${styles.formula} text-[14.5px] rounded-md px-3.5 py-2 my-2 ml-[29px] inline-block`}>
-                  {step.formula}
+                  <MathProse text={step.formula} />
                 </div>
               )}
               <div className="flex gap-4 pl-[29px] mt-2.5 flex-wrap items-center">
@@ -162,12 +165,11 @@ const StepByStepScreen: React.FC<StepByStepScreenProps> = ({
                 </button>
               </div>
               {whyOpen[i] && (
-                <div
+                <MathProse
                   id={`hh-why-${i}`}
-                  className={`${styles.whyBox} mt-2.5 ml-[29px] px-3.5 py-2.5 rounded-r-md text-[13px] leading-relaxed`}
-                >
-                  {step.why}
-                </div>
+                  text={step.why}
+                  className={`${styles.whyBox} block mt-2.5 ml-[29px] px-3.5 py-2.5 rounded-r-md text-[13px] leading-relaxed`}
+                />
               )}
               <div className="pl-[29px] mt-3">
                 <input
@@ -186,12 +188,11 @@ const StepByStepScreen: React.FC<StepByStepScreenProps> = ({
                   </div>
                 )}
                 {askResponses[i] && (
-                  <div
-                    role="status"
-                    aria-live="polite"
-                    className="mt-2 px-3 py-2 bg-[var(--pen-soft)] rounded-md text-[13px] leading-relaxed max-w-[420px] text-[var(--pen)]"
-                  >
-                    {askResponses[i]}
+                  <div role="status" aria-live="polite">
+                    <MathProse
+                      text={askResponses[i]}
+                      className="block mt-2 px-3 py-2 bg-[var(--pen-soft)] rounded-md text-[13px] leading-relaxed max-w-[420px] text-[var(--pen)]"
+                    />
                   </div>
                 )}
               </div>
@@ -216,7 +217,7 @@ const StepByStepScreen: React.FC<StepByStepScreenProps> = ({
         <>
           <div className={`${styles.feedbackCorrect} rounded-[10px] px-5 py-4.5 my-4 text-center`}>
             <div className="font-mono text-[11px] uppercase tracking-wide">Answer</div>
-            <div className={`${styles.serif} text-[26px] font-bold mt-1`}>{session.answer}</div>
+            <MathProse text={session.answer} className={`${styles.serif} block text-[26px] font-bold mt-1`} />
           </div>
           <button
             type="button"

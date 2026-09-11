@@ -16,6 +16,13 @@
  * white" at the same time in dark mode.
  */
 .wrap {
+  /* ToolsApiLoader's `contained` mode is `absolute inset-0`, which anchors to
+     the nearest positioned ancestor — without this, that ancestor is
+     whatever happens to be `position: relative` further up the tree (e.g.
+     ToolWithExplore's <main>), so the loading overlay covers the entire
+     scroll area (including the "All tools" grid below) instead of just this
+     tool's own content. */
+  position: relative;
   --paper: #ffffff;
   --paper-raised: #ffffff;
   --ink: #111827; /* gray-900 */

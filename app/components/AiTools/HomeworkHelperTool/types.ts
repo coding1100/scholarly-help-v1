@@ -5,6 +5,7 @@ export type HomeworkStatus = "detected" | "in_progress" | "completed";
 export type ScreenName =
   | "home"
   | "analyzing"
+  | "pickQuestions"
   | "detected"
   | "modeSelect"
   | "solving"
@@ -66,6 +67,24 @@ export interface CheckWorkResult {
   status: "correct" | "partial" | "wrong";
   title: string;
   body: string;
+}
+
+/** One candidate question found by a detect call, before it becomes a real session. */
+export interface DetectedQuestionDTO {
+  index: number;
+  question: string;
+  subject: string;
+  topic: string;
+  level: string;
+  method: string;
+  method_formula: string | null;
+  input_type: HomeworkInputType;
+  answer: string;
+}
+
+export interface DetectionResponseDTO {
+  detection_id: string;
+  questions: DetectedQuestionDTO[];
 }
 
 export const INPUT_TOOLKITS: Record<HomeworkInputType, { label: string; syms: string[] } | null> = {

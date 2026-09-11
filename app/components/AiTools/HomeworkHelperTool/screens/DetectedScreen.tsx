@@ -1,25 +1,45 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import MathProse from "@/app/components/AiTools/shared/MathProse";
 import styles from "../homework-helper.module.css";
 import type { HomeworkSessionDTO } from "../types";
 
 interface DetectedScreenProps {
   session: HomeworkSessionDTO;
+  /** When part of a multi-question worksheet queue, e.g. { index: 1, total: 16 } for "Question 2 of 16". */
+  queuePosition?: { index: number; total: number } | null;
   onChange: (patch: { level?: string; subject?: string; topic?: string }) => Promise<void>;
   onContinue: () => void;
 }
 
-const DetectedScreen: React.FC<DetectedScreenProps> = ({ session, onChange, onContinue }) => {
+const DetectedScreen: React.FC<DetectedScreenProps> = ({
+  session,
+  queuePosition,
+  onChange,
+  onContinue,
+}) => {
   const [editing, setEditing] = useState(false);
   const [level, setLevel] = useState(session.level);
   const [subject, setSubject] = useState(session.subject);
   const [topic, setTopic] = useState(session.topic);
 
+  // Re-sync the edit form and collapse it whenever a different session is
+  // shown (e.g. advancing through a worksheet queue) — otherwise the form
+  // keeps stale values from whichever question was last edited.
+  useEffect(() => {
+    setLevel(session.level);
+    setSubject(session.subject);
+    setTopic(session.topic);
+    setEditing(false);
+  }, [session.session_id, session.level, session.subject, session.topic]);
+
   return (
     <div>
       <div className={`${styles.mono} text-[11px] uppercase tracking-wider text-[var(--ink-faint)] mt-1 mb-2.5`}>
-        1 question found
+        {queuePosition
+          ? `Question ${queuePosition.index + 1} of ${queuePosition.total}`
+          : "1 question found"}
       </div>
       <div className="flex gap-2 flex-wrap mb-4">
         <span className={`${styles.pill} ${styles.pillLevel} rounded-full px-3 py-1 text-[11.5px]`}>
@@ -30,7 +50,7 @@ const DetectedScreen: React.FC<DetectedScreenProps> = ({ session, onChange, onCo
       </div>
 
       <div className={`${styles.card} ${styles.serif} p-6 text-[19px] leading-relaxed mb-3`}>
-        {session.question}
+        <MathProse text={session.question} />
       </div>
 
       <button
@@ -96,7 +116,7 @@ const DetectedScreen: React.FC<DetectedScreenProps> = ({ session, onChange, onCo
           className="font-semibold text-[14.5px] px-5 py-2.5 rounded-lg bg-[var(--pen-btn)] text-white"
           onClick={onContinue}
         >
-          Let's work on this →
+          {queuePosition ? "Let's work on this one →" : "Let's work on this →"}
         </button>
       </div>
     </div>
