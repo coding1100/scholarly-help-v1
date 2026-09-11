@@ -96,7 +96,7 @@ const DetectedScreen: React.FC<DetectedScreenProps> = ({ session, onChange, onCo
           className="font-semibold text-[14.5px] px-5 py-2.5 rounded-lg bg-[var(--pen-btn)] text-white"
           onClick={onContinue}
         >
-          Let&apos;s work on this →
+          Let's work on this →
         </button>
       </div>
     </div>
