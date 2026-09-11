@@ -41,7 +41,7 @@ export default function Step6({
 
             {/* Subtitle */}
             <p className="text-gray-600 text-center mb-8 text-sm">
-              Hi {childName}! Let&apos;s practice {topic.toLowerCase()} at{" "}
+              Hi {childName}! Let's practice {topic.toLowerCase()} at{" "}
               {difficulty} level. Answer the questions below and I&apos;ll help you
               learn!
             </p>
