@@ -833,7 +833,7 @@ export default function StudySourceIngestion({
                 <p className="mx-auto mt-2 max-w-lg text-xs leading-relaxed text-[#64748b] sm:text-sm">
                   {experience === "tutor"
                     ? "Ask anything, or add course material for source-grounded tutoring and personalized practice."
-                    : "Let&apos;s create your first study session together, select an option below to get started."}
+                    : "Create your first study session together, select an option below to get started."}
                 </p>
               </div>
               <div className="rounded-[28px] bg-white p-3 shadow-[0_8px_40px_rgba(15,23,42,0.06)] sm:rounded-[36px] sm:p-4">

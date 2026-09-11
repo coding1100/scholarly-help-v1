@@ -21,8 +21,8 @@ const CompleteScreen: React.FC<CompleteScreenProps> = ({ onContinue, onPractice,
     <h2 className={`${styles.serif} text-[23px] mb-1.5`}>Question complete</h2>
     <p className="text-[var(--ink-soft)] text-[14.5px] mb-6.5">
       {hasNext
-        ? "Nice work — this one's saved. On to the next question."
-        : "Nice work — this one's saved to My Homework."}
+        ? "Nice work, this one's saved. On to the next question."
+        : "Nice work, this one's saved to My Homework."}
     </p>
     <div className="flex gap-2.5 justify-center flex-wrap">
       <button
