@@ -217,3 +217,17 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/*
+ * Applied to result/feedback blocks that get inserted right after a submit
+ * action (Check my work, Socratic Check, practice Check answer). Chrome's
+ * CSS scroll anchoring tries to preserve the visual position of content
+ * near the viewport when the DOM changes; a large block appearing right
+ * where the just-submitted (and about-to-blur) button sits is exactly the
+ * shape scroll anchoring re-anchors around, which visibly jumps the page
+ * once the async response lands. Opting these blocks out stops that jump
+ * without touching real focus/scroll behavior anywhere else in the tool.
+ */
+.noScrollAnchor {
+  overflow-anchor: none;
+}

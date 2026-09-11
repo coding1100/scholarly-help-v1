@@ -54,6 +54,12 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({
   };
 
   const checkAnswer = async () => {
+    // Guard here rather than relying on the input/button's native `disabled`
+    // below — disabling the focused element the user just typed into/clicked
+    // force-blurs it right as this whole form is about to be swapped out for
+    // the result card. That focus loss + layout swap is what trips Chrome's
+    // CSS scroll anchoring into jumping the page down once the answer lands.
+    if (loading) return;
     const value = inputRef.current?.value.trim();
     if (!value) return;
     setLoading(true);
@@ -195,15 +201,20 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({
               ref={inputRef}
               type="text"
               placeholder="Your answer..."
-              disabled={loading}
-              className="flex-1 px-3 py-2 border border-[var(--line)] rounded-lg text-sm font-mono bg-[var(--paper-raised)] text-[var(--ink)] disabled:opacity-60"
+              aria-disabled={loading}
+              readOnly={loading}
+              className={`flex-1 px-3 py-2 border border-[var(--line)] rounded-lg text-sm font-mono bg-[var(--paper-raised)] text-[var(--ink)] ${
+                loading ? "opacity-60" : ""
+              }`}
               onKeyDown={(e) => e.key === "Enter" && checkAnswer()}
             />
             <button
               type="button"
-              disabled={loading}
+              aria-disabled={loading}
               aria-busy={loading}
-              className="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg bg-[var(--pen-btn)] text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`text-[13.5px] font-semibold px-3.5 py-2 rounded-lg bg-[var(--pen-btn)] text-white ${
+                loading ? "opacity-50 cursor-not-allowed" : ""
+              }`}
               onClick={checkAnswer}
             >
               {loading ? "Checking…" : "Check answer"}
@@ -223,7 +234,7 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({
         <div
           role="status"
           aria-live="polite"
-          className={`${state.correct ? styles.feedbackCorrect : styles.feedbackWrong} px-4.5 py-4 rounded-[10px]`}
+          className={`${state.correct ? styles.feedbackCorrect : styles.feedbackWrong} ${styles.noScrollAnchor} px-4.5 py-4 rounded-[10px]`}
           style={{ padding: "16px 18px" }}
         >
           <div className={`${styles.serif} font-bold text-base mb-1`}>

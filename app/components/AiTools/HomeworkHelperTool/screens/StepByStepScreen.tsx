@@ -42,6 +42,11 @@ const StepByStepScreen: React.FC<StepByStepScreenProps> = ({
   }
 
   const submitAsk = async (i: number) => {
+    // Guarded here rather than via the input's native `disabled` below —
+    // disabling the focused input right as its response is about to be
+    // inserted below it force-blurs it and can trip Chrome's CSS scroll
+    // anchoring into jumping the page once the answer lands.
+    if (askBusy !== null) return;
     const input = askInputRefs.current[i];
     const value = input?.value.trim();
     if (!value) return;
@@ -55,6 +60,7 @@ const StepByStepScreen: React.FC<StepByStepScreenProps> = ({
   };
 
   const submitPropose = async () => {
+    if (proposeBusy) return;
     const value = proposeInputRef.current?.value.trim();
     if (!value) return;
     setProposeBusy(true);
@@ -93,14 +99,19 @@ const StepByStepScreen: React.FC<StepByStepScreenProps> = ({
                 ref={proposeInputRef}
                 type="text"
                 placeholder="e.g. Can we use...?"
-                disabled={proposeBusy}
-                className="flex-1 px-2.5 py-1.5 border border-[var(--line)] rounded-md text-[13.5px] bg-[var(--paper-raised)] text-[var(--ink)] disabled:opacity-60"
+                aria-disabled={proposeBusy}
+                readOnly={proposeBusy}
+                className={`flex-1 px-2.5 py-1.5 border border-[var(--line)] rounded-md text-[13.5px] bg-[var(--paper-raised)] text-[var(--ink)] ${
+                  proposeBusy ? "opacity-60" : ""
+                }`}
                 onKeyDown={(e) => e.key === "Enter" && submitPropose()}
               />
               <button
                 type="button"
-                disabled={proposeBusy}
-                className="text-[13px] px-3 py-1.5 rounded-md border border-[var(--line)] disabled:opacity-50"
+                aria-disabled={proposeBusy}
+                className={`text-[13px] px-3 py-1.5 rounded-md border border-[var(--line)] ${
+                  proposeBusy ? "opacity-50" : ""
+                }`}
                 onClick={submitPropose}
               >
                 Ask
@@ -110,7 +121,7 @@ const StepByStepScreen: React.FC<StepByStepScreenProps> = ({
           {proposeResponse && (
             <MathProse
               text={proposeResponse}
-              className="block mt-2.5 px-3 py-2 rounded-md text-[13.5px] leading-relaxed bg-[var(--paper-raised)]"
+              className={`${styles.noScrollAnchor} block mt-2.5 px-3 py-2 rounded-md text-[13.5px] leading-relaxed bg-[var(--paper-raised)]`}
             />
           )}
         </div>
@@ -178,17 +189,20 @@ const StepByStepScreen: React.FC<StepByStepScreenProps> = ({
                   }}
                   type="text"
                   placeholder="Ask about this step..."
-                  disabled={askBusy === i}
-                  className="w-full max-w-[340px] px-2.5 py-1.5 border border-[var(--line)] rounded-md text-[13px] bg-[var(--paper-raised)] text-[var(--ink)] disabled:opacity-60"
+                  aria-disabled={askBusy === i}
+                  readOnly={askBusy === i}
+                  className={`w-full max-w-[340px] px-2.5 py-1.5 border border-[var(--line)] rounded-md text-[13px] bg-[var(--paper-raised)] text-[var(--ink)] ${
+                    askBusy === i ? "opacity-60" : ""
+                  }`}
                   onKeyDown={(e) => e.key === "Enter" && submitAsk(i)}
                 />
                 {askBusy === i && (
-                  <div role="status" aria-live="polite" className="text-[12px] text-[var(--ink-faint)] mt-1.5">
+                  <div role="status" aria-live="polite" className={`${styles.noScrollAnchor} text-[12px] text-[var(--ink-faint)] mt-1.5`}>
                     Thinking…
                   </div>
                 )}
                 {askResponses[i] && (
-                  <div role="status" aria-live="polite">
+                  <div role="status" aria-live="polite" className={styles.noScrollAnchor}>
                     <MathProse
                       text={askResponses[i]}
                       className="block mt-2 px-3 py-2 bg-[var(--pen-soft)] rounded-md text-[13px] leading-relaxed max-w-[420px] text-[var(--pen)]"
