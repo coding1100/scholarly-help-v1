@@ -6,9 +6,11 @@ import styles from "../homework-helper.module.css";
 interface CompleteScreenProps {
   onContinue: () => void;
   onPractice: () => void;
+  /** True when this question was part of a multi-question worksheet queue and another one follows. */
+  hasNext?: boolean;
 }
 
-const CompleteScreen: React.FC<CompleteScreenProps> = ({ onContinue, onPractice }) => (
+const CompleteScreen: React.FC<CompleteScreenProps> = ({ onContinue, onPractice, hasNext }) => (
   <div className="text-center py-12">
     <div
       aria-hidden="true"
@@ -18,7 +20,9 @@ const CompleteScreen: React.FC<CompleteScreenProps> = ({ onContinue, onPractice 
     </div>
     <h2 className={`${styles.serif} text-[23px] mb-1.5`}>Question complete</h2>
     <p className="text-[var(--ink-soft)] text-[14.5px] mb-6.5">
-      Nice work — this one&apos;s saved to My Homework.
+      {hasNext
+        ? "Nice work — this one's saved. On to the next question."
+        : "Nice work — this one's saved to My Homework."}
     </p>
     <div className="flex gap-2.5 justify-center flex-wrap">
       <button
@@ -26,7 +30,7 @@ const CompleteScreen: React.FC<CompleteScreenProps> = ({ onContinue, onPractice 
         className="font-semibold text-[14.5px] px-5 py-2.5 rounded-lg border border-[var(--line)]"
         onClick={onContinue}
       >
-        Continue homework
+        {hasNext ? "Next question →" : "Continue homework"}
       </button>
       <button
         type="button"

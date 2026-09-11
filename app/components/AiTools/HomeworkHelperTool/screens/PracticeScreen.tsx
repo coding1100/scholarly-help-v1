@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import MathProse from "@/app/components/AiTools/shared/MathProse";
 import styles from "../homework-helper.module.css";
 import InputToolbar from "../components/InputToolbar";
 import type { HomeworkSessionDTO, PracticeQuestionDTO } from "../types";
@@ -171,9 +172,11 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({
       <p className="sr-only" aria-live="polite">
         Question {index + 1} of {questions.length}
       </p>
-      <div className={`${styles.card} ${styles.serif} p-4.5 text-[17px] mb-3.5`} style={{ padding: "18px 20px" }}>
-        {pq.q}
-      </div>
+      <MathProse
+        text={pq.q}
+        className={`${styles.card} ${styles.serif} block p-4.5 text-[17px] mb-3.5`}
+        style={{ padding: "18px 20px" }}
+      />
 
       {!state?.checked ? (
         <>
@@ -207,7 +210,10 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({
             </button>
           </div>
           {state?.hintShown && (
-            <div className={`${styles.feedbackPartial} px-3.5 py-2.5 rounded-lg text-[13px] mb-2`}>{pq.hint}</div>
+            <MathProse
+              text={pq.hint}
+              className={`${styles.feedbackPartial} block px-3.5 py-2.5 rounded-lg text-[13px] mb-2`}
+            />
           )}
           <button type="button" className="text-[13.5px] font-semibold text-[var(--pen)]" onClick={showHint}>
             Hint
@@ -229,7 +235,10 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({
               "Not quite"
             )}
           </div>
-          <div className="text-[14.5px]">{state.correct ? "Nice — that's right." : solutionText[index] || pq.solution}</div>
+          <MathProse
+            text={state.correct ? "Nice — that's right." : solutionText[index] || pq.solution}
+            className="block text-[14.5px]"
+          />
           <div className="flex gap-2.5 mt-3.5 flex-wrap">
             {!state.correct && (
               <button type="button" className="text-[13px] px-3 py-1.5 rounded-md border border-[var(--line)]" onClick={retry}>

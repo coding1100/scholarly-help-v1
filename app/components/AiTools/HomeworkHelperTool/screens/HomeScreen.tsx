@@ -158,7 +158,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
         )}
         {recent && recent.length === 0 && (
           <div className="text-[13.5px] italic text-[var(--ink-faint)] py-1.5">
-            Nothing completed yet — finish a question and it&apos;ll show up here.
+            Nothing completed yet.
           </div>
         )}
         {recent && recent.length > 0 && (

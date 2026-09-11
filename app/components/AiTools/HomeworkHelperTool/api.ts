@@ -2,6 +2,7 @@ import axios from "axios";
 import { getAccessToken } from "@/app/lib/authSession";
 import type {
   CheckWorkResult,
+  DetectionResponseDTO,
   HomeworkMode,
   HomeworkSessionDTO,
   PracticeQuestionDTO,
@@ -61,7 +62,7 @@ export async function detectFromText(text: string, signal?: AbortSignal) {
     { text },
     { headers: authHeaders(), signal },
   );
-  return unwrap<HomeworkSessionDTO>(res.data);
+  return unwrap<DetectionResponseDTO>(res.data);
 }
 
 export async function detectFromImage(file: File, extraText?: string, signal?: AbortSignal) {
@@ -72,7 +73,7 @@ export async function detectFromImage(file: File, extraText?: string, signal?: A
     headers: { ...authHeaders(), "Content-Type": "multipart/form-data" },
     signal,
   });
-  return unwrap<HomeworkSessionDTO>(res.data);
+  return unwrap<DetectionResponseDTO>(res.data);
 }
 
 export async function detectFromDocument(file: File, signal?: AbortSignal) {
@@ -82,7 +83,19 @@ export async function detectFromDocument(file: File, signal?: AbortSignal) {
     headers: { ...authHeaders(), "Content-Type": "multipart/form-data" },
     signal,
   });
-  return unwrap<HomeworkSessionDTO>(res.data);
+  return unwrap<DetectionResponseDTO>(res.data);
+}
+
+export async function createSessionsFromDetection(
+  detectionId: string,
+  questionIndices: number[],
+) {
+  const res = await axios.post(
+    `${baseUrl()}/sessions/from-detection`,
+    { detection_id: detectionId, question_indices: questionIndices },
+    { headers: authHeaders() },
+  );
+  return unwrap<HomeworkSessionDTO[]>(res.data);
 }
 
 export async function listSessions() {

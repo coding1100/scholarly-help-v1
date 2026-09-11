@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import MathProse from "@/app/components/AiTools/shared/MathProse";
 import styles from "../homework-helper.module.css";
 import type { HomeworkMode, HomeworkSessionDTO } from "../types";
 
@@ -20,7 +21,7 @@ const ModeSelectScreen: React.FC<ModeSelectScreenProps> = ({ session, onPickMode
       <h1 className={`${styles.serif} text-[26px] font-bold tracking-tight mt-1 mb-1.5`}>
         How would you like to work on this?
       </h1>
-      <p className="text-[var(--ink-soft)] text-[15px] leading-relaxed mb-5">{session.question}</p>
+      <MathProse text={session.question} className="block text-[var(--ink-soft)] text-[15px] leading-relaxed mb-5" />
 
       <button
         type="button"

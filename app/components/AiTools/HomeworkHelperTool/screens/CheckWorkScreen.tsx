@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useState } from "react";
+import MathProse from "@/app/components/AiTools/shared/MathProse";
 import styles from "../homework-helper.module.css";
 import QuestionHeader from "../components/QuestionHeader";
 import InputToolbar from "../components/InputToolbar";
@@ -77,8 +78,8 @@ const CheckWorkScreen: React.FC<CheckWorkScreenProps> = ({ session, onCheck, onP
           className={`${feedbackClass} mt-4 px-4.5 py-4 rounded-[10px] text-[14.5px] leading-relaxed`}
           style={{ padding: "16px 18px" }}
         >
-          <div className={`${styles.serif} font-bold text-base mb-1.5`}>{result.title}</div>
-          <div>{result.body}</div>
+          <MathProse text={result.title} className={`${styles.serif} block font-bold text-base mb-1.5`} />
+          <MathProse text={result.body} className="block" />
           <div className="flex gap-2.5 mt-3.5 flex-wrap">
             {result.status !== "correct" && (
               <button

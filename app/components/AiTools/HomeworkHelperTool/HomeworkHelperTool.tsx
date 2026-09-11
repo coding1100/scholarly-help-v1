@@ -13,10 +13,16 @@ import { looksLikeGibberish } from "@/app/utils/text";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import * as api from "./api";
 import styles from "./homework-helper.module.css";
-import type { HomeworkMode, HomeworkSessionDTO, ScreenName } from "./types";
+import type {
+  DetectionResponseDTO,
+  HomeworkMode,
+  HomeworkSessionDTO,
+  ScreenName,
+} from "./types";
 
 import HomeScreen from "./screens/HomeScreen";
 import AnalyzingScreen from "./screens/AnalyzingScreen";
+import PickQuestionsScreen from "./screens/PickQuestionsScreen";
 import DetectedScreen from "./screens/DetectedScreen";
 import ModeSelectScreen from "./screens/ModeSelectScreen";
 import StepByStepScreen from "./screens/StepByStepScreen";
@@ -38,6 +44,10 @@ const HomeworkHelperTool: React.FC = () => {
   const [session, setSession] = useState<HomeworkSessionDTO | null>(null);
   const [loading, setLoading] = useState(false);
   const [pasteText, setPasteText] = useState("");
+  const [detection, setDetection] = useState<DetectionResponseDTO | null>(null);
+  /** Sessions created from the current detection, worked through one at a time. */
+  const [queue, setQueue] = useState<HomeworkSessionDTO[]>([]);
+  const [queueIndex, setQueueIndex] = useState(0);
 
   const requestControllerRef = useRef<AbortController | null>(null);
   useEffect(() => () => requestControllerRef.current?.abort(), []);
@@ -73,13 +83,16 @@ const HomeworkHelperTool: React.FC = () => {
 
   const goHome = useCallback(() => {
     setSession(null);
+    setDetection(null);
+    setQueue([]);
+    setQueueIndex(0);
     setScreen("home");
   }, []);
 
   const openMyHomework = useCallback(() => setScreen("myhomework"), []);
 
   const runDetect = useCallback(
-    async (fn: (signal: AbortSignal) => Promise<HomeworkSessionDTO>) => {
+    async (fn: (signal: AbortSignal) => Promise<DetectionResponseDTO>) => {
       setScreen("analyzing");
       setLoading(true);
       requestControllerRef.current?.abort();
@@ -87,8 +100,19 @@ const HomeworkHelperTool: React.FC = () => {
       requestControllerRef.current = controller;
       try {
         const result = await fn(controller.signal);
-        setSession(result);
-        setScreen("detected");
+        setDetection(result);
+        // A single detected question skips the picker — matches the prototype's
+        // "1 question found" straight-through flow. A worksheet with several
+        // questions stops at the picker so the student chooses which to work on.
+        if (result.questions.length === 1) {
+          const created = await api.createSessionsFromDetection(result.detection_id, [0]);
+          setQueue(created);
+          setQueueIndex(0);
+          setSession(created[0]);
+          setScreen("detected");
+        } else {
+          setScreen("pickQuestions");
+        }
         trackToolGenerate({ tool: "homework-helper" } as any);
       } catch (err: any) {
         if (err?.name === "CanceledError" || err?.code === "ERR_CANCELED") return;
@@ -99,6 +123,25 @@ const HomeworkHelperTool: React.FC = () => {
       }
     },
     [showApiError],
+  );
+
+  const confirmQuestionSelection = useCallback(
+    async (selectedIndices: number[]) => {
+      if (!detection) return;
+      setLoading(true);
+      try {
+        const created = await api.createSessionsFromDetection(detection.detection_id, selectedIndices);
+        setQueue(created);
+        setQueueIndex(0);
+        setSession(created[0]);
+        setScreen("detected");
+      } catch (err: any) {
+        showApiError(err, "Could not start those questions. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [detection, showApiError],
   );
 
   const submitPastedText = useCallback(() => {
@@ -130,6 +173,11 @@ const HomeworkHelperTool: React.FC = () => {
     try {
       const result = await api.getSession(sessionId);
       setSession(result);
+      // Resuming a single session from "My Homework" is not part of a
+      // worksheet queue — treat it as a standalone queue of one so
+      // "Complete question" goes home instead of advancing a stale queue.
+      setQueue([result]);
+      setQueueIndex(0);
       if (result.status === "completed") setScreen("complete");
       else if (result.mode) setScreen("solving");
       else setScreen("detected");
@@ -174,6 +222,7 @@ const HomeworkHelperTool: React.FC = () => {
     try {
       const result = await api.completeSession(session.session_id);
       setSession(result);
+      setQueue((prev) => prev.map((s) => (s.session_id === result.session_id ? result : s)));
       setScreen("complete");
     } catch (err: any) {
       showApiError(err, "Could not save this. Please try again.");
@@ -181,6 +230,20 @@ const HomeworkHelperTool: React.FC = () => {
       setLoading(false);
     }
   }, [session, showApiError]);
+
+  const hasNextInQueue = queueIndex < queue.length - 1;
+
+  /** From the complete screen: move to the next queued question, or go home if this was the last (or only) one. */
+  const continueAfterComplete = useCallback(() => {
+    if (hasNextInQueue) {
+      const nextIndex = queueIndex + 1;
+      setQueueIndex(nextIndex);
+      setSession(queue[nextIndex]);
+      setScreen("detected");
+    } else {
+      goHome();
+    }
+  }, [hasNextInQueue, queueIndex, queue, goHome]);
 
   const goPractice = useCallback(() => setScreen("practice"), []);
   const goModeSelect = useCallback(() => setScreen("modeSelect"), []);
@@ -207,13 +270,23 @@ const HomeworkHelperTool: React.FC = () => {
 
       {screen === "analyzing" && <AnalyzingScreen />}
 
+      {screen === "pickQuestions" && detection && (
+        <PickQuestionsScreen
+          questions={detection.questions}
+          onContinue={confirmQuestionSelection}
+          onBack={goHome}
+        />
+      )}
+
       {screen === "detected" && session && (
         <DetectedScreen
           session={session}
+          queuePosition={queue.length > 1 ? { index: queueIndex, total: queue.length } : null}
           onChange={async (patch) => {
             try {
               const updated = await api.updateDetection(session.session_id, patch);
               setSession(updated);
+              setQueue((prev) => prev.map((s) => (s.session_id === updated.session_id ? updated : s)));
               toast.success("Details updated");
             } catch (err: any) {
               showApiError(err, "Could not update details.");
@@ -270,7 +343,11 @@ const HomeworkHelperTool: React.FC = () => {
       )}
 
       {screen === "complete" && session && (
-        <CompleteScreen onContinue={goHome} onPractice={goPractice} />
+        <CompleteScreen
+          onContinue={continueAfterComplete}
+          onPractice={goPractice}
+          hasNext={hasNextInQueue}
+        />
       )}
 
       {screen === "practice" && session && (

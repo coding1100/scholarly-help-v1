@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useState } from "react";
+import MathProse from "@/app/components/AiTools/shared/MathProse";
 import styles from "../homework-helper.module.css";
 import QuestionHeader from "../components/QuestionHeader";
 import InputToolbar from "../components/InputToolbar";
@@ -72,12 +73,14 @@ const SocraticScreen: React.FC<SocraticScreenProps> = ({ session, onAnswer, onHi
         const solved = i < index || (isCurrent && feedback?.correct);
         return (
           <div key={i} className="mb-3.5">
-            <div className={`${styles.aiBubble} px-4 py-3 text-[14.5px] leading-relaxed max-w-[88%] mb-2`}>
-              {q.q}
-            </div>
+            <MathProse
+              text={q.q}
+              className={`${styles.aiBubble} block px-4 py-3 text-[14.5px] leading-relaxed max-w-[88%] mb-2`}
+            />
             {solved && !isCurrent && (
               <div className={`${styles.feedbackCorrect} mt-2 px-3.5 py-2.5 rounded-lg text-[13.5px] leading-relaxed max-w-[88%]`}>
-                ✓ {q.correct_msg}
+                <span aria-hidden="true">✓ </span>
+                <MathProse text={q.correct_msg} />
               </div>
             )}
             {isCurrent && !feedback?.correct && (
@@ -128,15 +131,17 @@ const SocraticScreen: React.FC<SocraticScreenProps> = ({ session, onAnswer, onHi
                   feedback.correct ? styles.feedbackCorrect : styles.feedbackWrong
                 }`}
               >
-                {feedback.correct ? "✓ " : ""}
-                {feedback.msg}
+                {feedback.correct && <span aria-hidden="true">✓ </span>}
+                <MathProse text={feedback.msg} />
               </div>
             )}
             {isCurrent &&
               hints.slice(0, shownHints).map((h, hi) => (
-                <div key={hi} className={`${styles.feedbackPartial} mt-2 px-3.5 py-2.5 rounded-lg text-[13px] max-w-[88%]`}>
-                  {h}
-                </div>
+                <MathProse
+                  key={hi}
+                  text={h}
+                  className={`${styles.feedbackPartial} block mt-2 px-3.5 py-2.5 rounded-lg text-[13px] max-w-[88%]`}
+                />
               ))}
             {isCurrent && feedback?.correct && (
               <div className="mt-1.5">
@@ -157,7 +162,7 @@ const SocraticScreen: React.FC<SocraticScreenProps> = ({ session, onAnswer, onHi
         <>
           <div className={`${styles.feedbackCorrect} rounded-[10px] px-5 py-4.5 my-4 text-center`}>
             <div className="font-mono text-[11px] uppercase tracking-wide">Answer</div>
-            <div className={`${styles.serif} text-[26px] font-bold mt-1`}>{session.answer}</div>
+            <MathProse text={session.answer} className={`${styles.serif} block text-[26px] font-bold mt-1`} />
           </div>
           <button
             type="button"
