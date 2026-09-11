@@ -21,7 +21,13 @@ const CheckWorkScreen: React.FC<CheckWorkScreenProps> = ({ session, onCheck, onP
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const submit = async () => {
-    if (!text.trim()) return;
+    // Guard instead of relying on the native `disabled` attribute below —
+    // disabling the button the user just clicked force-blurs it while the
+    // result card is about to be inserted, which is exactly the shape that
+    // trips Chrome's CSS scroll anchoring into jumping the page down once
+    // the response lands. aria-disabled keeps the button visually/
+    // semantically non-interactive without ever stealing focus.
+    if (busy || !text.trim()) return;
     setBusy(true);
     try {
       const res = await onCheck(text);
@@ -62,9 +68,11 @@ const CheckWorkScreen: React.FC<CheckWorkScreenProps> = ({ session, onCheck, onP
       <div className="mt-3">
         <button
           type="button"
-          disabled={busy}
+          aria-disabled={busy}
           aria-busy={busy}
-          className="font-semibold text-[14.5px] px-4 py-2.5 rounded-lg bg-[var(--pen-btn)] text-white disabled:opacity-50 disabled:cursor-not-allowed"
+          className={`font-semibold text-[14.5px] px-4 py-2.5 rounded-lg bg-[var(--pen-btn)] text-white ${
+            busy ? "opacity-50 cursor-not-allowed" : ""
+          }`}
           onClick={submit}
         >
           {busy ? "Checking…" : "Check my work"}
@@ -75,7 +83,7 @@ const CheckWorkScreen: React.FC<CheckWorkScreenProps> = ({ session, onCheck, onP
         <div
           role="status"
           aria-live="polite"
-          className={`${feedbackClass} mt-4 px-4.5 py-4 rounded-[10px] text-[14.5px] leading-relaxed`}
+          className={`${feedbackClass} ${styles.noScrollAnchor} mt-4 px-4.5 py-4 rounded-[10px] text-[14.5px] leading-relaxed`}
           style={{ padding: "16px 18px" }}
         >
           <MathProse text={result.title} className={`${styles.serif} block font-bold text-base mb-1.5`} />

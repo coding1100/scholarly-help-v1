@@ -35,6 +35,15 @@ const SocraticScreen: React.FC<SocraticScreenProps> = ({ session, onAnswer, onHi
   const current = questions[index];
 
   const submit = async () => {
+    // Guarded here instead of relying on the input/button's native `disabled`
+    // attribute — disabling the currently-focused element (the input the
+    // user just typed into and hit Enter on, or the button they clicked)
+    // force-blurs it right as the feedback block is about to be inserted
+    // below. That focus loss + layout growth combo is what triggers
+    // Chrome's CSS scroll anchoring to jump the page down once the async
+    // answer lands. aria-disabled + this guard keep the same UX without
+    // ever stealing focus mid-submit.
+    if (busy) return;
     const value = inputRef.current?.value.trim();
     if (!value) return;
     setBusy(true);
@@ -98,15 +107,20 @@ const SocraticScreen: React.FC<SocraticScreenProps> = ({ session, onAnswer, onHi
                     ref={inputRef}
                     type="text"
                     placeholder="Type your answer..."
-                    disabled={busy}
-                    className="flex-1 px-3 py-2 border border-[var(--line)] rounded-lg text-sm bg-[var(--paper-raised)] text-[var(--ink)] disabled:opacity-60"
+                    aria-disabled={busy}
+                    readOnly={busy}
+                    className={`flex-1 px-3 py-2 border border-[var(--line)] rounded-lg text-sm bg-[var(--paper-raised)] text-[var(--ink)] ${
+                      busy ? "opacity-60" : ""
+                    }`}
                     onKeyDown={(e) => e.key === "Enter" && submit()}
                   />
                   <button
                     type="button"
-                    disabled={busy}
+                    aria-disabled={busy}
                     aria-busy={busy}
-                    className="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg bg-[var(--pen-btn)] text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    className={`text-[13.5px] font-semibold px-3.5 py-2 rounded-lg bg-[var(--pen-btn)] text-white ${
+                      busy ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
                     onClick={submit}
                   >
                     {busy ? "Checking…" : "Check"}
@@ -127,7 +141,7 @@ const SocraticScreen: React.FC<SocraticScreenProps> = ({ session, onAnswer, onHi
               <div
                 role="status"
                 aria-live="polite"
-                className={`mt-2 px-3.5 py-2.5 rounded-lg text-[13.5px] leading-relaxed max-w-[88%] ${
+                className={`${styles.noScrollAnchor} mt-2 px-3.5 py-2.5 rounded-lg text-[13.5px] leading-relaxed max-w-[88%] ${
                   feedback.correct ? styles.feedbackCorrect : styles.feedbackWrong
                 }`}
               >
