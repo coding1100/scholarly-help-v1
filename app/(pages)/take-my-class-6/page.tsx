@@ -113,7 +113,7 @@ export async function generateMetadata({}): Promise<Metadata> {
   return {
     title: PAGE_TITLE,
     description: PAGE_DESCRIPTION,
-    robots: { index: false, follow: false },
+    robots: { index: true, follow: true },
     alternates: {
       canonical: canonicalUrl,
     },
