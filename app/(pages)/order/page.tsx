@@ -34,7 +34,7 @@ export function generateMetadata({}) {
   return {
     title: `${MetaData.order.title}`,
     description: `${MetaData.order.description}`,
-    robots: { index: false, follow: false },
+    robots: { index: true, follow: true },
     alternates: {
       canonical: canonicalUrl,
     },

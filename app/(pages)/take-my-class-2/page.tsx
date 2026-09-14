@@ -104,8 +104,8 @@ export async function generateMetadata(): Promise<Metadata> {
         title: metaTitle,
         description: metaDescription,
         robots: {
-          index: false,
-          follow: false,
+          index: true,
+          follow: true,
         },
         alternates: {
           canonical: canonicalUrl,
@@ -124,8 +124,8 @@ export async function generateMetadata(): Promise<Metadata> {
     description:
       "Struggling with online classes, exams, assignments or essays? Scholarly Help provides professional academic writing services tailored to your needs. Get timely, plagiarism-free solutions crafted by experts. Your success starts here!",
     robots: {
-      index: false,
-      follow: false,
+      index: true,
+      follow: true,
     },
     alternates: {
       canonical: canonicalUrl,

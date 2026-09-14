@@ -75,7 +75,7 @@ export function generateMetadata({}) {
   return {
     title: `${MetaData.doMyClass.title}`,
     description: `${MetaData.doMyClass.description}`,
-    robots: { index: false, follow: false },
+    robots: { index: true, follow: true },
     alternates: {
       canonical: canonicalUrl,
     },
