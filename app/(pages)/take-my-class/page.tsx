@@ -100,7 +100,7 @@ export async function generateMetadata({}): Promise<Metadata> {
     title: pageData?.meta?.title || MetaData.takeMyClass.title,
     description:
       pageData?.meta?.description || MetaData.takeMyClass.description,
-    robots: { index: false, follow: false },
+    robots: { index: true, follow: true },
     alternates: {
       canonical: canonicalUrl,
     },
