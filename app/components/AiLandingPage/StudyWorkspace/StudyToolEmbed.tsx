@@ -4,6 +4,7 @@ import { FC, useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import StudySourceIngestion from "@/app/components/AiTools/Dashboard/StudySourceIngestion";
 import StudyWorkspace from "@/app/components/AiTools/Dashboard/StudyWorkspace";
+import StudyAuthGateModal from "@/app/components/AiTools/StudyWorkspace/StudyAuthGateModal";
 import { appendQueryString } from "@/app/utils/url";
 import { setActiveStudySessionId } from "@/app/utils/studyApiClient";
 
@@ -29,6 +30,29 @@ const StudyToolEmbed: FC = () => {
   // Reveal the workspace only after the user's first successful upload, so the
   // hero opens on the clean ingestion card exactly like the tool page does.
   const [hasSessionContent, setHasSessionContent] = useState(false);
+
+  // Once a guest's free AI-action allowance is used up, StudyWorkspace
+  // (mounted below once hasSessionContent is true) dispatches "study:auth-gate"
+  // instead of calling the AI directly — see runGeneration() in
+  // AiTools/Dashboard/StudyWorkspace.tsx. The dashboard tool page
+  // (StudyWorkspacePageContent.tsx) listens for this and opens
+  // StudyAuthGateModal; this embed is the same child component reused on the
+  // landing page, so without its own listener the event fires into the void
+  // and clicking "Generate" after the free action just silently does nothing.
+  const [gateOpen, setGateOpen] = useState(false);
+  const [gateReason, setGateReason] = useState<"query" | "session">("query");
+
+  useEffect(() => {
+    const onAuthGate = (e: Event) => {
+      const reason =
+        (e as CustomEvent<{ reason?: "query" | "session" }>).detail?.reason ||
+        "query";
+      setGateReason(reason);
+      setGateOpen(true);
+    };
+    window.addEventListener("study:auth-gate", onAuthGate);
+    return () => window.removeEventListener("study:auth-gate", onAuthGate);
+  }, []);
 
   // A session already in the URL (return visit / shared link) shows the workspace.
   useEffect(() => {
@@ -60,6 +84,17 @@ const StudyToolEmbed: FC = () => {
         onContentReady={() => setHasSessionContent(true)}
       />
       {hasSessionContent ? <StudyWorkspace /> : null}
+
+      {gateOpen ? (
+        <StudyAuthGateModal
+          open={gateOpen}
+          reason={gateReason}
+          returnUrl={`${pathname || "/tools/ai-study-workspace"}${
+            sessionId ? `?sessionId=${sessionId}` : ""
+          }`}
+          onClose={() => setGateOpen(false)}
+        />
+      ) : null}
     </div>
   );
 };
