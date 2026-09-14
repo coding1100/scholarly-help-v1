@@ -71,7 +71,7 @@ export async function generateMetadata() {
       return {
         title: metaTitle,
         description: metaDescription,
-        robots: { index: false, follow: false },
+        robots: { index: true, follow: true },
         alternates: {
           canonical: canonicalUrl,
         },
@@ -87,7 +87,7 @@ export async function generateMetadata() {
   return {
     title: `${MetaData.exams.title}`,
     description: `${MetaData.exams.description}`,
-    robots: { index: false, follow: false },
+    robots: { index: true, follow: true },
     alternates: {
       canonical: canonicalUrl,
     },
