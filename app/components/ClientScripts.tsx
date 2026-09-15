@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useCallback } from "react";
 import Script from "next/script";
 import axios from "axios";
-import { Toaster } from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 import { initializeAuthSession, installAxiosAuthRefresh } from "@/app/lib/authSession";
 import { hasRefreshSessionHint } from "@/app/lib/accessTokenStore";
 import BillingGate from "@/app/components/AiTools/BillingGate";
@@ -58,6 +58,14 @@ export default function ClientScripts() {
     currentPage === "/about-us" || currentPage === "/about-us/";
 
   const ShowLiveChat = isHomePage;
+
+  useEffect(() => {
+    const message = sessionStorage.getItem("auth:success-toast");
+    if (message) {
+      sessionStorage.removeItem("auth:success-toast");
+      toast.success(message, { id: "auth-success" });
+    }
+  }, []);
 
   useEffect(() => {
     const uninstallAuthRefresh = installAxiosAuthRefresh();
