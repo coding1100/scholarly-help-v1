@@ -97,6 +97,7 @@ const SignInCard: FC<SignInCardProps> = ({
       // Hard navigation so the just-set access_token cookie is sent with the
       // request — /tools/* is middleware-guarded and a client-side replace can
       // race the cookie write and bounce back to /sign-in.
+      sessionStorage.setItem("auth:success-toast", "Signed in successfully!");
       window.location.assign(redirectUrl);
     },
     [returnUrl, searchParams, email],
