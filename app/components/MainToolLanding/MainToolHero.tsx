@@ -112,7 +112,7 @@ const MainToolHero: FC = () => {
                     <p className="text-[#000] text-sm sm:text-base text-center">{hero.badgeText}</p>
                 </div>
                 <div className="w-full max-w-[720px] mx-auto px-2 sm:px-0">
-                    <p className="text-[28px] sm:text-[36px] lg:text-[49px] font-bold text-center relative leading-tight sm:leading-snug lg:leading-normal">
+                    <h1 className="text-[28px] sm:text-[36px] lg:text-[49px] font-bold text-center relative leading-tight sm:leading-snug lg:leading-normal">
                         {hero.headingPrefix}
                         <span className="relative inline-block text-[#F56200]">
                             {hero.highlightWord}
@@ -132,7 +132,7 @@ const MainToolHero: FC = () => {
                             </svg>
                         </span>
                         {hero.headingSuffix}
-                    </p>
+                    </h1>
                 </div>
                 <div className="w-full max-w-[570px] mx-auto px-2 sm:px-0">
                     <p

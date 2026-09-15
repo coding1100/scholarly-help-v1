@@ -11,7 +11,7 @@ const DeadLine: FC<DeadLineProps> = () => {
     return (
         <div className="bg-[#3D3D5E]">
             <div className="w-full max-w-7xl container py-10 sm:py-14 lg:py-[70px] px-4 sm:px-8 lg:px-14 mx-auto flex flex-col items-center justify-center text-center">
-                <p
+                <h2
                     className="text-white text-[26px] sm:text-[28px] md:text-3xl lg:text-[42px] font-bold max-w-4xl"
                     style={{ lineHeight: "1.2" }}
                 >
@@ -26,7 +26,7 @@ const DeadLine: FC<DeadLineProps> = () => {
                         Deadline
                     </span>{" "}
                     Won&apos;t wait
-                </p>
+                </h2>
                 <p className="text-white text-sm sm:text-base text-center mt-4 sm:mt-5 mb-6 sm:mb-8 max-w-2xl px-2">
                     Use a free tool to get started in 30 seconds — or speak to an expert right now.
                 </p>
