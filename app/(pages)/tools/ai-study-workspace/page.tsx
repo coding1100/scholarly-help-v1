@@ -14,9 +14,9 @@ import StudyFaq from "@/app/components/AiLandingPage/StudyWorkspace/StudyFaq";
 import FooterCta from "@/app/components/AiLandingPage/StudyWorkspace/FooterCta";
 import ProductSchema from "@/app/components/ProductSchema";
 
-const TITLE = "Free AI Study Tools | ScholarlyHelp Workspace";
+const TITLE = "Free AI Study Tools for Smarter Study | ScholarlyHelp";
 const DESCRIPTION =
-  "Upload any material to get AI notes, flashcards, quizzes and a 24/7 AI tutor in one place. Try the free AI study workspace today.";
+  "Explore free AI study tools for notes, summaries, flashcards, quizzes, and tutoring. ScholarlyHelp helps students study smarter with powerful AI study tools.";
 
 const Page: FC = () => {
   const baseUrl =
