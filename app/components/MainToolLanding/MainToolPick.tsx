@@ -17,9 +17,9 @@ function ToolCard({ tool }: { tool: PickToolItem }) {
                     <p>{tool.tag}</p>
                 </div>
             </div>
-            <p className="text-[#1A1A1A] text-lg sm:text-xl font-semibold mb-2">
+            <h3 className="text-[#1A1A1A] text-lg sm:text-xl font-semibold mb-2">
                 {tool.heading}
-            </p>
+            </h3>
             <p className="text-[#7A7A7A] text-sm sm:text-[16px] mb-6 flex-1">
                 {tool.description}
             </p>
@@ -59,9 +59,9 @@ const MainToolPick: FC = () => {
             id="pick-tools"
             className="w-full max-w-7xl container scroll-mt-24 py-6 sm:py-9 px-4 sm:px-8 lg:px-14 rounded-lg mx-auto"
         >
-            <p className="text-[28px] sm:text-[34px] lg:text-[42px] font-bold text-center leading-tight">
+            <h2 className="text-[28px] sm:text-[34px] lg:text-[42px] font-bold text-center leading-tight">
                 {pick.heading}
-            </p>
+            </h2>
             <p className="text-center text-[#263238] text-sm sm:text-[17px] mt-2 sm:mt-0 px-2 sm:px-0">
                 {pick.description}
             </p>

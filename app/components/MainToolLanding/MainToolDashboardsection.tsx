@@ -40,10 +40,10 @@ const MainToolDashboardsection: FC = () => {
                     <div className="w-fit py-2 px-5 sm:px-7 mb-5 sm:mb-7 rounded-full border border-[#D6D6D6] bg-white text-[#000] text-center text-sm sm:text-base">
                         <p>{dashboard.badge}</p>
                     </div>
-                    <div className="text-[28px] sm:text-[34px] lg:text-[42px] font-bold leading-tight sm:leading-[44px] lg:leading-[50px] mb-4">
-                        <p>{dashboard.headingLine1}</p>
-                        <p>{dashboard.headingLine2}</p>
-                    </div>
+                    <h2 className="text-[28px] sm:text-[34px] lg:text-[42px] font-bold leading-tight sm:leading-[44px] lg:leading-[50px] mb-4">
+                        <span className="block">{dashboard.headingLine1}</span>{" "}
+                        <span className="block">{dashboard.headingLine2}</span>
+                    </h2>
                     <p className="text-base sm:text-lg mb-6 sm:mb-7 max-w-full lg:max-w-[452px]">
                         {dashboard.description}
                     </p>
