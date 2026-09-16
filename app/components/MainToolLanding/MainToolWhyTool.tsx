@@ -34,9 +34,9 @@ const MainToolWhyTool: FC = () => {
     return (
         <div className="bg-[#565ADD]">
             <div className="w-full max-w-7xl container pt-10 sm:pt-14 pb-16 sm:pb-24 px-4 sm:px-8 lg:px-14 mx-auto">
-                <p className="text-white text-[28px] sm:text-[34px] lg:text-[42px] font-bold text-center mb-8 sm:mb-12 leading-tight">
+                <h2 className="text-white text-[28px] sm:text-[34px] lg:text-[42px] font-bold text-center mb-8 sm:mb-12 leading-tight">
                     {why.heading}
-                </p>
+                </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 lg:gap-x-16 gap-y-8 sm:gap-y-10">
                     {why.items.map((tool) => (
                         <div key={tool.heading} className="grid grid-cols-12 items-start gap-3 sm:gap-4">
@@ -44,9 +44,9 @@ const MainToolWhyTool: FC = () => {
                                 <DashedCheckIcon />
                             </div>
                             <div className="col-span-10">
-                                <p className="text-white text-xl sm:text-2xl font-bold leading-tight">
+                                <h3 className="text-white text-xl sm:text-2xl font-bold leading-tight">
                                     {tool.heading}
-                                </p>
+                                </h3>
                                 <p className="text-white text-sm sm:text-base leading-relaxed mt-2">
                                     {tool.description}
                                 </p>
