@@ -23,8 +23,8 @@ const Page: FC = () => {
   return (
     <MainLayout>
       <ProductSchema
-        productTitle="Free Paraphrasing Tool | ScholarlyHelp"
-        metaDescription="Use the free ScholarlyHelp’s paraphrasing tool to rewrite any text in seconds. Choose your style, keep your meaning, and just copy and paste it."
+        productTitle="Free AI Paraphrasing Tool: Rewrite Text | ScholarlyHelp"
+        metaDescription="ScholarlyHelp's free paraphrasing tool rewrites your text in seconds. Choose a style, keep your meaning, and create clear, natural writing with our AI paraphraser."
         pageUrl={`${normalizedBaseUrl}/tools/ai-paraphraser`}
       />
       <div className="font-poppins">
@@ -54,9 +54,9 @@ export function generateMetadata(): Metadata {
   const canonicalUrl = `${normalizedBaseUrl}/tools/ai-paraphraser`;
 
   return {
-    title: "Free Paraphrasing Tool | ScholarlyHelp",
+    title: "Free AI Paraphrasing Tool: Rewrite Text | ScholarlyHelp",
     description:
-      "Use the free ScholarlyHelp’s paraphrasing tool to rewrite any text in seconds. Choose your style, keep your meaning, and just copy and paste it.",
+      "ScholarlyHelp's free paraphrasing tool rewrites your text in seconds. Choose a style, keep your meaning, and create clear, natural writing with our AI paraphraser.",
     alternates: {
       canonical: canonicalUrl,
     },
