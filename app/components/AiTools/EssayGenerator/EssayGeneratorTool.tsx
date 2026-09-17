@@ -81,7 +81,22 @@ export default function EssayGeneratorTool({ embedded = false }: { embedded?: bo
   const [blockBuzzwords, setBlockBuzzwords] = useState(true);
   const [includeSubheadings, setIncludeSubheadings] = useState(true);
   const [consent, setConsent] = useState(false);
-  const [draft, setDraft] = useState("");
+  const [draftHistory, setDraftHistory] = useState({ entries: [""], index: 0 });
+  const draft = draftHistory.entries[draftHistory.index];
+  const canUndo = draftHistory.index > 0;
+  const canRedo = draftHistory.index < draftHistory.entries.length - 1;
+  function setDraft(value: string | ((current: string) => string)) {
+    setDraftHistory((history) => {
+      const current = history.entries[history.index];
+      const next = typeof value === "function" ? value(current) : value;
+      if (next === current) return history;
+      const entries = [...history.entries.slice(0, history.index + 1), next];
+      return { entries, index: entries.length - 1 };
+    });
+  }
+  function resetDraft(text: string) {
+    setDraftHistory({ entries: [text], index: 0 });
+  }
   const [result, setResult] = useState<EssayResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -90,7 +105,6 @@ export default function EssayGeneratorTool({ embedded = false }: { embedded?: bo
   const [sourceLabel, setSourceLabel] = useState("");
   const [checkPanel, setCheckPanel] = useState<string | null>(null);
   const [transformingAction, setTransformingAction] = useState<"paraphrase" | "expand" | "shorten" | null>(null);
-  const [historyBusy, setHistoryBusy] = useState<"undo" | "redo" | null>(null);
   const [citationBusy, setCitationBusy] = useState(false);
   const wizardTopRef = useRef<HTMLDivElement | null>(null);
   const previousStepRef = useRef(step);
@@ -170,7 +184,7 @@ export default function EssayGeneratorTool({ embedded = false }: { embedded?: bo
 
   async function generateEssay() {
     if (!session || !outline) return;
-    setLoading(true); setProgress(4); setResult(null); setDraft(""); setGenerationError("");
+    setLoading(true); setProgress(4); setResult(null); resetDraft(""); setGenerationError("");
     goToStep(4);
     const controller = new AbortController(); abortRef.current = controller;
     try {
@@ -190,7 +204,7 @@ export default function EssayGeneratorTool({ embedded = false }: { embedded?: bo
         headers, signal: controller.signal, timeoutMs: 360_000,
         parse: (payload) => unwrap(payload), onProgress: (state) => setProgress(Math.max(8, state.progress || 0)),
       });
-      setProgress(100); setResult(essay); setDraft(essay.plain_text);
+      setProgress(100); setResult(essay); resetDraft(essay.plain_text);
       setSession((current) => current ? { ...current, current_revision_id: essay.revision_id, current_text: essay.plain_text, word_count: essay.word_count } : current);
       toast.success("Essay draft generated.");
     } catch (error: any) {
@@ -206,31 +220,19 @@ export default function EssayGeneratorTool({ embedded = false }: { embedded?: bo
     if (!session?.current_revision_id || !draft.trim()) return;
     try {
       const response = await axios.patch(`${API}/tools/essay-generator/sessions/${session.session_id}/draft`, { text: draft, expected_revision_id: session.current_revision_id }, { headers: await requestHeaders() });
-      const updated = unwrap<Session>(response.data); setSession(updated); setDraft(updated.current_text || draft);
+      const updated = unwrap<Session>(response.data); setSession(updated);
       toast.success("Draft saved.");
     } catch (error) { toast.error(errorMessage(error)); }
   }
 
-  async function undoDraft() {
-    if (!session?.current_revision_id || historyBusy) return;
-    setHistoryBusy("undo");
-    try {
-      const response = await axios.post(`${API}/tools/essay-generator/sessions/${session.session_id}/undo`, { expected_revision_id: session.current_revision_id }, { headers: await requestHeaders() });
-      const updated = unwrap<Session>(response.data); setSession(updated); setDraft(updated.current_text || "");
-      toast.success("Undo applied.");
-    } catch (error) { toast.error(errorMessage(error)); }
-    finally { setHistoryBusy(null); }
+  function undoDraft() {
+    if (loading || transformingAction || citationBusy) return;
+    setDraftHistory((history) => ({ ...history, index: Math.max(0, history.index - 1) }));
   }
 
-  async function redoDraft() {
-    if (!session?.current_revision_id || historyBusy) return;
-    setHistoryBusy("redo");
-    try {
-      const response = await axios.post(`${API}/tools/essay-generator/sessions/${session.session_id}/redo`, { expected_revision_id: session.current_revision_id }, { headers: await requestHeaders() });
-      const updated = unwrap<Session>(response.data); setSession(updated); setDraft(updated.current_text || "");
-      toast.success("Redo applied.");
-    } catch (error) { toast.error(errorMessage(error)); }
-    finally { setHistoryBusy(null); }
+  function redoDraft() {
+    if (loading || transformingAction || citationBusy) return;
+    setDraftHistory((history) => ({ ...history, index: Math.min(history.entries.length - 1, history.index + 1) }));
   }
 
   async function transformSelection(action: "paraphrase" | "expand" | "shorten") {
@@ -360,8 +362,8 @@ export default function EssayGeneratorTool({ embedded = false }: { embedded?: bo
               <button type="button" disabled={!draftReady || loading || Boolean(transformingAction)} onClick={() => void transformSelection("expand")} className="inline-flex items-center justify-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45">{transformingAction === "expand" && <FiLoader className="animate-spin" />} Expand</button>
               <button type="button" disabled={!draftReady || loading || Boolean(transformingAction)} onClick={() => void transformSelection("shorten")} className="inline-flex items-center justify-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45">{transformingAction === "shorten" && <FiLoader className="animate-spin" />} Shorten</button>
               <button type="button" disabled={!draftReady || loading} onClick={() => setCitationOpen(true)} className="inline-flex items-center justify-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45"><FiBookOpen /> Citations</button>
-              <button type="button" disabled={!draftReady || loading || Boolean(historyBusy)} onClick={undoDraft} className="inline-flex items-center justify-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45">{historyBusy === "undo" ? <FiLoader className="animate-spin" /> : <FiRotateCcw />} Undo</button>
-              <button type="button" disabled={!draftReady || loading || Boolean(historyBusy)} onClick={redoDraft} className="inline-flex items-center justify-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45">{historyBusy === "redo" ? <FiLoader className="animate-spin" /> : <FiRotateCw />} Redo</button>
+              <button type="button" disabled={!canUndo || loading || Boolean(transformingAction) || citationBusy} onClick={undoDraft} className="inline-flex items-center justify-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45"><FiRotateCcw /> Undo</button>
+              <button type="button" disabled={!canRedo || loading || Boolean(transformingAction) || citationBusy} onClick={redoDraft} className="inline-flex items-center justify-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45"><FiRotateCw /> Redo</button>
               <button type="button" disabled={!draftReady || loading} onClick={saveDraft} className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#24251f] px-4 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-45"><FiCheck /> Save</button>
             </div>
           </div>
@@ -369,7 +371,14 @@ export default function EssayGeneratorTool({ embedded = false }: { embedded?: bo
             <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
               <div className="flex flex-col gap-2 border-b border-gray-100 px-5 py-3 sm:flex-row sm:items-center sm:justify-between"><span className="inline-flex items-center gap-2 text-sm font-bold"><FiEdit3 /> Editable draft</span><span className={`w-fit rounded-full px-3 py-1 text-xs font-bold ${targetState === "On target" ? "bg-emerald-100 text-emerald-800" : targetState === "Over target" ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800"}`}>{words.toLocaleString()} / {targetWords.toLocaleString()} words</span></div>
               <div className="relative">
-                <textarea ref={textRef} disabled={draftPending} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={generationError ? "Generation did not complete. Go back to preferences and try again." : draftPending ? "Writing your full essay draft..." : ""} className="min-h-[520px] w-full resize-y p-5 font-serif text-[16px] leading-8 text-gray-800 outline-none disabled:resize-none disabled:bg-white sm:min-h-[680px] sm:p-8" />
+                <textarea ref={textRef} disabled={draftPending || Boolean(transformingAction) || citationBusy} value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => {
+                  if (e.nativeEvent.isComposing || !(e.ctrlKey || e.metaKey) || e.altKey) return;
+                  const key = e.key.toLowerCase();
+                  if (key === "z" || key === "y") {
+                    e.preventDefault();
+                    if (key === "y" || e.shiftKey) redoDraft(); else undoDraft();
+                  }
+                }} placeholder={generationError ? "Generation did not complete. Go back to preferences and try again." : draftPending ? "Writing your full essay draft..." : ""} className="min-h-[520px] w-full resize-y p-5 font-serif text-[16px] leading-8 text-gray-800 outline-none disabled:resize-none disabled:bg-white sm:min-h-[680px] sm:p-8" />
                 {draftPending && <div className="absolute inset-0 grid place-items-center bg-white/90 p-6 text-center">
                   <div className="max-w-sm">
                     <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-[#eeedfe] border-t-[#534ab7]" />
