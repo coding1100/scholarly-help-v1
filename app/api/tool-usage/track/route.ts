@@ -56,12 +56,57 @@ function isPrivateIp(ip: string): boolean {
   );
 }
 
+async function fetchJson(url: string, timeoutMs: number): Promise<any | null> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    if (!response.ok) return null;
+    return await response.json();
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+/** Primary provider: HTTPS, no API key, ~1000 req/day free tier. */
+async function geolocateViaIpapiCo(ip: string): Promise<GeoLookup | null> {
+  const payload = await fetchJson(`https://ipapi.co/${encodeURIComponent(ip)}/json/`, 2_500);
+  if (!payload || payload.error) return null;
+  const value: GeoLookup = {
+    country: text(payload.country_name, 120),
+    region: text(payload.region, 120),
+    city: text(payload.city, 120),
+  };
+  if (!value.country && !value.region && !value.city) return null;
+  return value;
+}
+
+/** Fallback provider if ipapi.co is unreachable or rate-limited. HTTP only on the free tier. */
+async function geolocateViaIpApiCom(ip: string): Promise<GeoLookup | null> {
+  const payload = await fetchJson(
+    `http://ip-api.com/json/${encodeURIComponent(ip)}?fields=status,country,regionName,city`,
+    2_000,
+  );
+  if (!payload || payload.status !== "success") return null;
+  const value: GeoLookup = {
+    country: text(payload.country, 120),
+    region: text(payload.regionName, 120),
+    city: text(payload.city, 120),
+  };
+  if (!value.country && !value.region && !value.city) return null;
+  return value;
+}
+
 /**
  * We don't sit behind Vercel/Cloudflare (no x-vercel-ip-country, cf-ipcountry,
  * etc. headers on EC2), so those CDN headers are always absent in production.
  * This is the fallback: a server-side lookup against a free geo-IP API
  * (no API key, no client-side call). Best-effort only — on any failure or
  * timeout this resolves to {} so tracking never blocks/fails on geo data.
+ * Tries an HTTPS provider first, then an HTTP-only one, in case outbound
+ * plain-HTTP is restricted on the host.
  */
 async function geolocateIp(ip: string | null): Promise<GeoLookup> {
   if (!ip || isPrivateIp(ip)) return {};
@@ -69,34 +114,12 @@ async function geolocateIp(ip: string | null): Promise<GeoLookup> {
   const cached = geoCache.get(ip);
   if (cached && cached.expiresAt > Date.now()) return cached.value;
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 2_000);
-  try {
-    const response = await fetch(
-      `http://ip-api.com/json/${encodeURIComponent(ip)}?fields=status,country,regionName,city`,
-      { signal: controller.signal },
-    );
-    if (!response.ok) return {};
-    const payload = (await response.json()) as {
-      status?: string;
-      country?: string;
-      regionName?: string;
-      city?: string;
-    };
-    if (payload.status !== "success") return {};
-
-    const value: GeoLookup = {
-      country: text(payload.country, 120),
-      region: text(payload.regionName, 120),
-      city: text(payload.city, 120),
-    };
+  const value =
+    (await geolocateViaIpapiCo(ip)) || (await geolocateViaIpApiCom(ip)) || {};
+  if (value.country || value.region || value.city) {
     geoCache.set(ip, { value, expiresAt: Date.now() + GEO_CACHE_TTL_MS });
-    return value;
-  } catch {
-    return {};
-  } finally {
-    clearTimeout(timeoutId);
   }
+  return value;
 }
 
 function userKey(input: {
@@ -155,7 +178,15 @@ export async function POST(request: NextRequest) {
     let region = headerText(request, ["x-vercel-ip-country-region", "x-region"]);
     let city = headerText(request, ["x-vercel-ip-city", "x-city"]);
     if (!country && !region && !city) {
-      const geo = await geolocateIp(clientIp(request));
+      const resolvedIp = clientIp(request);
+      const geo = await geolocateIp(resolvedIp);
+      if (!geo.country && !geo.region && !geo.city) {
+        console.warn("tool-usage geo lookup empty", {
+          resolvedIp,
+          xForwardedFor: request.headers.get("x-forwarded-for"),
+          xRealIp: request.headers.get("x-real-ip"),
+        });
+      }
       country = geo.country;
       region = geo.region;
       city = geo.city;
