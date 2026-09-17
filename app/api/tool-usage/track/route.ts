@@ -39,6 +39,66 @@ function headerText(request: NextRequest, names: string[], max = 120): string | 
   return undefined;
 }
 
+type GeoLookup = { country?: string; region?: string; city?: string };
+
+const GEO_CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6h: an IP's geolocation rarely changes within a session.
+const geoCache = new Map<string, { value: GeoLookup; expiresAt: number }>();
+
+function isPrivateIp(ip: string): boolean {
+  return (
+    ip === "127.0.0.1" ||
+    ip === "::1" ||
+    /^10\./.test(ip) ||
+    /^192\.168\./.test(ip) ||
+    /^172\.(1[6-9]|2\d|3[01])\./.test(ip) ||
+    ip.startsWith("fc") ||
+    ip.startsWith("fd")
+  );
+}
+
+/**
+ * We don't sit behind Vercel/Cloudflare (no x-vercel-ip-country, cf-ipcountry,
+ * etc. headers on EC2), so those CDN headers are always absent in production.
+ * This is the fallback: a server-side lookup against a free geo-IP API
+ * (no API key, no client-side call). Best-effort only — on any failure or
+ * timeout this resolves to {} so tracking never blocks/fails on geo data.
+ */
+async function geolocateIp(ip: string | null): Promise<GeoLookup> {
+  if (!ip || isPrivateIp(ip)) return {};
+
+  const cached = geoCache.get(ip);
+  if (cached && cached.expiresAt > Date.now()) return cached.value;
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 2_000);
+  try {
+    const response = await fetch(
+      `http://ip-api.com/json/${encodeURIComponent(ip)}?fields=status,country,regionName,city`,
+      { signal: controller.signal },
+    );
+    if (!response.ok) return {};
+    const payload = (await response.json()) as {
+      status?: string;
+      country?: string;
+      regionName?: string;
+      city?: string;
+    };
+    if (payload.status !== "success") return {};
+
+    const value: GeoLookup = {
+      country: text(payload.country, 120),
+      region: text(payload.regionName, 120),
+      city: text(payload.city, 120),
+    };
+    geoCache.set(ip, { value, expiresAt: Date.now() + GEO_CACHE_TTL_MS });
+    return value;
+  } catch {
+    return {};
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 function userKey(input: {
   userId?: string;
   userEmail?: string;
@@ -88,6 +148,19 @@ export async function POST(request: NextRequest) {
     const anonymousId = text(body?.anonymousId, 120);
     const usedAt = new Date();
 
+    // CDN-injected headers first (present on Vercel/Cloudflare); this app
+    // runs on plain EC2, so those are normally absent and we fall back to a
+    // server-side geo-IP lookup instead.
+    let country = headerText(request, ["x-vercel-ip-country", "cf-ipcountry", "x-country"]);
+    let region = headerText(request, ["x-vercel-ip-country-region", "x-region"]);
+    let city = headerText(request, ["x-vercel-ip-city", "x-city"]);
+    if (!country && !region && !city) {
+      const geo = await geolocateIp(clientIp(request));
+      country = geo.country;
+      region = geo.region;
+      city = geo.city;
+    }
+
     await db.collection("tool_usage_events").insertOne({
       toolName,
       action: text(body?.action, 80) || "generate",
@@ -104,9 +177,9 @@ export async function POST(request: NextRequest) {
       timezone: text(body?.timezone, 120),
       language: text(body?.language, 40),
       device: text(body?.device, 40),
-      country: headerText(request, ["x-vercel-ip-country", "cf-ipcountry", "x-country"]),
-      region: headerText(request, ["x-vercel-ip-country-region", "x-region"]),
-      city: headerText(request, ["x-vercel-ip-city", "x-city"]),
+      country,
+      region,
+      city,
       ipHash: hashIp(clientIp(request)),
       userAgent: text(request.headers.get("user-agent"), 500),
       createdAt: usedAt,
