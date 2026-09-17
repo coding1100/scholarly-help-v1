@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminSessionRole } from "@/app/lib/server/adminSession";
+import { getMongoDatabase } from "@/app/lib/mongodb";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -74,6 +75,19 @@ export async function DELETE(
     if (!response.ok) {
       console.error("Admin user deletion failed:", response.status, payload);
       return NextResponse.json({ error: "Failed to delete user" }, { status: 502 });
+    }
+
+    // The backend has no knowledge of tool_usage_events — it's written
+    // directly by this frontend (see /api/tool-usage/track) into its own
+    // Mongo connection, not one of the backend's Mongoose collections. A
+    // successful backend delete leaves these rows behind unless purged here,
+    // which is why a deleted user kept reappearing in the admin report.
+    // Best-effort: never fail the delete response over this cleanup step.
+    try {
+      const db = await getMongoDatabase(process.env.TOOL_USAGE_DATABASE_NAME || "scholarly_help");
+      await db?.collection("tool_usage_events").deleteMany({ userId });
+    } catch (error) {
+      console.error("Failed to purge tool_usage_events for deleted user:", error);
     }
 
     return NextResponse.json(payload);
