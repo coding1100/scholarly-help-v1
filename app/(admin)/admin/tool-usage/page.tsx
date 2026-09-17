@@ -1,9 +1,12 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import {
   getToolUsageReport,
   parseToolUsageFilters,
   TOOL_USAGE_TOOL_OPTIONS,
 } from "@/app/lib/server/toolUsageReport";
+import { getAdminSessionRoleFromCookieValue } from "@/app/lib/server/adminSession";
+import DeleteUserButton from "./DeleteUserButton";
 
 type PageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
@@ -63,6 +66,9 @@ export default async function ToolUsagePage({ searchParams }: PageProps) {
   const params = toSearchParams(searchParams);
   const filters = parseToolUsageFilters(params);
   const report = await getToolUsageReport(filters);
+  const cookieStore = await cookies();
+  const isFullAdmin =
+    getAdminSessionRoleFromCookieValue(cookieStore.get("sh_admin_session")?.value) === "admin";
   const exportParams = new URLSearchParams(params);
   if (!exportParams.get("from") && filters.from) exportParams.set("from", dateInputValue(filters.from));
   if (!exportParams.get("to") && filters.to) exportParams.set("to", dateInputValue(filters.to));
@@ -191,7 +197,7 @@ export default async function ToolUsagePage({ searchParams }: PageProps) {
             <h3 className="text-lg font-semibold text-[#1a2456]">User Tool Matrix</h3>
           </div>
           <div className="w-full overflow-x-auto">
-            <table className="min-w-[1120px] divide-y divide-[#eef0f8] text-sm">
+            <table className="min-w-[1220px] divide-y divide-[#eef0f8] text-sm">
               <thead className="bg-[#f8f9fd]">
                 <tr>
                   <th className="w-[23%] px-4 py-3 text-left font-semibold text-[#353535]">User</th>
@@ -201,6 +207,9 @@ export default async function ToolUsagePage({ searchParams }: PageProps) {
                   <th className="w-[16%] px-4 py-3 text-left font-semibold text-[#353535]">Location</th>
                   <th className="w-[11%] px-4 py-3 text-left font-semibold text-[#353535]">First Used</th>
                   <th className="w-[11%] px-4 py-3 text-left font-semibold text-[#353535]">Last Used</th>
+                  {isFullAdmin ? (
+                    <th className="w-[9%] px-4 py-3 text-right font-semibold text-[#353535]">Actions</th>
+                  ) : null}
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#eef0f8]">
@@ -222,11 +231,18 @@ export default async function ToolUsagePage({ searchParams }: PageProps) {
                       <td className="max-w-[180px] truncate px-4 py-3 text-[#727780]" title={locationLabel(row)}>{locationLabel(row)}</td>
                       <td className="whitespace-nowrap px-4 py-3 text-[#727780]">{displayDate(row.firstUsedAt)}</td>
                       <td className="whitespace-nowrap px-4 py-3 text-[#727780]">{displayDate(row.lastUsedAt)}</td>
+                      {isFullAdmin ? (
+                        <td className="px-4 py-3 text-right">
+                          {row.userType === "registered" && row.userId ? (
+                            <DeleteUserButton userId={row.userId} userLabel={userLabel(row)} />
+                          ) : null}
+                        </td>
+                      ) : null}
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td className="px-4 py-8 text-center text-[#727780]" colSpan={7}>
+                    <td className="px-4 py-8 text-center text-[#727780]" colSpan={isFullAdmin ? 8 : 7}>
                       No usage events found.
                     </td>
                   </tr>
