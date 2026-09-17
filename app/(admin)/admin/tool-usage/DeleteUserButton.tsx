@@ -5,9 +5,11 @@ import { useState, useTransition } from "react";
 export default function DeleteUserButton({
   userId,
   userLabel,
+  userLocation,
 }: {
   userId: string;
   userLabel: string;
+  userLocation?: string;
 }) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -75,7 +77,13 @@ export default function DeleteUserButton({
         type="button"
         disabled={isPending}
         onClick={() => {
-          if (window.confirm(`Permanently delete ${userLabel}? This cannot be undone.`)) {
+          const locationNote =
+            userLocation && userLocation !== "-" ? ` (location: ${userLocation})` : "";
+          if (
+            window.confirm(
+              `Permanently delete ${userLabel}${locationNote}? This cannot be undone.`,
+            )
+          ) {
             deleteUser(false);
           }
         }}
