@@ -8,6 +8,9 @@ import {
 import { getAdminSessionRoleFromCookieValue } from "@/app/lib/server/adminSession";
 import DeleteUserButton from "./DeleteUserButton";
 
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 type PageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
 };

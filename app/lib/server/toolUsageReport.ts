@@ -99,24 +99,48 @@ function escapeRegex(value: string) {
 export function parseToolUsageFilters(searchParams: URLSearchParams) {
   const fromRaw = searchParams.get("from");
   const toRaw = searchParams.get("to");
-  const defaultTo = new Date();
-  defaultTo.setUTCHours(23, 59, 59, 999);
-  const defaultFrom = new Date(defaultTo);
-  defaultFrom.setUTCMonth(defaultFrom.getUTCMonth() - 3);
-  defaultFrom.setUTCHours(0, 0, 0, 0);
+  const hasFrom = Boolean(fromRaw && fromRaw.trim());
+  const hasTo = Boolean(toRaw && toRaw.trim());
 
-  const from = fromRaw ? new Date(fromRaw) : defaultFrom;
-  const to = toRaw ? new Date(toRaw) : defaultTo;
-  if (from && /^\d{4}-\d{2}-\d{2}$/.test(fromRaw || "")) {
-    from.setUTCHours(0, 0, 0, 0);
-  }
-  if (to && /^\d{4}-\d{2}-\d{2}$/.test(toRaw || "")) {
-    to.setUTCHours(23, 59, 59, 999);
+  const todayStart = new Date();
+  todayStart.setUTCHours(0, 0, 0, 0);
+  const todayEnd = new Date();
+  todayEnd.setUTCHours(23, 59, 59, 999);
+
+  let from: Date | undefined;
+  let to: Date | undefined;
+
+  // By default when opening the page without date parameters, filter to today's date only.
+  if (!hasFrom && !hasTo) {
+    from = todayStart;
+    to = todayEnd;
+  } else {
+    if (hasFrom) {
+      const parsedFrom = new Date(fromRaw!);
+      if (!Number.isNaN(parsedFrom.getTime())) {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(fromRaw!.trim())) {
+          parsedFrom.setUTCHours(0, 0, 0, 0);
+        }
+        from = parsedFrom;
+      }
+      if (!hasTo) {
+        to = todayEnd;
+      }
+    }
+    if (hasTo) {
+      const parsedTo = new Date(toRaw!);
+      if (!Number.isNaN(parsedTo.getTime())) {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(toRaw!.trim())) {
+          parsedTo.setUTCHours(23, 59, 59, 999);
+        }
+        to = parsedTo;
+      }
+    }
   }
 
   return {
-    from: from && !Number.isNaN(from.getTime()) ? from : undefined,
-    to: to && !Number.isNaN(to.getTime()) ? to : undefined,
+    from,
+    to,
     toolName: searchParams.get("tool")?.trim() || undefined,
     user: searchParams.get("user")?.trim() || undefined,
   } satisfies ToolUsageReportFilters;
