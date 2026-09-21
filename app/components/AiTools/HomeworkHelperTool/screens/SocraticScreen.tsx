@@ -9,18 +9,29 @@ import type { HomeworkSessionDTO } from "../types";
 
 interface SocraticScreenProps {
   session: HomeworkSessionDTO;
-  onAnswer: (questionIndex: number, answer: string) => Promise<{ correct: boolean; feedback: string }>;
+  onAnswer: (
+    questionIndex: number,
+    answer: string,
+  ) => Promise<{ correct: boolean; mastery_reached: boolean; partial: boolean; feedback: string }>;
   onHint: (questionIndex: number) => Promise<{ hints: string[] }>;
   onComplete: () => void;
 }
+
+// After this many failed attempts on the same question, offer a "Solve for
+// me" way out instead of leaving the student stuck with no path forward.
+const FAILED_ATTEMPTS_BEFORE_SOLVE = 3;
 
 const SocraticScreen: React.FC<SocraticScreenProps> = ({ session, onAnswer, onHint, onComplete }) => {
   const questions = session.content.socratic || [];
   const [index, setIndex] = useState(0);
   const [busy, setBusy] = useState(false);
-  const [feedback, setFeedback] = useState<{ correct: boolean; msg: string } | null>(null);
+  const [feedback, setFeedback] = useState<
+    { correct: boolean; partial: boolean; masteryReached: boolean; msg: string } | null
+  >(null);
   const [hints, setHints] = useState<string[]>([]);
   const [shownHints, setShownHints] = useState(0);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [solveRevealed, setSolveRevealed] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   if (!questions.length) {
@@ -49,7 +60,13 @@ const SocraticScreen: React.FC<SocraticScreenProps> = ({ session, onAnswer, onHi
     setBusy(true);
     try {
       const result = await onAnswer(index, value);
-      setFeedback({ correct: result.correct, msg: result.feedback });
+      setFeedback({
+        correct: result.correct,
+        partial: result.partial,
+        masteryReached: result.mastery_reached,
+        msg: result.feedback,
+      });
+      setFailedAttempts((n) => (result.correct || result.partial ? 0 : n + 1));
     } finally {
       setBusy(false);
     }
@@ -65,12 +82,27 @@ const SocraticScreen: React.FC<SocraticScreenProps> = ({ session, onAnswer, onHi
     }
   };
 
-  const next = () => {
-    setIndex((n) => n + 1);
+  const resetQuestionState = () => {
     setFeedback(null);
     setHints([]);
     setShownHints(0);
+    setFailedAttempts(0);
+    setSolveRevealed(false);
+  };
+
+  const next = () => {
+    setIndex((n) => n + 1);
+    resetQuestionState();
     if (inputRef.current) inputRef.current.value = "";
+  };
+
+  // Skips every remaining micro-step and jumps straight to the final answer —
+  // used when the grader signals the student has already demonstrated
+  // understanding, so Socratic mode doesn't force them through steps they've
+  // clearly grasped.
+  const skipAhead = () => {
+    setIndex(questions.length);
+    resetQuestionState();
   };
 
   return (
@@ -92,7 +124,7 @@ const SocraticScreen: React.FC<SocraticScreenProps> = ({ session, onAnswer, onHi
                 <MathProse text={q.correct_msg} />
               </div>
             )}
-            {isCurrent && !feedback?.correct && (
+            {isCurrent && !feedback?.correct && !solveRevealed && (
               <>
                 <div className="max-w-[88%]">
                   <InputToolbar inputType={session.input_type} onInsert={(sym) => {
@@ -137,12 +169,12 @@ const SocraticScreen: React.FC<SocraticScreenProps> = ({ session, onAnswer, onHi
                 </div>
               </>
             )}
-            {isCurrent && feedback && (
+            {isCurrent && feedback && !solveRevealed && (
               <div
                 role="status"
                 aria-live="polite"
                 className={`${styles.noScrollAnchor} mt-2 px-3.5 py-2.5 rounded-lg text-[13.5px] leading-relaxed max-w-[88%] ${
-                  feedback.correct ? styles.feedbackCorrect : styles.feedbackWrong
+                  feedback.correct ? styles.feedbackCorrect : feedback.partial ? styles.feedbackPartial : styles.feedbackWrong
                 }`}
               >
                 {feedback.correct && <span aria-hidden="true">✓ </span>}
@@ -150,6 +182,7 @@ const SocraticScreen: React.FC<SocraticScreenProps> = ({ session, onAnswer, onHi
               </div>
             )}
             {isCurrent &&
+              !solveRevealed &&
               hints.slice(0, shownHints).map((h, hi) => (
                 <MathProse
                   key={hi}
@@ -157,8 +190,24 @@ const SocraticScreen: React.FC<SocraticScreenProps> = ({ session, onAnswer, onHi
                   className={`${styles.feedbackPartial} block mt-2 px-3.5 py-2.5 rounded-lg text-[13px] max-w-[88%]`}
                 />
               ))}
-            {isCurrent && feedback?.correct && (
-              <div className="mt-1.5">
+            {isCurrent && !feedback?.correct && !solveRevealed && failedAttempts >= FAILED_ATTEMPTS_BEFORE_SOLVE && (
+              <div className="mt-2">
+                <button
+                  type="button"
+                  className="text-[13.5px] font-semibold px-3.5 py-1.5 rounded-md border border-[var(--line)]"
+                  onClick={() => setSolveRevealed(true)}
+                >
+                  Solve for me
+                </button>
+              </div>
+            )}
+            {isCurrent && solveRevealed && (
+              <div className={`${styles.feedbackCorrect} mt-2 px-3.5 py-2.5 rounded-lg text-[13.5px] leading-relaxed max-w-[88%]`}>
+                <MathProse text={q.correct_msg} />
+              </div>
+            )}
+            {isCurrent && (feedback?.correct || solveRevealed) && (
+              <div className="mt-1.5 flex gap-2.5 flex-wrap">
                 <button
                   type="button"
                   className="text-[13.5px] font-semibold px-3.5 py-1.5 rounded-md border border-[var(--line)]"
@@ -166,6 +215,15 @@ const SocraticScreen: React.FC<SocraticScreenProps> = ({ session, onAnswer, onHi
                 >
                   Next question →
                 </button>
+                {feedback?.correct && feedback.masteryReached && index < questions.length - 1 && (
+                  <button
+                    type="button"
+                    className="text-[13.5px] font-semibold px-3.5 py-1.5 rounded-md bg-[var(--pen-btn)] text-white"
+                    onClick={skipAhead}
+                  >
+                    I&apos;ve got this — skip ahead →
+                  </button>
+                )}
               </div>
             )}
           </div>
