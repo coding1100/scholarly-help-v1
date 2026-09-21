@@ -39,6 +39,32 @@ const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], variabl
 
 type HomeworkDraft = { text: string };
 
+// Persists which session is currently open so a page refresh can resume it
+// instead of silently dropping back to the home screen with an empty queue.
+// Deliberately separate from useToolDraftPersistence, which is a one-shot
+// restore-then-delete meant for the auth-redirect round trip, not something
+// that survives an arbitrary number of refreshes.
+const ACTIVE_SESSION_KEY = "hh_active_session_id";
+
+function readActiveSessionId(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.localStorage.getItem(ACTIVE_SESSION_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function writeActiveSessionId(sessionId: string | null) {
+  if (typeof window === "undefined") return;
+  try {
+    if (sessionId) window.localStorage.setItem(ACTIVE_SESSION_KEY, sessionId);
+    else window.localStorage.removeItem(ACTIVE_SESSION_KEY);
+  } catch {
+    // Storage full/unavailable — refresh just won't resume; not fatal.
+  }
+}
+
 const HomeworkHelperTool: React.FC = () => {
   const [screen, setScreen] = useState<ScreenName>("home");
   const [session, setSession] = useState<HomeworkSessionDTO | null>(null);
@@ -87,7 +113,14 @@ const HomeworkHelperTool: React.FC = () => {
     setQueue([]);
     setQueueIndex(0);
     setScreen("home");
+    writeActiveSessionId(null);
   }, []);
+
+  // Keep the persisted "active session" in sync with whichever session is
+  // currently open, so a refresh can resume exactly where the user left off.
+  useEffect(() => {
+    writeActiveSessionId(session?.session_id ?? null);
+  }, [session?.session_id]);
 
   const openMyHomework = useCallback(() => setScreen("myhomework"), []);
 
@@ -168,7 +201,7 @@ const HomeworkHelperTool: React.FC = () => {
     [guardAiClick, runDetect],
   );
 
-  const resumeSession = useCallback(async (sessionId: string) => {
+  const resumeSession = useCallback(async (sessionId: string, opts?: { silent?: boolean }) => {
     setLoading(true);
     try {
       const result = await api.getSession(sessionId);
@@ -178,14 +211,35 @@ const HomeworkHelperTool: React.FC = () => {
       // "Complete question" goes home instead of advancing a stale queue.
       setQueue([result]);
       setQueueIndex(0);
-      if (result.status === "completed") setScreen("complete");
+      // A completed session has no more "next step" to solve — show the
+      // original question/answer for review instead of the content-free
+      // congrats card (which is only meant to appear right after finishing).
+      if (result.status === "completed") setScreen("review");
       else if (result.mode) setScreen("solving");
       else setScreen("detected");
     } catch (err: any) {
-      toast.error("Could not load that session.");
+      // Silent for the mount-time auto-restore: a stale/deleted session id
+      // in storage shouldn't greet a fresh page load with an error toast —
+      // it should just clean itself up and leave the user on the home screen.
+      if (opts?.silent) {
+        writeActiveSessionId(null);
+      } else {
+        toast.error("Could not load that session.");
+      }
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  // On mount (including after a page refresh), resume whatever session was
+  // last active instead of dropping the user back to an empty home screen.
+  // If the stored id is stale (deleted session, expired guest id, etc.),
+  // resumeSession's own catch clears loading and the user just lands on
+  // home as before — a failed restore is a no-op, not an error state.
+  useEffect(() => {
+    const savedId = readActiveSessionId();
+    if (savedId) resumeSession(savedId, { silent: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const pickMode = useCallback(
@@ -313,6 +367,7 @@ const HomeworkHelperTool: React.FC = () => {
             return res.response;
           }}
           onComplete={completeQuestion}
+          onBack={goModeSelect}
         />
       )}
 
@@ -326,7 +381,7 @@ const HomeworkHelperTool: React.FC = () => {
       )}
 
       {screen === "solving" && session && session.mode === "explain" && (
-        <ExplainScreen session={session} onPickMode={pickMode} />
+        <ExplainScreen session={session} onPickMode={pickMode} onBack={goModeSelect} />
       )}
 
       {screen === "solving" && session && session.mode === "checkwork" && (
@@ -334,12 +389,25 @@ const HomeworkHelperTool: React.FC = () => {
           session={session}
           onCheck={(attempt) => api.checkWork(session.session_id, attempt)}
           onPickMode={pickMode}
+          onExplainMistake={async () => {
+            // peek=true fetches the explain content inline without persisting
+            // session.mode as "explain" — a normal generateMode call would
+            // both unmount CheckWorkScreen (and the visible result) in favor
+            // of ExplainScreen *and* stick the session in "explain" mode on
+            // resume/refresh, when the user is still actually checking work.
+            const res = await api.generateMode(session.session_id, "explain", true);
+            return res.content as any;
+          }}
           onComplete={completeQuestion}
         />
       )}
 
       {screen === "solving" && session && session.mode === "solution" && (
         <ShowSolutionScreen session={session} onComplete={completeQuestion} />
+      )}
+
+      {screen === "review" && session && (
+        <ShowSolutionScreen session={session} onComplete={openMyHomework} reviewOnly />
       )}
 
       {screen === "complete" && session && (
@@ -355,7 +423,7 @@ const HomeworkHelperTool: React.FC = () => {
           session={session}
           onGenerate={() => api.generatePractice(session.session_id)}
           onAnswer={(qIndex, answer) => api.submitPracticeAnswer(session.session_id, qIndex, answer)}
-          onDone={goHome}
+          onDone={continueAfterComplete}
           onPracticeAgain={goPractice}
         />
       )}
