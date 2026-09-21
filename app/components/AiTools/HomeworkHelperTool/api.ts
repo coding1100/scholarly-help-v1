@@ -161,7 +161,7 @@ export async function answerSocratic(sessionId: string, questionIndex: number, a
     { question_index: questionIndex, answer },
     { headers: authHeaders() },
   );
-  return unwrap<{ correct: boolean; feedback: string }>(res.data);
+  return unwrap<{ correct: boolean; mastery_reached: boolean; partial: boolean; feedback: string }>(res.data);
 }
 
 export async function getSocraticHint(sessionId: string, questionIndex: number) {
@@ -197,7 +197,7 @@ export async function submitPracticeAnswer(sessionId: string, questionIndex: num
     { question_index: questionIndex, answer },
     { headers: authHeaders() },
   );
-  return unwrap<{ correct: boolean; solution: string }>(res.data);
+  return unwrap<{ correct: boolean; partial: boolean; feedback: string; solution: string }>(res.data);
 }
 
 export async function completeSession(sessionId: string) {
