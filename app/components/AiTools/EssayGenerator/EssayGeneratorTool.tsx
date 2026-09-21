@@ -17,7 +17,6 @@ import {
   FiRefreshCw,
   FiRotateCcw,
   FiRotateCw,
-  FiSearch,
   FiUpload,
   FiUsers,
   FiX,
@@ -29,6 +28,7 @@ import { getGuestUserId } from "@/app/lib/client/guestStudyLimits";
 import { cancelJob, waitForJob } from "@/app/lib/client/jobStream";
 import { getOrRefreshAccessToken } from "@/app/lib/authSession";
 import { countWords } from "@/app/utils/text";
+import DraftTools from "./DraftTools";
 
 type Point = { text: string };
 type BodySection = { id?: string; title: string; points: Point[] };
@@ -103,7 +103,6 @@ export default function EssayGeneratorTool({ embedded = false }: { embedded?: bo
   const [generationError, setGenerationError] = useState("");
   const [citationOpen, setCitationOpen] = useState(false);
   const [sourceLabel, setSourceLabel] = useState("");
-  const [checkPanel, setCheckPanel] = useState<string | null>(null);
   const [transformingAction, setTransformingAction] = useState<"paraphrase" | "expand" | "shorten" | null>(null);
   const [citationBusy, setCitationBusy] = useState(false);
   const wizardTopRef = useRef<HTMLDivElement | null>(null);
@@ -401,12 +400,8 @@ export default function EssayGeneratorTool({ embedded = false }: { embedded?: bo
               <Panel title="Draft checks" icon={<FiFileText />}>{result ? <ul className="space-y-2 text-sm text-gray-600">{result.quality_checks.map((item, index) => <li key={index}>- {item}</li>)}</ul> : <p className="text-sm text-gray-500">{draftPending ? `Generation is running (${Math.max(8, progress)}%).` : generationError ? "Generation did not complete." : "No draft generated yet."}</p>}</Panel>
               <Panel title="Next steps" icon={<FiRefreshCw />}>{result ? <ul className="space-y-2 text-sm text-gray-600">{result.next_steps.map((item, index) => <li key={index}>- {item}</li>)}</ul> : <p className="text-sm text-gray-500">{draftPending ? "Please wait until the draft appears before editing, saving, or using handoffs." : "Go back to preferences and try generation again."}</p>}</Panel>
               {result?.citations_note && <Panel title="Citation note" icon={<FiBookOpen />}><p className="text-sm text-gray-600">{result.citations_note}</p></Panel>}
-              <Panel title="Handoffs" icon={<FiUsers />}>
-                <div className="space-y-2">
-                  <button type="button" onClick={() => setCheckPanel("AI Detector handoff ready. Save this draft, then open AI Detector from the tools dashboard to scan it.")} className="flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold"><FiSearch /> Check with AI Detector</button>
-                  <button type="button" onClick={() => setCheckPanel("Humanizer handoff ready. Save this draft, then run it through Humanizer for sentence-level variation.")} className="flex w-full items-center gap-2 rounded-lg border border-[#534ab7] bg-[#eeedfe] px-3 py-2 text-sm font-semibold text-[#3c3489]"><FiZap /> Humanize with Humanizer</button>
-                </div>
-                {checkPanel && <p className="mt-3 rounded-lg bg-gray-50 p-3 text-xs text-gray-600">{checkPanel}</p>}
+              <Panel title="Essay tools" icon={<FiUsers />}>
+                <DraftTools draft={draft} disabled={!draftReady || loading || Boolean(transformingAction) || citationBusy} api={API} requestHeaders={requestHeaders} guardAiClick={guardAiClick} onApply={setDraft} />
               </Panel>
             </aside>
           </div>
