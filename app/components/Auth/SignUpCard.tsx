@@ -8,6 +8,7 @@ import Logo from "@/app/assets/Images/logo.png";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import axios from "axios";
+import toast from "react-hot-toast";
 import AuthButtonSpinner from "./AuthButtonSpinner";
 import SocialAuthButtons from "./SocialAuthButtons";
 import { buildHrefWithSameQuery } from "@/app/utils/url";
@@ -106,6 +107,7 @@ const SignUpCard: FC<SignUpCardProps> = ({
       setPassword("");
       const otpParams = new URLSearchParams(qs);
       if (returnUrl) otpParams.set("returnUrl", returnUrl);
+      toast.success("Sign up successful! Please check your email to verify your account.");
       route.push(buildHrefWithSameQuery("/otp", otpParams));
     } catch (err: any) {
       const networkMsg = getAuthNetworkErrorMessage(err);

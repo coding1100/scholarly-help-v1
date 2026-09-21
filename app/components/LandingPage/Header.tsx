@@ -15,6 +15,7 @@ import {
 } from "@/app/lib/takeMyClassLandingRoutes";
 import { rememberFbclidFromUrl } from "@/app/lib/client/smsTracking";
 import { hasRefreshSessionHint } from "@/app/lib/accessTokenStore";
+import { getToolDashboardHref } from "@/app/lib/toolLandingRoutes";
 
 const Star: React.FC<{ className?: string }> = ({ className }) => (
   <svg
@@ -32,6 +33,7 @@ const Star: React.FC<{ className?: string }> = ({ className }) => (
 
 export default function Header() {
   const pathname = usePathname();
+  const dashboardHref = getToolDashboardHref(pathname);
   const router = useRouter();
   const prefetchedRoutesRef = useRef<Set<string>>(new Set());
   // take-my-class-3's centered landing header is shared by the -4/-5/-6
@@ -604,7 +606,7 @@ export default function Header() {
          </button> */}
                 {isSignedIn && (
                   <Link
-                    href="/tools/dashboard"
+                    href={dashboardHref}
                     className="rounded-md px-3 py-2 cursor-pointer bg-[#ff641a] text-white border border-transparent transition duration-300 text-sm font-medium flex items-center justify-center whitespace-nowrap hover:bg-white hover:text-[#ff641a] hover:border-[#ff641a]"
                   >
                     AI Dashboard
@@ -684,7 +686,7 @@ export default function Header() {
               {isSignedIn && (
                 <li className="p-3">
                   <Link
-                    href="/tools/dashboard"
+                    href={dashboardHref}
                     className="block rounded-md bg-[#ff641a] px-3 py-2 text-center text-sm font-medium text-white transition duration-300 hover:bg-white hover:text-[#ff641a] hover:border-[#ff641a] border border-transparent"
                     onClick={() => {
                       setMobileOpen(false);

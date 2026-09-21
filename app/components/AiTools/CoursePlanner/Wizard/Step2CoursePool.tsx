@@ -5,6 +5,7 @@ import { CoursePlannerService } from "@/app/lib/client/coursePlanner/service";
 
 const EXTRACT_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899", "#06b6d4"];
 const VALID_DAYS: CourseSection["days"][number][] = ["M", "T", "W", "Th", "F", "Sa", "Su"];
+const MAX_SYLLABUS_WORDS = 1500;
 
 // The LLM response is loosely typed JSON at the API boundary — normalize
 // "days" defensively rather than trusting it matches the narrow union.
@@ -63,6 +64,8 @@ export const Step2CoursePool: React.FC<Props> = ({
   const [syllabusText, setSyllabusText] = useState("");
   const [isExtracting, setIsExtracting] = useState(false);
   const [extractionError, setExtractionError] = useState<string | null>(null);
+  const syllabusWordCount = syllabusText.trim() ? syllabusText.trim().split(/\s+/).length : 0;
+  const isSyllabusOverLimit = syllabusWordCount > MAX_SYLLABUS_WORDS;
 
   // Manual course form
   const [code, setCode] = useState("");
@@ -168,7 +171,7 @@ export const Step2CoursePool: React.FC<Props> = ({
   };
 
   const handleTextExtract = async () => {
-    if (!syllabusText.trim()) return;
+    if (!syllabusText.trim() || isSyllabusOverLimit || isExtracting) return;
     setIsExtracting(true);
     setExtractionError(null);
 
@@ -253,12 +256,22 @@ export const Step2CoursePool: React.FC<Props> = ({
               value={syllabusText}
               onChange={(e) => setSyllabusText(e.target.value)}
               placeholder="Paste course syllabus content, schedule descriptions, exam dates..."
+              aria-invalid={isSyllabusOverLimit}
+              aria-describedby={isSyllabusOverLimit ? "syllabus-word-count syllabus-word-error" : "syllabus-word-count"}
               className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-400/20 text-gray-900 text-sm"
             />
+            <p id="syllabus-word-count" className={`mt-1 text-right text-xs ${isSyllabusOverLimit ? "text-red-600" : "text-gray-500"}`}>
+              {syllabusWordCount.toLocaleString("en-US")} / 1,500 words
+            </p>
+            {isSyllabusOverLimit && (
+              <p id="syllabus-word-error" role="alert" className="mt-2 text-xs font-medium text-red-600">
+                Syllabus text exceeds the 1,500-word limit. Please remove {(syllabusWordCount - MAX_SYLLABUS_WORDS).toLocaleString("en-US")} words to extract courses.
+              </p>
+            )}
             <div className="mt-2 flex justify-end">
               <button
                 onClick={handleTextExtract}
-                disabled={isExtracting || !syllabusText.trim()}
+                disabled={isExtracting || !syllabusText.trim() || isSyllabusOverLimit}
                 className="px-5 py-2 bg-primary-400 hover:bg-primary-300 disabled:opacity-50 text-white font-medium text-xs rounded-xl shadow-sm transition-all flex items-center gap-2"
               >
                 {isExtracting ? (
