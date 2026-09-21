@@ -61,6 +61,14 @@ type GradeResult = {
   issues: Issue[];
   prompt_coverage: { requirement: string; status: "met" | "partial" | "missing"; evidence: string }[];
   citation_note: string;
+  benchmark_comparison?: {
+    dimension: string;
+    assessment: string;
+    essay_quote: string;
+    sample_quote: string;
+    analysis: string;
+    suggestion: string;
+  }[];
 };
 
 type Session = {
@@ -68,6 +76,7 @@ type Session = {
   title: string;
   current_revision_id: string;
   current_text: string;
+  settings?: { benchmark_sample?: string };
   word_count: number;
   latest_run_id?: string;
   updated_at?: string;
@@ -183,6 +192,7 @@ export default function EssayGraderTool() {
       const loaded = unwrap<Session>(response.data);
       setSession(loaded);
       setText(loaded.current_text || "");
+      setSample(loaded.settings?.benchmark_sample || "");
       setResult(null);
       setSelectedIssue(null);
       setView("setup");
@@ -237,10 +247,11 @@ export default function EssayGraderTool() {
   }
 
   async function saveDraftIfNeeded(current: Session, headers: Record<string, string>) {
-    if (!current.current_revision_id || text === current.current_text) return current;
+    if (!current.current_revision_id || (text === current.current_text && sample.trim() === (current.settings?.benchmark_sample || "").trim())) return current;
     const saved = await axios.patch(`${API}/tools/essay-grader/sessions/${current.session_id}/draft`, {
       text,
       expected_revision_id: current.current_revision_id,
+      benchmark_sample: sample.trim(),
     }, { headers });
     const updated = unwrap<Session>(saved.data);
     setSession(updated);
@@ -428,7 +439,7 @@ export default function EssayGraderTool() {
                       <Select label="Citation style" value={citation} onChange={setCitation} options={[["none", "Not needed"], ["apa7", "APA 7"], ["mla9", "MLA 9"], ["chicago16", "Chicago 16"], ["harvard", "Harvard"]]} />
                       <Pills label="Feedback tone" value={tone} onChange={setTone} options={["encouraging", "direct", "simple"]} />
                     </div>
-                    <Area label="Strong sample to benchmark against" value={sample} onChange={setSample} placeholder="Optional. It will not be treated as factual source material." />
+                    <Area label="Strong sample to benchmark against" value={sample} onChange={setSample} placeholder="Optional. Compare structure, writing quality, and content development against a reference essay." />
                     <label className="flex items-start gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm dark:border-gray-700 dark:bg-gray-900">
                       <input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} className="mt-1 accent-primary-400" />
                       <span><b className="block">Help improve grading quality</b><small className="mt-1 block text-gray-500 dark:text-gray-400">Off by default. Grading quality is the same either way.</small></span>
@@ -547,6 +558,24 @@ export default function EssayGraderTool() {
                     </div>
                   </Panel>
                 </div>
+
+                {!!result.benchmark_comparison?.length && (
+                  <Panel>
+                    <h3 className="mb-4 text-base font-semibold">Comparison with your reference sample</h3>
+                    <div className="grid gap-4 lg:grid-cols-3">
+                      {result.benchmark_comparison.map((comparison) => (
+                        <div key={comparison.dimension} className="space-y-3 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+                          <h4 className="font-semibold">{labelFromValue(comparison.dimension)}</h4>
+                          <p className="text-sm font-medium text-primary-400">{labelFromValue(comparison.assessment)}</p>
+                          <p className="text-sm leading-6">{comparison.analysis}</p>
+                          <blockquote className="text-sm text-gray-500 dark:text-gray-400"><b>Your essay:</b> &quot;{comparison.essay_quote}&quot;</blockquote>
+                          <blockquote className="text-sm text-gray-500 dark:text-gray-400"><b>Reference sample:</b> &quot;{comparison.sample_quote}&quot;</blockquote>
+                          <p className="text-sm leading-6"><b>Next step:</b> {comparison.suggestion}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </Panel>
+                )}
 
                 <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_390px]">
                   <div className="space-y-5">
