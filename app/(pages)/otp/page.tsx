@@ -59,7 +59,10 @@ const OTPPage = () => {
       // so it must be set here or the redirect below bounces back to sign-in.
 
       toast.dismiss();
-      toast.success(response?.data?.message || "Email verified successfully!");
+      sessionStorage.setItem(
+        "auth:success-toast",
+        "Account verified successfully! You're now signed in.",
+      );
       const returnUrl =
         typeof window !== "undefined"
           ? new URLSearchParams(window.location.search).get("returnUrl")
