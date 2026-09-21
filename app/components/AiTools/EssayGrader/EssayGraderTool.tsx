@@ -130,12 +130,9 @@ export default function EssayGraderTool() {
   const [strictness, setStrictness] = useState("standard");
   const [tone, setTone] = useState("direct");
   const [citation, setCitation] = useState("none");
-  const [school, setSchool] = useState("");
-  const [benchmark, setBenchmark] = useState("");
   const [prompt, setPrompt] = useState("");
   const [rubricText, setRubricText] = useState("");
   const [sample, setSample] = useState("");
-  const [deadline, setDeadline] = useState("");
   const [consent, setConsent] = useState(false);
   const [criteria, setCriteria] = useState<CustomCriterion[]>([]);
   const [draftCriterion, setDraftCriterion] = useState<CustomCriterion>({ title: "", instruction: "", weight: 25 });
@@ -253,19 +250,15 @@ export default function EssayGraderTool() {
   async function createSession(headers: Record<string, string>) {
     const created = await axios.post(`${API}/tools/essay-grader/sessions`, {
       text,
-      title: school || undefined,
       purpose,
       academic_level: level,
       genre,
       strictness,
       feedback_tone: tone,
       citation_style: citation,
-      target_school: school || undefined,
-      benchmark: benchmark || undefined,
       assignment_prompt: prompt || undefined,
       rubric_text: criteria.length ? undefined : rubricText || undefined,
       benchmark_sample: sample || undefined,
-      deadline: deadline || undefined,
       improvement_consent: consent,
       custom_criteria: criteria.length ? criteria : undefined,
     }, { headers });
@@ -429,10 +422,6 @@ export default function EssayGraderTool() {
                 </div>
                 {advanced && (
                   <div className="mt-5 space-y-5 border-t border-gray-200 pt-5 dark:border-gray-700">
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <Field label="Target school or scholarship" value={school} onChange={setSchool} placeholder="e.g. Yale University" />
-                      <Field label="Benchmark" value={benchmark} onChange={setBenchmark} placeholder="e.g. top-tier admissions benchmark" />
-                    </div>
                     <Area label="Assignment prompt or question" value={prompt} onChange={setPrompt} placeholder="Paste the full prompt so coverage can be checked." />
                     <Area label="Rubric or scoring criteria" value={rubricText} onChange={setRubricText} placeholder="Paste an instructor rubric, or build criteria in Custom rubrics." />
                     <div className="grid gap-4 md:grid-cols-2">
@@ -440,7 +429,6 @@ export default function EssayGraderTool() {
                       <Pills label="Feedback tone" value={tone} onChange={setTone} options={["encouraging", "direct", "simple"]} />
                     </div>
                     <Area label="Strong sample to benchmark against" value={sample} onChange={setSample} placeholder="Optional. It will not be treated as factual source material." />
-                    <Field label="Deadline" value={deadline} onChange={setDeadline} type="datetime-local" />
                     <label className="flex items-start gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm dark:border-gray-700 dark:bg-gray-900">
                       <input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} className="mt-1 accent-primary-400" />
                       <span><b className="block">Help improve grading quality</b><small className="mt-1 block text-gray-500 dark:text-gray-400">Off by default. Grading quality is the same either way.</small></span>
@@ -615,7 +603,7 @@ export default function EssayGraderTool() {
                             <span className="text-xs font-semibold text-gray-500">Inspect</span>
                           </span>
                           <span className="mt-1 block text-sm font-semibold text-gray-900 dark:text-white">{issue.title}</span>
-                          <span className="mt-1 line-clamp-2 block text-xs text-gray-500 dark:text-gray-400">"{issue.quote}"</span>
+                          <span className="mt-1 line-clamp-2 block text-xs text-gray-500 dark:text-gray-400">&quot;{issue.quote}&quot;</span>
                         </button>
                       ))}
                     </Panel>
@@ -737,7 +725,7 @@ function IssueInspector({ issue, onClose, onApply }: { issue: Issue; onClose: ()
       <button onClick={onClose} className="mb-4 inline-flex items-center gap-1 text-xs font-semibold text-gray-500 hover:text-primary-400"><FiX /> Close inspection</button>
       <div className="mb-4 rounded-lg bg-gray-50 p-3 dark:bg-gray-900">
         <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Highlighted text</div>
-        <p className="text-sm leading-6 text-gray-800 dark:text-gray-100">"{issue.quote}"</p>
+        <p className="text-sm leading-6 text-gray-800 dark:text-gray-100">&quot;{issue.quote}&quot;</p>
       </div>
       <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-amber-950">
         <div className="mb-1 text-xs font-semibold uppercase tracking-wide">Why this matters</div>
