@@ -11,7 +11,8 @@ export type ScreenName =
   | "solving"
   | "complete"
   | "practice"
-  | "myhomework";
+  | "myhomework"
+  | "review";
 
 export interface HomeworkSessionDTO {
   session_id: string;

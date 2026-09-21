@@ -128,10 +128,10 @@ export async function updateDetection(
   return unwrap<HomeworkSessionDTO>(res.data);
 }
 
-export async function generateMode(sessionId: string, mode: HomeworkMode) {
+export async function generateMode(sessionId: string, mode: HomeworkMode, peek?: boolean) {
   const res = await axios.post(
     `${baseUrl()}/sessions/${sessionId}/mode`,
-    { mode },
+    { mode, ...(peek ? { peek: true } : {}) },
     { headers: authHeaders() },
   );
   return unwrap<{ mode: HomeworkMode; content: unknown; session: HomeworkSessionDTO }>(res.data);
@@ -161,7 +161,7 @@ export async function answerSocratic(sessionId: string, questionIndex: number, a
     { question_index: questionIndex, answer },
     { headers: authHeaders() },
   );
-  return unwrap<{ correct: boolean; feedback: string }>(res.data);
+  return unwrap<{ correct: boolean; mastery_reached: boolean; partial: boolean; feedback: string }>(res.data);
 }
 
 export async function getSocraticHint(sessionId: string, questionIndex: number) {
@@ -197,7 +197,7 @@ export async function submitPracticeAnswer(sessionId: string, questionIndex: num
     { question_index: questionIndex, answer },
     { headers: authHeaders() },
   );
-  return unwrap<{ correct: boolean; solution: string }>(res.data);
+  return unwrap<{ correct: boolean; partial: boolean; feedback: string; solution: string }>(res.data);
 }
 
 export async function completeSession(sessionId: string) {

@@ -40,6 +40,11 @@ jobs:
           ADMIN_PASSWORD: admin12345
           JWT_SECRET: local-report-admin-session-secret-change-before-production-2026
           TOOL_USAGE_DATABASE_NAME: scholarlyhelp_prod
+          # Shared secret sent as `x-internal-api-key` to the backend's admin-only
+          # endpoints (e.g. DELETE /admin/users/:user_id) that aren't reachable via
+          # a Supabase user session. Must match ADMIN_INTERNAL_API_KEY in the
+          # scholarlyhelp backend's env.
+          ADMIN_INTERNAL_API_KEY: ${{ secrets.ADMIN_INTERNAL_API_KEY }}
           # Agentic platform (powers Tutor / Micro Learning / Exam Prep agents).
           # NEXT_PUBLIC_* are inlined at build time, so they must be present here.
           NEXT_PUBLIC_BASE_URL: ${{ secrets.NEXT_PUBLIC_BASE_URL }}
@@ -89,6 +94,7 @@ jobs:
           REPORT_ADMIN_PASSWORD: admin12345
           JWT_SECRET: local-report-admin-session-secret-change-before-production-2026
           TOOL_USAGE_DATABASE_NAME: scholarlyhelp_prod
+          ADMIN_INTERNAL_API_KEY: ${{ secrets.ADMIN_INTERNAL_API_KEY }}
         run: |
           # Setup SSH
           mkdir -p ~/.ssh
@@ -100,7 +106,7 @@ jobs:
           scp -i ~/.ssh/deploy_key deploy.tar.gz $EC2_USER@$EC2_HOST:/tmp/
 
           # Execute deployment commands on EC2
-          ssh -i ~/.ssh/deploy_key $EC2_USER@$EC2_HOST "APP_DIR='$APP_DIR' AUTH_API_BASE_URL='$AUTH_API_BASE_URL' GEMINI_API_KEY='$GEMINI_API_KEY' GEMINI_MODEL_ID='$GEMINI_MODEL_ID' GOOGLE_CLIENT_TOOL_EMAIL='$GOOGLE_CLIENT_TOOL_EMAIL' GOOGLE_PRIVATE_TOOL_KEY='$GOOGLE_PRIVATE_TOOL_KEY' GOOGLE_SHEET_TOOL_ID='$GOOGLE_SHEET_TOOL_ID' REPORT_ADMIN_USERNAME='$REPORT_ADMIN_USERNAME' REPORT_ADMIN_PASSWORD='$REPORT_ADMIN_PASSWORD' ADMIN_USERNAME='$ADMIN_USERNAME' ADMIN_PASSWORD='$ADMIN_PASSWORD' JWT_SECRET='$JWT_SECRET' TOOL_USAGE_DATABASE_NAME='$TOOL_USAGE_DATABASE_NAME' bash -s" << 'EOF'
+          ssh -i ~/.ssh/deploy_key $EC2_USER@$EC2_HOST "APP_DIR='$APP_DIR' AUTH_API_BASE_URL='$AUTH_API_BASE_URL' GEMINI_API_KEY='$GEMINI_API_KEY' GEMINI_MODEL_ID='$GEMINI_MODEL_ID' GOOGLE_CLIENT_TOOL_EMAIL='$GOOGLE_CLIENT_TOOL_EMAIL' GOOGLE_PRIVATE_TOOL_KEY='$GOOGLE_PRIVATE_TOOL_KEY' GOOGLE_SHEET_TOOL_ID='$GOOGLE_SHEET_TOOL_ID' REPORT_ADMIN_USERNAME='$REPORT_ADMIN_USERNAME' REPORT_ADMIN_PASSWORD='$REPORT_ADMIN_PASSWORD' ADMIN_USERNAME='$ADMIN_USERNAME' ADMIN_PASSWORD='$ADMIN_PASSWORD' JWT_SECRET='$JWT_SECRET' TOOL_USAGE_DATABASE_NAME='$TOOL_USAGE_DATABASE_NAME' ADMIN_INTERNAL_API_KEY='$ADMIN_INTERNAL_API_KEY' bash -s" << 'EOF'
             # Ensure PATH includes where pm2 is installed
             export PATH=$PATH:/home/ubuntu/.nvm/versions/node/v24.12.0/bin
             
@@ -137,6 +143,7 @@ jobs:
             sed -i '/^ADMIN_PASSWORD=/d' .env
             sed -i '/^JWT_SECRET=/d' .env
             sed -i '/^TOOL_USAGE_DATABASE_NAME=/d' .env
+            sed -i '/^ADMIN_INTERNAL_API_KEY=/d' .env
             {
               echo "AUTH_API_BASE_URL=$AUTH_API_BASE_URL"
               echo "GEMINI_API_KEY=$GEMINI_API_KEY"
@@ -150,6 +157,7 @@ jobs:
               echo "ADMIN_PASSWORD=$ADMIN_PASSWORD"
               echo "JWT_SECRET=$JWT_SECRET"
               echo "TOOL_USAGE_DATABASE_NAME=$TOOL_USAGE_DATABASE_NAME"
+              echo "ADMIN_INTERNAL_API_KEY=$ADMIN_INTERNAL_API_KEY"
             } >> .env
 
             # Start the application with PM2.
@@ -169,6 +177,7 @@ jobs:
             export ADMIN_PASSWORD="$ADMIN_PASSWORD"
             export JWT_SECRET="$JWT_SECRET"
             export TOOL_USAGE_DATABASE_NAME="$TOOL_USAGE_DATABASE_NAME"
+            export ADMIN_INTERNAL_API_KEY="$ADMIN_INTERNAL_API_KEY"
             pm2 start npm --name "scholarly-help" -- start
             pm2 save
 

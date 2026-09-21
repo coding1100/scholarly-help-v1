@@ -5,17 +5,17 @@
 
 export const heroContent = {
   badge: "4,220 students used this tool this week",
-  titleTop: "Make AI writing",
-  titleAccent: "sound human again",
+  titleTop: "The best AI humanizer that makes",
+  titleAccent: "your writing sound real",
   subtitle:
-    "Paste your AI-generated content and get a natural, humanized version instantly for free.",
-  steps: ["Paste text", "Set intensity", "Humanize Text"],
+    "Paste your AI-generated content, and our free AI humanizer delivers a natural, human voice instantly.",
+  steps: ["Paste text", "Set intensity", "Humanize Text."],
 };
 
 export const beforeAfterContent = {
   eyebrow: "Before vs after",
-  title: "From raw AI output to a real human voice",
-  subtitle: "Paste your AI text and get a humanized version in seconds.",
+  title: "From raw AI output to humanize ai text naturally",
+  subtitle: "Use our AI text humanizer to paste your draft and watch it transform into natural, flowing writing in seconds.",
   pasteLabel: "What You Paste",
   pasteText:
     "It is important to note that renewable energy sources provide numerous benefits. These benefits include a considerable reduction in emissions, alongside significant long-term economic advantages for various stakeholders.",
@@ -31,44 +31,44 @@ export const beforeAfterContent = {
 
 export const useCasesContent = {
   eyebrow: "Use cases",
-  title: "Every Student has a reason to humanize",
-  subtitle: "Write faster. Sound human. Stress less.",
+  title: "Every Student has a reason to humanize AI text",
+  subtitle: "Whether you write fast or write slow, this AI humanizer tool fits every kind of student and every kind of deadline.",
   cards: [
     {
       icon: "🤖",
       title: "Draft sounds robotic!",
       description:
-        "Transform the draft into a natural, friendly voice in just a few seconds.",
+        "Run it through our AI humanizer to turn stiff, mechanical sentences into natural, human-sounding writing.",
     },
     {
       icon: "⏰",
       title: "Deadline is tonight",
       description:
-        "When time is short, humanize your rough draft instantly and ship it out.",
+        "Paste your draft and use our humanize AI free tool to make rushed writing sound natural and polished.",
     },
     {
       icon: "✂️",
       title: "Too many AI fillers?",
       description:
-        "Remove extra filler words and turn any bland piece into a compelling one.",
+        "Remove repetitive phrases and filler words to turn bland, padded writing into clear, engaging text.",
     },
     {
       icon: "🔍",
       title: "Scared of AI detectors?",
       description:
-        "Use the built-in detector button to check your score before and after rewriting.",
+        "Use our AI detector and humanizer to check your score, adjust the strength, and improve the result.",
     },
     {
       icon: "🌐",
       title: "English is not native",
       description:
-        "Turn awkward phrasing into natural, fluent English that sounds authentic.",
+        "Use our online tools to humanize AI text to turn awkward phrasing into fluent, natural English.",
     },
     {
       icon: "📝",
       title: "Built for all writing",
       description:
-        "Humanize any of your content pieces, research, marketing copy, or essays.",
+        "Essays, research papers, marketing copy, and emails our AI to humanized tool adapts your writing to each task's tone.",
     },
   ],
 };
@@ -79,26 +79,26 @@ export const howItWorksContent = {
   steps: [
     {
       title: "Paste in your text",
-      description: "Drop in up to 200 words of text to get started.",
+      description: "Drop up to 200 words of AI-generated content into the box: a line, paragraph, or section needing a human touch.",
     },
     {
-      title: "Set intensity & check AI",
-      description: "Check your score, adjust the intensity, and test.",
+      title: "Set intensity and check AI score",
+      description: "Check your AI score, choose light, balanced, or strong, then click to humanize AI text instantly.",
     },
     {
-      title: "Copy and use it",
-      description: "Review your text, copy it, and paste into your doc.",
+      title: "Review and copy",
+      description: "Compare the humanized version with your original, then copy the version that sounds most natural.",
     },
     {
-      title: "Unlock dashboard",
+      title: "Unlock your dashboard",
       description:
-        "Add your email to save work and unlock your dashboard.",
+        "Enter your email to download results and access all 16 tools in your free ScholarlyHelp dashboard.",
     },
   ],
   // Renders as: "{start} {brand} [pill] {end}"
   ctaTitleStart: "Want all",
   ctaTitleBrand: "ScholarlyHelp",
-  ctaTitlePill: "Tools",
+  ctaTitlePill: "tools",
   ctaTitleEnd: "in one place?",
   ctaBody:
     "Your free ScholarlyHelp dashboard keeps the AI humanizer, paraphraser, summarizer, essay title generator, and citation tool ready in one place.",
@@ -115,7 +115,7 @@ export const watchVideoContent = {
 
 export const whyItWorksContent = {
   eyebrow: "Why it works",
-  title: "Not just a rewrite, a real human voice",
+  title: "Not a cleanup tool- a real humanize AI engine",
   subtitle:
     "Every output is designed to sound like a real person wrote it, not a machine cleaned it up.",
   features: [
@@ -129,22 +129,22 @@ export const whyItWorksContent = {
       icon: "💬",
       title: "Flows Effortlessly",
       description:
-        "Paste your text, click once, and instantly compare a smoother, flowing version.",
+        "Paste, click, and compare your humanized AI-free result with the original in seconds.",
     },
     {
       icon: "🎓",
       title: "Built for academics",
       description:
-        "Every rewrite stays clear, professional, and suitable for papers across any subject.",
+        "Every rewrite keeps your academic writing clear, natural, well-structured, and easy to read.",
     },
   ],
 };
 
 export const twoWaysContent = {
   eyebrow: "How to get help",
-  title: "Do it yourself, or let us do it",
+  title: "Two ways to get AI humanizer free results",
   subtitle:
-    "Handle it with our free AI text humanizer, or pass it to our writers.",
+    "Handle it with our free AI humanizer, or pass the whole assignment to our experts.",
   freeColumn: {
     heading: "Free tool, do it yourself",
     subheading: "",
@@ -157,7 +157,7 @@ export const twoWaysContent = {
       {
         title: "Rewrite in seconds",
         description:
-          "Adjust the intensity, click humanize, and receive your humanized text instantly.",
+          "Adjust the intensity, click humanize, and receive your AI humanizer free text instantly.",
       },
       {
         title: "Copy and use it",
@@ -165,9 +165,9 @@ export const twoWaysContent = {
           "Once you are satisfied, copy the final output and paste it straight into your document.",
       },
       {
-        title: "Add email",
+        title: "Add emAIl",
         description:
-          "Enter your email to save your progress and unlock the full ScholarlyHelp dashboard.",
+          "Enter your emAIl to save your progress and unlock the full ScholarlyHelp dashboard.",
       },
     ],
   },
@@ -215,21 +215,21 @@ export const reviewsContent = {
   reviews: [
     {
       quote:
-        "My notes always come out sounding stiff and formal. I ran a paragraph through this and it read like something I would actually say. I used the tone as a guide for the rest of the essay.",
+        "My notes always come out sounding stiff and formal. I ran a paragraph through this AI humanizer tool, and it read like something I would actually say. I used the tone as a guide for the rest of the essay.",
       author: "James K.",
-      detail: "Business, University of Michigan — Junior",
+      detail: "Business, University of Michigan Junior",
     },
     {
       quote:
-        "What I like is that it keeps my point but changes how it sounds. My writing used to read cold and flat, and now it feels a lot more like me. I use it on every draft.",
+        "What I like is that it keeps my point but changes how it sounds. My writing used to read cold and flat, and now it feels a lot more like me. I use it on every draft to humanize AI text before I submit.",
       author: "Sofia F.",
-      detail: "Psychology, Ohio State — First year",
+      detail: "Psychology, Ohio State, first year",
     },
     {
       quote:
-        "English is my second language, so my sentences often come out a bit stiff. Reading the humanized version shows me how a natural academic sentence should sound, and I pick up a little each time.",
+        "English is my second language, so my sentences often come out a bit stiff. I use this as an alternative to Grammarly AI humanizer to make my academic writing sound more natural, and I pick up something new each time.",
       author: "Taki K.",
-      detail: "Computer Science, Indiana — MSc",
+      detail: "Computer Science, Indiana MSc",
     },
   ],
 };
@@ -241,22 +241,22 @@ export const faqContent = {
     {
       question: "Is this tool really free?",
       answer:
-        "The free tool handles up to 200 words per request. Break your document down and paste it freely, or unlock unlimited access with premium.",
+        "Yes, the free AI humanizer handles up to 200 words per request at no cost and with no sign-up required. Break your document down and paste it freely, or unlock unlimited access with premium.",
     },
     {
       question: "Can I check my AI score before and after humanizing?",
       answer:
-        "Yes. You can use the built-in detector button to test your draft instantly, verify your score, adjust the intensity, and check it again to make sure it reads completely human before you copy.",
+        "Absolutely. The built-in AI detector and humanizer button lets you test your draft instantly, check the score, adjust the intensity, and verify the result again before you copy anything.",
     },
     {
       question: "Will it change the meaning of my text?",
       answer:
-        "No. The tool changes the tone and the wording so it reads more naturally, but your argument and key points stay the same. It is still wise to read the result once before you use it.",
+        "No. The humanize AI text process changes tone and wording to sound more natural, but your argument and key points stay exactly as you wrote them. Always read the output once before you use it.",
     },
     {
       question: "Can I control the humanization level?",
       answer:
-        "Yes, you can. You can set the rewrite intensity to normal, moderate, or full, and the humanizer will adjust the output to match your preference.",
+        "Yes. Set the rewrite intensity to light, balanced, or strong, and the AI humanizer tool adjusts the output to match — subtle polish or a full rewrite, your choice.",
     },
     {
       question: "What if I need the whole assignment written?",
@@ -273,8 +273,8 @@ export const footerCtaContent = {
   titleStart: "Your writing should sound like",
   titlePill: "you.",
   titleEnd: "",
-  body: "Start now with the free tool to humanize AI text or talk to a ScholarlyHelp writer who can take it from here.",
-  primaryButton: "Humanize my text free →",
+  body: "Start now with the best AI humanizer to humanize AI text free, or talk to a ScholarlyHelp writer who can take the whole thing from here.",
+  primaryButton: "Humanize my text for free",
   primaryHref: "#humanizer-tool",
   secondaryButton: "Talk to an expert →",
   secondaryHref: "/contact-us",
@@ -282,7 +282,7 @@ export const footerCtaContent = {
 
 /** Page-level SEO. */
 export const metaContent = {
-  title: "Free Tool to Humanize AI Text | ScholarlyHelp",
+  title: "Free AI Humanizer: Humanize AI Text Fast | ScholarlyHelp",
   description:
-    "Use the free ScholarlyHelp tool to humanize AI text in seconds. Turn stiff, robotic writing into natural, human wording.",
+    "Use ScholarlyHelp's free AI humanizer to humanize AI text in seconds. Turn stiff, robotic writing into natural wording with our free AI humanizer tool.",
 };
