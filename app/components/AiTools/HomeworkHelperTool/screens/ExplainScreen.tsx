@@ -9,14 +9,22 @@ import type { HomeworkMode, HomeworkSessionDTO } from "../types";
 interface ExplainScreenProps {
   session: HomeworkSessionDTO;
   onPickMode: (mode: HomeworkMode) => void;
+  onBack: () => void;
 }
 
-const ExplainScreen: React.FC<ExplainScreenProps> = ({ session, onPickMode }) => {
+const ExplainScreen: React.FC<ExplainScreenProps> = ({ session, onPickMode, onBack }) => {
   const explain = session.content.explain;
   const [tutorAlertOpen, setTutorAlertOpen] = useState(false);
 
   return (
     <div>
+      <button
+        type="button"
+        className="text-[13px] font-semibold text-[var(--pen)] mb-3"
+        onClick={onBack}
+      >
+        ← Back
+      </button>
       <QuestionHeader session={session} />
       <div className={`${styles.card} p-5.5 text-[15px] leading-relaxed`} style={{ padding: "22px" }}>
         <MathProse

@@ -12,6 +12,7 @@ interface StepByStepScreenProps {
   onAsk: (stepIndex: number, question: string) => Promise<string>;
   onPropose: (proposal: string) => Promise<string>;
   onComplete: () => void;
+  onBack: () => void;
 }
 
 const StepByStepScreen: React.FC<StepByStepScreenProps> = ({
@@ -20,6 +21,7 @@ const StepByStepScreen: React.FC<StepByStepScreenProps> = ({
   onAsk,
   onPropose,
   onComplete,
+  onBack,
 }) => {
   const steps = session.content.stepByStep || [];
   const [stepIndex, setStepIndex] = useState(0);
@@ -35,6 +37,13 @@ const StepByStepScreen: React.FC<StepByStepScreenProps> = ({
   if (!steps.length) {
     return (
       <div>
+        <button
+          type="button"
+          className="text-[13px] font-semibold text-[var(--pen)] mb-3"
+          onClick={onBack}
+        >
+          ← Back
+        </button>
         <QuestionHeader session={session} />
         <div className="text-[var(--ink-faint)] text-sm italic">No steps generated yet.</div>
       </div>
@@ -74,6 +83,13 @@ const StepByStepScreen: React.FC<StepByStepScreenProps> = ({
 
   return (
     <div>
+      <button
+        type="button"
+        className="text-[13px] font-semibold text-[var(--pen)] mb-3"
+        onClick={onBack}
+      >
+        ← Back
+      </button>
       <QuestionHeader session={session} />
 
       {(session.method_formula || session.method) && (
