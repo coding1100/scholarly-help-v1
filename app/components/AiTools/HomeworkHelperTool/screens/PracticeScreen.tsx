@@ -9,16 +9,36 @@ import type { HomeworkSessionDTO, PracticeQuestionDTO } from "../types";
 interface PracticeScreenProps {
   session: HomeworkSessionDTO;
   onGenerate: () => Promise<{ questions: PracticeQuestionDTO[] }>;
-  onAnswer: (questionIndex: number, answer: string) => Promise<{ correct: boolean; solution: string }>;
+  onAnswer: (
+    questionIndex: number,
+    answer: string,
+  ) => Promise<{ correct: boolean; partial: boolean; feedback: string; solution: string }>;
   onDone: () => void;
   onPracticeAgain: () => void;
 }
 
+// After this many consecutive wrong (non-partial) attempts on the same
+// question, offer a "Solve for me" way out instead of leaving the student
+// stuck with no path forward.
+const WRONG_STREAK_BEFORE_SOLVE = 3;
+
 interface PerQuestionState {
   checked: boolean;
   correct: boolean;
+  partial: boolean;
   hintShown: boolean;
+  wrongStreak: number;
+  solveRevealed: boolean;
 }
+
+const initialState = (prev?: PerQuestionState): PerQuestionState => ({
+  checked: false,
+  correct: false,
+  partial: false,
+  hintShown: prev?.hintShown || false,
+  wrongStreak: prev?.wrongStreak || 0,
+  solveRevealed: false,
+});
 
 const PracticeScreen: React.FC<PracticeScreenProps> = ({
   session,
@@ -66,20 +86,33 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({
     try {
       const result = await onAnswer(index, value);
       if (result.correct) setCorrectCount((n) => n + 1);
-      setPerQuestion((prev) => ({ ...prev, [index]: { checked: true, correct: result.correct, hintShown: prev[index]?.hintShown || false } }));
-      setSolutionText((prev) => ({ ...prev, [index]: result.solution }));
+      setPerQuestion((prev) => ({
+        ...prev,
+        [index]: {
+          ...initialState(prev[index]),
+          checked: true,
+          correct: result.correct,
+          partial: result.partial,
+          wrongStreak: result.correct || result.partial ? 0 : (prev[index]?.wrongStreak || 0) + 1,
+        },
+      }));
+      setSolutionText((prev) => ({ ...prev, [index]: result.correct ? result.solution : result.feedback }));
     } finally {
       setLoading(false);
     }
   };
 
   const showHint = () => {
-    setPerQuestion((prev) => ({ ...prev, [index]: { ...(prev[index] || { checked: false, correct: false }), hintShown: true } }));
+    setPerQuestion((prev) => ({ ...prev, [index]: { ...(prev[index] || initialState()), hintShown: true } }));
   };
 
   const retry = () => {
-    setPerQuestion((prev) => ({ ...prev, [index]: { checked: false, correct: false, hintShown: prev[index]?.hintShown || false } }));
+    setPerQuestion((prev) => ({ ...prev, [index]: initialState(prev[index]) }));
     if (inputRef.current) inputRef.current.value = "";
+  };
+
+  const revealSolution = () => {
+    setPerQuestion((prev) => ({ ...prev, [index]: { ...prev[index], solveRevealed: true } }));
   };
 
   const next = () => {
@@ -226,15 +259,40 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({
               className={`${styles.feedbackPartial} block px-3.5 py-2.5 rounded-lg text-[13px] mb-2`}
             />
           )}
-          <button type="button" className="text-[13.5px] font-semibold text-[var(--pen)]" onClick={showHint}>
-            Hint
-          </button>
+          <div className="flex gap-3.5 items-center">
+            <button type="button" className="text-[13.5px] font-semibold text-[var(--pen)]" onClick={showHint}>
+              Hint
+            </button>
+            {(state?.wrongStreak || 0) >= WRONG_STREAK_BEFORE_SOLVE && (
+              <button
+                type="button"
+                className="text-[13.5px] font-semibold px-3 py-1 rounded-md border border-[var(--line)]"
+                onClick={revealSolution}
+              >
+                Solve for me
+              </button>
+            )}
+          </div>
         </>
+      ) : state.solveRevealed ? (
+        <div className={`${styles.feedbackCorrect} ${styles.noScrollAnchor} px-4.5 py-4 rounded-[10px]`} style={{ padding: "16px 18px" }}>
+          <div className={`${styles.serif} font-bold text-base mb-1`}>Solution</div>
+          <MathProse text={pq.solution} className="block text-[14.5px]" />
+          <div className="flex gap-2.5 mt-3.5 flex-wrap">
+            <button
+              type="button"
+              className="text-[13px] font-semibold px-3 py-1.5 rounded-md bg-[var(--pen-btn)] text-white"
+              onClick={next}
+            >
+              {index < questions.length - 1 ? "Next question →" : "See results →"}
+            </button>
+          </div>
+        </div>
       ) : (
         <div
           role="status"
           aria-live="polite"
-          className={`${state.correct ? styles.feedbackCorrect : styles.feedbackWrong} ${styles.noScrollAnchor} px-4.5 py-4 rounded-[10px]`}
+          className={`${state.correct ? styles.feedbackCorrect : state.partial ? styles.feedbackPartial : styles.feedbackWrong} ${styles.noScrollAnchor} px-4.5 py-4 rounded-[10px]`}
           style={{ padding: "16px 18px" }}
         >
           <div className={`${styles.serif} font-bold text-base mb-1`}>
@@ -242,6 +300,8 @@ const PracticeScreen: React.FC<PracticeScreenProps> = ({
               <>
                 Correct <span aria-hidden="true">✓</span>
               </>
+            ) : state.partial ? (
+              "Almost there"
             ) : (
               "Not quite"
             )}
