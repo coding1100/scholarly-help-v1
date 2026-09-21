@@ -1,9 +1,15 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import {
   getToolUsageReport,
   parseToolUsageFilters,
   TOOL_USAGE_TOOL_OPTIONS,
 } from "@/app/lib/server/toolUsageReport";
+import { getAdminSessionRoleFromCookieValue } from "@/app/lib/server/adminSession";
+import DeleteUserButton from "./DeleteUserButton";
+
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 type PageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
@@ -63,6 +69,9 @@ export default async function ToolUsagePage({ searchParams }: PageProps) {
   const params = toSearchParams(searchParams);
   const filters = parseToolUsageFilters(params);
   const report = await getToolUsageReport(filters);
+  const cookieStore = await cookies();
+  const isFullAdmin =
+    getAdminSessionRoleFromCookieValue(cookieStore.get("sh_admin_session")?.value) === "admin";
   const exportParams = new URLSearchParams(params);
   if (!exportParams.get("from") && filters.from) exportParams.set("from", dateInputValue(filters.from));
   if (!exportParams.get("to") && filters.to) exportParams.set("to", dateInputValue(filters.to));
@@ -70,8 +79,8 @@ export default async function ToolUsagePage({ searchParams }: PageProps) {
   const maxToolUsage = Math.max(...report.toolTotals.map((tool) => tool.usageCount), 1);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h2 className="text-2xl font-bold text-[#1a2456]">Tool Usage</h2>
           <p className="mt-1 text-sm text-[#4b5563]">
@@ -86,7 +95,7 @@ export default async function ToolUsagePage({ searchParams }: PageProps) {
         </Link>
       </div>
 
-      <form className="grid gap-3 rounded-xl border border-[#e2e8f4] bg-white p-4 shadow-sm md:grid-cols-5">
+      <form className="grid gap-3 rounded-xl border border-[#e2e8f4] bg-white p-3 shadow-sm md:grid-cols-5">
         <label className="text-sm font-medium text-[#353535]">
           From
           <input
@@ -145,7 +154,7 @@ export default async function ToolUsagePage({ searchParams }: PageProps) {
         </div>
       </form>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+      <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
         {[
           ["Total Usage", report.summary.totalUsage],
           ["All Users", report.summary.totalUsers],
@@ -154,17 +163,17 @@ export default async function ToolUsagePage({ searchParams }: PageProps) {
           ["Tools Used", report.summary.totalTools],
           ["Top Tool", report.summary.mostUsedTool || "-"],
         ].map(([label, value]) => (
-          <div key={label} className="rounded-xl border border-[#e2e8f4] bg-white p-4 shadow-sm">
+          <div key={label} className="rounded-xl border border-[#e2e8f4] bg-white p-3 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-wide text-[#727780]">{label}</p>
-            <p className="mt-2 truncate text-2xl font-bold text-[#1a2456]">{value}</p>
+            <p className="mt-1 truncate text-xl font-bold text-[#1a2456]">{value}</p>
           </div>
         ))}
       </div>
 
-      <div className="grid min-w-0 gap-6 2xl:grid-cols-[minmax(280px,0.75fr)_minmax(0,1.5fr)]">
-        <section className="rounded-xl border border-[#e2e8f4] bg-white p-5 shadow-sm">
-          <h3 className="text-lg font-semibold text-[#1a2456]">Usage By Tool</h3>
-          <div className="mt-4 space-y-3">
+      <div className="grid min-w-0 gap-4 2xl:grid-cols-[minmax(240px,0.6fr)_minmax(0,1.6fr)]">
+        <section className="rounded-xl border border-[#e2e8f4] bg-white p-4 shadow-sm">
+          <h3 className="text-base font-semibold text-[#1a2456]">Usage By Tool</h3>
+          <div className="mt-3 max-h-64 space-y-2.5 overflow-y-auto pr-1 2xl:max-h-none">
             {report.toolTotals.length ? (
               report.toolTotals.slice(0, 12).map((tool) => (
                 <div key={tool.toolName}>
@@ -172,9 +181,9 @@ export default async function ToolUsagePage({ searchParams }: PageProps) {
                     <span className="truncate font-medium text-[#353535]">{tool.toolName}</span>
                     <span className="font-semibold text-[#283c88]">{tool.usageCount}</span>
                   </div>
-                  <div className="mt-1 h-2 rounded-full bg-[#eef0f8]">
+                  <div className="mt-1 h-1.5 rounded-full bg-[#eef0f8]">
                     <div
-                      className="h-2 rounded-full bg-[#565add]"
+                      className="h-1.5 rounded-full bg-[#565add]"
                       style={{ width: `${Math.max(4, (tool.usageCount / maxToolUsage) * 100)}%` }}
                     />
                   </div>
@@ -187,28 +196,37 @@ export default async function ToolUsagePage({ searchParams }: PageProps) {
         </section>
 
         <section className="min-w-0 overflow-hidden rounded-xl border border-[#e2e8f4] bg-white shadow-sm">
-          <div className="border-b border-[#eef0f8] px-5 py-4">
-            <h3 className="text-lg font-semibold text-[#1a2456]">User Tool Matrix</h3>
+          <div className="border-b border-[#eef0f8] px-4 py-3">
+            <h3 className="text-base font-semibold text-[#1a2456]">User Tool Matrix</h3>
           </div>
           <div className="w-full overflow-x-auto">
-            <table className="min-w-[1120px] divide-y divide-[#eef0f8] text-sm">
+            <table className="min-w-[1040px] divide-y divide-[#eef0f8] text-sm">
               <thead className="bg-[#f8f9fd]">
                 <tr>
-                  <th className="w-[23%] px-4 py-3 text-left font-semibold text-[#353535]">User</th>
-                  <th className="w-[10%] px-4 py-3 text-left font-semibold text-[#353535]">Type</th>
-                  <th className="w-[20%] px-4 py-3 text-left font-semibold text-[#353535]">Tool</th>
-                  <th className="w-[9%] px-4 py-3 text-right font-semibold text-[#353535]">Uses</th>
-                  <th className="w-[16%] px-4 py-3 text-left font-semibold text-[#353535]">Location</th>
-                  <th className="w-[11%] px-4 py-3 text-left font-semibold text-[#353535]">First Used</th>
-                  <th className="w-[11%] px-4 py-3 text-left font-semibold text-[#353535]">Last Used</th>
+                  <th className="w-[26%] px-4 py-2 text-left font-semibold text-[#353535]">User</th>
+                  <th className="w-[10%] px-4 py-2 text-left font-semibold text-[#353535]">Type</th>
+                  <th className="w-[22%] px-4 py-2 text-left font-semibold text-[#353535]">Tool</th>
+                  <th className="w-[9%] px-4 py-2 text-right font-semibold text-[#353535]">Uses</th>
+                  <th className="w-[13%] px-4 py-2 text-left font-semibold text-[#353535]">First Used</th>
+                  <th className="w-[13%] px-4 py-2 text-left font-semibold text-[#353535]">Last Used</th>
+                  {isFullAdmin ? (
+                    <th className="w-[10%] px-4 py-2 text-right font-semibold text-[#353535]">Actions</th>
+                  ) : null}
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#eef0f8]">
                 {report.rows.length ? (
                   report.rows.map((row) => (
                     <tr key={`${row.toolName}-${row.userKey}`}>
-                      <td className="max-w-[260px] truncate px-4 py-3 text-[#353535]" title={row.userEmail || row.userId || row.anonymousId || row.userKey}>{userLabel(row)}</td>
-                      <td className="px-4 py-3">
+                      <td className="max-w-[260px] px-4 py-2 text-[#353535]">
+                        <div className="truncate" title={row.userEmail || row.userId || row.anonymousId || row.userKey}>
+                          {userLabel(row)}
+                        </div>
+                        <div className="truncate text-xs text-[#9aa1b1]" title={locationLabel(row)}>
+                          {locationLabel(row)}
+                        </div>
+                      </td>
+                      <td className="px-4 py-2">
                         <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
                           row.userType === "guest"
                             ? "bg-[#fff7ed] text-[#c2410c]"
@@ -217,16 +235,26 @@ export default async function ToolUsagePage({ searchParams }: PageProps) {
                           {row.userType === "guest" ? "Guest" : "Registered"}
                         </span>
                       </td>
-                      <td className="max-w-[220px] truncate px-4 py-3 text-[#353535]">{row.toolName}</td>
-                      <td className="px-4 py-3 text-right font-semibold text-[#283c88]">{row.usageCount}</td>
-                      <td className="max-w-[180px] truncate px-4 py-3 text-[#727780]" title={locationLabel(row)}>{locationLabel(row)}</td>
-                      <td className="whitespace-nowrap px-4 py-3 text-[#727780]">{displayDate(row.firstUsedAt)}</td>
-                      <td className="whitespace-nowrap px-4 py-3 text-[#727780]">{displayDate(row.lastUsedAt)}</td>
+                      <td className="max-w-[220px] truncate px-4 py-2 text-[#353535]">{row.toolName}</td>
+                      <td className="px-4 py-2 text-right font-semibold text-[#283c88]">{row.usageCount}</td>
+                      <td className="whitespace-nowrap px-4 py-2 text-[#727780]">{displayDate(row.firstUsedAt)}</td>
+                      <td className="whitespace-nowrap px-4 py-2 text-[#727780]">{displayDate(row.lastUsedAt)}</td>
+                      {isFullAdmin ? (
+                        <td className="px-4 py-2 text-right">
+                          {row.userType === "registered" && row.userId ? (
+                            <DeleteUserButton
+                              userId={row.userId}
+                              userLabel={userLabel(row)}
+                              userLocation={locationLabel(row)}
+                            />
+                          ) : null}
+                        </td>
+                      ) : null}
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td className="px-4 py-8 text-center text-[#727780]" colSpan={7}>
+                    <td className="px-4 py-8 text-center text-[#727780]" colSpan={isFullAdmin ? 8 : 7}>
                       No usage events found.
                     </td>
                   </tr>
