@@ -128,10 +128,10 @@ export async function updateDetection(
   return unwrap<HomeworkSessionDTO>(res.data);
 }
 
-export async function generateMode(sessionId: string, mode: HomeworkMode) {
+export async function generateMode(sessionId: string, mode: HomeworkMode, peek?: boolean) {
   const res = await axios.post(
     `${baseUrl()}/sessions/${sessionId}/mode`,
-    { mode },
+    { mode, ...(peek ? { peek: true } : {}) },
     { headers: authHeaders() },
   );
   return unwrap<{ mode: HomeworkMode; content: unknown; session: HomeworkSessionDTO }>(res.data);
