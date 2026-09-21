@@ -353,6 +353,22 @@ export default function Header() {
     },
     {
       title: "Tools",
+      submenu: [
+        {
+          title: "Academic Tools",
+          links: [
+            {
+              name: "AI Study Workspace",
+              href: "/tools/ai-study-workspace/",
+            },
+            { name: "AI Paraphraser", href: "/tools/ai-paraphraser/" },
+            { name: "AI Summarizer", href: "/tools/ai-summarizer/" },
+            { name: "AI Humanizer", href: "/tools/ai-humanizer/" },
+            { name: "Citation Generator", href: "/tools/citation-generator/" },
+          ],
+          button: [{ name: "See All Tools", href: "/tools/" }],
+        },
+      ],
       href: "/tools/",
     },
   ];
