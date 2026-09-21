@@ -5,19 +5,28 @@ import MathProse from "@/app/components/AiTools/shared/MathProse";
 import styles from "../homework-helper.module.css";
 import QuestionHeader from "../components/QuestionHeader";
 import InputToolbar from "../components/InputToolbar";
-import type { CheckWorkResult, HomeworkMode, HomeworkSessionDTO } from "../types";
+import type { CheckWorkResult, ExplainDTO, HomeworkMode, HomeworkSessionDTO } from "../types";
 
 interface CheckWorkScreenProps {
   session: HomeworkSessionDTO;
   onCheck: (attempt: string) => Promise<CheckWorkResult>;
   onPickMode: (mode: HomeworkMode) => void;
+  onExplainMistake: () => Promise<ExplainDTO>;
   onComplete: () => void;
 }
 
-const CheckWorkScreen: React.FC<CheckWorkScreenProps> = ({ session, onCheck, onPickMode, onComplete }) => {
+const CheckWorkScreen: React.FC<CheckWorkScreenProps> = ({
+  session,
+  onCheck,
+  onPickMode,
+  onExplainMistake,
+  onComplete,
+}) => {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<CheckWorkResult | null>(null);
+  const [explainBusy, setExplainBusy] = useState(false);
+  const [explanation, setExplanation] = useState<ExplainDTO | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const submit = async () => {
@@ -34,6 +43,21 @@ const CheckWorkScreen: React.FC<CheckWorkScreenProps> = ({ session, onCheck, onP
       setResult(res);
     } finally {
       setBusy(false);
+    }
+  };
+
+  const explainMistake = async () => {
+    if (explainBusy) return;
+    if (explanation) {
+      // Already fetched — just toggle it back open if it was closed.
+      return;
+    }
+    setExplainBusy(true);
+    try {
+      const res = await onExplainMistake();
+      setExplanation(res);
+    } finally {
+      setExplainBusy(false);
     }
   };
 
@@ -101,10 +125,14 @@ const CheckWorkScreen: React.FC<CheckWorkScreenProps> = ({ session, onCheck, onP
             {result.status !== "correct" && (
               <button
                 type="button"
-                className="text-[13px] px-3 py-1.5 rounded-md border border-[var(--line)]"
-                onClick={() => onPickMode("explain")}
+                aria-disabled={explainBusy}
+                aria-expanded={!!explanation}
+                className={`text-[13px] px-3 py-1.5 rounded-md border border-[var(--line)] ${
+                  explainBusy ? "opacity-50 cursor-not-allowed" : ""
+                }`}
+                onClick={explainMistake}
               >
-                Explain my mistake
+                {explainBusy ? "Explaining…" : "Explain my mistake"}
               </button>
             )}
             <button
@@ -124,6 +152,18 @@ const CheckWorkScreen: React.FC<CheckWorkScreenProps> = ({ session, onCheck, onP
               </button>
             )}
           </div>
+
+          {explanation && (
+            <div
+              className={`${styles.noScrollAnchor} mt-3.5 pt-3.5 border-t border-[var(--line)]`}
+            >
+              <MathProse
+                text={explanation.concept_name}
+                className={`${styles.serif} block font-bold text-[15px] mb-1.5`}
+              />
+              <MathProse text={explanation.body} className="block" />
+            </div>
+          )}
         </div>
       )}
     </div>

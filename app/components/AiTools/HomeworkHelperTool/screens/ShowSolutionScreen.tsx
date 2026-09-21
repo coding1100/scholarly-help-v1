@@ -9,9 +9,12 @@ import type { HomeworkSessionDTO } from "../types";
 interface ShowSolutionScreenProps {
   session: HomeworkSessionDTO;
   onComplete: () => void;
+  /** Review mode: this session is already completed, so the CTA just returns
+   *  to My Homework instead of re-completing it. */
+  reviewOnly?: boolean;
 }
 
-const ShowSolutionScreen: React.FC<ShowSolutionScreenProps> = ({ session, onComplete }) => {
+const ShowSolutionScreen: React.FC<ShowSolutionScreenProps> = ({ session, onComplete, reviewOnly }) => {
   const steps = session.content.stepByStep || [];
 
   return (
@@ -47,7 +50,7 @@ const ShowSolutionScreen: React.FC<ShowSolutionScreenProps> = ({ session, onComp
         className="font-semibold text-[14.5px] px-5 py-2.5 rounded-lg bg-[var(--pen-btn)] text-white"
         onClick={onComplete}
       >
-        Complete question
+        {reviewOnly ? "← Back to My Homework" : "Complete question"}
       </button>
     </div>
   );
