@@ -30,7 +30,19 @@ function getDeviceLabel() {
 
 function postUsageEvent(detail: ToolsSheetGenerateEventDetail) {
   const toolName = (detail.toolName || "").trim();
-  if (!toolName) return;
+  if (!toolName) {
+    // A silent no-op here means a tool's usage is never recorded and never
+    // shows up in the admin Tool Usage filter — surface it loudly in dev
+    // instead of letting a wrong/missing `toolName` key go unnoticed
+    // (see: Homework Helper, which passed `tool` instead of `toolName`).
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(
+        "[toolsSheetClient] trackToolGenerate called without a toolName — usage event dropped.",
+        detail,
+      );
+    }
+    return;
+  }
 
   const payload = {
     toolName,
