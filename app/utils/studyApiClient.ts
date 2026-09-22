@@ -414,7 +414,7 @@ export async function streamStudyTutor(
     const jsonRaw = dataLines.join("\n").trim();
     if (!jsonRaw) return;
     let payload: {
-      text?: string;
+      text?: unknown;
       citations?: number[];
       message?: string;
       provenance?: "source" | "general" | "image";
@@ -430,7 +430,15 @@ export async function streamStudyTutor(
     }
     if (eventName === "chunk" && payload.text) {
       receivedAnyChunk = true;
-      handlers.onChunk(payload.text);
+      // The backend's `text` field is normally a plain string, but a malformed
+      // chunk (e.g. an LLM tool-call/JSON fragment forwarded verbatim) can land
+      // here as an object. Concatenating that directly into the transcript via
+      // `+=` coerces it through `String(object)` -> the literal "[object Object]"
+      // showing up mid-answer. Drop anything that isn't already a string instead
+      // of rendering that placeholder.
+      if (typeof payload.text === "string") {
+        handlers.onChunk(payload.text);
+      }
     }
     if (eventName === "done") {
       receivedDone = true;
