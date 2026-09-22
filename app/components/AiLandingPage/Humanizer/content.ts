@@ -282,7 +282,7 @@ export const footerCtaContent = {
 
 /** Page-level SEO. */
 export const metaContent = {
-  title: "Free AI Humanizer: Humanize AI Text Fast | ScholarlyHelp",
+  title: "AI Humanizer: Free Online Tool | ScholarlyHelp",
   description:
-    "Use ScholarlyHelp's free AI humanizer to humanize AI text in seconds. Turn stiff, robotic writing into natural wording with our free AI humanizer tool.",
+    "Turn AI-generated wording into natural-sounding text while keeping your message clear. Use a free AI humanizer to refine your writing. Humanize it today.",
 };
