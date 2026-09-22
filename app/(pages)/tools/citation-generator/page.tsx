@@ -67,9 +67,9 @@ export function generateMetadata(): Metadata {
   const canonicalUrl = `${normalizedBaseUrl}/tools/citation-generator`;
 
   return {
-    title: "Free Citation Generator | ScholarlyHelp",
+    title: "Citation Generator: Free APA, MLA & More | ScholarlyHelp",
     description:
-      "Use the free ScholarlyHelp citation generator to make APA, MLA, Harvard and Chicago citations in seconds. Paste a link, get both citations.",
+      "APA, MLA, Harvard, or Chicago citations made simple. Cite DOIs, URLs, or PDFs in seconds with our free citation generator. Create accurate references.",
     alternates: {
       canonical: canonicalUrl,
     },

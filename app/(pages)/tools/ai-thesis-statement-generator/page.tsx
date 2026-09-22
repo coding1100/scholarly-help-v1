@@ -24,9 +24,9 @@ import {
   footerCtaContent,
 } from "@/app/components/AiLandingPage/ThesisStatementGenerator/content";
 
-const META_TITLE = "Free Thesis Statement Generator | ScholarlyHelp";
+const META_TITLE = "Thesis Statement Generator: Free | ScholarlyHelp";
 const META_DESCRIPTION =
-  "Use ScholarlyHelp's free thesis statement generator to convert any topic into analytical, argumentative, and comparative thesis statements in seconds. Try it today!";
+  "Need a clear argument for your essay? A thesis statement generator creates analytical, argumentative, or comparative statements. Shape your thesis now.";
 
 const Page: FC = () => {
   const baseUrl =

@@ -67,9 +67,9 @@ export function generateMetadata(): Metadata {
   const canonicalUrl = `${normalizedBaseUrl}/tools/research-question-generator`;
 
   return {
-    title: "Free Research Question Generator | ScholarlyHelp",
+    title: "Research Question Generator: Free | ScholarlyHelp",
     description:
-      "Turn any topic into focused research questions with the free ScholarlyHelp research question generator.",
+      "Need a strong research question? A research question generator helps create focused ideas for essays, papers, theses, and projects. Generate yours today.",
     alternates: {
       canonical: canonicalUrl,
     },

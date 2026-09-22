@@ -54,9 +54,9 @@ export function generateMetadata(): Metadata {
   const canonicalUrl = `${normalizedBaseUrl}/tools/ai-paraphraser`;
 
   return {
-    title: "Free AI Paraphrasing Tool: Rewrite Text | ScholarlyHelp",
+    title: "Paraphrasing Tool: Free & Online | ScholarlyHelp",
     description:
-      "ScholarlyHelp's free paraphrasing tool rewrites your text in seconds. Choose a style, keep your meaning, and create clear, natural writing with our AI paraphraser.",
+      "Need clearer wording without changing your meaning? Use a free paraphrasing tool to rewrite text, choose a style, and create natural results. Try it free.",
     alternates: {
       canonical: canonicalUrl,
     },

@@ -64,9 +64,9 @@ export function generateMetadata(): Metadata {
   const canonicalUrl = `${normalizedBaseUrl}/tools/ai-essay-title-generator`;
 
   return {
-    title: "Free Essay Title Generator | ScholarlyHelp",
+    title: "Essay Title Generator: Free Online | ScholarlyHelp",
     description:
-      "Use the free ScholarlyHelp essay title generator to get strong, relevant titles in seconds. Enter your topic and pick your favorite.",
+      "Struggling to name your essay? An essay title generator gives you relevant options based on your topic and preferred style. Find your ideal title now.",
     alternates: {
       canonical: canonicalUrl,
     },

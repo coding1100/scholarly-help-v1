@@ -24,10 +24,9 @@ import {
   footerCtaContent,
 } from "@/app/components/AiLandingPage/Summarizer/content";
 
-const META_TITLE =
-  "Free AI Summarizer: Notes, Flashcards & Audio | ScholarlyHelp";
+const META_TITLE = "AI Summarizer: Free Online Tool | ScholarlyHelp";
 const META_DESCRIPTION =
-  "Turn long texts, documents, or PDFs into flashcards, study notes, slide decks, or audio with our free AI summarizer. Try ScholarlyHelp today!";
+  "Have a long document to review? An AI summarizer turns text and PDFs into concise notes, flashcards, slides, or audio for easier revision. Summarize it.";
 
 const Page: FC = () => {
   const baseUrl =

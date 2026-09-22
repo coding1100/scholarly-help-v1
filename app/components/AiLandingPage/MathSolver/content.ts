@@ -254,7 +254,7 @@ export const mathSolverContent: ToolLandingContent = {
 };
 
 export const mathSolverMeta = {
-  title: "Free Math Solver | ScholarlyHelp",
+  title: "AI Math Solver: Free & Online | ScholarlyHelp",
   description:
-    "The free ScholarlyHelp math solver works out maths, physics, and chemistry problems step by step. Type it in or upload a photo.",
+    "Stuck on a math problem? An AI math solver gives step-by-step solutions from typed questions or uploaded photos, with clear explanations. Solve it now.",
 };
