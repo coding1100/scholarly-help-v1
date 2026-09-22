@@ -3,7 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { Menu, X, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import megaMenuImage from "@/app/assets/Images/mega-menu-image.webp";
+import megaMenuImage from "@/public/images/scholarly-help-mega-menu-image.webp";
+import toolsMegaMenuImage from "@/public/images/tools-mega-menu-image.webp";
 import Image from "next/image";
 import LogoSmall from "@/app/assets/Images/logoSmall.png";
 import LogoNormal from "@/app/assets/Images/logo.svg";
@@ -581,8 +582,8 @@ export default function Header() {
                           </div>
                           <div className="ml-8">
                             <Image
-                              src={megaMenuImage}
-                              alt="SiteJabber"
+                              src={item.href === "/tools/" ? toolsMegaMenuImage : megaMenuImage}
+                              alt={item.href === "/tools/" ? "Scholarly Help Tools" : "Scholarly Help"}
                               width={325}
                               height={250}
                               fetchPriority="high"
