@@ -1103,6 +1103,20 @@ export default function AiTutorChat({ initialSessionId }: { initialSessionId?: s
   const renderHelperRow = () => setShowHelper(true);
   const hideHelperRow = () => setShowHelper(false);
 
+  // Outside an active quiz question there is no `activeSet` item to anchor
+  // Hint/Why/ELI6 to, so we fall back to the student's own last question —
+  // otherwise the backend has nothing but a generic phrase like "this topic"
+  // to search the document for, and RAG retrieval drifts to unrelated content.
+  const getLastUserQuestion = (): string | null => {
+    for (let i = messages.length - 1; i >= 0; i -= 1) {
+      const msg = messages[i];
+      if (msg.sender === "user" && (msg.text || msg.html)?.trim()) {
+        return (msg.text || msg.html || "").trim();
+      }
+    }
+    return null;
+  };
+
   // Jump to note source with highlight
   const jumpToSource = (sectionId: string) => {
     setActiveDrawer("notes");
@@ -1866,7 +1880,12 @@ export default function AiTutorChat({ initialSessionId }: { initialSessionId?: s
     if (item) {
       addBotMessage(`💡 <b>Hint:</b> ${item.hint}`, "hint");
     } else {
-      sendQueryToBackendTutor("Give me a helpful hint on this topic.");
+      const lastQuestion = getLastUserQuestion();
+      sendQueryToBackendTutor(
+        lastQuestion
+          ? `Give me a helpful hint about my last question: "${lastQuestion}"`
+          : "Give me a helpful hint on the material covered so far.",
+      );
     }
   };
 
@@ -1876,7 +1895,12 @@ export default function AiTutorChat({ initialSessionId }: { initialSessionId?: s
     if (item) {
       addBotMessage(`🤔 <b>Why:</b> ${item.explain}`, "explanation");
     } else {
-      sendQueryToBackendTutor("Explain why this concept works the way it does.");
+      const lastQuestion = getLastUserQuestion();
+      sendQueryToBackendTutor(
+        lastQuestion
+          ? `Explain why, going deeper on my last question: "${lastQuestion}"`
+          : "Explain why this concept works the way it does.",
+      );
     }
   };
 
@@ -1886,7 +1910,12 @@ export default function AiTutorChat({ initialSessionId }: { initialSessionId?: s
     if (item) {
       addBotMessage(`👶 <b>ELI6:</b> ${item.eli6}`, "explained simply");
     } else {
-      sendQueryToBackendTutor("Explain this concept like I am 6 years old.");
+      const lastQuestion = getLastUserQuestion();
+      sendQueryToBackendTutor(
+        lastQuestion
+          ? `Explain like I'm 6 years old, based on my last question: "${lastQuestion}"`
+          : "Explain the material covered so far like I am 6 years old.",
+      );
     }
   };
 

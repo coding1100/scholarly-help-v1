@@ -39,7 +39,7 @@ export const TOOL_USAGE_TOOL_OPTIONS = [
   "CGPA Calculator",
   "Citation Tool",
   "Essay Outline Tool",
-  "Essay Generator",
+  "Essay Generator",  
   "Essay Grader",
   "Essay Title Generator",
   "Exam Prep",
