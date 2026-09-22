@@ -758,10 +758,19 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
       return;
     }
 
+    // `initialContent` arrives asynchronously from EditorContainer's document
+    // fetch and starts as `undefined` while that request is in flight. Without
+    // this guard, this effect fired on that first `undefined` render, wrote the
+    // placeholder, and marked `documentId` as loaded — so when the real content
+    // arrived moments later the guard above skipped re-applying it, permanently
+    // stranding the editor on "Main Heading" even though the document (and its
+    // freshly-generated outline) had saved correctly.
+    if (initialContent === undefined) {
+      return;
+    }
+
     editor.commands.setContent(
-      initialContent
-        ? stripReferencesMarker(initialContent) || "<h1>Main Heading</h1><p></p>"
-        : "<h1>Main Heading</h1><p></p>",
+      stripReferencesMarker(initialContent) || "<h1>Main Heading</h1><p></p>",
     );
     // Restore the persisted bibliography for this document.
     setReferences(initialContent ? parseReferences(initialContent) : []);
