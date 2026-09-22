@@ -22,6 +22,13 @@ interface DocumentsSidebarProps {
   onNew?: () => void;
   onSelect?: (id: DocumentItem["id"]) => void;
   className?: string;
+  /**
+   * The currently-open document id (the `?doc=` param). Included only to
+   * retrigger the list fetch when it changes — creating a new document
+   * doesn't touch `query`, so without this the sidebar (if left open) kept
+   * showing the pre-creation list until the search box was typed in.
+   */
+  activeDocumentId?: string | null;
 }
 
 const formatRelative = (dateLike: string | number | Date) => {
@@ -46,6 +53,7 @@ const DocumentsSidebar: React.FC<DocumentsSidebarProps> = ({
   onNew,
   onSelect,
   className,
+  activeDocumentId,
 }) => {
   const [query, setQuery] = useState("");
   const [fetchedDocs, setFetchedDocs] = useState<DocumentRecord[]>([]);
@@ -67,7 +75,11 @@ const DocumentsSidebar: React.FC<DocumentsSidebarProps> = ({
     }, 250);
 
     return () => clearTimeout(timeout);
-  }, [documents, query]);
+    // activeDocumentId: refetch when a new document is created/opened (e.g.
+    // via "+ New document") while this sidebar stays open — that navigation
+    // doesn't change `query`, so the list would otherwise show the
+    // pre-creation snapshot until the user typed a search term.
+  }, [documents, query, activeDocumentId]);
 
   const docs = documents || fetchedDocs;
 

@@ -32,6 +32,10 @@ export type AssistantPanel = "documents" | "library" | "chat" | "review";
 type AcademicAssistantPanelProps = {
   activePanel: Exclude<AssistantPanel, "documents">;
   onClose: () => void;
+  /** Resets chat history and review feedback when the open document changes,
+   *  so switching documents doesn't leave the previous document's AI Chat
+   *  conversation or Review feedback visible/mixed in on the new one. */
+  documentId?: string | null;
 };
 
 type ChatMessage = {
@@ -84,9 +88,17 @@ const PanelHeader = ({
   </div>
 );
 
+const WELCOME_CHAT_MESSAGE: ChatMessage = {
+  id: "welcome",
+  role: "assistant",
+  content:
+    "Ask about your draft, request a paragraph, find research angles, or ask for citation suggestions.",
+};
+
 const AcademicAssistantPanel: React.FC<AcademicAssistantPanelProps> = ({
   activePanel,
   onClose,
+  documentId,
 }) => {
   const { editor } = useContext(EditorContext);
   const { title } = useContext(TitleContext);
@@ -95,12 +107,7 @@ const AcademicAssistantPanel: React.FC<AcademicAssistantPanelProps> = ({
   const [sourceTitle, setSourceTitle] = useState("");
   const [chatInput, setChatInput] = useState("");
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-    {
-      id: "welcome",
-      role: "assistant",
-      content:
-        "Ask about your draft, request a paragraph, find research angles, or ask for citation suggestions.",
-    },
+    WELCOME_CHAT_MESSAGE,
   ]);
   const [chatLoading, setChatLoading] = useState(false);
   const [reviewText, setReviewText] = useState("");
@@ -114,6 +121,21 @@ const AcademicAssistantPanel: React.FC<AcademicAssistantPanelProps> = ({
     () => documentText.split(/\s+/).filter(Boolean).length,
     [documentText],
   );
+
+  // Chat history and review feedback are specific to the document they were
+  // generated for — reset both when the open document changes so switching
+  // documents doesn't leave the previous document's conversation/feedback
+  // visible (or mixed with new messages) on the new one. `sources` is
+  // deliberately NOT reset here: it's a user-level library, not scoped to a
+  // single document (listSources() has no per-document filter).
+  const initialDocumentIdRef = useRef(documentId);
+  useEffect(() => {
+    if (documentId === initialDocumentIdRef.current) return;
+    initialDocumentIdRef.current = documentId;
+    setChatMessages([WELCOME_CHAT_MESSAGE]);
+    setChatInput("");
+    setReviewText("");
+  }, [documentId]);
 
   useEffect(() => {
     if (activePanel !== "library") return;

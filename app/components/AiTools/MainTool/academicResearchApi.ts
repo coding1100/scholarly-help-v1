@@ -136,10 +136,17 @@ export const updateDocumentTitle = (id: string, title: string) =>
     headers: { "Content-Type": "application/json" },
   });
 
-export const updateDocumentContent = (id: string, content: string, clientVersion?: number) =>
+// NOTE: no `client_version`/optimistic-concurrency field is sent here — the
+// backend's UpdateContentDto never declared one, and the global ValidationPipe
+// runs with forbidNonWhitelisted: true, so a request carrying it was always
+// rejected with 400 (silently swallowed by the autosave .catch(), meaning
+// content edits were never actually persisted). Stale-write protection for
+// autosave is handled entirely client-side via ParagraphEditor's
+// autosaveVersionRef/autosaveChainRef, which don't depend on this field.
+export const updateDocumentContent = (id: string, content: string) =>
   request<DocumentRecord>(`/documents/${encodeURIComponent(id)}/content`, {
     method: "PATCH",
-    data: { content, ...(clientVersion !== undefined ? { client_version: clientVersion } : {}) },
+    data: { content },
     headers: { "Content-Type": "application/json" },
   });
 
@@ -161,7 +168,12 @@ export const generateEssayOutline = (payload: {
   request<{
     topic?: string;
     keywords?: string[];
-    outline?: Array<{ section?: string; title?: string } | string>;
+    // Backend (essay_outline.service.ts) always returns { section, subsections }
+    // per item — the string/title-only shapes are kept here only as a defensive
+    // fallback for a malformed/legacy response, not the expected shape.
+    outline?: Array<
+      { section?: string; title?: string; subsections?: string[] } | string
+    >;
     tokens_used?: number;
   }>("/tools/essay-outline", {
     method: "POST",

@@ -19,6 +19,12 @@ export type DocumentKind = "research" | "essay";
 export type GenerateOutlineResult = {
   /** Section titles, first item is the document's H1. Empty for "none". */
   sections: string[];
+  /**
+   * Sub-points for each section in `sections` (same index), when the source
+   * provided them (smart/AI mode only — standard/none never have these).
+   * Empty array for a section with no sub-points of its own.
+   */
+  subsections: string[][];
   /** True when we fell back to the deterministic skeleton (smart mode only). */
   usedFallback: boolean;
 };
@@ -82,15 +88,30 @@ export const standardOutline = (
   ];
 };
 
-/** Build the editor HTML for an outline (H1 for the first section, H2 for the rest). */
-export const outlineToHtml = (sections: string[]): string => {
+/**
+ * Build the editor HTML for an outline (H1 for the first section, H2 for the
+ * rest). When `subsections[i]` has entries, they're rendered as a bullet list
+ * under that section — this is the AI-generated sub-outline detail; it's
+ * lost if the caller omits `subsections` (e.g. the deterministic skeleton,
+ * which has none).
+ */
+export const outlineToHtml = (
+  sections: string[],
+  subsections?: string[][],
+): string => {
   if (!sections.length) return "<h1>Untitled</h1><p></p>";
   return sections
-    .map((section, index) =>
-      index === 0
-        ? `<h1>${escapeHtml(section)}</h1><p></p>`
-        : `<h2>${escapeHtml(section)}</h2><p></p>`,
-    )
+    .map((section, index) => {
+      const heading =
+        index === 0
+          ? `<h1>${escapeHtml(section)}</h1>`
+          : `<h2>${escapeHtml(section)}</h2>`;
+      const points = (subsections?.[index] || []).filter(Boolean);
+      const list = points.length
+        ? `<ul>${points.map((point) => `<li>${escapeHtml(point)}</li>`).join("")}</ul>`
+        : "<p></p>";
+      return `${heading}${list}`;
+    })
     .join("");
 };
 
@@ -121,13 +142,17 @@ export const generateOutline = async (
   prompt: string,
 ): Promise<GenerateOutlineResult> => {
   if (mode === "none") {
-    return { sections: [], usedFallback: false };
+    return { sections: [], subsections: [], usedFallback: false };
   }
 
   const kind = detectDocumentKind(prompt);
 
   if (mode === "standard") {
-    return { sections: standardOutline(prompt, kind), usedFallback: false };
+    return {
+      sections: standardOutline(prompt, kind),
+      subsections: [],
+      usedFallback: false,
+    };
   }
 
   // Smart mode: ask the API, then guarantee a full skeleton on empty result.
@@ -137,18 +162,34 @@ export const generateOutline = async (
     essay_level: "post graduate",
   });
 
-  const sectionTitles: string[] = (response.outline ?? [])
-    .map((item) =>
-      typeof item === "string" ? item : item?.section || item?.title || "",
-    )
-    .map((s) => String(s).trim())
-    .filter(Boolean);
-
-  if (sectionTitles.length === 0) {
-    return { sections: standardOutline(prompt, kind), usedFallback: true };
+  // Built together (not sections.map().filter()) so `subsections[i]` always
+  // lines up with `sections[i]` even when some items get dropped for having
+  // no title — a separate post-hoc filter would desync the two indices.
+  const sections: string[] = [];
+  const subsections: string[][] = [];
+  for (const item of response.outline ?? []) {
+    const title =
+      typeof item === "string"
+        ? item
+        : item?.section || item?.title || "";
+    const trimmed = String(title).trim();
+    if (!trimmed) continue;
+    sections.push(trimmed);
+    const points = typeof item === "object" && Array.isArray(item?.subsections)
+      ? item.subsections.map((p) => String(p).trim()).filter(Boolean)
+      : [];
+    subsections.push(points);
   }
 
-  return { sections: sectionTitles, usedFallback: false };
+  if (sections.length === 0) {
+    return {
+      sections: standardOutline(prompt, kind),
+      subsections: [],
+      usedFallback: true,
+    };
+  }
+
+  return { sections, subsections, usedFallback: false };
 };
 
 /**
@@ -162,7 +203,7 @@ export const generateOutlineSafe = async (
   try {
     return await generateOutline(mode, prompt);
   } catch {
-    if (mode === "none") return { sections: [], usedFallback: false };
-    return { sections: standardOutline(prompt), usedFallback: true };
+    if (mode === "none") return { sections: [], subsections: [], usedFallback: false };
+    return { sections: standardOutline(prompt), subsections: [], usedFallback: true };
   }
 };
