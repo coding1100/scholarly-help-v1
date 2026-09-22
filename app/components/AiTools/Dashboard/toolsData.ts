@@ -2,7 +2,6 @@ import {
   FiAlignLeft,
   FiBarChart,
   FiBookmark,
-  FiBookOpen,
   FiCalendar,
   FiCheckCircle,
   FiFileText,
@@ -48,22 +47,13 @@ export const TOOLS: ToolCardData[] = [
   },
   {
     name: "Tutor Tool",
-    description: "Ask questions and get step-by-step explanations.",
+    description:
+      "Upload your material, then research deep-dive, solve assignments Socratically, or take a quiz — all grounded in your own document.",
     href: "/tools/tutor",
     icon: LuGraduationCap,
     badge: "New",
     category: "study-tools",
     cta: "Ask a question",
-  },
-  {
-    name: "Homework Helper",
-    description:
-      "Upload or paste any question and work through it step-by-step, Socratically, or check your own attempt — any subject.",
-    href: "/tools/homework-helper",
-    icon: FiBookOpen,
-    badge: "New",
-    category: "study-tools",
-    cta: "Get help",
   },
   {
     name: "CGPA Calculator",

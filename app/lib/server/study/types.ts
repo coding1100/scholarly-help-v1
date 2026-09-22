@@ -7,7 +7,7 @@ export type StudyArtifactType =
   | "quizzes";
 
 /** How the AI should teach and prioritize content */
-export type StudyLearningMode = "research" | "quiz" | "exam";
+export type StudyLearningMode = "research" | "quiz" | "exam" | "assignment";
 
 export type StudySourceKind = "text" | "url" | "file" | "youtube";
 

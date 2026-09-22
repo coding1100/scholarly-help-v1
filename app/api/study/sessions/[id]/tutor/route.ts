@@ -81,7 +81,9 @@ async function continuePartialTutorAnswer(input: {
 }
 
 function resolveLearningMode(mode?: string): StudyLearningMode {
-  return mode === "exam" || mode === "quiz" || mode === "research" ? mode : "research";
+  return mode === "exam" || mode === "quiz" || mode === "research" || mode === "assignment"
+    ? mode
+    : "research";
 }
 
 export async function POST(
@@ -135,12 +137,19 @@ export async function POST(
       mode?: StudyLearningMode;
       examTopics?: string[];
       tutorContext?: string;
+      groundedText?: string;
     };
     const learningMode = resolveLearningMode(body.mode);
     const examTopics = Array.isArray(body.examTopics)
       ? body.examTopics.map((t) => String(t).trim()).filter(Boolean).slice(0, 12)
       : [];
     const tutorContext = String(body.tutorContext || "").trim().slice(0, 2500);
+    // Inline action chips (Hint/Why?/ELI6/Step-by-Step) must process the EXACT
+    // AI message currently rendered on screen, not re-derive relevance via a
+    // fresh RAG query keyed off the student's last typed question — that drifts
+    // to unrelated document chunks. When the caller supplies the on-screen text
+    // directly, skip retrieval entirely and ground the answer in it.
+    const groundedText = String(body.groundedText || "").trim().slice(0, 12000);
     const message = (body?.message || "").trim();
     const useStream = Boolean(body?.stream);
     const imageAttachments = Array.isArray(body?.attachments)
@@ -160,70 +169,86 @@ export async function POST(
       return fail("message is required");
     }
 
-    // Hybrid RAG retrieval (vector + keyword), with an automatic keyword-only
-    // fallback when embeddings aren't ready yet — so latency/behavior stay
-    // stable right after upload. If RAG fails entirely, fall back to the legacy
-    // keyword ranker over the stored chunks so the tutor never breaks.
-    //
-    // topK is sized for real grounding: 3 chunks (~2k chars) out of a
-    // 100-page document starved the model of context and made it answer from
-    // prior knowledge (hallucination). 8–10 hits + their neighbors is still
-    // tiny vs the model's context window, but enough to actually answer from.
-    const chunkLimit = learningMode === "exam" ? 10 : 8;
-    // Self-heal any sources whose vectors are missing/stale (embed failed at
-    // upload, process stopped mid-index, or model drift) BEFORE retrieving, so
-    // this query benefits from recovered vectors instead of silently degrading
-    // to keyword-only forever. Bounded + best-effort; never breaks the tutor.
-    try {
-      await reindexStaleStudySources(params.id);
-    } catch (error) {
-      console.error("study.tutor.reindex_stale_failed", error);
+    let hasRelevantContext: boolean;
+    let context: string;
+    let citations: number[];
+
+    if (groundedText) {
+      // Grounded action chip: the caller already knows exactly which text the
+      // answer must be based on (the AI message rendered on screen), so skip
+      // retrieval entirely rather than re-deriving relevance from `message`
+      // (e.g. a synthetic "give me a hint about X" prompt), which would drift
+      // to whatever the RAG query happens to match instead of the exact
+      // passage the student is looking at.
+      hasRelevantContext = true;
+      context = groundedText;
+      citations = [];
+    } else {
+      // Hybrid RAG retrieval (vector + keyword), with an automatic keyword-only
+      // fallback when embeddings aren't ready yet — so latency/behavior stay
+      // stable right after upload. If RAG fails entirely, fall back to the legacy
+      // keyword ranker over the stored chunks so the tutor never breaks.
+      //
+      // topK is sized for real grounding: 3 chunks (~2k chars) out of a
+      // 100-page document starved the model of context and made it answer from
+      // prior knowledge (hallucination). 8–10 hits + their neighbors is still
+      // tiny vs the model's context window, but enough to actually answer from.
+      const chunkLimit = learningMode === "exam" ? 10 : 8;
+      // Self-heal any sources whose vectors are missing/stale (embed failed at
+      // upload, process stopped mid-index, or model drift) BEFORE retrieving, so
+      // this query benefits from recovered vectors instead of silently degrading
+      // to keyword-only forever. Bounded + best-effort; never breaks the tutor.
+      try {
+        await reindexStaleStudySources(params.id);
+      } catch (error) {
+        console.error("study.tutor.reindex_stale_failed", error);
+      }
+      let ranked: Array<{
+        index: number;
+        chunk: string;
+        score: number;
+        vectorScore?: number;
+        keywordScore?: number;
+      }> = [];
+      try {
+        ranked = await retrieveStudyContext(params.id, message, chunkLimit);
+      } catch (error) {
+        console.error("study.tutor.retrieve_failed", error);
+      }
+      if (ranked.length === 0) {
+        const { chunks } = await getSessionSourceText(params.id);
+        // Legacy ranker's score counts matched query tokens — a genuine keyword
+        // relevance signal, so expose it as keywordScore for the check below.
+        ranked = topChunksByQuery(chunks, message, chunkLimit).map((item) => ({
+          ...item,
+          keywordScore: item.score,
+        }));
+      }
+      // "Relevant" must mean the chunks actually MATCHED the query. The fused
+      // RRF/cosine `score` is > 0 for every returned hit by construction, so the
+      // old `score > 0` check was always true — the prompt then claimed relevant
+      // context even when retrieval found nothing, and the model confidently
+      // "cited" unrelated chunks (hallucination). Require a real signal: a BM25
+      // keyword match, or a cosine similarity high enough to indicate topical fit.
+      const MIN_VECTOR_RELEVANCE = 0.55;
+      const isRelevantHit = (item: { keywordScore?: number; vectorScore?: number }) =>
+        (item.keywordScore ?? 0) > 0 ||
+        (item.vectorScore ?? 0) >= MIN_VECTOR_RELEVANCE;
+      // When at least one hit is relevant, keep the whole retrieved window
+      // (neighbor/expansion chunks carry no per-strategy score but provide the
+      // surrounding sentences that make a hit answerable). When NOTHING is
+      // relevant, inject no context at all: feeding zero-score chunks in as
+      // "[n] …" invited the model to cite unrelated material even though
+      // hasRelevantContext was false.
+      hasRelevantContext = ranked.some(isRelevantHit);
+      const contextChunks = hasRelevantContext ? ranked : [];
+      context = contextChunks
+        .map((item) => `[${item.index}] ${item.chunk}`)
+        .join("\n\n");
+      // Only cite chunks we actually injected as context — otherwise the stored
+      // citation ids point at material the model never saw.
+      citations = contextChunks.map((item) => item.index);
     }
-    let ranked: Array<{
-      index: number;
-      chunk: string;
-      score: number;
-      vectorScore?: number;
-      keywordScore?: number;
-    }> = [];
-    try {
-      ranked = await retrieveStudyContext(params.id, message, chunkLimit);
-    } catch (error) {
-      console.error("study.tutor.retrieve_failed", error);
-    }
-    if (ranked.length === 0) {
-      const { chunks } = await getSessionSourceText(params.id);
-      // Legacy ranker's score counts matched query tokens — a genuine keyword
-      // relevance signal, so expose it as keywordScore for the check below.
-      ranked = topChunksByQuery(chunks, message, chunkLimit).map((item) => ({
-        ...item,
-        keywordScore: item.score,
-      }));
-    }
-    // "Relevant" must mean the chunks actually MATCHED the query. The fused
-    // RRF/cosine `score` is > 0 for every returned hit by construction, so the
-    // old `score > 0` check was always true — the prompt then claimed relevant
-    // context even when retrieval found nothing, and the model confidently
-    // "cited" unrelated chunks (hallucination). Require a real signal: a BM25
-    // keyword match, or a cosine similarity high enough to indicate topical fit.
-    const MIN_VECTOR_RELEVANCE = 0.55;
-    const isRelevantHit = (item: { keywordScore?: number; vectorScore?: number }) =>
-      (item.keywordScore ?? 0) > 0 ||
-      (item.vectorScore ?? 0) >= MIN_VECTOR_RELEVANCE;
-    // When at least one hit is relevant, keep the whole retrieved window
-    // (neighbor/expansion chunks carry no per-strategy score but provide the
-    // surrounding sentences that make a hit answerable). When NOTHING is
-    // relevant, inject no context at all: feeding zero-score chunks in as
-    // "[n] …" invited the model to cite unrelated material even though
-    // hasRelevantContext was false.
-    const hasRelevantContext = ranked.some(isRelevantHit);
-    const contextChunks = hasRelevantContext ? ranked : [];
-    const context = contextChunks
-      .map((item) => `[${item.index}] ${item.chunk}`)
-      .join("\n\n");
-    // Only cite chunks we actually injected as context — otherwise the stored
-    // citation ids point at material the model never saw.
-    const citations = contextChunks.map((item) => item.index);
     const hasImages = imageAttachments.length > 0;
     const provenance: TutorProvenance = hasImages
       ? "image"
@@ -315,6 +340,7 @@ export async function POST(
                   mode: learningMode,
                   examTopics,
                   tutorContext,
+                  isGroundedInOnScreenText: Boolean(groundedText),
                 }),
                 temperature: 0.25,
                 maxOutputTokens: TUTOR_MAX_OUTPUT_TOKENS,
@@ -371,6 +397,7 @@ export async function POST(
                   mode: learningMode,
                   examTopics,
                   tutorContext,
+                  isGroundedInOnScreenText: Boolean(groundedText),
                 }),
                 temperature: 0.25,
                 maxOutputTokens: TUTOR_MAX_OUTPUT_TOKENS,
@@ -463,6 +490,7 @@ export async function POST(
           mode: learningMode,
           examTopics,
           tutorContext,
+          isGroundedInOnScreenText: Boolean(groundedText),
         }),
         temperature: 0.25,
         maxOutputTokens: TUTOR_MAX_OUTPUT_TOKENS,
@@ -478,6 +506,7 @@ export async function POST(
           mode: learningMode,
           examTopics,
           tutorContext,
+          isGroundedInOnScreenText: Boolean(groundedText),
         }),
         temperature: 0.25,
         maxOutputTokens: TUTOR_MAX_OUTPUT_TOKENS,

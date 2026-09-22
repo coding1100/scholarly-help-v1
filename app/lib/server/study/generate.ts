@@ -772,43 +772,60 @@ async function buildQuiz(
         quizzes.some((q) => String(q?.question || "").trim()),
       "quizzes",
     );
-    // Drop malformed/blank and near-duplicate questions before re-id'ing so the
-    // final quiz is clean and (with the min floor honored by the prompt) usable.
+    // Drop malformed/blank, incomplete, and near-duplicate questions before
+    // re-id'ing so only genuinely model-generated content ever reaches a
+    // student — never a fabricated placeholder standing in for missing data
+    // (a question with fewer than 4 real MCQ options previously got padded
+    // with literal "Option A/B/C/D" text and presented as if real; that item
+    // is now dropped instead of faked).
     const seen = new Set<string>();
+    const isShortAnswer = (quiz: (typeof quizzes)[number]) =>
+      quiz.questionFormat === "short_answer" || quiz.options?.length === 0;
     const cleaned = quizzes
-      .map((quiz) => ({
-        question: String(quiz.question || "").trim(),
-        options:
-          quiz.questionFormat === "short_answer" || quiz.options?.length === 0
-            ? []
-            : Array.isArray(quiz.options) && quiz.options.length === 4
-              ? quiz.options.map((option) => String(option))
-              : ["Option A", "Option B", "Option C", "Option D"],
-        correctAnswerIndex:
-          typeof quiz.correctAnswerIndex === "number" &&
-          quiz.correctAnswerIndex >= 0 &&
-          quiz.correctAnswerIndex <= 3
-            ? quiz.correctAnswerIndex
-            : 0,
-        explanation: String(quiz.explanation || "").trim(),
-        difficulty: quiz.difficulty || "medium",
-        questionType: quiz.questionType || "recall",
-        questionFormat:
-          quiz.questionFormat === "short_answer" || quiz.options?.length === 0
-            ? "short_answer"
-            : "mcq",
-        answer: String(quiz.answer || "").trim(),
-        hint: String(quiz.hint || "").trim(),
-        simpleExplanation: String(quiz.simpleExplanation || "").trim(),
-        topic: String(quiz.topic || "General").trim() || "General",
-      }))
+      .map((quiz) => {
+        const question = String(quiz.question || "").trim();
+        const shortAnswer = isShortAnswer(quiz);
+        const rawOptions = Array.isArray(quiz.options)
+          ? quiz.options.map((option) => String(option).trim())
+          : [];
+        const hasFourRealOptions =
+          rawOptions.length === 4 && rawOptions.every(Boolean);
+        const answer = String(quiz.answer || "").trim();
+        return {
+          question,
+          options: shortAnswer ? [] : hasFourRealOptions ? rawOptions : null,
+          correctAnswerIndex:
+            typeof quiz.correctAnswerIndex === "number" &&
+            quiz.correctAnswerIndex >= 0 &&
+            quiz.correctAnswerIndex <= 3
+              ? quiz.correctAnswerIndex
+              : 0,
+          explanation: String(quiz.explanation || "").trim(),
+          difficulty: quiz.difficulty || "medium",
+          questionType: quiz.questionType || "recall",
+          questionFormat: shortAnswer ? ("short_answer" as const) : ("mcq" as const),
+          answer,
+          hint: String(quiz.hint || "").trim(),
+          simpleExplanation: String(quiz.simpleExplanation || "").trim(),
+          topic: String(quiz.topic || "").trim(),
+          shortAnswer,
+        };
+      })
       .filter((quiz) => {
         if (!quiz.question) return false;
+        // A short-answer item needs a real model answer; an MCQ needs 4 real
+        // options (never null, which marks a malformed item to drop here).
+        if (quiz.shortAnswer ? !quiz.answer : quiz.options === null) return false;
         const key = quiz.question.toLowerCase().replace(/\s+/g, " ");
         if (seen.has(key)) return false;
         seen.add(key);
         return true;
-      });
+      })
+      .map(({ shortAnswer: _shortAnswer, ...quiz }) => ({
+        ...quiz,
+        options: quiz.options ?? [],
+        topic: quiz.topic || "General",
+      }));
 
     return cleaned.map((quiz, index) => ({ id: `quiz-${index + 1}`, ...quiz }));
   });

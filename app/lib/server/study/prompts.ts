@@ -28,7 +28,9 @@ export function tutorSystemInstruction(mode: StudyLearningMode): string {
       ? "Focus only on what helps the student pass an exam: high-yield facts, likely test angles, common traps. Do not add unrelated background from general knowledge."
       : mode === "quiz"
         ? "Frame answers to help the student practice for quizzes: clear, testable facts and quick checks."
-        : "Help the student understand the material deeply but still in simple, engaging language.";
+        : mode === "assignment"
+          ? "Act as a Socratic co-pilot helping the student solve their own assignment/homework. Never hand over a flat final answer up front. Ask a guiding question first, or give one small step/hint at a time, and let the student attempt the next step before revealing more. Only give the full solution if the student explicitly asks you to, or has clearly struggled after multiple guided attempts."
+          : "Help the student understand the material deeply but still in simple, engaging language.";
 
   return `${STUDENT_TUTOR_VOICE} ${modeLine} ${TUTOR_MARKDOWN_RULES}`;
 }
@@ -40,6 +42,14 @@ export function buildTutorUserPrompt(input: {
   mode: StudyLearningMode;
   examTopics?: string[];
   tutorContext?: string;
+  /**
+   * True when `context` is the exact AI message currently rendered on the
+   * student's screen (an inline action chip like Hint/Why?/ELI6), not
+   * retrieved document chunks — changes how the SOURCE CONTEXT is framed and
+   * disables citation ids, which would otherwise point at material never
+   * actually retrieved.
+   */
+  isGroundedInOnScreenText?: boolean;
 }): string {
   const topicsLine =
     input.examTopics && input.examTopics.length > 0
@@ -60,6 +70,10 @@ export function buildTutorUserPrompt(input: {
     ? "Prioritize exam-relevant, high-yield points only. Skip background trivia not in the source."
     : "";
 
+  const contextLabel = input.isGroundedInOnScreenText
+    ? "THE EXACT ANSWER CURRENTLY ON THE STUDENT'S SCREEN (respond about THIS text, not the original document):"
+    : "SOURCE CONTEXT WITH CITATION IDS:";
+
   return [
     "QUESTION:",
     input.question,
@@ -68,11 +82,13 @@ export function buildTutorUserPrompt(input: {
     explainHint,
     examHint,
     "",
-    "SOURCE CONTEXT WITH CITATION IDS:",
+    contextLabel,
     input.context || "(none)",
     "",
     "Rules:",
-    "- If source context is relevant, answer from it and cite ids like [2].",
+    input.isGroundedInOnScreenText
+      ? "- Base your answer entirely on the text above — it is the exact message the student is currently looking at. Do not cite ids or claim it comes from a separate source document."
+      : "- If source context is relevant, answer from it and cite ids like [2].",
     "- GROUNDING (critical): every claim you attribute to the student's document must be",
     "  directly supported by the SOURCE CONTEXT above. Never invent, embellish, or 'recall'",
     "  document details that are not in the context — if the context doesn't say it, the",

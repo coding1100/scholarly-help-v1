@@ -149,6 +149,13 @@ const nextConfig = {
         destination: '/tools/math-solver',
         permanent: true,
       },
+      // Homework Helper retired — its Socratic step-by-step functionality
+      // was absorbed into the Tutor Tool's Assignment tab.
+      {
+        source: '/tools/homework-helper',
+        destination: '/tools/tutor',
+        permanent: true,
+      },
       ...movedLandings.map((slug) => ({
         source: `/${slug}`,
         destination: `/tools/${slug}`,
