@@ -10,12 +10,22 @@ type DownloadFileTypeProps = {
   documentId?: string | null;
 };
 
+// Mirrors academicDocumentExport.ts's sanitizeFilename exactly (same
+// replacement/trim/cap rules) — duplicated rather than imported so this
+// component doesn't statically pull in that module's docx/jspdf/html2canvas
+// dependencies, which are otherwise only loaded lazily via dynamic import()
+// inside the click handlers below.
+const sanitizeFilename = (name: string): string => {
+  const base = (name || "document").trim() || "document";
+  return base.replace(/[<>:"/\\|?*\u0000-\u001f]+/g, "_").slice(0, 160);
+};
+
 const DownloadFileType: React.FC<DownloadFileTypeProps> = () => {
   const { editor } = useContext(EditorContext);
   const { title } = useContext(TitleContext);
   const [exporting, setExporting] = useState(false);
 
-  const baseName = (title || "document").replace(/[<>:"/\\|?*\x00-\x1F]/g, "-").trim() || "document";
+  const baseName = sanitizeFilename(title || "document");
 
   const handleDownloadLaTeX = async () => {
     if (!editor) {

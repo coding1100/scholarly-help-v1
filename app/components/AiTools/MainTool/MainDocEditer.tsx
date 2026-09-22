@@ -222,6 +222,30 @@ const MainDocEditor: React.FC<MainDocEditorProps> = ({
     fileInputRef.current?.click();
   };
 
+  // Link is provided by @tiptap/starter-kit (bundles @tiptap/extension-link,
+  // enabled by default here since this config doesn't disable it).
+  const handleSetLink = () => {
+    if (!editor) return;
+    const { from, to } = editor.state.selection;
+    if (from === to) {
+      toast.error("Select text first to link it.");
+      return;
+    }
+    const previousHref = editor.getAttributes("link").href as string | undefined;
+    const url = window.prompt("Link URL (leave blank to remove):", previousHref || "https://");
+    if (url === null) return; // cancelled
+    const trimmed = url.trim();
+    if (!trimmed) {
+      editor.chain().focus().unsetLink().run();
+      return;
+    }
+    editor
+      .chain()
+      .focus()
+      .setLink({ href: trimmed, target: "_blank", rel: "noopener noreferrer" })
+      .run();
+  };
+
   const startPersistedDocument = async (
     content: string,
     fallbackTitle: string,
@@ -275,7 +299,7 @@ const MainDocEditor: React.FC<MainDocEditorProps> = ({
     guardAiClick(async () => {
       setIsGenerating(true);
       try {
-        const { sections, usedFallback } = await generateOutline(mode, prompt);
+        const { sections, subsections, usedFallback } = await generateOutline(mode, prompt);
         if (usedFallback) {
           toast("Couldn’t build a custom outline — used a standard structure.", {
             id: "outline-fallback",
@@ -284,7 +308,7 @@ const MainDocEditor: React.FC<MainDocEditorProps> = ({
 
         setOutlineResponse(sections);
         if (!title.trim()) setTitle(docTitle);
-        await startPersistedDocument(outlineToHtml(sections), docTitle);
+        await startPersistedDocument(outlineToHtml(sections, subsections), docTitle);
       } catch (error) {
         // Never strand the user on an empty page: fall back to the deterministic
         // skeleton instead of a blank draft.
@@ -558,7 +582,7 @@ const MainDocEditor: React.FC<MainDocEditorProps> = ({
                   editor.chain().focus().toggleStrike().run()
                 }
                 onToggleCode={() => editor.chain().focus().toggleCode().run()}
-                onLink={() => {}}
+                onLink={handleSetLink}
               />
             </div>
           )}

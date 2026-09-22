@@ -69,6 +69,21 @@ const normalizeCitationStyle = (style: string) => {
   return "APA" as const;
 };
 
+// The citation search box has no type selector (its own placeholder says
+// "Search by title, DOI, or PubMed ID…"), so detect intent from the query
+// itself instead of always searching by title — a DOI/PMID sent as a title
+// search degrades to a fuzzy text match and frequently returns nothing for
+// a query the backend could have looked up exactly.
+const DOI_PATTERN = /^10\.\d{4,9}\/\S+$/i;
+const PMID_PATTERN = /^\d{6,9}$/;
+
+const detectCitationSearchType = (query: string): "title" | "doi" | "pmid" => {
+  const trimmed = query.trim();
+  if (DOI_PATTERN.test(trimmed)) return "doi";
+  if (PMID_PATTERN.test(trimmed)) return "pmid";
+  return "title";
+};
+
 type InlineChatMessage = {
   id: string;
   role: "user" | "assistant";
@@ -618,6 +633,9 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
   );
   const autosaveVersionRef = useRef(0);
   const autosaveChainRef = useRef<Promise<unknown>>(Promise.resolve());
+  // Tracks whether the most recent autosave attempt failed, so the failure
+  // toast fires once per failure streak instead of on every 10s retry.
+  const autosaveFailedRef = useRef(false);
   const referencesLoadedRef = useRef(false);
   const suggestionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSuggestionKeyRef = useRef("");
@@ -697,8 +715,7 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
     },
   });
 
-  // Citation insert feedback + collected references (bibliography).
-  const [citing, setCiting] = useState(false);
+  // Collected references (bibliography), persisted alongside the document.
   const [references, setReferences] = useState<DocumentReference[]>([]);
   // Mirror of `references` for reading inside the autosave timer closure.
   const referencesRef = useRef<DocumentReference[]>([]);
@@ -750,6 +767,20 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
     setReferences(initialContent ? parseReferences(initialContent) : []);
     referencesLoadedRef.current = true;
     lastLoadedDocumentIdRef.current = documentId;
+
+    // Close any in-flight/open AI-action popup from the previous document —
+    // each holds a `pendingRangeRef`/range captured against the OLD editor
+    // content. Left open across a document switch, accepting one of these
+    // would insert at a position computed for a different document's text
+    // (wrong location, or a ProseMirror RangeError if the position now
+    // exceeds the new document's size).
+    setCitePickerOpen(false);
+    setCiteResults([]);
+    setRewriteOpen(false);
+    setRewriteResult("");
+    setSelectionChatOpen(false);
+    pendingRangeRef.current = null;
+    selectionChatRangeRef.current = null;
   }, [documentId, editor, initialContent]);
 
   // When there is no document id (the in-memory page flow), the outline may
@@ -1145,12 +1176,27 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
         // slower older request from overwriting a newer edit.
         autosaveChainRef.current = autosaveChainRef.current.then(() => {
           if (version !== autosaveVersionRef.current) return;
-          return updateDocumentContent(documentId, html, version);
+          return updateDocumentContent(documentId, html);
+        }).then(() => {
+          if (version === autosaveVersionRef.current) autosaveFailedRef.current = false;
         }).catch((error) => {
           console.error(
             "Autosave failed:",
             getAcademicErrorMessage(error, "Could not autosave document."),
           );
+          // Surface this to the user once per failure streak, not on every
+          // 10s retry — a silent autosave failure (as this was until the
+          // client_version bug above was fixed) means edits are quietly lost.
+          if (!autosaveFailedRef.current) {
+            autosaveFailedRef.current = true;
+            toast.error(
+              getAcademicErrorMessage(
+                error,
+                "Your changes aren't saving. Check your connection.",
+              ),
+              { id: "autosave-failed" },
+            );
+          }
         });
       }, AUTOSAVE_MS);
     };
@@ -1258,8 +1304,16 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
     setSuggestionCursorPos(null);
     showSuggestionLoading(pos);
 
+    // Same staleness guard the automatic suggestion flow uses: two rapid
+    // "Try Again" clicks (or Ctrl+/ presses) would otherwise both resolve
+    // and unconditionally apply, so a slower first response can overwrite a
+    // fresher second one, or land at a since-moved cursor position.
+    const requestId = suggestionRequestIdRef.current + 1;
+    suggestionRequestIdRef.current = requestId;
+
     try {
       const suggestion = await fetchAISuggestion(payload);
+      if (requestId !== suggestionRequestIdRef.current) return;
       suggestionLoadingRef.current = false;
 
       const plainText = suggestion.replace(/<[^>]*>/g, "");
@@ -1283,6 +1337,7 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
       commands.clearAISuggestion();
       commands.addAISuggestion(pos, plainText);
     } catch (error) {
+      if (requestId !== suggestionRequestIdRef.current) return;
       clearSuggestionLoading();
       const message = getAcademicErrorMessage(
         error,
@@ -1341,12 +1396,12 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
       const q = rawQuery.trim().slice(0, 180);
       if (q.length < 3) return;
       const style = normalizeCitationStyle(citationStyle);
+      const type = detectCitationSearchType(q);
 
       setCiteQuery(q);
       setCiteLoading(true);
-      setCiting(true);
       try {
-        const res = await searchCitations({ q, style, type: "title" });
+        const res = await searchCitations({ q, style, type });
         setCiteResults(res.results ?? []);
       } catch (error) {
         setCiteResults([]);
@@ -1380,7 +1435,6 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
         }
       } finally {
         setCiteLoading(false);
-        setCiting(false);
       }
     },
     [citationStyle],
@@ -1426,7 +1480,16 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
         return;
       }
 
-      const at = pendingRangeRef.current?.to ?? editor.state.selection.to;
+      // Clamp to the current doc size as a last-resort guard: the range is
+      // kept remapped across edits/doc switches (see the transaction handler
+      // above), but clamping avoids a ProseMirror RangeError in any gap case
+      // (e.g. the whole selection getting deleted while the search was in
+      // flight) instead of silently losing the citation.
+      const docSize = editor.state.doc.content.size;
+      const at = Math.min(
+        pendingRangeRef.current?.to ?? editor.state.selection.to,
+        docSize,
+      );
       const insert = inText ? ` ${inText}` : ` (${fallback})`;
       editor.chain().focus().insertContentAt(at, insert).run();
 
@@ -1614,19 +1677,17 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
       return;
     }
 
+    // Same last-resort clamp as citation insertion — the range is kept
+    // remapped across edits, this just guards the residual gap case.
+    const docSize = editor.state.doc.content.size;
+    const from = Math.min(range.from, docSize);
+    const to = Math.min(range.to, docSize);
+
     if (rewriteMode === "append") {
       // Insert after the selection on a new line (counter-argument).
-      editor
-        .chain()
-        .focus()
-        .insertContentAt(range.to, `\n\n${rewriteResult}`)
-        .run();
+      editor.chain().focus().insertContentAt(to, `\n\n${rewriteResult}`).run();
     } else {
-      editor
-        .chain()
-        .focus()
-        .insertContentAt({ from: range.from, to: range.to }, rewriteResult)
-        .run();
+      editor.chain().focus().insertContentAt({ from, to }, rewriteResult).run();
     }
 
     setRewriteOpen(false);
@@ -1705,12 +1766,25 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
     if (!editor) return;
 
     const handler = ({ transaction }: { transaction: Transaction }) => {
+      if (!transaction.docChanged) return;
       const range = selectionChatRangeRef.current;
-      if (!range) return;
-      selectionChatRangeRef.current = {
-        from: transaction.mapping.map(range.from),
-        to: transaction.mapping.map(range.to),
-      };
+      if (range) {
+        selectionChatRangeRef.current = {
+          from: transaction.mapping.map(range.from),
+          to: transaction.mapping.map(range.to),
+        };
+      }
+      // Cite/Rewrite also hold a captured range while their (1-60s) request
+      // is in flight — remap it the same way, so typing elsewhere in the
+      // document while waiting doesn't leave the eventual insert/replace
+      // pointing at a shifted or out-of-bounds position.
+      const pending = pendingRangeRef.current;
+      if (pending) {
+        pendingRangeRef.current = {
+          from: transaction.mapping.map(pending.from),
+          to: transaction.mapping.map(pending.to),
+        };
+      }
     };
 
     editor.on("transaction", handler as any);
@@ -1962,6 +2036,32 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
     return () => window.removeEventListener("mainTool:blockAction", onBlockAction);
   }, [handleCiteSelectedText, openSelectionChat, handleHumanizeSelectedText]);
 
+  // Link is provided by @tiptap/starter-kit (bundles @tiptap/extension-link,
+  // enabled by default — neither editor config here disables it), so no new
+  // dependency is needed. A plain prompt() matches this toolbar's existing
+  // lightweight style (no other button here opens a modal either).
+  const handleSetLink = useCallback(() => {
+    if (!editor) return;
+    const { from, to } = editor.state.selection;
+    if (from === to) {
+      toast.error("Select text first to link it.", { id: "link-select-first" });
+      return;
+    }
+    const previousHref = editor.getAttributes("link").href as string | undefined;
+    const url = window.prompt("Link URL (leave blank to remove):", previousHref || "https://");
+    if (url === null) return; // cancelled
+    const trimmed = url.trim();
+    if (!trimmed) {
+      editor.chain().focus().unsetLink().run();
+      return;
+    }
+    editor
+      .chain()
+      .focus()
+      .setLink({ href: trimmed, target: "_blank", rel: "noopener noreferrer" })
+      .run();
+  }, [editor]);
+
   return (
     <div ref={editorShellRef} className="relative">
       {editor && showFormatToolbar && (
@@ -2061,7 +2161,7 @@ const ParagraphEditor: React.FC<ParagraphEditorProps> = ({
             }
             onToggleStrike={() => editor.chain().focus().toggleStrike().run()}
             onToggleCode={() => editor.chain().focus().toggleCode().run()}
-            onLink={() => {}}
+            onLink={handleSetLink}
           />
         </div>
       )}

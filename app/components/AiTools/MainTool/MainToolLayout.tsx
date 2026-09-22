@@ -232,6 +232,7 @@ const MainToolLayout: React.FC<MainToolLayoutProps> = ({
                         router.push(`${pathname || "/tools/academic-research-assistant"}?doc=${id}`)
                       }
                       className="w-full"
+                      activeDocumentId={documentId}
                     />
                   </div>
                 </div>
@@ -242,6 +243,7 @@ const MainToolLayout: React.FC<MainToolLayoutProps> = ({
                 <AcademicAssistantPanel
                   activePanel={activePanel}
                   onClose={() => setActivePanel(null)}
+                  documentId={documentId}
                 />
               )}
               <div

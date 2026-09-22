@@ -1,9 +1,7 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { HiOutlineXMark } from "react-icons/hi2";
-import { HiOutlineChartBar, HiOutlineUserGroup } from "react-icons/hi";
-import { HiOutlineSquare2Stack } from "react-icons/hi2";
+import { HiOutlineSquare2Stack, HiOutlineXMark } from "react-icons/hi2";
 import PublishedDocument from "./PublishedDocument";
 import {
   getAcademicErrorMessage,
@@ -127,18 +125,8 @@ const PublishDocumentModal: React.FC<PublishDocumentModalProps> = ({
         <div className="mt-5 space-y-4">
           <FeatureRow
             icon={<HiOutlineSquare2Stack className="h-5 w-5" />}
-            title="Increase exposure"
-            description="We will index your paper in Google search results and drive traffic."
-          />
-          <FeatureRow
-            icon={<HiOutlineChartBar className="h-5 w-5" />}
-            title="Track your impact"
-            description="Get updates on number of pageviews your paper is receiving."
-          />
-          <FeatureRow
-            icon={<HiOutlineUserGroup className="h-5 w-5" />}
-            title="Find collaborators"
-            description="Sharing a pre-print is an excellent way to attract potential collaborators."
+            title="Marks this document as published"
+            description="A public read-only page, search indexing, and view analytics are coming soon — publishing today only flags the document for that upcoming release."
           />
         </div>
 
