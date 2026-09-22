@@ -48,7 +48,7 @@ export type StudyArtifactType =
   | "flashcards"
   | "quizzes";
 
-export type StudyLearningMode = "research" | "quiz" | "exam";
+export type StudyLearningMode = "research" | "quiz" | "exam" | "assignment";
 
 export interface GenerateStudyArtifactOptions {
   mode?: StudyLearningMode;
@@ -365,6 +365,14 @@ export async function streamStudyTutor(
     mode?: StudyLearningMode;
     examTopics?: string[];
     tutorContext?: string;
+    /**
+     * The exact AI message currently rendered on screen. When set, the
+     * backend grounds its answer in this text directly instead of running a
+     * fresh RAG retrieval keyed off `message` — used by inline action chips
+     * (Hint/Why?/ELI6/Step-by-Step) so they explain the thing the student is
+     * actually looking at, not whatever the retrieval happens to match.
+     */
+    groundedText?: string;
   } | undefined,
   handlers: {
     onChunk: (text: string) => void;
@@ -388,6 +396,7 @@ export async function streamStudyTutor(
       mode: options?.mode || "research",
       examTopics: options?.examTopics || [],
       tutorContext: options?.tutorContext || "",
+      groundedText: options?.groundedText || "",
     }),
   });
   if (!res.ok || !res.body) {

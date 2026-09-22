@@ -3,7 +3,7 @@
 import { Suspense, useState, useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import ToolsLayout from "@/app/components/AiTools/ToolsLayout";
-import AiTutorChat from "@/app/components/AiTools/Tutor/AiTutorChat";
+import TutorWorkspace from "@/app/components/AiTools/Tutor2/TutorWorkspace";
 import { ToolsSuspenseFallback } from "@/app/components/AiTools/ToolsApiLoader";
 import ToolWithExplore from "@/app/components/AiTools/ToolWithExplore";
 import ProductSchema from "@/app/components/ProductSchema";
@@ -45,7 +45,7 @@ function TutorPageContent() {
       />
       <ToolsLayout setFlag={setFlag} flag={flag}>
         <ToolWithExplore>
-          <AiTutorChat initialSessionId={sessionId || undefined} />
+          <TutorWorkspace initialSessionId={sessionId || undefined} />
         </ToolWithExplore>
       </ToolsLayout>
 
