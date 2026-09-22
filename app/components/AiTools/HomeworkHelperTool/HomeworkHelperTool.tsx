@@ -146,7 +146,7 @@ const HomeworkHelperTool: React.FC = () => {
         } else {
           setScreen("pickQuestions");
         }
-        trackToolGenerate({ tool: "homework-helper" } as any);
+        trackToolGenerate({ toolName: "Homework Helper" });
       } catch (err: any) {
         if (err?.name === "CanceledError" || err?.code === "ERR_CANCELED") return;
         showApiError(err, "Could not read that question. Please try again.");

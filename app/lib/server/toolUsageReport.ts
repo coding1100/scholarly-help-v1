@@ -44,6 +44,7 @@ export const TOOL_USAGE_TOOL_OPTIONS = [
   "Essay Title Generator",
   "Exam Prep",
   "Grammar Checker",
+  "Homework Helper",
   "Humanizer Tool",
   "Language Practice",
   "Main Tool",
@@ -81,6 +82,19 @@ const BACKEND_SERVICE_LABELS: Record<string, string> = {
   "summarizer": "Summarizer Tool",
   "thesis-statement": "AI Thesis Statement Generator",
 };
+
+if (process.env.NODE_ENV !== "production") {
+  const knownLabels = new Set<string>(TOOL_USAGE_TOOL_OPTIONS);
+  const unknownLabels = Object.values(BACKEND_SERVICE_LABELS).filter(
+    (label) => !knownLabels.has(label),
+  );
+  if (unknownLabels.length) {
+    console.warn(
+      `[toolUsageReport] BACKEND_SERVICE_LABELS has labels missing from TOOL_USAGE_TOOL_OPTIONS: ${unknownLabels.join(", ")}. ` +
+        "These tools won't be selectable in the admin Tool Usage filter dropdown.",
+    );
+  }
+}
 
 const backendServiceLabelSwitch = {
   $switch: {
@@ -245,7 +259,7 @@ export async function getToolUsageReport(filters: ToolUsageReportFilters = {}) {
 
   const collection = db.collection("tool_usage_events");
 
-  const [rows, toolTotals, userTotals, usageCountResult] = await Promise.all([
+  const [rows, toolTotals, userTotals, usageCountResult, userCountResult] = await Promise.all([
     collection
       .aggregate<ToolUsageReportRow>([
         ...normalizedEventsPipeline,
@@ -309,21 +323,32 @@ export async function getToolUsageReport(filters: ToolUsageReportFilters = {}) {
         { $count: "totalUsage" },
       ])
       .toArray(),
+    // Distinct user counts, computed independently of `rows` (which is capped
+    // at $limit: 10000 grouped rows for display) so they stay accurate even
+    // when the filtered result set is larger than that cap.
+    collection
+      .aggregate<{ userType: ToolUsageReportRow["userType"]; count: number }>([
+        ...normalizedEventsPipeline,
+        { $group: { _id: { userKey: "$userKey", userType: "$userType" } } },
+        { $group: { _id: "$_id.userType", count: { $sum: 1 } } },
+        { $project: { _id: 0, userType: "$_id", count: 1 } },
+      ])
+      .toArray(),
   ]);
   const totalUsage = usageCountResult[0]?.totalUsage || 0;
+  const registeredUsers =
+    userCountResult.find((entry) => entry.userType === "registered")?.count || 0;
+  const guestUsers = userCountResult.find((entry) => entry.userType === "guest")?.count || 0;
+  const totalUsers = userCountResult.reduce((sum, entry) => sum + entry.count, 0);
 
   const summary: ToolUsageSummary = {
-    totalUsers: new Set(rows.map((row) => row.userKey)).size,
+    totalUsers,
     totalTools: toolTotals.length,
     totalUsage,
     mostUsedTool: toolTotals[0]?.toolName || null,
     mostActiveUser: userTotals[0]?.label || null,
-    registeredUsers: new Set(
-      rows.filter((row) => row.userType === "registered").map((row) => row.userKey),
-    ).size,
-    guestUsers: new Set(
-      rows.filter((row) => row.userType === "guest").map((row) => row.userKey),
-    ).size,
+    registeredUsers,
+    guestUsers,
   };
 
   return { summary, rows, toolTotals, userTotals };
