@@ -16,6 +16,10 @@ export const TUTOR_MARKDOWN_RULES = [
   "- Use **bold** for key terms students must remember.",
   "- Keep paragraphs to 2–3 short sentences max.",
   "- Complete every sentence and bullet; do not trail off.",
+  "- Only use fenced code blocks (```) for actual source code. For formulas, reactions, or",
+  "  transformations (e.g. inputs → outputs), write them as plain inline text with an arrow",
+  "  (e.g. Glucose → 2 Pyruvate + 2 ATP), never as a code block, diagram placeholder, or object.",
+  "- Never output literal placeholder text such as [object Object], undefined, null, or {}.",
 ].join("\n");
 
 export function tutorSystemInstruction(mode: StudyLearningMode): string {
