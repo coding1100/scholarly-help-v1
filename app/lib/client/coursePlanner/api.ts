@@ -9,6 +9,7 @@ import {
   NotificationItem,
   NotificationSettings,
   ScheduleOption,
+  ScheduleConflict,
   ExtractedSyllabusResult,
 } from "./types";
 
@@ -159,15 +160,30 @@ export const CoursePlannerApi = {
   },
 
   // LLM-backed: interprets a free-text request against the real course
-  // catalog and returns a server-validated section swap. Used both by the
-  // chat panel and by "Auto Swap" conflict resolution (which synthesizes a
-  // query from the conflict description).
+  // catalog and returns a server-validated section swap. Used by the free
+  // text chat panel only — "Auto Swap" uses the deterministic
+  // resolveConflict endpoint below instead.
   async chatEditSchedule(dto: {
     semesterId: string;
     currentSectionIds: string[];
     userQuery: string;
   }): Promise<{ success: boolean; explanation: string; updatedSectionIds: string[] }> {
     const res = await axios.post(`${getBaseUrl()}/tools/course-planner/schedules/chat`, dto, {
+      headers: getAuthHeaders(),
+    });
+    return unwrap(res);
+  },
+
+  // Deterministic (non-LLM) conflict resolution for "Auto Swap" — targets
+  // one specific already-detected conflict and returns a guaranteed
+  // conflict-free alternative when one exists, same response shape as
+  // chatEditSchedule so callers can treat them interchangeably.
+  async resolveConflict(dto: {
+    semesterId: string;
+    currentSectionIds: string[];
+    conflict: ScheduleConflict;
+  }): Promise<{ success: boolean; explanation: string; updatedSectionIds: string[] }> {
+    const res = await axios.post(`${getBaseUrl()}/tools/course-planner/schedules/resolve-conflict`, dto, {
       headers: getAuthHeaders(),
     });
     return unwrap(res);
@@ -253,10 +269,25 @@ export const CoursePlannerApi = {
     return unwrap(res);
   },
 
-  async applyAdaptiveAlert(id: string): Promise<boolean> {
-    await axios.put(`${getBaseUrl()}/tools/course-planner/adaptive/${id}`, {}, {
-      headers: getAuthHeaders(),
-    });
+  // Reports the backend's honest partial-failure result: `applied: false`
+  // means every proposed change referenced coursework that no longer
+  // exists, so nothing actually changed — the caller should surface this
+  // as a real failure, not silently treat the alert as resolved.
+  async applyAdaptiveAlert(id: string): Promise<{ applied: boolean; skipped: number; total: number }> {
+    const res = await axios.put(
+      `${getBaseUrl()}/tools/course-planner/adaptive/${id}`,
+      { status: "applied" },
+      { headers: getAuthHeaders() },
+    );
+    return unwrap(res);
+  },
+
+  async ignoreAdaptiveAlert(id: string): Promise<boolean> {
+    await axios.put(
+      `${getBaseUrl()}/tools/course-planner/adaptive/${id}`,
+      { status: "ignored" },
+      { headers: getAuthHeaders() },
+    );
     return true;
   },
 

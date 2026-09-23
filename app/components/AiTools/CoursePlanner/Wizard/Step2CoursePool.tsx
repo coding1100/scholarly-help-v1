@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Upload, FileText, Plus, Trash2, ArrowRight, ArrowLeft, Loader2, Sparkles, Check } from "lucide-react";
+import { FiUpload, FiPlus, FiTrash2, FiArrowRight, FiArrowLeft, FiLoader, FiZap } from "react-icons/fi";
 import { CourseCatalogItem, CourseSection, ExtractedSyllabusCourse } from "@/app/lib/client/coursePlanner/types";
 import { CoursePlannerService } from "@/app/lib/client/coursePlanner/service";
 
@@ -17,12 +17,19 @@ const normalizeDays = (days: unknown): CourseSection["days"] => {
   return valid.length > 0 ? valid : ["M", "W", "F"];
 };
 
+// A course pool entry as it's POSTed to create a course — sections have no
+// `id`/`courseId` yet (the backend assigns both once the parent course
+// document exists), matching CreateCourseDto/CourseSectionDto exactly.
+type NewPoolCourse = Omit<CourseCatalogItem, "id" | "semesterId" | "sections"> & {
+  sections: Omit<CourseSection, "id" | "courseId">[];
+};
+
 // Extraction only guarantees a course's identity/timing fields (per the LLM
 // schema on the backend) — fill in the rest so it's a valid pool entry.
 const toPoolCourse = (
   c: ExtractedSyllabusCourse,
   colorIdx: number
-): Omit<CourseCatalogItem, "id" | "semesterId"> => ({
+): NewPoolCourse => ({
   code: (c.code || "").toUpperCase() || `COURSE${colorIdx + 1}`,
   title: c.title || "Untitled Course",
   credits: c.credits ?? 3,
@@ -30,27 +37,36 @@ const toPoolCourse = (
   isRequired: c.isRequired ?? true,
   isElective: !(c.isRequired ?? true),
   instructor: c.instructor,
+  // No `id`/`courseId` here — same as the manual-entry path just below,
+  // the backend's CourseSectionDto rejects both on create
+  // (forbidNonWhitelisted) since it assigns its own section id once the
+  // parent course document exists, and courseId is unknown until then too.
+  // A previous version of this mapping set `courseId: ""`, which is still a
+  // present (whitelisted-violating) property from the DTO's perspective —
+  // `forbidNonWhitelisted` rejects it whether it's empty or not — and that
+  // silently broke every AI-extracted course from ever saving.
   sections: (c.sections && c.sections.length > 0
     ? c.sections
     : [{ sectionNumber: "01", instructor: c.instructor || "Staff", days: ["M", "W", "F"] as CourseSection["days"], startTime: "09:00", endTime: "10:00" }]
-  ).map((s, i) => ({
+  ).map((s) => ({
     sectionNumber: s.sectionNumber || "01",
     instructor: s.instructor || c.instructor || "Staff",
     days: normalizeDays(s.days),
     startTime: s.startTime || "09:00",
     endTime: s.endTime || "10:00",
     location: s.location,
-    id: `sec_${Date.now()}_${colorIdx}_${i}`,
-    courseId: "",
   })),
 });
 
 interface Props {
   courses: CourseCatalogItem[];
-  onAddCourse: (course: Omit<CourseCatalogItem, "id" | "semesterId">) => Promise<boolean>;
+  onAddCourse: (course: NewPoolCourse) => Promise<boolean>;
   onDeleteCourse: (id: string) => void;
   onNext: () => void;
   onBack: () => void;
+  /** Gates the AI syllabus-extraction calls (text + file) for guest users,
+   * same as every other AI action in this tool. */
+  guardAiClick: (run: () => void | Promise<void>) => boolean;
 }
 
 export const Step2CoursePool: React.FC<Props> = ({
@@ -59,11 +75,13 @@ export const Step2CoursePool: React.FC<Props> = ({
   onDeleteCourse,
   onNext,
   onBack,
+  guardAiClick,
 }) => {
   const [activeTab, setActiveTab] = useState<"ai" | "manual">("ai");
   const [syllabusText, setSyllabusText] = useState("");
   const [isExtracting, setIsExtracting] = useState(false);
   const [extractionError, setExtractionError] = useState<string | null>(null);
+  const [extractionNotice, setExtractionNotice] = useState<string | null>(null);
   const syllabusWordCount = syllabusText.trim() ? syllabusText.trim().split(/\s+/).length : 0;
   const isSyllabusOverLimit = syllabusWordCount > MAX_SYLLABUS_WORDS;
 
@@ -95,11 +113,11 @@ export const Step2CoursePool: React.FC<Props> = ({
       color,
       sections: [
         {
-          // No courseId here — the backend's CourseSectionDto rejects it
-          // (forbidNonWhitelisted), and the course doesn't exist yet at
-          // this point anyway. The section's real courseId is assigned
-          // server-side once the course document is created.
-          id: `sec_${Date.now()}_1`,
+          // No `id`/`courseId` here — the backend assigns both once the
+          // parent course document exists (CourseSectionDto's `id` is
+          // optional and courseId isn't a field on it at all;
+          // forbidNonWhitelisted rejects any property the DTO doesn't
+          // declare).
           sectionNumber: "01",
           instructor: instructor.trim() || "Staff",
           days: ["M", "W", "F"],
@@ -135,23 +153,31 @@ export const Step2CoursePool: React.FC<Props> = ({
       return;
     }
 
-    setIsExtracting(true);
-    setExtractionError(null);
+    guardAiClick(async () => {
+      setIsExtracting(true);
+      setExtractionError(null);
+      setExtractionNotice(null);
 
-    try {
-      const result = await CoursePlannerService.extractSyllabusFile(file);
-      if (!result.courses || result.courses.length === 0) {
-        throw new Error("No courses could be extracted from that file. Try pasting the syllabus text instead.");
+      try {
+        const result = await CoursePlannerService.extractSyllabusFile(file);
+        if (!result.courses || result.courses.length === 0) {
+          throw new Error("No courses could be extracted from that file. Try pasting the syllabus text instead.");
+        }
+        if (result.truncated) {
+          setExtractionNotice(
+            "This document was longer than we could fully process — some courses or assignments near the end may have been missed."
+          );
+        }
+        await addExtractedCourses(result.courses);
+      } catch (err: any) {
+        setExtractionError(
+          err?.response?.data?.message || err?.message || "Syllabus parsing failed. Please try again."
+        );
+      } finally {
+        setIsExtracting(false);
+        e.target.value = "";
       }
-      await addExtractedCourses(result.courses);
-    } catch (err: any) {
-      setExtractionError(
-        err?.response?.data?.message || err?.message || "Syllabus parsing failed. Please try again."
-      );
-    } finally {
-      setIsExtracting(false);
-      e.target.value = "";
-    }
+    });
   };
 
   // Adds every extracted course one at a time (not fire-and-forget) so a
@@ -170,25 +196,34 @@ export const Step2CoursePool: React.FC<Props> = ({
     }
   };
 
-  const handleTextExtract = async () => {
+  const handleTextExtract = () => {
     if (!syllabusText.trim() || isSyllabusOverLimit || isExtracting) return;
-    setIsExtracting(true);
-    setExtractionError(null);
 
-    try {
-      const result = await CoursePlannerService.extractSyllabusText(syllabusText);
-      if (!result.courses || result.courses.length === 0) {
-        throw new Error("No courses could be extracted from that text. Try adding more detail or use manual entry.");
+    guardAiClick(async () => {
+      setIsExtracting(true);
+      setExtractionError(null);
+      setExtractionNotice(null);
+
+      try {
+        const result = await CoursePlannerService.extractSyllabusText(syllabusText);
+        if (!result.courses || result.courses.length === 0) {
+          throw new Error("No courses could be extracted from that text. Try adding more detail or use manual entry.");
+        }
+        if (result.truncated) {
+          setExtractionNotice(
+            "This text was longer than we could fully process — some courses or assignments near the end may have been missed."
+          );
+        }
+        await addExtractedCourses(result.courses);
+        setSyllabusText("");
+      } catch (err: any) {
+        setExtractionError(
+          err?.response?.data?.message || err?.message || "Syllabus parsing failed. Please try again."
+        );
+      } finally {
+        setIsExtracting(false);
       }
-      await addExtractedCourses(result.courses);
-      setSyllabusText("");
-    } catch (err: any) {
-      setExtractionError(
-        err?.response?.data?.message || err?.message || "Syllabus parsing failed. Please try again."
-      );
-    } finally {
-      setIsExtracting(false);
-    }
+    });
   };
 
   const totalCredits = courses.reduce((acc, c) => acc + c.credits, 0);
@@ -196,14 +231,14 @@ export const Step2CoursePool: React.FC<Props> = ({
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-xl border border-gray-200/80 p-6 shadow-sm flex items-center justify-between">
+      <div className="bg-white rounded-lg border border-gray-200 p-5 shadow-sm flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-gray-800">Build Course Pool</h2>
-          <p className="text-sm text-gray-500">Extract from syllabus PDF/text or manually add courses</p>
+          <h2 className="text-lg font-semibold text-gray-800">Build Course Pool</h2>
+          <p className="text-xs text-gray-500">Extract from syllabus PDF/text or manually add courses</p>
         </div>
         <div className="text-right">
-          <span className="text-xs text-gray-400 block font-medium">Selected Credit Load</span>
-          <span className="text-lg font-bold text-primary-400">{totalCredits} credits ({courses.length} courses)</span>
+          <span className="text-xs text-gray-400 block">Selected Credit Load</span>
+          <span className="text-base font-semibold text-primary-400">{totalCredits} credits ({courses.length} courses)</span>
         </div>
       </div>
 
@@ -211,34 +246,34 @@ export const Step2CoursePool: React.FC<Props> = ({
       <div className="flex gap-2 border-b border-gray-200 pb-2">
         <button
           onClick={() => setActiveTab("ai")}
-          className={`px-4 py-2 text-sm font-semibold rounded-xl transition-all flex items-center gap-2 ${
+          className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors flex items-center gap-2 ${
             activeTab === "ai"
-              ? "bg-primary-400 text-white shadow-sm"
-              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              ? "bg-primary-400 text-white"
+              : "bg-white text-gray-600 ring-1 ring-gray-200 hover:bg-gray-50"
           }`}
         >
          AI Syllabus Extraction
         </button>
         <button
           onClick={() => setActiveTab("manual")}
-          className={`px-4 py-2 text-sm font-semibold rounded-xl transition-all flex items-center gap-2 ${
+          className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors flex items-center gap-2 ${
             activeTab === "manual"
-              ? "bg-primary-400 text-white shadow-sm"
-              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              ? "bg-primary-400 text-white"
+              : "bg-white text-gray-600 ring-1 ring-gray-200 hover:bg-gray-50"
           }`}
         >
-          <Plus className="w-4 h-4" /> Manual Entry
+          <FiPlus className="w-4 h-4" /> Manual Entry
         </button>
       </div>
 
       {/* AI Extraction Tab */}
       {activeTab === "ai" && (
-        <div className="bg-white rounded-xl border border-gray-200/80 p-6 shadow-sm space-y-4">
-          <div className="border-2 border-dashed border-gray-200 hover:border-primary-400 rounded-xl p-8 text-center transition-all bg-gray-50/50">
-            <Upload className="w-8 h-8 text-primary-400 mx-auto mb-2" />
+        <div className="bg-white rounded-lg border border-gray-200 p-5 shadow-sm space-y-4">
+          <div className="border-2 border-dashed border-gray-200 hover:border-primary-400 rounded-lg p-8 text-center transition-colors bg-gray-50">
+            <FiUpload className="w-6 h-6 text-primary-400 mx-auto mb-2" />
             <p className="text-sm font-semibold text-gray-700">Upload Syllabus PDF or Document</p>
             <p className="text-xs text-gray-400 mb-4">Supports .pdf and .docx formats up to 5MB</p>
-            <label className="inline-flex items-center px-4 py-2 bg-primary-400 hover:bg-primary-300 text-white text-xs font-semibold rounded-xl cursor-pointer transition-all shadow-sm">
+            <label className="inline-flex items-center px-4 py-2 bg-primary-400 hover:bg-primary-300 text-white text-xs font-semibold rounded-lg cursor-pointer transition-colors">
               <span>Choose File</span>
               <input type="file" accept=".pdf,.docx" onChange={handleFileUpload} className="hidden" />
             </label>
@@ -246,7 +281,7 @@ export const Step2CoursePool: React.FC<Props> = ({
 
           <div className="relative flex py-2 items-center">
             <div className="flex-grow border-t border-gray-200"></div>
-            <span className="flex-shrink mx-4 text-xs font-semibold text-gray-400 uppercase">Or Paste Syllabus Text</span>
+            <span className="flex-shrink mx-4 text-xs font-semibold text-gray-400">Or Paste Syllabus Text</span>
             <div className="flex-grow border-t border-gray-200"></div>
           </div>
 
@@ -258,13 +293,13 @@ export const Step2CoursePool: React.FC<Props> = ({
               placeholder="Paste course syllabus content, schedule descriptions, exam dates..."
               aria-invalid={isSyllabusOverLimit}
               aria-describedby={isSyllabusOverLimit ? "syllabus-word-count syllabus-word-error" : "syllabus-word-count"}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-400/20 text-gray-900 text-sm"
+              className="w-full px-3.5 py-3 rounded-lg border border-gray-300 focus:border-primary-400 focus:ring-2 focus:ring-primary-400/20 text-gray-800 text-sm"
             />
             <p id="syllabus-word-count" className={`mt-1 text-right text-xs ${isSyllabusOverLimit ? "text-red-600" : "text-gray-500"}`}>
               {syllabusWordCount.toLocaleString("en-US")} / 1,500 words
             </p>
             {isSyllabusOverLimit && (
-              <p id="syllabus-word-error" role="alert" className="mt-2 text-xs font-medium text-red-600">
+              <p id="syllabus-word-error" role="alert" className="mt-2 text-xs font-semibold text-red-600">
                 Syllabus text exceeds the 1,500-word limit. Please remove {(syllabusWordCount - MAX_SYLLABUS_WORDS).toLocaleString("en-US")} words to extract courses.
               </p>
             )}
@@ -272,23 +307,29 @@ export const Step2CoursePool: React.FC<Props> = ({
               <button
                 onClick={handleTextExtract}
                 disabled={isExtracting || !syllabusText.trim() || isSyllabusOverLimit}
-                className="px-5 py-2 bg-primary-400 hover:bg-primary-300 disabled:opacity-50 text-white font-medium text-xs rounded-xl shadow-sm transition-all flex items-center gap-2"
+                className="px-4 py-2 bg-primary-400 hover:bg-primary-300 disabled:opacity-50 text-white font-semibold text-xs rounded-lg transition-colors flex items-center gap-2"
               >
                 {isExtracting ? (
                   <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" /> Extracting...
+                    <FiLoader className="w-3.5 h-3.5 animate-spin" /> Extracting...
                   </>
                 ) : (
                   <>
-                    <Sparkles className="w-3.5 h-3.5" /> Extract Courses via AI
+                    <FiZap className="w-3.5 h-3.5" /> Extract Courses via AI
                   </>
                 )}
               </button>
             </div>
           </div>
 
+          {extractionNotice && (
+            <div className="p-3 bg-primary-100 border border-primary-200 rounded-lg text-primary-400 text-xs font-semibold">
+              {extractionNotice}
+            </div>
+          )}
+
           {extractionError && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs font-medium">
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs font-semibold">
               {extractionError}
             </div>
           )}
@@ -297,7 +338,7 @@ export const Step2CoursePool: React.FC<Props> = ({
 
       {/* Manual Entry Tab */}
       {activeTab === "manual" && (
-        <form onSubmit={handleManualAdd} className="bg-white rounded-xl border border-gray-200/80 p-6 shadow-sm space-y-4">
+        <form onSubmit={handleManualAdd} className="bg-white rounded-lg border border-gray-200 p-5 shadow-sm space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1">Course Code</label>
@@ -307,7 +348,7 @@ export const Step2CoursePool: React.FC<Props> = ({
                 placeholder="e.g. CS 101"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm"
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm"
               />
             </div>
             <div>
@@ -318,7 +359,7 @@ export const Step2CoursePool: React.FC<Props> = ({
                 placeholder="e.g. Intro to Computer Science"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm"
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm"
               />
             </div>
           </div>
@@ -332,7 +373,7 @@ export const Step2CoursePool: React.FC<Props> = ({
                 max="8"
                 value={credits}
                 onChange={(e) => setCredits(parseInt(e.target.value, 10) || 3)}
-                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm"
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm"
               />
             </div>
             <div>
@@ -342,7 +383,7 @@ export const Step2CoursePool: React.FC<Props> = ({
                 placeholder="e.g. Dr. Smith"
                 value={instructor}
                 onChange={(e) => setInstructor(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm"
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm"
               />
             </div>
             <div>
@@ -353,8 +394,8 @@ export const Step2CoursePool: React.FC<Props> = ({
                     key={c}
                     type="button"
                     onClick={() => setColor(c)}
-                    className={`w-6 h-6 rounded-full border-2 transition-all ${
-                      color === c ? "border-gray-800 scale-110" : "border-transparent"
+                    className={`w-6 h-6 rounded-full border-2 transition-colors ${
+                      color === c ? "border-gray-800" : "border-transparent"
                     }`}
                     style={{ backgroundColor: c }}
                   />
@@ -364,7 +405,7 @@ export const Step2CoursePool: React.FC<Props> = ({
           </div>
 
           <div className="flex items-center gap-6 pt-1">
-            <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-gray-700">
+            <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-gray-700">
               <input
                 type="checkbox"
                 checked={isRequired}
@@ -376,7 +417,7 @@ export const Step2CoursePool: React.FC<Props> = ({
               />
               Required Course
             </label>
-            <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-gray-700">
+            <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-gray-700">
               <input
                 type="checkbox"
                 checked={isElective}
@@ -393,16 +434,16 @@ export const Step2CoursePool: React.FC<Props> = ({
           <div className="pt-2 flex justify-end">
             <button
               type="submit"
-              className="px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white font-medium text-xs rounded-xl shadow-sm transition-all flex items-center gap-1.5"
+              className="px-4 py-2 bg-primary-400 hover:bg-primary-300 text-white font-semibold text-xs rounded-lg transition-colors flex items-center gap-1.5"
             >
-              <Plus className="w-4 h-4" /> Add Course to Pool
+              <FiPlus className="w-4 h-4" /> Add Course to Pool
             </button>
           </div>
         </form>
       )}
 
       {/* Active Pool List */}
-      <div className="bg-white rounded-xl border border-gray-200/80 p-6 shadow-sm">
+      <div className="bg-white rounded-lg border border-gray-200 p-5 shadow-sm">
         <h3 className="text-sm font-semibold text-gray-800 mb-4 flex items-center justify-between">
           <span>Active Course Pool ({courses.length})</span>
           <span className="text-xs font-normal text-gray-400">Identity distinct from sections</span>
@@ -417,29 +458,29 @@ export const Step2CoursePool: React.FC<Props> = ({
             {courses.map((c) => (
               <div
                 key={c.id}
-                className="p-4 rounded-xl border border-gray-100 bg-gray-50/50 flex items-center justify-between hover:border-gray-300 transition-all"
+                className="p-3.5 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-between hover:border-gray-300 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-3 h-10 rounded-full" style={{ backgroundColor: c.color }} />
+                  <div className="w-2.5 h-10 rounded-full" style={{ backgroundColor: c.color }} />
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-gray-900 text-sm">{c.code}</span>
-                      <span className="px-2 py-0.5 bg-gray-200/70 text-gray-700 font-semibold text-[10px] rounded-md">
+                      <span className="font-semibold text-gray-800 text-sm">{c.code}</span>
+                      <span className="px-2 py-0.5 bg-gray-100 text-gray-600 font-semibold text-xs rounded-full ring-1 ring-gray-200">
                         {c.credits} cr
                       </span>
                       {c.isRequired && (
-                        <span className="px-2 py-0.5 bg-primary-200 text-primary-500 font-semibold text-[10px] rounded-md">
+                        <span className="px-2 py-0.5 bg-primary-100 text-primary-400 font-semibold text-xs rounded-full ring-1 ring-primary-300">
                           Required
                         </span>
                       )}
                       {c.isElective && (
-                        <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 font-semibold text-[10px] rounded-md">
+                        <span className="px-2 py-0.5 bg-secondary-200/40 text-secondary-500 font-semibold text-xs rounded-full ring-1 ring-secondary-200">
                           Elective
                         </span>
                       )}
                     </div>
                     <p className="text-xs text-gray-600 line-clamp-1">{c.title}</p>
-                    {c.instructor && <p className="text-[11px] text-gray-400">Prof: {c.instructor}</p>}
+                    {c.instructor && <p className="text-xs text-gray-400">Prof. {c.instructor}</p>}
                   </div>
                 </div>
 
@@ -447,7 +488,7 @@ export const Step2CoursePool: React.FC<Props> = ({
                   onClick={() => onDeleteCourse(c.id)}
                   className="p-2 text-gray-400 hover:text-red-600 rounded-lg transition-colors"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <FiTrash2 className="w-4 h-4" />
                 </button>
               </div>
             ))}
@@ -459,17 +500,17 @@ export const Step2CoursePool: React.FC<Props> = ({
       <div className="flex items-center justify-between pt-4">
         <button
           onClick={onBack}
-          className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium text-sm rounded-xl transition-all flex items-center gap-2"
+          className="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 font-semibold text-sm rounded-lg transition-colors hover:bg-gray-50 flex items-center gap-2"
         >
-          <ArrowLeft className="w-4 h-4" /> Back
+          <FiArrowLeft className="w-4 h-4" /> Back
         </button>
 
         <button
           onClick={onNext}
           disabled={courses.length === 0}
-          className="px-6 py-2.5 bg-primary-400 hover:bg-primary-300 disabled:opacity-50 text-white font-medium text-sm rounded-xl transition-all shadow-sm flex items-center gap-2"
+          className="px-5 py-2.5 bg-primary-400 hover:bg-primary-300 disabled:opacity-50 text-white font-semibold text-sm rounded-lg transition-colors flex items-center gap-2"
         >
-          Configure Sections & Catalog <ArrowRight className="w-4 h-4" />
+          Configure Sections & Catalog <FiArrowRight className="w-4 h-4" />
         </button>
       </div>
     </div>

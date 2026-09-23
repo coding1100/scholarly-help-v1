@@ -69,6 +69,9 @@ export interface ExtractedSyllabusCoursework {
 export interface ExtractedSyllabusResult {
   courses: ExtractedSyllabusCourse[];
   coursework: ExtractedSyllabusCoursework[];
+  /** True when the source text was longer than the backend's extraction
+   * prompt cap, so content past that point wasn't seen by the model. */
+  truncated?: boolean;
 }
 
 export interface SchedulePreferences {

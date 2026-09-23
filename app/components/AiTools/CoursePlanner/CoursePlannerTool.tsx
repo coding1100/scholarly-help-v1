@@ -2,19 +2,19 @@
 
 import React, { useEffect, useState } from "react";
 import {
-  Sparkles,
-  BookOpen,
-  Calendar as CalendarIcon,
-  Clock,
-  CheckSquare,
-  Bell,
-  Plus,
-  RefreshCw,
-  LayoutDashboard,
-  ShieldCheck,
-  Zap,
-  Trash2,
-} from "lucide-react";
+  FiBookOpen,
+  FiCalendar,
+  FiClock,
+  FiCheckSquare,
+  FiBell,
+  FiPlus,
+  FiRefreshCw,
+  FiGrid,
+  FiShield,
+  FiZap,
+  FiTrash2,
+  FiX,
+} from "react-icons/fi";
 import {
   Semester,
   CourseCatalogItem,
@@ -228,10 +228,31 @@ export const CoursePlannerTool: React.FC = () => {
   // Adaptive alert handlers
   const handleApplyAlert = (id: string) =>
     runMutation(async () => {
-      await CoursePlannerService.applyAdaptiveAlert(id);
+      const result = await CoursePlannerService.applyAdaptiveAlert(id);
       if (activeSemester) {
         setAlerts(await CoursePlannerService.getAdaptiveAlerts(activeSemester.id));
         setCoursework(await CoursePlannerService.getCoursework(activeSemester.id));
+      }
+      // The backend only marks an alert "applied" if at least one proposed
+      // change actually landed — if every referenced coursework item was
+      // deleted out from under it, `applied` comes back false and nothing
+      // changed. Throw so runMutation surfaces this as a real failure
+      // instead of the caller assuming success just because the request
+      // itself didn't error.
+      if (!result.applied) {
+        throw new Error(
+          result.total > 0
+            ? "Couldn't apply this proposal — the coursework it referenced was deleted."
+            : "This proposal had nothing to apply."
+        );
+      }
+    });
+
+  const handleIgnoreAlert = (id: string) =>
+    runMutation(async () => {
+      await CoursePlannerService.ignoreAdaptiveAlert(id);
+      if (activeSemester) {
+        setAlerts(await CoursePlannerService.getAdaptiveAlerts(activeSemester.id));
       }
     });
 
@@ -247,23 +268,43 @@ export const CoursePlannerTool: React.FC = () => {
       setSettings(await CoursePlannerService.updateNotificationSettings(updates));
     });
 
+  // Once a semester is finalized, only the sections the student actually
+  // enrolled in should appear anywhere in the dashboard — not the full raw
+  // pool (which may have multiple sections per course). `Semester` doesn't
+  // carry `selectedSectionIds` directly, but every finalized semester has
+  // exactly one AttendanceLog per selected section per class day, so the
+  // set of section IDs referenced there reconstructs the same selection
+  // without needing a schema change. Filters `.sections` per course but
+  // never drops a course entirely — CoursesTab/AttendanceTab still need to
+  // show every enrolled course even if (in principle) it ended up with zero
+  // remaining sections.
+  const coursesForDisplay = React.useMemo(() => {
+    if (!activeSemester || activeSemester.status !== "finalized") return courses;
+    const selectedSectionIds = new Set(attendanceLogs.map((log) => log.sectionId));
+    if (selectedSectionIds.size === 0) return courses;
+    return courses.map((c) => ({
+      ...c,
+      sections: c.sections.filter((s) => selectedSectionIds.has(s.id)),
+    }));
+  }, [courses, attendanceLogs, activeSemester]);
+
   const unreadNotifCount = notifications.filter((n) => !n.read).length;
 
   const dashboardTabs = [
-    { id: "overview", label: "Overview", icon: LayoutDashboard },
-    { id: "schedule", label: "Timetable", icon: Clock },
-    { id: "courses", label: "Courses", icon: BookOpen },
-    { id: "coursework", label: "Coursework Kanban", icon: CheckSquare },
-    { id: "calendar", label: "Calendar", icon: CalendarIcon },
-    { id: "attendance", label: "Attendance", icon: ShieldCheck },
-    { id: "adaptive", label: "Adaptive Planning", icon: Zap },
+    { id: "overview", label: "Overview", icon: FiGrid },
+    { id: "schedule", label: "Timetable", icon: FiClock },
+    { id: "courses", label: "Courses", icon: FiBookOpen },
+    { id: "coursework", label: "Coursework Kanban", icon: FiCheckSquare },
+    { id: "calendar", label: "Calendar", icon: FiCalendar },
+    { id: "attendance", label: "Attendance", icon: FiShield },
+    { id: "adaptive", label: "Adaptive Planning", icon: FiZap },
   ];
 
   if (isLoading) {
     return (
       <div className="w-full max-w-7xl mx-auto px-4 py-16 flex items-center justify-center">
         <div className="flex items-center gap-3 text-gray-500 text-sm font-semibold">
-          <RefreshCw className="w-4 h-4 animate-spin" />
+          <FiRefreshCw className="w-4 h-4 animate-spin" />
           Loading your Course Planner…
         </div>
       </div>
@@ -273,14 +314,14 @@ export const CoursePlannerTool: React.FC = () => {
   if (loadError) {
     return (
       <div className="w-full max-w-7xl mx-auto px-4 py-16">
-        <div className="max-w-md mx-auto text-center bg-white rounded-xl border border-red-200 p-8 shadow-sm">
-          <p className="text-sm font-semibold text-red-700 mb-2">Something went wrong</p>
+        <div className="max-w-md mx-auto text-center bg-white rounded-lg border border-gray-200 p-8 shadow-sm">
+          <p className="text-sm font-semibold text-gray-800 mb-2">Something went wrong</p>
           <p className="text-xs text-gray-500 mb-5">{loadError}</p>
           <button
             onClick={refreshAllData}
-            className="px-4 py-2 bg-primary-400 hover:bg-primary-300 text-white font-semibold text-xs rounded-xl transition-all inline-flex items-center gap-1.5"
+            className="px-4 py-2 bg-primary-400 hover:bg-primary-300 text-white font-semibold text-xs rounded-lg transition-colors inline-flex items-center gap-1.5"
           >
-            <RefreshCw className="w-3.5 h-3.5" /> Retry
+            <FiRefreshCw className="w-3.5 h-3.5" /> Retry
           </button>
         </div>
       </div>
@@ -290,24 +331,24 @@ export const CoursePlannerTool: React.FC = () => {
   return (
     <div className="container relative mx-auto max-w-7xl px-3 py-4 sm:px-4 md:px-8 md:py-6 space-y-6">
       {mutationError && (
-        <div className="bg-red-50 border border-red-200 text-red-700 text-xs font-semibold rounded-xl px-4 py-3 flex items-center justify-between">
+        <div className="bg-red-50 border border-red-200 text-red-700 text-xs font-semibold rounded-lg px-4 py-3 flex items-center justify-between">
           <span>{mutationError}</span>
-          <button onClick={() => setMutationError(null)} className="text-red-400 hover:text-red-600 font-bold px-2">
-            ✕
+          <button onClick={() => setMutationError(null)} className="text-red-400 hover:text-red-600 p-1">
+            <FiX className="w-3.5 h-3.5" />
           </button>
         </div>
       )}
       {/* Top Application Header */}
-      <div className="bg-white rounded-xl border border-gray-200/80 p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white rounded-lg border border-gray-200 p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div>
-            <h1 className="text-xl font-semibold text-gray-800 tracking-tight flex items-center gap-2">
+            <h1 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
               AI Course Planner
-              <span className="px-2.5 py-0.5 bg-primary-100 text-primary-500 text-[10px] font-semibold rounded-full border border-primary-200 uppercase">
+              <span className="px-2.5 py-0.5 bg-primary-100 text-primary-400 text-xs font-semibold rounded-full ring-1 ring-primary-300">
                 Pro
               </span>
             </h1>
-            <p className="text-xs text-gray-500 font-medium">Smart timetable scheduling, attendance tracking & workload rebalancing</p>
+            <p className="text-xs text-gray-500">Smart timetable scheduling, attendance tracking & workload rebalancing</p>
           </div>
         </div>
 
@@ -318,7 +359,7 @@ export const CoursePlannerTool: React.FC = () => {
               <select
                 value={activeSemester?.id || ""}
                 onChange={(e) => handleSelectSemester(e.target.value)}
-                className="px-3.5 py-2 border border-gray-200 rounded-xl text-xs font-semibold text-gray-800 bg-white shadow-2xs focus:ring-2 focus:ring-primary-400/20"
+                className="px-3.5 py-2 border border-gray-300 rounded-lg text-xs font-semibold text-gray-800 bg-white focus:ring-2 focus:ring-primary-400/20"
               >
                 {semesters.map((s) => (
                   <option key={s.id} value={s.id}>
@@ -329,10 +370,10 @@ export const CoursePlannerTool: React.FC = () => {
               {activeSemester && (
                 <button
                   onClick={() => setDeleteConfirmSemester(activeSemester)}
-                  className="p-2 bg-gray-50 hover:bg-red-50 border border-gray-200 hover:border-red-200 rounded-xl text-gray-500 hover:text-red-600 transition-all"
+                  className="p-2 rounded-lg text-gray-500 transition-colors hover:bg-gray-50 hover:text-red-600"
                   title={`Delete ${activeSemester.name}`}
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <FiTrash2 className="w-4 h-4" />
                 </button>
               )}
             </div>
@@ -340,17 +381,17 @@ export const CoursePlannerTool: React.FC = () => {
 
           <button
             onClick={handleCreateNewSemesterClick}
-            className="px-3.5 py-2 bg-primary-100 hover:bg-primary-200 text-primary-500 font-semibold text-xs rounded-xl border border-primary-200 transition-all flex items-center gap-1.5"
+            className="px-3.5 py-2 bg-primary-400 hover:bg-primary-300 text-white font-semibold text-xs rounded-lg transition-colors flex items-center gap-1.5"
           >
-            <Plus className="w-4 h-4" /> New Semester
+            <FiPlus className="w-4 h-4" /> New Semester
           </button>
 
           <button
             onClick={() => setIsNotifOpen(true)}
-            className="relative p-2.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl text-gray-700 transition-all"
+            className="relative rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-50 hover:text-primary-400"
             title="Notifications Queue"
           >
-            <Bell className="w-4 h-4" />
+            <FiBell className="w-4 h-4" />
             {unreadNotifCount > 0 && (
               <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary-400 text-white font-semibold text-[9px] rounded-full flex items-center justify-center border-2 border-white">
                 {unreadNotifCount}
@@ -370,7 +411,7 @@ export const CoursePlannerTool: React.FC = () => {
       ) : (
         <div className="space-y-6">
           {/* Dashboard Tab Navigation Bar */}
-          <div className="bg-white rounded-xl border border-gray-200/80 p-2 shadow-sm overflow-x-auto flex gap-1.5">
+          <div className="bg-white rounded-lg border border-gray-200 p-1.5 shadow-sm overflow-x-auto flex gap-1">
             {dashboardTabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -378,10 +419,10 @@ export const CoursePlannerTool: React.FC = () => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-4 py-2.5 rounded-xl font-semibold text-xs transition-all flex items-center gap-2 whitespace-nowrap ${
+                  className={`px-3.5 py-2 rounded-lg font-semibold text-xs transition-colors flex items-center gap-1.5 whitespace-nowrap ${
                     isActive
-                      ? "bg-primary-400 text-white shadow-sm"
-                      : "text-gray-600 hover:bg-gray-100"
+                      ? "bg-primary-400 text-white"
+                      : "text-gray-600 hover:bg-gray-50"
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -395,7 +436,7 @@ export const CoursePlannerTool: React.FC = () => {
           {activeTab === "overview" && (
             <OverviewTab
               semester={activeSemester}
-              courses={courses}
+              courses={coursesForDisplay}
               coursework={coursework}
               attendanceLogs={attendanceLogs}
               alerts={alerts}
@@ -405,14 +446,14 @@ export const CoursePlannerTool: React.FC = () => {
           {activeTab === "schedule" && (
             <ScheduleTab
               semester={activeSemester}
-              courses={courses}
+              courses={coursesForDisplay}
               coursework={coursework}
               attendanceLogs={attendanceLogs}
             />
           )}
           {activeTab === "courses" && (
             <CoursesTab
-              courses={courses}
+              courses={coursesForDisplay}
               onUpdateCourse={handleUpdateCourse}
               onDeleteCourse={handleDeleteCourse}
             />
@@ -420,7 +461,7 @@ export const CoursePlannerTool: React.FC = () => {
           {activeTab === "coursework" && (
             <CourseworkKanbanTab
               semesterId={activeSemester.id}
-              courses={courses}
+              courses={coursesForDisplay}
               coursework={coursework}
               onCreateCoursework={handleCreateCoursework}
               onUpdateCoursework={handleUpdateCoursework}
@@ -429,7 +470,7 @@ export const CoursePlannerTool: React.FC = () => {
           )}
           {activeTab === "calendar" && (
             <CalendarTab
-              courses={courses}
+              courses={coursesForDisplay}
               coursework={coursework}
               calendarEvents={calendarEvents}
               onAddPersonalEvent={handleAddPersonalEvent}
@@ -438,7 +479,7 @@ export const CoursePlannerTool: React.FC = () => {
           )}
           {activeTab === "attendance" && (
             <AttendanceTab
-              courses={courses}
+              courses={coursesForDisplay}
               attendanceLogs={attendanceLogs}
               onConfirmAttendance={handleConfirmAttendance}
             />
@@ -447,6 +488,7 @@ export const CoursePlannerTool: React.FC = () => {
             <AdaptivePlanningTab
               alerts={alerts}
               onApplyAlert={handleApplyAlert}
+              onIgnoreAlert={handleIgnoreAlert}
             />
           )}
         </div>
@@ -465,26 +507,26 @@ export const CoursePlannerTool: React.FC = () => {
 
       {/* Delete Semester Confirmation Modal */}
       {deleteConfirmSemester && (
-        <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-xl space-y-4">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl p-5 max-w-md w-full shadow-xl space-y-4">
             <h3 className="text-lg font-semibold text-gray-800">Delete Semester?</h3>
             <p className="text-xs text-gray-600">
               Are you sure you want to delete <span className="font-semibold">{deleteConfirmSemester.name}</span>?
             </p>
-            <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-medium">
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700">
               This will permanently delete all its courses, coursework, attendance logs, and calendar events. This
               cannot be undone.
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => setDeleteConfirmSemester(null)}
-                className="px-4 py-2 bg-gray-100 text-gray-700 text-xs font-semibold rounded-xl"
+                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-xs font-semibold rounded-lg transition-colors hover:bg-gray-50"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleDeleteSemester(deleteConfirmSemester)}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-xl shadow-xs"
+                className="px-4 py-2 bg-white border border-red-300 text-red-600 text-xs font-semibold rounded-lg transition-colors hover:bg-red-50"
               >
                 Confirm Delete
               </button>

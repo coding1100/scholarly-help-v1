@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Printer, Calendar, Clock, BookOpen, AlertCircle } from "lucide-react";
+import { FiPrinter, FiMapPin, FiBell } from "react-icons/fi";
 import { CourseCatalogItem, Coursework, AttendanceLog, Semester } from "@/app/lib/client/coursePlanner/types";
 
 interface Props {
@@ -72,28 +72,28 @@ export const ScheduleTab: React.FC<Props> = ({
   return (
     <div className="space-y-6">
       {/* Header Bar */}
-      <div className="bg-white rounded-xl border border-gray-200/80 p-6 shadow-sm flex items-center justify-between">
+      <div className="bg-white rounded-lg border border-gray-200 p-5 shadow-sm flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-gray-800">Weekly Class Timetable</h2>
-          <p className="text-sm text-gray-500">Accepted schedule timetable with course colors and due-date badges</p>
+          <h2 className="text-lg font-semibold text-gray-800">Weekly Class Timetable</h2>
+          <p className="text-xs text-gray-500">Accepted schedule timetable with course colors and due-date badges</p>
         </div>
 
         <button
           onClick={handlePrint}
-          className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-xl border border-gray-200 transition-all flex items-center gap-2"
+          className="px-4 py-2 bg-white hover:bg-gray-50 text-gray-700 text-xs font-semibold rounded-lg border border-gray-300 transition-colors flex items-center gap-2"
         >
-          <Printer className="w-3.5 h-3.5" /> Print / Export Timetable
+          <FiPrinter className="w-3.5 h-3.5" /> Print / Export Timetable
         </button>
       </div>
 
       {/* Interactive Timetable Grid */}
-      <div className="bg-white rounded-xl border border-gray-200/80 p-6 shadow-sm overflow-x-auto">
+      <div className="bg-white rounded-lg border border-gray-200 p-5 shadow-sm overflow-x-auto">
         <div className="min-w-[700px]">
           {/* Days Header */}
           <div className="grid grid-cols-6 border-b border-gray-200 pb-3 mb-3 text-center">
-            <div className="text-xs font-semibold text-gray-400 uppercase">Time</div>
+            <div className="text-xs font-semibold text-gray-400">Time</div>
             {days.map((d) => (
-              <div key={d} className="text-xs font-semibold text-gray-800 uppercase tracking-wider">
+              <div key={d} className="text-xs font-semibold text-gray-800 tracking-wide">
                 {dayNames[d]}
               </div>
             ))}
@@ -124,29 +124,31 @@ export const ScheduleTab: React.FC<Props> = ({
                         return (
                         <div
                           key={section.id}
-                          className="p-2.5 rounded-xl border text-white shadow-xs transition-transform hover:scale-[1.02]"
+                          className="p-2.5 rounded-lg text-white shadow-sm transition-transform hover:scale-[1.02]"
                           style={{ backgroundColor: course.color }}
                         >
                           <div className="flex items-center justify-between">
                             <span className="font-semibold text-xs">{course.code}</span>
-                            <span className="text-[10px] bg-black/20 px-1.5 py-0.5 rounded font-bold">
+                            <span className="text-[10px] bg-black/20 px-1.5 py-0.5 rounded font-semibold">
                               Sec {section.sectionNumber}
                             </span>
                           </div>
                           <p className="text-[10px] opacity-90 truncate mt-0.5">{course.title}</p>
                           {dueTitles && dueTitles.size > 0 && (
                             <p
-                              className="text-[9px] font-bold bg-black/25 rounded px-1 py-0.5 mt-1 truncate"
+                              className="flex items-center gap-1 text-[9px] font-semibold bg-black/25 rounded px-1 py-0.5 mt-1 truncate"
                               title={Array.from(dueTitles).join(", ")}
                             >
-                              📌 Due: {Array.from(dueTitles)[0]}{dueTitles.size > 1 ? ` +${dueTitles.size - 1}` : ""}
+                              <FiBell className="w-2.5 h-2.5 shrink-0" /> Due: {Array.from(dueTitles)[0]}{dueTitles.size > 1 ? ` +${dueTitles.size - 1}` : ""}
                             </p>
                           )}
                           <p className="text-[10px] font-semibold mt-1 opacity-90">
                             {section.startTime} - {section.endTime}
                           </p>
                           {section.location && (
-                            <p className="text-[9px] opacity-75 truncate">📍 {section.location}</p>
+                            <p className="flex items-center gap-1 text-[9px] opacity-75 truncate">
+                              <FiMapPin className="w-2.5 h-2.5 shrink-0" /> {section.location}
+                            </p>
                           )}
                         </div>
                         );

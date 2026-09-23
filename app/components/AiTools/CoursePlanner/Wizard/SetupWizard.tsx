@@ -3,6 +3,7 @@ import { Semester, CourseCatalogItem, ScheduleOption, SchedulePreferences, Polic
 import { CoursePlannerService } from "@/app/lib/client/coursePlanner/service";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
+import { FiCheck, FiX } from "react-icons/fi";
 import { Step1SemesterInfo } from "./Step1SemesterInfo";
 import { Step2CoursePool } from "./Step2CoursePool";
 import { Step3CatalogSections } from "./Step3CatalogSections";
@@ -93,11 +94,22 @@ export const SetupWizard: React.FC<Props> = ({ activeSemester, priorSemesters, o
       setStep(2);
     });
 
-  // Step 2: Course pool handlers
-  const handleAddCourse = (courseData: Omit<CourseCatalogItem, "id" | "semesterId">) =>
+  // Step 2: Course pool handlers. Sections have no `id`/`courseId` yet — the
+  // backend assigns both once the course document exists — so this accepts
+  // the same relaxed shape Step2CoursePool builds (CoursePlannerService.
+  // addCourse's stricter param type is enforced by the DTO server-side, not
+  // meaningfully by this client-only type).
+  const handleAddCourse = (
+    courseData: Omit<CourseCatalogItem, "id" | "semesterId" | "sections"> & {
+      sections: Omit<CourseCatalogItem["sections"][number], "id" | "courseId">[];
+    }
+  ) =>
     runStep(async () => {
       if (!currentSemesterId) return;
-      const newCrs = await CoursePlannerService.addCourse({ ...courseData, semesterId: currentSemesterId });
+      const newCrs = await CoursePlannerService.addCourse({
+        ...courseData,
+        semesterId: currentSemesterId,
+      } as Omit<CourseCatalogItem, "id">);
       setCourses((prev) => [...prev, newCrs]);
     });
 
@@ -169,7 +181,7 @@ export const SetupWizard: React.FC<Props> = ({ activeSemester, priorSemesters, o
   return (
     <div className="space-y-8 py-4">
       {/* Wizard Progress Steps Bar */}
-      <div className="max-w-4xl mx-auto bg-white rounded-xl border border-gray-200/80 p-4 shadow-sm">
+      <div className="max-w-4xl mx-auto bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
         <div className="flex items-center justify-between">
           {stepTitles.map((title, idx) => {
             const stepNum = idx + 1;
@@ -178,19 +190,19 @@ export const SetupWizard: React.FC<Props> = ({ activeSemester, priorSemesters, o
             return (
               <div key={idx} className="flex items-center gap-2">
                 <div
-                  className={`w-7 h-7 rounded-full font-semibold text-xs flex items-center justify-center transition-all ${
+                  className={`w-7 h-7 rounded-full font-semibold text-xs flex items-center justify-center transition-colors ${
                     isDone
-                      ? "bg-emerald-600 text-white"
+                      ? "bg-primary-400 text-white"
                       : isCurrent
                       ? "bg-primary-400 text-white ring-4 ring-primary-200"
                       : "bg-gray-100 text-gray-400"
                   }`}
                 >
-                  {isDone ? "✓" : stepNum}
+                  {isDone ? <FiCheck className="w-3.5 h-3.5" /> : stepNum}
                 </div>
                 <span
                   className={`text-xs font-semibold hidden md:inline ${
-                    isCurrent ? "text-primary-400 font-bold" : "text-gray-500"
+                    isCurrent ? "text-primary-400" : "text-gray-500"
                   }`}
                 >
                   {title}
@@ -203,10 +215,10 @@ export const SetupWizard: React.FC<Props> = ({ activeSemester, priorSemesters, o
       </div>
 
       {wizardError && (
-        <div className="max-w-4xl mx-auto bg-red-50 border border-red-200 text-red-700 text-xs font-semibold rounded-xl px-4 py-3 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto bg-red-50 border border-red-200 text-red-700 text-xs font-semibold rounded-lg px-4 py-3 flex items-center justify-between">
           <span>{wizardError}</span>
-          <button onClick={() => setWizardError(null)} className="text-red-400 hover:text-red-600 font-bold px-2">
-            ✕
+          <button onClick={() => setWizardError(null)} className="text-red-400 hover:text-red-600 p-1">
+            <FiX className="w-3.5 h-3.5" />
           </button>
         </div>
       )}
@@ -220,6 +232,7 @@ export const SetupWizard: React.FC<Props> = ({ activeSemester, priorSemesters, o
           onDeleteCourse={handleDeleteCourse}
           onNext={() => setStep(3)}
           onBack={() => setStep(1)}
+          guardAiClick={guardAiClick}
         />
       )}
       {step === 3 && (
@@ -243,6 +256,7 @@ export const SetupWizard: React.FC<Props> = ({ activeSemester, priorSemesters, o
           options={scheduleOptions}
           onSelectOption={handleSelectOption}
           onBack={() => setStep(4)}
+          guardAiClick={guardAiClick}
         />
       )}
       {step === 6 && selectedOption && (

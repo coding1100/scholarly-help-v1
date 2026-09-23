@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Calendar as CalendarIcon, Plus, Filter, Clock, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { FiPlus, FiFilter, FiTrash2, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { CourseCatalogItem, Coursework, CalendarEvent, CalendarCategory } from "@/app/lib/client/coursePlanner/types";
 
 const MONTH_NAMES = [
@@ -51,7 +51,7 @@ export const CalendarTab: React.FC<Props> = ({
       startTime,
       endTime,
       category: "personal",
-      color: "#8b5cf6",
+      color: "#565add",
     });
 
     setEventTitle("");
@@ -61,26 +61,26 @@ export const CalendarTab: React.FC<Props> = ({
   return (
     <div className="space-y-6">
       {/* Header Bar */}
-      <div className="bg-white rounded-xl border border-gray-200/80 p-6 shadow-sm flex items-center justify-between">
+      <div className="bg-white rounded-lg border border-gray-200 p-5 shadow-sm flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-gray-800">Unified Academic Calendar</h2>
-          <p className="text-sm text-gray-500">Classes, coursework deadlines, and personal schedule events in one view</p>
+          <h2 className="text-lg font-semibold text-gray-800">Unified Academic Calendar</h2>
+          <p className="text-xs text-gray-500">Classes, coursework deadlines, and personal schedule events in one view</p>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex bg-gray-100 p-1 rounded-xl">
+          <div className="flex bg-gray-100 p-1 rounded-lg">
             <button
               onClick={() => setViewMode("month")}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                viewMode === "month" ? "bg-white text-primary-400 shadow-2xs" : "text-gray-600"
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+                viewMode === "month" ? "bg-white text-primary-400 shadow-sm" : "text-gray-600"
               }`}
             >
               Month Grid
             </button>
             <button
               onClick={() => setViewMode("agenda")}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                viewMode === "agenda" ? "bg-white text-primary-400 shadow-2xs" : "text-gray-600"
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+                viewMode === "agenda" ? "bg-white text-primary-400 shadow-sm" : "text-gray-600"
               }`}
             >
               Agenda List
@@ -89,9 +89,9 @@ export const CalendarTab: React.FC<Props> = ({
 
           <button
             onClick={() => setShowEventModal(true)}
-            className="px-4 py-2 bg-primary-400 hover:bg-primary-300 text-white text-xs font-semibold rounded-xl shadow-sm transition-all flex items-center gap-1.5"
+            className="px-4 py-2 bg-primary-400 hover:bg-primary-300 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5"
           >
-            <Plus className="w-4 h-4" /> Personal Event
+            <FiPlus className="w-4 h-4" /> Personal Event
           </button>
         </div>
       </div>
@@ -99,16 +99,16 @@ export const CalendarTab: React.FC<Props> = ({
       {/* Category Filters */}
       <div className="flex items-center gap-2">
         <span className="text-xs font-semibold text-gray-500 flex items-center gap-1">
-          <Filter className="w-3.5 h-3.5" /> Filter Category:
+          <FiFilter className="w-3.5 h-3.5" /> Filter Category
         </span>
         {(["all", "class", "coursework", "personal"] as const).map((cat) => (
           <button
             key={cat}
             onClick={() => setFilterCategory(cat)}
-            className={`px-3 py-1 text-xs font-semibold rounded-xl capitalize transition-all ${
+            className={`px-3 py-1 text-xs font-semibold rounded-full capitalize transition-colors ring-1 ${
               filterCategory === cat
-                ? "bg-gray-900 text-white shadow-2xs"
-                : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
+                ? "bg-primary-400 text-white ring-primary-400"
+                : "bg-white text-gray-600 ring-gray-200 hover:bg-gray-50"
             }`}
           >
             {cat}
@@ -118,7 +118,7 @@ export const CalendarTab: React.FC<Props> = ({
 
       {/* Agenda View */}
       {viewMode === "agenda" && (
-        <div className="bg-white rounded-xl border border-gray-200/80 p-6 shadow-sm space-y-4">
+        <div className="bg-white rounded-lg border border-gray-200 p-5 shadow-sm space-y-4">
           <h3 className="text-sm font-semibold text-gray-800">Upcoming Agenda Events</h3>
 
           <div className="space-y-3">
@@ -127,17 +127,17 @@ export const CalendarTab: React.FC<Props> = ({
               .map((cw) => {
                 const course = courses.find((c) => c.id === cw.courseId);
                 return (
-                  <div key={cw.id} className="p-3.5 bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-between">
+                  <div key={cw.id} className="p-3.5 bg-gray-50 rounded-lg border border-gray-200 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-3 h-10 rounded-full" style={{ backgroundColor: course?.color || "#3b82f6" }} />
+                      <div className="w-2.5 h-10 rounded-full" style={{ backgroundColor: course?.color || "#3b82f6" }} />
                       <div>
-                        <span className="font-bold text-gray-900 text-xs">{cw.title}</span>
+                        <span className="font-semibold text-gray-800 text-xs">{cw.title}</span>
                         <span className="text-xs text-primary-400 font-semibold ml-2">[{course?.code || "COURSE"}]</span>
-                        <p className="text-[11px] text-gray-400">Due: {cw.dueDate.replace("T", " ")}</p>
+                        <p className="text-xs text-gray-400">Due: {cw.dueDate.replace("T", " ")}</p>
                       </div>
                     </div>
 
-                    <span className="px-2.5 py-1 bg-amber-100 text-amber-800 text-[10px] font-semibold rounded-md">
+                    <span className="px-2.5 py-1 bg-secondary-200/40 text-secondary-500 text-xs font-semibold rounded-full ring-1 ring-secondary-200">
                       Coursework
                     </span>
                   </div>
@@ -147,23 +147,23 @@ export const CalendarTab: React.FC<Props> = ({
             {calendarEvents
               .filter((e) => filterCategory === "all" || filterCategory === e.category)
               .map((e) => (
-                <div key={e.id} className="p-3.5 bg-purple-50/60 border border-purple-100 rounded-xl flex items-center justify-between">
+                <div key={e.id} className="p-3.5 bg-primary-100 border border-primary-200 rounded-lg flex items-center justify-between">
                   <div>
-                    <span className="font-bold text-purple-900 text-xs">{e.title}</span>
-                    <p className="text-[11px] text-purple-700">
+                    <span className="font-semibold text-primary-500 text-xs">{e.title}</span>
+                    <p className="text-xs text-primary-400">
                       {e.date} ({e.startTime} - {e.endTime})
                     </p>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-1 bg-purple-200 text-purple-800 text-[10px] font-semibold rounded-md">
+                    <span className="px-2.5 py-1 bg-white text-primary-400 text-xs font-semibold rounded-full ring-1 ring-primary-300">
                       Personal
                     </span>
                     <button
                       onClick={() => onDeletePersonalEvent(e.id)}
-                      className="text-purple-400 hover:text-red-600 p-1 transition-colors"
+                      className="text-primary-400 hover:text-red-600 p-1 transition-colors"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <FiTrash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
@@ -174,7 +174,7 @@ export const CalendarTab: React.FC<Props> = ({
 
       {/* Month View Grid */}
       {viewMode === "month" && (
-        <div className="bg-white rounded-xl border border-gray-200/80 p-6 shadow-sm space-y-4">
+        <div className="bg-white rounded-lg border border-gray-200 p-5 shadow-sm space-y-4">
           <div className="flex items-center justify-between pb-2 border-b border-gray-100">
             <div className="flex items-center gap-2">
               <button
@@ -182,9 +182,9 @@ export const CalendarTab: React.FC<Props> = ({
                 className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500"
                 aria-label="Previous month"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <FiChevronLeft className="w-4 h-4" />
               </button>
-              <h3 className="text-sm font-semibold text-gray-900 w-40 text-center">
+              <h3 className="text-sm font-semibold text-gray-800 w-40 text-center">
                 {MONTH_NAMES[viewMonth]} {viewYear}
               </h3>
               <button
@@ -192,7 +192,7 @@ export const CalendarTab: React.FC<Props> = ({
                 className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500"
                 aria-label="Next month"
               >
-                <ChevronRight className="w-4 h-4" />
+                <FiChevronRight className="w-4 h-4" />
               </button>
             </div>
             <span className="text-xs text-gray-400">Showing active class & coursework events</span>
@@ -215,15 +215,20 @@ export const CalendarTab: React.FC<Props> = ({
 
               for (let dayNum = 1; dayNum <= daysInMonth; dayNum++) {
                 const dayStr = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(dayNum).padStart(2, "0")}`;
-                const dayTasks = coursework.filter((cw) => cw.dueDate.startsWith(dayStr));
-                const dayEvents = calendarEvents.filter((ev) => ev.date === dayStr);
+                const dayTasks =
+                  filterCategory === "all" || filterCategory === "coursework"
+                    ? coursework.filter((cw) => cw.dueDate.startsWith(dayStr))
+                    : [];
+                const dayEvents = calendarEvents.filter(
+                  (ev) => ev.date === dayStr && (filterCategory === "all" || filterCategory === ev.category)
+                );
                 const isToday = dayStr === todayStr;
 
                 cells.push(
                   <div
                     key={dayNum}
-                    className={`min-h-[75px] rounded-xl border p-2 text-left space-y-1 ${
-                      isToday ? "bg-primary-100 border-primary-300" : "bg-gray-50 border-gray-100"
+                    className={`min-h-[75px] rounded-lg border p-2 text-left space-y-1 ${
+                      isToday ? "bg-primary-100 border-primary-300" : "bg-gray-50 border-gray-200"
                     }`}
                   >
                     <span className={`font-semibold text-xs ${isToday ? "text-primary-500" : "text-gray-700"}`}>{dayNum}</span>
@@ -236,7 +241,7 @@ export const CalendarTab: React.FC<Props> = ({
                       <div
                         key={ev.id}
                         className="p-1 text-white rounded text-[9px] truncate font-semibold"
-                        style={{ backgroundColor: ev.color || "#8b5cf6" }}
+                        style={{ backgroundColor: ev.color || "#565add" }}
                       >
                         {ev.title}
                       </div>
@@ -253,19 +258,19 @@ export const CalendarTab: React.FC<Props> = ({
 
       {/* Add Personal Event Modal */}
       {showEventModal && (
-        <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <form onSubmit={handleCreateEvent} className="bg-white rounded-xl p-6 max-w-md w-full shadow-xl space-y-4">
-            <h3 className="text-lg font-bold text-gray-900">Add Personal Event</h3>
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+          <form onSubmit={handleCreateEvent} className="bg-white rounded-xl p-5 max-w-md w-full shadow-xl space-y-4">
+            <h3 className="text-lg font-semibold text-gray-800">Add Personal Event</h3>
 
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1">Event Title</label>
               <input
                 type="text"
                 required
-                placeholder="e.g. Study Group Session / Career Fair"
+                placeholder="e.g. Study Group Session, Career Fair"
                 value={eventTitle}
                 onChange={(e) => setEventTitle(e.target.value)}
-                className="w-full px-3 py-2 border rounded-xl text-xs"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-primary-400/20"
               />
             </div>
 
@@ -276,7 +281,7 @@ export const CalendarTab: React.FC<Props> = ({
                 required
                 value={eventDate}
                 onChange={(e) => setEventDate(e.target.value)}
-                className="w-full px-3 py-2 border rounded-xl text-xs"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-primary-400/20"
               />
             </div>
 
@@ -287,7 +292,7 @@ export const CalendarTab: React.FC<Props> = ({
                   type="time"
                   value={startTime}
                   onChange={(e) => setStartTime(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-xl text-xs"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-primary-400/20"
                 />
               </div>
 
@@ -297,7 +302,7 @@ export const CalendarTab: React.FC<Props> = ({
                   type="time"
                   value={endTime}
                   onChange={(e) => setEndTime(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-xl text-xs"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-primary-400/20"
                 />
               </div>
             </div>
@@ -306,13 +311,13 @@ export const CalendarTab: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={() => setShowEventModal(false)}
-                className="px-4 py-2 bg-gray-100 text-gray-700 text-xs font-semibold rounded-xl"
+                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-xs font-semibold rounded-lg transition-colors hover:bg-gray-50"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-primary-400 text-white text-xs font-semibold rounded-xl shadow-xs"
+                className="px-4 py-2 bg-primary-400 hover:bg-primary-300 text-white text-xs font-semibold rounded-lg transition-colors"
               >
                 Save Event
               </button>
