@@ -1,15 +1,17 @@
 "use client";
 
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { FiArrowUp, FiBookmark } from "react-icons/fi";
 import toast from "react-hot-toast";
 import ChatMessage from "../ChatMessage";
 import { useTutorChat } from "../useTutorChat";
 import { saveTutorItem } from "../tutorApi";
+import type { SaveHandler } from "../TutorWorkspace";
 
 interface ResearchTabProps {
   sessionId: string | null;
   active: boolean;
+  onRegisterSaveHandler?: (handler: SaveHandler) => void;
 }
 
 /**
@@ -17,7 +19,7 @@ interface ResearchTabProps {
  * topic breakdowns, and citations from the uploaded material. Kept mounted
  * even when not the active tab so its conversation never resets on switch.
  */
-const ResearchTab: FC<ResearchTabProps> = ({ sessionId, active }) => {
+const ResearchTab: FC<ResearchTabProps> = ({ sessionId, active, onRegisterSaveHandler }) => {
   const { messages, isStreaming, error, send, sendActionChip } = useTutorChat({
     sessionId,
     mode: "research",
@@ -48,6 +50,25 @@ const ResearchTab: FC<ResearchTabProps> = ({ sessionId, active }) => {
       setSavingId(null);
     }
   };
+
+  useEffect(() => {
+    if (!onRegisterSaveHandler) return;
+    onRegisterSaveHandler({
+      hasContent: messages.some((m) => m.role === "assistant" && m.text.trim()),
+      save: async (projectLabel?: string) => {
+        const combined = messages
+          .filter((m) => m.role === "assistant" && m.text.trim())
+          .map((m) => m.text.trim())
+          .join("\n\n---\n\n");
+        if (!combined) return;
+        await saveTutorItem({
+          folder: "Research Notes",
+          title: projectLabel ? `${projectLabel} — Research` : combined.slice(0, 80),
+          content: combined,
+        });
+      },
+    });
+  }, [messages, onRegisterSaveHandler]);
 
   return (
     <div className={`flex h-full flex-col ${active ? "" : "hidden"}`}>

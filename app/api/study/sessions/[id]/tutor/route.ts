@@ -34,6 +34,14 @@ type TutorAttachment = {
 type TutorProvenance = "source" | "general" | "image";
 
 const TUTOR_MAX_OUTPUT_TOKENS = 8192;
+// Socratic (assignment) turns must stay short — one guiding question or a
+// small partial hint, never a full breakdown — so give the model much less
+// room to work with than other modes, reinforcing the prompt's hard rule.
+const ASSIGNMENT_MAX_OUTPUT_TOKENS = 1024;
+
+function outputBudgetFor(mode: StudyLearningMode): number {
+  return mode === "assignment" ? ASSIGNMENT_MAX_OUTPUT_TOKENS : TUTOR_MAX_OUTPUT_TOKENS;
+}
 
 const TUTOR_SYSTEM_MARKDOWN =
   " Always format answers in readable Markdown (headings, lists, bold keywords, blank lines between sections).";
@@ -58,6 +66,7 @@ async function continuePartialTutorAnswer(input: {
   partialAnswer: string;
   userQuestion: string;
   context: string;
+  maxOutputTokens: number;
 }) {
   const tail = input.partialAnswer.slice(-12000);
   return generateGeminiText({
@@ -76,7 +85,7 @@ async function continuePartialTutorAnswer(input: {
       "Write only what comes next until the question is fully answered.",
     ].join("\n"),
     temperature: 0.15,
-    maxOutputTokens: TUTOR_MAX_OUTPUT_TOKENS,
+    maxOutputTokens: input.maxOutputTokens,
   });
 }
 
@@ -112,6 +121,18 @@ export async function POST(
       return fail(`Tutor rate limit reached. Try again in ${quota.retryAfterSeconds} seconds.`, 429);
     }
 
+    const body = (await request.json()) as {
+      message?: string;
+      stream?: boolean;
+      attachments?: TutorAttachment[];
+      mode?: StudyLearningMode;
+      examTopics?: string[];
+      tutorContext?: string;
+      groundedText?: string;
+    };
+    const learningMode = resolveLearningMode(body.mode);
+    const outputBudget = outputBudgetFor(learningMode);
+
     // Same free-run-count / credit-balance gate every other tool enforces —
     // Study Workspace only ever had its own generous rate limiter above, so a
     // signed-in user with zero free runs left could still use the tutor
@@ -124,22 +145,11 @@ export async function POST(
         request,
         service: "study.tutor",
         estimatedPromptTokens: 2000,
-        estimatedCompletionTokens: TUTOR_MAX_OUTPUT_TOKENS,
+        estimatedCompletionTokens: outputBudget,
       });
       if (gate.blocked) return gate.response;
       billingReservationId = gate.reservationId;
     }
-
-    const body = (await request.json()) as {
-      message?: string;
-      stream?: boolean;
-      attachments?: TutorAttachment[];
-      mode?: StudyLearningMode;
-      examTopics?: string[];
-      tutorContext?: string;
-      groundedText?: string;
-    };
-    const learningMode = resolveLearningMode(body.mode);
     const examTopics = Array.isArray(body.examTopics)
       ? body.examTopics.map((t) => String(t).trim()).filter(Boolean).slice(0, 12)
       : [];
@@ -318,7 +328,7 @@ export async function POST(
                   ].join("\n"),
                   images: parsedImages,
                   temperature: 0.2,
-                  maxOutputTokens: TUTOR_MAX_OUTPUT_TOKENS,
+                  maxOutputTokens: outputBudget,
                 });
                 fullAnswer = multimodalAnswer.trim();
               }
@@ -343,7 +353,7 @@ export async function POST(
                   isGroundedInOnScreenText: Boolean(groundedText),
                 }),
                 temperature: 0.25,
-                maxOutputTokens: TUTOR_MAX_OUTPUT_TOKENS,
+                maxOutputTokens: outputBudget,
                 streamMetaOut: streamMeta,
               })) {
                 if (!chunk) continue;
@@ -372,6 +382,7 @@ export async function POST(
                   partialAnswer: answer,
                   userQuestion: messageWithAttachmentContext,
                   context,
+                  maxOutputTokens: outputBudget,
                 });
                 const extra = more.trim();
                 if (extra) {
@@ -400,7 +411,7 @@ export async function POST(
                   isGroundedInOnScreenText: Boolean(groundedText),
                 }),
                 temperature: 0.25,
-                maxOutputTokens: TUTOR_MAX_OUTPUT_TOKENS,
+                maxOutputTokens: outputBudget,
               });
               if (answer.trim()) {
                 controller.enqueue(
@@ -429,7 +440,7 @@ export async function POST(
                 request,
                 reservationId: billingReservationId,
                 promptTokens: 2000,
-                completionTokens: TUTOR_MAX_OUTPUT_TOKENS,
+                completionTokens: outputBudget,
               });
             }
           } catch (error) {
@@ -477,7 +488,7 @@ export async function POST(
           ].join("\n"),
           images: parsedImages,
           temperature: 0.2,
-          maxOutputTokens: TUTOR_MAX_OUTPUT_TOKENS,
+          maxOutputTokens: outputBudget,
         });
       }
     } else {
@@ -493,7 +504,7 @@ export async function POST(
           isGroundedInOnScreenText: Boolean(groundedText),
         }),
         temperature: 0.25,
-        maxOutputTokens: TUTOR_MAX_OUTPUT_TOKENS,
+        maxOutputTokens: outputBudget,
       });
     }
     if (!answer.trim()) {
@@ -509,7 +520,7 @@ export async function POST(
           isGroundedInOnScreenText: Boolean(groundedText),
         }),
         temperature: 0.25,
-        maxOutputTokens: TUTOR_MAX_OUTPUT_TOKENS,
+        maxOutputTokens: outputBudget,
       });
     }
 
@@ -552,7 +563,7 @@ export async function POST(
         request,
         reservationId: billingReservationId,
         promptTokens: 2000,
-        completionTokens: TUTOR_MAX_OUTPUT_TOKENS,
+        completionTokens: outputBudget,
       });
     }
 

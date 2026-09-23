@@ -1,15 +1,17 @@
 "use client";
 
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { FiArrowUp, FiBookmark } from "react-icons/fi";
 import toast from "react-hot-toast";
 import ChatMessage from "../ChatMessage";
 import { useTutorChat } from "../useTutorChat";
 import { saveTutorItem } from "../tutorApi";
+import type { SaveHandler } from "../TutorWorkspace";
 
 interface AssignmentTabProps {
   sessionId: string | null;
   active: boolean;
+  onRegisterSaveHandler?: (handler: SaveHandler) => void;
 }
 
 /**
@@ -17,7 +19,7 @@ interface AssignmentTabProps {
  * progressive hints (assignment-mode system prompt enforces this
  * server-side) rather than dumping flat answers.
  */
-const AssignmentTab: FC<AssignmentTabProps> = ({ sessionId, active }) => {
+const AssignmentTab: FC<AssignmentTabProps> = ({ sessionId, active, onRegisterSaveHandler }) => {
   const { messages, isStreaming, error, send, sendActionChip } = useTutorChat({
     sessionId,
     mode: "assignment",
@@ -32,18 +34,20 @@ const AssignmentTab: FC<AssignmentTabProps> = ({ sessionId, active }) => {
     void send(text);
   };
 
+  const buildTranscript = () =>
+    messages
+      .map((m) => `**${m.role === "user" ? "You" : "Tutor"}:** ${m.text}`)
+      .join("\n\n");
+
   const handleSaveProgress = async () => {
     if (messages.length === 0) return;
     setSaving(true);
     try {
-      const transcript = messages
-        .map((m) => `**${m.role === "user" ? "You" : "Tutor"}:** ${m.text}`)
-        .join("\n\n");
       const firstUserMessage = messages.find((m) => m.role === "user")?.text || "Assignment progress";
       await saveTutorItem({
         folder: "Solved Homeworks",
         title: firstUserMessage.slice(0, 80).replace(/\s+/g, " ").trim(),
-        content: transcript,
+        content: buildTranscript(),
       });
       toast.success("Saved to Solved Homeworks");
     } catch {
@@ -52,6 +56,24 @@ const AssignmentTab: FC<AssignmentTabProps> = ({ sessionId, active }) => {
       setSaving(false);
     }
   };
+
+  useEffect(() => {
+    if (!onRegisterSaveHandler) return;
+    onRegisterSaveHandler({
+      hasContent: messages.length > 0,
+      save: async (projectLabel?: string) => {
+        if (messages.length === 0) return;
+        const firstUserMessage = messages.find((m) => m.role === "user")?.text || "Assignment progress";
+        await saveTutorItem({
+          folder: "Solved Homeworks",
+          title: projectLabel
+            ? `${projectLabel} — Assignment`
+            : firstUserMessage.slice(0, 80).replace(/\s+/g, " ").trim(),
+          content: buildTranscript(),
+        });
+      },
+    });
+  }, [messages, onRegisterSaveHandler]);
 
   return (
     <div className={`flex h-full flex-col ${active ? "" : "hidden"}`}>
