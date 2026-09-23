@@ -1,9 +1,12 @@
 "use client";
 
-import { FC, useEffect, useState } from "react";
+import { FC, useCallback, useEffect, useRef, useState } from "react";
+import { FiBookmark } from "react-icons/fi";
+import toast from "react-hot-toast";
 import Landing from "./Landing";
 import IntentPicker, { type TutorTab } from "./IntentPicker";
 import Sidebar from "./Sidebar";
+import SaveModal from "./SaveModal";
 import ResearchTab from "./tabs/ResearchTab";
 import AssignmentTab from "./tabs/AssignmentTab";
 import QuizTab from "./tabs/QuizTab";
@@ -11,6 +14,12 @@ import { getStudySessionDetails } from "./tutorApi";
 
 interface TutorWorkspaceProps {
   initialSessionId?: string;
+}
+
+/** A tab's self-reported ability to save its current state. */
+export interface SaveHandler {
+  hasContent: boolean;
+  save: (projectLabel?: string) => Promise<void>;
 }
 
 /**
@@ -32,6 +41,15 @@ const TutorWorkspace: FC<TutorWorkspaceProps> = ({ initialSessionId }) => {
   // now visible in that response. Only a RESUMED session (loaded on mount, or
   // picked from Session History) should auto-skip the picker.
   const [freshSessionId, setFreshSessionId] = useState<string | null>(null);
+  const [saveModalOpen, setSaveModalOpen] = useState(false);
+  const saveHandlersRef = useRef<Partial<Record<TutorTab, SaveHandler>>>({});
+
+  const registerSaveHandler = useCallback(
+    (tab: TutorTab) => (handler: SaveHandler) => {
+      saveHandlersRef.current[tab] = handler;
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!sessionId) return;
@@ -78,6 +96,33 @@ const TutorWorkspace: FC<TutorWorkspaceProps> = ({ initialSessionId }) => {
     setSessionId(id);
   };
 
+  const handleSaveActiveTab = async () => {
+    const handler = saveHandlersRef.current[activeTab];
+    if (!handler || !handler.hasContent) return;
+    try {
+      await handler.save();
+      toast.success("Saved");
+    } catch {
+      toast.error("Could not save. Please retry.");
+    }
+  };
+
+  const handleSaveAllSession = async (projectLabel: string) => {
+    const entries = Object.entries(saveHandlersRef.current) as [TutorTab, SaveHandler][];
+    const savable = entries.filter(([, handler]) => handler.hasContent);
+    if (savable.length === 0) {
+      toast.error("Nothing to save yet in this session.");
+      return;
+    }
+    const results = await Promise.allSettled(savable.map(([, handler]) => handler.save(projectLabel)));
+    const failed = results.filter((r) => r.status === "rejected").length;
+    if (failed === 0) {
+      toast.success(`Saved ${savable.length} item${savable.length > 1 ? "s" : ""} to their folders`);
+    } else {
+      toast.error(`Saved ${savable.length - failed} of ${savable.length} items — some failed`);
+    }
+  };
+
   if (checkingSession) {
     return (
       <div className="flex h-[calc(100vh-4.2rem)] items-center justify-center text-sm text-gray-500">
@@ -118,22 +163,51 @@ const TutorWorkspace: FC<TutorWorkspaceProps> = ({ initialSessionId }) => {
           wrapper's own box, so a lingering full-size wrapper would otherwise
           sit on top of the active tab and swallow clicks. */}
       <div className="relative flex-1">
+        <button
+          type="button"
+          onClick={() => setSaveModalOpen(true)}
+          className="absolute right-3 top-3 z-10 flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 shadow-sm transition-colors hover:border-primary-400 hover:text-primary-400"
+        >
+          <FiBookmark className="h-3.5 w-3.5" />
+          Save Progress
+        </button>
         <div
           className={`absolute inset-0 ${activeTab === "research" ? "" : "hidden pointer-events-none"}`}
         >
-          <ResearchTab sessionId={sessionId} active={activeTab === "research"} />
+          <ResearchTab
+            sessionId={sessionId}
+            active={activeTab === "research"}
+            onRegisterSaveHandler={registerSaveHandler("research")}
+          />
         </div>
         <div
           className={`absolute inset-0 ${activeTab === "assignment" ? "" : "hidden pointer-events-none"}`}
         >
-          <AssignmentTab sessionId={sessionId} active={activeTab === "assignment"} />
+          <AssignmentTab
+            sessionId={sessionId}
+            active={activeTab === "assignment"}
+            onRegisterSaveHandler={registerSaveHandler("assignment")}
+          />
         </div>
         <div
           className={`absolute inset-0 ${activeTab === "quiz" ? "" : "hidden pointer-events-none"}`}
         >
-          <QuizTab sessionId={sessionId} active={activeTab === "quiz"} />
+          <QuizTab
+            sessionId={sessionId}
+            active={activeTab === "quiz"}
+            onRegisterSaveHandler={registerSaveHandler("quiz")}
+          />
         </div>
       </div>
+
+      <SaveModal
+        open={saveModalOpen}
+        onClose={() => setSaveModalOpen(false)}
+        activeTab={activeTab}
+        activeTabHasContent={Boolean(saveHandlersRef.current[activeTab]?.hasContent)}
+        onSaveActiveTab={handleSaveActiveTab}
+        onSaveAllSession={handleSaveAllSession}
+      />
     </div>
   );
 };

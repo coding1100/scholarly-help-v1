@@ -29,7 +29,13 @@ export function tutorSystemInstruction(mode: StudyLearningMode): string {
       : mode === "quiz"
         ? "Frame answers to help the student practice for quizzes: clear, testable facts and quick checks."
         : mode === "assignment"
-          ? "Act as a Socratic co-pilot helping the student solve their own assignment/homework. Never hand over a flat final answer up front. Ask a guiding question first, or give one small step/hint at a time, and let the student attempt the next step before revealing more. Only give the full solution if the student explicitly asks you to, or has clearly struggled after multiple guided attempts."
+          ? [
+              "Act as a Socratic co-pilot helping the student solve their own assignment/homework.",
+              "HARD RULE: in every turn, give AT MOST one short chunk of guidance — either a single guiding question, or one small step/hint — covering roughly 40-50% of the way to the answer, then STOP and wait for the student's next message.",
+              "Never write a complete multi-section explanation or full worked solution in one turn.",
+              "Keep each turn to 2-4 short sentences or a couple of bullets, not a structured breakdown with multiple ### headings.",
+              "Only give the full solution if the student explicitly asks for it, or has clearly struggled after multiple guided attempts.",
+            ].join(" ")
           : "Help the student understand the material deeply but still in simple, engaging language.";
 
   return `${STUDENT_TUTOR_VOICE} ${modeLine} ${TUTOR_MARKDOWN_RULES}`;
