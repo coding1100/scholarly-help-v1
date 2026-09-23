@@ -9,6 +9,7 @@ import {
   NotificationSettings,
   SchedulePreferences,
   ScheduleOption,
+  ScheduleConflict,
   PolicyPreset,
   ExtractedSyllabusResult,
 } from "./types";
@@ -80,8 +81,28 @@ export class CoursePlannerService {
     return CoursePlannerApi.addCourse(course);
   }
 
+  // CourseSectionDto (forbidNonWhitelisted) only accepts id/sectionNumber/
+  // instructor/days/startTime/endTime/location — it has no courseId field,
+  // and no _id/createdAt/updatedAt (Mongoose subdocument metadata that
+  // `getCourses`'s response carries on every section once it's been
+  // fetched at least once). Sending a section straight back the way it was
+  // read — e.g. after locally appending one new section to the existing
+  // array to add an alternate section — previously 400'd on every existing
+  // section in the array, not just the new one.
   static async updateCourse(id: string, updates: Partial<CourseCatalogItem>): Promise<CourseCatalogItem> {
-    return CoursePlannerApi.updateCourse(id, updates);
+    const cleaned: Partial<CourseCatalogItem> = { ...updates };
+    if (updates.sections) {
+      cleaned.sections = updates.sections.map((s) => ({
+        id: s.id,
+        sectionNumber: s.sectionNumber,
+        instructor: s.instructor,
+        days: s.days,
+        startTime: s.startTime,
+        endTime: s.endTime,
+        location: s.location,
+      }));
+    }
+    return CoursePlannerApi.updateCourse(id, cleaned);
   }
 
   static async deleteCourse(id: string): Promise<void> {
@@ -129,15 +150,25 @@ export class CoursePlannerService {
     });
   }
 
-  // LLM-backed schedule edit: sends the user's free-text request (or a
-  // synthesized one for "Auto Swap") to the backend, which resolves it
-  // against the real catalog and returns a validated section swap.
+  // LLM-backed schedule edit: sends the user's free-text request to the
+  // backend, which resolves it against the real catalog and returns a
+  // validated section swap.
   static async chatEditSchedule(
     semesterId: string,
     currentSectionIds: string[],
     userQuery: string
   ): Promise<{ success: boolean; explanation: string; updatedSectionIds: string[] }> {
     return CoursePlannerApi.chatEditSchedule({ semesterId, currentSectionIds, userQuery });
+  }
+
+  // Deterministic "Auto Swap" — no LLM involved, targets one specific
+  // conflict object already surfaced in the UI.
+  static async resolveConflict(
+    semesterId: string,
+    currentSectionIds: string[],
+    conflict: ScheduleConflict
+  ): Promise<{ success: boolean; explanation: string; updatedSectionIds: string[] }> {
+    return CoursePlannerApi.resolveConflict({ semesterId, currentSectionIds, conflict });
   }
 
   // --- Coursework ---
@@ -188,8 +219,14 @@ export class CoursePlannerService {
     return CoursePlannerApi.getAdaptiveAlerts(semesterId);
   }
 
-  static async applyAdaptiveAlert(alertId: string): Promise<boolean> {
+  static async applyAdaptiveAlert(
+    alertId: string
+  ): Promise<{ applied: boolean; skipped: number; total: number }> {
     return CoursePlannerApi.applyAdaptiveAlert(alertId);
+  }
+
+  static async ignoreAdaptiveAlert(alertId: string): Promise<boolean> {
+    return CoursePlannerApi.ignoreAdaptiveAlert(alertId);
   }
 
   // --- Notifications ---

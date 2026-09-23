@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { X, Bell, Check, Filter, Settings, ShieldAlert, Sparkles, BookOpen } from "lucide-react";
+import { FiX, FiBell, FiCheck } from "react-icons/fi";
 import { NotificationItem, NotificationSettings, CourseCatalogItem } from "@/app/lib/client/coursePlanner/types";
 
 interface Props {
@@ -34,35 +34,35 @@ export const NotificationDrawer: React.FC<Props> = ({
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden bg-gray-900/40 backdrop-blur-xs flex justify-end">
-      <div className="w-full max-w-md bg-white h-full shadow-2xl flex flex-col transition-all">
+    <div className="fixed inset-0 z-50 overflow-hidden bg-black/40 flex justify-end">
+      <div className="w-full max-w-md bg-white h-full shadow-2xl flex flex-col">
         {/* Drawer Header */}
-        <div className="p-5 border-b border-gray-100 flex items-center justify-between bg-gray-900 text-white">
+        <div className="p-5 border-b border-gray-200 flex items-center justify-between bg-white">
           <div className="flex items-center gap-2.5">
-            <Bell className="w-5 h-5 text-primary-400" />
-            <span className="font-bold text-base">Notifications Queue</span>
+            <FiBell className="w-4 h-4 text-primary-400" />
+            <span className="font-semibold text-sm text-gray-800">Notifications Queue</span>
             {unreadCount > 0 && (
-              <span className="px-2 py-0.5 bg-primary-400 text-white text-[10px] font-semibold rounded-full">
+              <span className="px-2 py-0.5 bg-primary-100 text-primary-400 text-xs font-semibold rounded-full ring-1 ring-primary-300">
                 {unreadCount} new
               </span>
             )}
           </div>
 
-          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">
-            <X className="w-5 h-5" />
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 transition-colors p-1">
+            <FiX className="w-4 h-4" />
           </button>
         </div>
 
         {/* Category Tabs */}
-        <div className="flex border-b border-gray-200 bg-gray-50 p-2 gap-1 overflow-x-auto text-xs font-semibold">
+        <div className="flex border-b border-gray-200 bg-gray-50 p-1.5 gap-1 overflow-x-auto text-xs font-semibold">
           {(["all", "attendance", "deadline", "adaptive", "settings"] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-3 py-1.5 rounded-lg capitalize transition-all ${
+              className={`px-3 py-1.5 rounded-lg capitalize transition-colors ${
                 activeTab === tab
-                  ? "bg-white text-primary-400 shadow-2xs font-bold"
-                  : "text-gray-600 hover:text-gray-900"
+                  ? "bg-white text-primary-400 shadow-sm"
+                  : "text-gray-600 hover:text-gray-800"
               }`}
             >
               {tab}
@@ -74,14 +74,14 @@ export const NotificationDrawer: React.FC<Props> = ({
         <div className="flex-1 p-4 overflow-y-auto space-y-3">
           {activeTab === "settings" ? (
             <div className="space-y-4">
-              <h4 className="text-xs font-semibold text-gray-800 uppercase tracking-wider">Notification Settings</h4>
+              <h4 className="text-xs font-semibold text-gray-500 tracking-wide">Notification Settings</h4>
 
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">Deadline Reminder Lead Time</label>
                 <select
                   value={settings.reminderLeadTimeHours}
                   onChange={(e) => onUpdateSettings({ reminderLeadTimeHours: parseInt(e.target.value, 10) })}
-                  className="w-full px-3 py-2 border rounded-xl text-xs bg-white"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs bg-white"
                 >
                   <option value="1">1 Hour Before</option>
                   <option value="12">12 Hours Before</option>
@@ -96,8 +96,8 @@ export const NotificationDrawer: React.FC<Props> = ({
                   {courses.map((c) => {
                     const isMuted = settings.mutedCourseIds.includes(c.id);
                     return (
-                      <div key={c.id} className="p-2.5 bg-gray-50 border rounded-xl flex items-center justify-between text-xs">
-                        <span className="font-bold text-gray-800">{c.code}</span>
+                      <div key={c.id} className="p-2.5 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-between text-xs">
+                        <span className="font-semibold text-gray-800">{c.code}</span>
                         <button
                           onClick={() => {
                             const newMuted = isMuted
@@ -105,8 +105,10 @@ export const NotificationDrawer: React.FC<Props> = ({
                               : [...settings.mutedCourseIds, c.id];
                             onUpdateSettings({ mutedCourseIds: newMuted });
                           }}
-                          className={`px-3 py-1 text-[11px] font-semibold rounded-lg ${
-                            isMuted ? "bg-amber-100 text-amber-800" : "bg-gray-200 text-gray-700"
+                          className={`px-3 py-1 text-xs font-semibold rounded-full ring-1 transition-colors ${
+                            isMuted
+                              ? "bg-white text-gray-500 ring-gray-300 hover:bg-gray-50"
+                              : "bg-primary-100 text-primary-400 ring-primary-300"
                           }`}
                         >
                           {isMuted ? "Muted" : "Active"}
@@ -123,16 +125,16 @@ export const NotificationDrawer: React.FC<Props> = ({
             filtered.map((item) => (
               <div
                 key={item.id}
-                className={`p-3.5 rounded-xl border transition-all ${
-                  item.read ? "bg-white border-gray-200 opacity-75" : "bg-primary-100/50 border-primary-200 shadow-2xs"
+                className={`p-3.5 rounded-lg border transition-colors ${
+                  item.read ? "bg-white border-gray-200 opacity-75" : "bg-primary-100/50 border-primary-200"
                 }`}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 bg-primary-200 text-primary-500 text-[9px] font-semibold rounded uppercase">
+                    <span className="px-2 py-0.5 bg-primary-200 text-primary-500 text-xs font-semibold rounded-full">
                       {item.category}
                     </span>
-                    <span className="font-bold text-gray-900 text-xs">{item.title}</span>
+                    <span className="font-semibold text-gray-800 text-xs">{item.title}</span>
                   </div>
 
                   {!item.read && (
@@ -141,13 +143,13 @@ export const NotificationDrawer: React.FC<Props> = ({
                       className="p-1 text-gray-400 hover:text-primary-400 transition-colors"
                       title="Mark as read"
                     >
-                      <Check className="w-3.5 h-3.5" />
+                      <FiCheck className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>
 
                 <p className="text-xs text-gray-600 mt-1">{item.message}</p>
-                <span className="text-[10px] text-gray-400 block mt-2">{item.createdAt.slice(0, 16).replace("T", " ")}</span>
+                <span className="text-xs text-gray-400 block mt-2">{item.createdAt.slice(0, 16).replace("T", " ")}</span>
               </div>
             ))
           )}

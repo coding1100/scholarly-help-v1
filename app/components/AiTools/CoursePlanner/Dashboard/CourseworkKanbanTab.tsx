@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Plus, Trash2, Calendar, AlertTriangle, CheckCircle2, Clock, Sparkles } from "lucide-react";
+import { FiPlus, FiTrash2, FiCalendar, FiAlertTriangle } from "react-icons/fi";
 import { CourseCatalogItem, Coursework, KanbanStatus, PriorityLevel, CourseworkType } from "@/app/lib/client/coursePlanner/types";
 
 interface Props {
@@ -31,10 +31,10 @@ export const CourseworkKanbanTab: React.FC<Props> = ({
   const [description, setDescription] = useState("");
 
   const columns: { id: KanbanStatus; title: string; color: string }[] = [
-    { id: "backlog", title: "Backlog", color: "bg-gray-100 border-gray-200" },
-    { id: "todo", title: "To Do", color: "bg-primary-100/60 border-primary-200" },
-    { id: "in_progress", title: "In Progress", color: "bg-amber-50/60 border-amber-100" },
-    { id: "done", title: "Done", color: "bg-emerald-50/60 border-emerald-100" },
+    { id: "backlog", title: "Backlog", color: "bg-gray-50 border-gray-200" },
+    { id: "todo", title: "To Do", color: "bg-primary-100/50 border-primary-200" },
+    { id: "in_progress", title: "In Progress", color: "bg-secondary-200/20 border-secondary-200" },
+    { id: "done", title: "Done", color: "bg-gray-50 border-gray-200" },
   ];
 
   const filteredCoursework = selectedCourseFilter === "all"
@@ -92,17 +92,17 @@ export const CourseworkKanbanTab: React.FC<Props> = ({
   return (
     <div className="space-y-6">
       {/* Header Bar */}
-      <div className="bg-white rounded-xl border border-gray-200/80 p-6 shadow-sm flex items-center justify-between">
+      <div className="bg-white rounded-lg border border-gray-200 p-5 shadow-sm flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-gray-800">Coursework Kanban Board</h2>
-          <p className="text-sm text-gray-500">Persisted drag-and-drop task tracking with same-day pile-up detection</p>
+          <h2 className="text-lg font-semibold text-gray-800">Coursework Kanban Board</h2>
+          <p className="text-xs text-gray-500">Persisted drag-and-drop task tracking with same-day pile-up detection</p>
         </div>
 
         <div className="flex items-center gap-3">
           <select
             value={selectedCourseFilter}
             onChange={(e) => setSelectedCourseFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-200 rounded-xl text-xs bg-white font-medium"
+            className="px-3 py-2 border border-gray-300 rounded-lg text-xs bg-white font-semibold text-gray-700"
           >
             <option value="all">All Courses</option>
             {courses.map((c) => (
@@ -114,21 +114,21 @@ export const CourseworkKanbanTab: React.FC<Props> = ({
 
           <button
             onClick={() => setShowAddModal(true)}
-            className="px-4 py-2 bg-primary-400 hover:bg-primary-300 text-white text-xs font-semibold rounded-xl shadow-sm transition-all flex items-center gap-1.5"
+            className="px-4 py-2 bg-primary-400 hover:bg-primary-300 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5"
           >
-            <Plus className="w-4 h-4" /> Add Task
+            <FiPlus className="w-4 h-4" /> Add Task
           </button>
         </div>
       </div>
 
       {/* Same-Day Pile-Up Warning Banner */}
       {pileUpDates.length > 0 && (
-        <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between">
+        <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <AlertTriangle className="w-5 h-5 text-amber-600" />
+            <FiAlertTriangle className="w-5 h-5 text-primary-400" />
             <div>
-              <h4 className="text-xs font-semibold text-amber-900">Same-Day Workload Pile-Up Alert</h4>
-              <p className="text-xs text-amber-700">
+              <h4 className="text-xs font-semibold text-gray-800">Same-Day Workload Pile-Up Alert</h4>
+              <p className="text-xs text-gray-500">
                 You have {dueDatesCount[pileUpDates[0]]} major deadlines on {pileUpDates[0]}. Adaptive Planning has logged an auto-rebalancing proposal.
               </p>
             </div>
@@ -145,11 +145,11 @@ export const CourseworkKanbanTab: React.FC<Props> = ({
               key={col.id}
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, col.id)}
-              className={`p-4 rounded-xl border min-h-[450px] space-y-3 ${col.color}`}
+              className={`p-4 rounded-lg border min-h-[450px] space-y-3 ${col.color}`}
             >
-              <div className="flex items-center justify-between pb-2 border-b border-gray-200/50">
-                <span className="font-bold text-gray-800 text-xs uppercase tracking-wider">{col.title}</span>
-                <span className="px-2 py-0.5 bg-white text-gray-700 font-semibold text-[10px] rounded-full shadow-2xs">
+              <div className="flex items-center justify-between pb-2 border-b border-gray-200">
+                <span className="font-semibold text-gray-800 text-xs tracking-wide">{col.title}</span>
+                <span className="px-2 py-0.5 bg-white text-gray-700 font-semibold text-xs rounded-full ring-1 ring-gray-200">
                   {colTasks.length}
                 </span>
               </div>
@@ -162,38 +162,38 @@ export const CourseworkKanbanTab: React.FC<Props> = ({
                       key={task.id}
                       draggable
                       onDragStart={(e) => handleDragStart(e, task.id)}
-                      className="bg-white rounded-xl border border-gray-200 p-4 shadow-2xs cursor-grab active:cursor-grabbing hover:border-gray-300 transition-all space-y-2"
+                      className="bg-white rounded-lg border border-gray-200 p-3.5 shadow-sm cursor-grab active:cursor-grabbing hover:border-gray-300 transition-colors space-y-2"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="px-2 py-0.5 text-[10px] font-semibold rounded-md text-white" style={{ backgroundColor: course?.color || "#3b82f6" }}>
+                        <span className="px-2 py-0.5 text-xs font-semibold rounded-full text-white" style={{ backgroundColor: course?.color || "#3b82f6" }}>
                           {course?.code || "COURSE"}
                         </span>
                         <span
-                          className={`text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded ${
+                          className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ring-1 ${
                             task.priority === "high"
-                              ? "bg-red-100 text-red-700"
+                              ? "bg-red-50 text-red-600 ring-red-200"
                               : task.priority === "medium"
-                              ? "bg-amber-100 text-amber-700"
-                              : "bg-gray-100 text-gray-600"
+                              ? "bg-secondary-200/40 text-secondary-500 ring-secondary-200"
+                              : "bg-gray-100 text-gray-600 ring-gray-200"
                           }`}
                         >
                           {task.priority}
                         </span>
                       </div>
 
-                      <h4 className="font-bold text-gray-900 text-xs">{task.title}</h4>
-                      {task.description && <p className="text-[11px] text-gray-500 line-clamp-2">{task.description}</p>}
+                      <h4 className="font-semibold text-gray-800 text-xs">{task.title}</h4>
+                      {task.description && <p className="text-xs text-gray-500 line-clamp-2">{task.description}</p>}
 
-                      <div className="pt-2 flex items-center justify-between border-t border-gray-100 text-[10px] text-gray-400">
+                      <div className="pt-2 flex items-center justify-between border-t border-gray-100 text-xs text-gray-400">
                         <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3 text-gray-400" /> {task.dueDate.replace("T", " ")}
+                          <FiCalendar className="w-3 h-3 text-gray-400" /> {task.dueDate.replace("T", " ")}
                         </span>
                         <button
                           onClick={() => onDeleteCoursework(task.id)}
                           className="text-gray-300 hover:text-red-600 transition-colors"
                           aria-label={`Delete ${task.title}`}
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <FiTrash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
 
@@ -212,7 +212,7 @@ export const CourseworkKanbanTab: React.FC<Props> = ({
                             completionState: targetStatus === "done" ? "done" : "pending",
                           });
                         }}
-                        className="w-full px-2 py-1 border border-gray-200 rounded-lg text-[10px] font-semibold text-gray-600 bg-white"
+                        className="w-full px-2 py-1 border border-gray-200 rounded-lg text-xs font-semibold text-gray-600 bg-white"
                       >
                         {columns.map((c) => (
                           <option key={c.id} value={c.id}>
@@ -231,19 +231,19 @@ export const CourseworkKanbanTab: React.FC<Props> = ({
 
       {/* Add Task Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <form onSubmit={handleCreateSubmit} className="bg-white rounded-xl p-6 max-w-md w-full shadow-xl space-y-4">
-            <h3 className="text-lg font-bold text-gray-900">Add Coursework Task</h3>
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+          <form onSubmit={handleCreateSubmit} className="bg-white rounded-xl p-5 max-w-md w-full shadow-xl space-y-4">
+            <h3 className="text-lg font-semibold text-gray-800">Add Coursework Task</h3>
 
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1">Title</label>
               <input
                 type="text"
                 required
-                placeholder="e.g. Midterm Exam Prep / Essay 1"
+                placeholder="e.g. Midterm Exam Prep, Essay 1"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-3 py-2 border rounded-xl text-xs"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-primary-400/20"
               />
             </div>
 
@@ -253,7 +253,7 @@ export const CourseworkKanbanTab: React.FC<Props> = ({
                 <select
                   value={courseId}
                   onChange={(e) => setCourseId(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-xl text-xs bg-white"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs bg-white"
                 >
                   {courses.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -268,7 +268,7 @@ export const CourseworkKanbanTab: React.FC<Props> = ({
                 <select
                   value={type}
                   onChange={(e) => setType(e.target.value as CourseworkType)}
-                  className="w-full px-3 py-2 border rounded-xl text-xs bg-white"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs bg-white"
                 >
                   <option value="assignment">Assignment</option>
                   <option value="exam">Exam</option>
@@ -286,7 +286,7 @@ export const CourseworkKanbanTab: React.FC<Props> = ({
                   required
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-xl text-xs"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs"
                 />
               </div>
 
@@ -295,7 +295,7 @@ export const CourseworkKanbanTab: React.FC<Props> = ({
                 <select
                   value={priority}
                   onChange={(e) => setPriority(e.target.value as PriorityLevel)}
-                  className="w-full px-3 py-2 border rounded-xl text-xs bg-white"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs bg-white"
                 >
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
@@ -310,7 +310,7 @@ export const CourseworkKanbanTab: React.FC<Props> = ({
                 rows={2}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full px-3 py-2 border rounded-xl text-xs"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs"
               />
             </div>
 
@@ -318,13 +318,13 @@ export const CourseworkKanbanTab: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={() => setShowAddModal(false)}
-                className="px-4 py-2 bg-gray-100 text-gray-700 text-xs font-semibold rounded-xl"
+                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-xs font-semibold rounded-lg transition-colors hover:bg-gray-50"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-primary-400 text-white text-xs font-semibold rounded-xl shadow-xs"
+                className="px-4 py-2 bg-primary-400 hover:bg-primary-300 text-white text-xs font-semibold rounded-lg transition-colors"
               >
                 Save Task
               </button>
