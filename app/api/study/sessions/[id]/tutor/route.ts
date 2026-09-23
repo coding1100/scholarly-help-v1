@@ -39,8 +39,15 @@ const TUTOR_MAX_OUTPUT_TOKENS = 8192;
 // room to work with than other modes, reinforcing the prompt's hard rule.
 const ASSIGNMENT_MAX_OUTPUT_TOKENS = 1024;
 
-function outputBudgetFor(mode: StudyLearningMode): number {
-  return mode === "assignment" ? ASSIGNMENT_MAX_OUTPUT_TOKENS : TUTOR_MAX_OUTPUT_TOKENS;
+// Action chips (Hint/Why?/ELI6/Step-by-Step) always pass groundedText — they
+// re-process one fixed piece of on-screen text and are expected to give a
+// complete answer, not hold back like a fresh Socratic conversational turn.
+// Only a freeform assignment-mode message (no groundedText) gets the smaller
+// budget that keeps the model from dumping a full breakdown unprompted.
+function outputBudgetFor(mode: StudyLearningMode, isGroundedActionChip: boolean): number {
+  return mode === "assignment" && !isGroundedActionChip
+    ? ASSIGNMENT_MAX_OUTPUT_TOKENS
+    : TUTOR_MAX_OUTPUT_TOKENS;
 }
 
 const TUTOR_SYSTEM_MARKDOWN =
@@ -131,7 +138,17 @@ export async function POST(
       groundedText?: string;
     };
     const learningMode = resolveLearningMode(body.mode);
-    const outputBudget = outputBudgetFor(learningMode);
+    const examTopics = Array.isArray(body.examTopics)
+      ? body.examTopics.map((t) => String(t).trim()).filter(Boolean).slice(0, 12)
+      : [];
+    const tutorContext = String(body.tutorContext || "").trim().slice(0, 2500);
+    // Inline action chips (Hint/Why?/ELI6/Step-by-Step) must process the EXACT
+    // AI message currently rendered on screen, not re-derive relevance via a
+    // fresh RAG query keyed off the student's last typed question — that drifts
+    // to unrelated document chunks. When the caller supplies the on-screen text
+    // directly, skip retrieval entirely and ground the answer in it.
+    const groundedText = String(body.groundedText || "").trim().slice(0, 12000);
+    const outputBudget = outputBudgetFor(learningMode, Boolean(groundedText));
 
     // Same free-run-count / credit-balance gate every other tool enforces —
     // Study Workspace only ever had its own generous rate limiter above, so a
@@ -150,16 +167,6 @@ export async function POST(
       if (gate.blocked) return gate.response;
       billingReservationId = gate.reservationId;
     }
-    const examTopics = Array.isArray(body.examTopics)
-      ? body.examTopics.map((t) => String(t).trim()).filter(Boolean).slice(0, 12)
-      : [];
-    const tutorContext = String(body.tutorContext || "").trim().slice(0, 2500);
-    // Inline action chips (Hint/Why?/ELI6/Step-by-Step) must process the EXACT
-    // AI message currently rendered on screen, not re-derive relevance via a
-    // fresh RAG query keyed off the student's last typed question — that drifts
-    // to unrelated document chunks. When the caller supplies the on-screen text
-    // directly, skip retrieval entirely and ground the answer in it.
-    const groundedText = String(body.groundedText || "").trim().slice(0, 12000);
     const message = (body?.message || "").trim();
     const useStream = Boolean(body?.stream);
     const imageAttachments = Array.isArray(body?.attachments)
@@ -277,6 +284,7 @@ export async function POST(
         sessionId: params.id,
         role: "user",
         message,
+        mode: learningMode,
         attachments:
           imageAttachments.length > 0
             ? imageAttachments
@@ -425,6 +433,7 @@ export async function POST(
               sessionId: params.id,
               role: "assistant",
               message: answer || "I could not generate a response. Please retry.",
+              mode: learningMode,
               citations,
               provenance,
               createdAt: new Date(),
@@ -530,6 +539,7 @@ export async function POST(
         sessionId: params.id,
         role: "user",
         message,
+        mode: learningMode,
         attachments:
           imageAttachments.length > 0
             ? imageAttachments
@@ -552,6 +562,7 @@ export async function POST(
         sessionId: params.id,
         role: "assistant",
         message: answer,
+        mode: learningMode,
         citations,
         provenance,
         createdAt: now,

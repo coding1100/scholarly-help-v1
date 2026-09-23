@@ -7,11 +7,14 @@ import ChatMessage from "../ChatMessage";
 import { useTutorChat } from "../useTutorChat";
 import { saveTutorItem } from "../tutorApi";
 import type { SaveHandler } from "../TutorWorkspace";
+import type { TutorChatMessage } from "../ChatMessage";
 
 interface ResearchTabProps {
   sessionId: string | null;
   active: boolean;
   onRegisterSaveHandler?: (handler: SaveHandler) => void;
+  onSaved?: () => void;
+  initialMessages?: TutorChatMessage[];
 }
 
 /**
@@ -19,10 +22,17 @@ interface ResearchTabProps {
  * topic breakdowns, and citations from the uploaded material. Kept mounted
  * even when not the active tab so its conversation never resets on switch.
  */
-const ResearchTab: FC<ResearchTabProps> = ({ sessionId, active, onRegisterSaveHandler }) => {
+const ResearchTab: FC<ResearchTabProps> = ({
+  sessionId,
+  active,
+  onRegisterSaveHandler,
+  onSaved,
+  initialMessages,
+}) => {
   const { messages, isStreaming, error, send, sendActionChip } = useTutorChat({
     sessionId,
     mode: "research",
+    initialMessages,
   });
   const [input, setInput] = useState("");
   const [savingId, setSavingId] = useState<string | null>(null);
@@ -44,6 +54,7 @@ const ResearchTab: FC<ResearchTabProps> = ({ sessionId, active, onRegisterSaveHa
         content: text,
       });
       toast.success("Saved to Research Notes");
+      onSaved?.();
     } catch {
       toast.error("Could not save this note. Please retry.");
     } finally {

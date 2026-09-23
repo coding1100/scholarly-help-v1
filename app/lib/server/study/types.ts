@@ -70,6 +70,9 @@ export interface TutorMessage {
   citations: number[];
   provenance?: "source" | "general" | "image";
   attachments?: TutorMessageImageAttachment[];
+  /** Which tab this turn belongs to, so resuming a session can split history
+   * back into Research vs Assignment (exam/quiz not chat-persisted). */
+  mode?: StudyLearningMode;
   createdAt: Date;
 }
 

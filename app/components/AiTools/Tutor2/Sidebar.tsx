@@ -1,7 +1,7 @@
 "use client";
 
 import { FC, useEffect, useState } from "react";
-import { FiBookOpen, FiEdit3, FiCheckSquare, FiFolder, FiClock, FiPlus } from "react-icons/fi";
+import { FiBookOpen, FiEdit3, FiCheckSquare, FiFolder, FiClock, FiPlus, FiX } from "react-icons/fi";
 import {
   listStudySessions,
   listTutorDocuments,
@@ -18,6 +18,9 @@ interface SidebarProps {
   currentSessionId: string | null;
   onSelectSession: (sessionId: string) => void;
   onNewSession: () => void;
+  /** Bumped by the parent after a successful save so an already-open "Saved
+   * Data" panel refetches instead of showing stale folder contents. */
+  savedDataRefreshToken?: number;
 }
 
 const TAB_ITEMS: Array<{ tab: TutorTab; icon: FC<{ className?: string }>; label: string }> = [
@@ -32,12 +35,14 @@ const Sidebar: FC<SidebarProps> = ({
   currentSessionId,
   onSelectSession,
   onNewSession,
+  savedDataRefreshToken,
 }) => {
   const [panel, setPanel] = useState<"none" | "folders" | "history">("none");
   const [folders, setFolders] = useState<TutorFolderRecord[]>([]);
   const [folderDocs, setFolderDocs] = useState<Record<string, TutorDocumentRecord[]>>({});
   const [sessions, setSessions] = useState<StudySessionDto[]>([]);
   const [loadingPanel, setLoadingPanel] = useState(false);
+  const [viewingDoc, setViewingDoc] = useState<TutorDocumentRecord | null>(null);
 
   useEffect(() => {
     if (panel !== "folders") return;
@@ -56,7 +61,11 @@ const Sidebar: FC<SidebarProps> = ({
       })
       .catch(() => setFolders([]))
       .finally(() => setLoadingPanel(false));
-  }, [panel]);
+    // Re-run whenever a save completes elsewhere (savedDataRefreshToken bump)
+    // even while this panel is already open — otherwise a freshly saved item
+    // stays invisible until the panel is closed and reopened.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [panel, savedDataRefreshToken]);
 
   useEffect(() => {
     if (panel !== "history") return;
@@ -145,12 +154,15 @@ const Sidebar: FC<SidebarProps> = ({
                   ) : (
                     <ul className="mt-1 space-y-1">
                       {docs.map((doc) => (
-                        <li
-                          key={doc.id || doc._id}
-                          className="truncate text-[11px] text-gray-600"
-                          title={doc.title}
-                        >
-                          {doc.title}
+                        <li key={doc.id || doc._id}>
+                          <button
+                            type="button"
+                            onClick={() => setViewingDoc(doc)}
+                            className="block w-full truncate rounded px-1 py-0.5 text-left text-[11px] text-gray-600 transition-colors hover:bg-primary-100 hover:text-primary-500"
+                            title={doc.title}
+                          >
+                            {doc.title}
+                          </button>
                         </li>
                       ))}
                     </ul>
@@ -185,6 +197,28 @@ const Sidebar: FC<SidebarProps> = ({
           </div>
         ) : null}
       </div>
+
+      {viewingDoc ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="flex max-h-[80vh] w-full max-w-lg flex-col rounded-xl bg-white p-5 shadow-xl">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h3 className="truncate text-sm font-semibold text-gray-800" title={viewingDoc.title}>
+                {viewingDoc.title}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setViewingDoc(null)}
+                className="shrink-0 rounded p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+              >
+                <FiX className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="overflow-y-auto whitespace-pre-wrap text-xs text-gray-700">
+              {viewingDoc.content || "This item has no saved content."}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </aside>
   );
 };

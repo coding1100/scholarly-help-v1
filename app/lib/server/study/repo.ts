@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 import { getMongoDb } from "@/app/lib/mongodb";
 import {
   StudyArtifactType,
+  StudyLearningMode,
   StudySession,
   StudySourceIndexStatus,
   StudySourceKind,
@@ -53,6 +54,7 @@ type MemoryTutorMessage = {
   citations: number[];
   provenance?: "source" | "general" | "image";
   attachments?: TutorMessageImageAttachment[];
+  mode?: StudyLearningMode;
   createdAt: Date;
 };
 
@@ -702,6 +704,7 @@ export async function saveTutorMessage(input: TutorMessage) {
       citations: input.citations,
       provenance: input.provenance,
       attachments: input.attachments,
+      mode: input.mode,
       createdAt: input.createdAt,
     });
     return _id;
@@ -713,6 +716,7 @@ export async function saveTutorMessage(input: TutorMessage) {
     citations: input.citations,
     provenance: input.provenance,
     ...(input.attachments?.length ? { attachments: input.attachments } : {}),
+    ...(input.mode ? { mode: input.mode } : {}),
     createdAt: input.createdAt,
   };
   const result = await db.collection(COLLECTIONS.tutorMessages).insertOne(payload);
@@ -733,6 +737,7 @@ export async function listTutorMessages(sessionId: string) {
         citations: item.citations || [],
         provenance: item.provenance,
         attachments: item.attachments,
+        mode: item.mode,
         createdAt: item.createdAt,
       }));
   }
@@ -750,6 +755,7 @@ export async function listTutorMessages(sessionId: string) {
     citations: item.citations || [],
     provenance: item.provenance,
     attachments: Array.isArray(item.attachments) ? item.attachments : undefined,
+    mode: item.mode as StudyLearningMode | undefined,
     createdAt: item.createdAt,
   }));
 }

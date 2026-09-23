@@ -261,7 +261,7 @@ function extractJsonBlock(raw: string): string {
   throw new SyntaxError("Model response did not contain valid JSON");
 }
 
-function parseJson<T>(raw: string): T {
+export function parseJson<T>(raw: string): T {
   return JSON.parse(extractJsonBlock(raw)) as T;
 }
 
@@ -739,7 +739,10 @@ async function buildQuiz(
     const raw = await generateGeminiText({
       systemInstruction: quizSystemInstruction(),
       userPrompt:
-        quizUserPrompt(prepared, mode, examTopics, targetQuestions, options) +
+        quizUserPrompt(prepared, mode, examTopics, targetQuestions, {
+          ...options,
+          explicitCount: Boolean(options.questionCount),
+        }) +
         variationHint() +
         avoidPreviousBlock(previousContent, {
           lens: attempt.lens,
