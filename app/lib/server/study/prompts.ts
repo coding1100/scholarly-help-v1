@@ -364,6 +364,11 @@ export function quizUserPrompt(
     preAssessment?: boolean;
     academicLevel?: "high_school" | "college" | "phd";
     rubric?: string;
+    /** True when the caller (e.g. the Quiz tab's "Number of questions" input)
+     * explicitly picked targetQuestionCount, so it should be honored exactly
+     * (down to 2) instead of floored up to the auto-computed default's
+     * 10-question minimum. */
+    explicitCount?: boolean;
   } = {},
 ): string {
   const topicsBlock =
@@ -372,9 +377,14 @@ export function quizUserPrompt(
       : "";
 
   // Ask for exactly the computed target (≈20% coverage of the source, min 10),
-  // with a small band so the model can land naturally without padding.
-  const target = Math.max(config.preAssessment ? 2 : 10, Math.round(targetQuestionCount));
-  const lower = Math.max(config.preAssessment ? 2 : 10, target - 1);
+  // with a small band so the model can land naturally without padding. The
+  // 10-question floor only applies to the AUTO-COMPUTED default target — when
+  // the caller explicitly asked for a specific count (e.g. the Quiz tab's
+  // "Number of questions" input, which allows as few as 2), honor it exactly
+  // instead of silently overriding what the user picked.
+  const floor = config.preAssessment || config.explicitCount ? 2 : 10;
+  const target = Math.max(floor, Math.round(targetQuestionCount));
+  const lower = Math.max(floor, target - 1);
   const upper = target + 2;
   const requestedDifficulty = config.difficulty || "adaptive";
   const requestedFormat = config.questionFormat || "mcq";
@@ -385,12 +395,20 @@ export function quizUserPrompt(
     "Rules:",
     config.preAssessment
       ? `- Generate about ${target} diagnostic questions across distinct core topics.`
-      : `- Generate ${target} questions drawn from the MOST IMPORTANT and relevant ~20% of the material (core concepts, definitions, and high-yield facts) — never fewer than 10.`,
+      : config.explicitCount
+        ? `- Generate exactly ${target} questions drawn from the most important, relevant material (core concepts, definitions, and high-yield facts).`
+        : `- Generate ${target} questions drawn from the MOST IMPORTANT and relevant ~20% of the material (core concepts, definitions, and high-yield facts) — never fewer than 10.`,
     requestedFormat === "mcq"
       ? "- Every item is multiple choice with exactly 4 options; correctAnswerIndex 0-3"
       : requestedFormat === "short_answer"
         ? "- Every item is short answer: options must be [], and answer must contain a concise model answer"
-        : "- Mix multiple-choice and short-answer items. MCQs have exactly 4 options; short answers have options: []",
+        : [
+            "- Produce a roughly 50/50 split: half multiple-choice (exactly 4 options, correctAnswerIndex 0-3),",
+            "  half short-answer (options: [], answer holds a concise model answer). Alternate/interleave the two",
+            "  formats through the array rather than grouping all of one format first.",
+            "- The short-answer half should be genuinely conceptual/theoretical questions (explain, compare,",
+            "  justify, predict an outcome) — NOT just a fill-in-the-blank restatement of an MCQ.",
+          ].join("\n"),
     "- Mix recall, application, and at least one 'which is NOT true' style question",
     "- Student-friendly wording; explanations teach why the answer is right",
     requestedDifficulty === "adaptive"

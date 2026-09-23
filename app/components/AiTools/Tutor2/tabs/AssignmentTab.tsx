@@ -1,31 +1,39 @@
 "use client";
 
 import { FC, useEffect, useState } from "react";
-import { FiArrowUp, FiBookmark } from "react-icons/fi";
-import toast from "react-hot-toast";
+import { FiArrowUp } from "react-icons/fi";
 import ChatMessage from "../ChatMessage";
 import { useTutorChat } from "../useTutorChat";
 import { saveTutorItem } from "../tutorApi";
 import type { SaveHandler } from "../TutorWorkspace";
+import type { TutorChatMessage } from "../ChatMessage";
 
 interface AssignmentTabProps {
   sessionId: string | null;
   active: boolean;
   onRegisterSaveHandler?: (handler: SaveHandler) => void;
+  initialMessages?: TutorChatMessage[];
 }
 
 /**
  * Solve Assignment — Socratic Co-Pilot. Asks guiding questions and gives
  * progressive hints (assignment-mode system prompt enforces this
- * server-side) rather than dumping flat answers.
+ * server-side) rather than dumping flat answers. Saving happens through the
+ * single consolidated "Save Progress" modal in TutorWorkspace, not a
+ * per-tab button — see onRegisterSaveHandler below.
  */
-const AssignmentTab: FC<AssignmentTabProps> = ({ sessionId, active, onRegisterSaveHandler }) => {
+const AssignmentTab: FC<AssignmentTabProps> = ({
+  sessionId,
+  active,
+  onRegisterSaveHandler,
+  initialMessages,
+}) => {
   const { messages, isStreaming, error, send, sendActionChip } = useTutorChat({
     sessionId,
     mode: "assignment",
+    initialMessages,
   });
   const [input, setInput] = useState("");
-  const [saving, setSaving] = useState(false);
 
   const handleSend = () => {
     const text = input.trim();
@@ -38,24 +46,6 @@ const AssignmentTab: FC<AssignmentTabProps> = ({ sessionId, active, onRegisterSa
     messages
       .map((m) => `**${m.role === "user" ? "You" : "Tutor"}:** ${m.text}`)
       .join("\n\n");
-
-  const handleSaveProgress = async () => {
-    if (messages.length === 0) return;
-    setSaving(true);
-    try {
-      const firstUserMessage = messages.find((m) => m.role === "user")?.text || "Assignment progress";
-      await saveTutorItem({
-        folder: "Solved Homeworks",
-        title: firstUserMessage.slice(0, 80).replace(/\s+/g, " ").trim(),
-        content: buildTranscript(),
-      });
-      toast.success("Saved to Solved Homeworks");
-    } catch {
-      toast.error("Could not save your progress. Please retry.");
-    } finally {
-      setSaving(false);
-    }
-  };
 
   useEffect(() => {
     if (!onRegisterSaveHandler) return;
@@ -77,19 +67,10 @@ const AssignmentTab: FC<AssignmentTabProps> = ({ sessionId, active, onRegisterSa
 
   return (
     <div className={`flex h-full flex-col ${active ? "" : "hidden"}`}>
-      <div className="flex items-center justify-between border-b border-gray-200 px-4 py-2">
+      <div className="border-b border-gray-200 px-4 py-2 pr-32">
         <p className="text-xs font-semibold text-gray-500">
           Socratic mode: I'll guide you with questions and hints, not flat answers.
         </p>
-        <button
-          type="button"
-          onClick={handleSaveProgress}
-          disabled={saving || messages.length === 0}
-          className="flex items-center gap-1 text-[11px] font-semibold text-gray-500 transition-colors hover:text-primary-400 disabled:opacity-50"
-        >
-          <FiBookmark className="h-3 w-3" />
-          {saving ? "Saving…" : "Save Progress"}
-        </button>
       </div>
 
       <div className="flex-1 space-y-3 overflow-y-auto p-4">

@@ -15,6 +15,8 @@ interface UseTutorChatOptions {
   sessionId: string | null;
   mode: StudyLearningMode;
   tutorContext?: string;
+  /** Prior turns for this mode, loaded once when resuming a saved session. */
+  initialMessages?: TutorChatMessage[];
 }
 
 /**
@@ -24,12 +26,21 @@ interface UseTutorChatOptions {
  * conversation — all three tabs stay mounted and this hook's state lives in
  * each one.
  */
-export function useTutorChat({ sessionId, mode, tutorContext }: UseTutorChatOptions) {
-  const [messages, setMessages] = useState<TutorChatMessage[]>([]);
+export function useTutorChat({ sessionId, mode, tutorContext, initialMessages }: UseTutorChatOptions) {
+  const [messages, setMessages] = useState<TutorChatMessage[]>(initialMessages || []);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const idRef = useRef(0);
   const nextId = () => `msg-${(idRef.current += 1)}-${Date.now().toString(36)}`;
+  const hydratedSessionId = useRef(sessionId);
+
+  // Hydrate once per session switch (e.g. resuming from Session History) —
+  // never on every re-render, or a freshly-sent local message would get
+  // clobbered back to the stale initialMessages snapshot.
+  if (sessionId !== hydratedSessionId.current) {
+    hydratedSessionId.current = sessionId;
+    if (initialMessages) setMessages(initialMessages);
+  }
 
   const send = useCallback(
     async (question: string, groundedText?: string) => {

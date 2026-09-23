@@ -75,6 +75,7 @@ export interface TutorMessageDto {
   citations: number[];
   provenance?: "source" | "general" | "image";
   attachments?: TutorMessageImageDto[];
+  mode?: StudyLearningMode;
   createdAt: string;
 }
 
@@ -335,6 +336,24 @@ export async function generateStudyArtifact(
         academicLevel: options.academicLevel || "college",
         rubric: options.rubric || "",
       }),
+    },
+  );
+}
+
+/**
+ * AI-grades one short-answer quiz response instead of relying on exact
+ * string matching, which fails correct answers over articles/phrasing (e.g.
+ * "The cytoplasm" vs model answer "Cytoplasm").
+ */
+export async function gradeShortAnswer(
+  sessionId: string,
+  input: { question: string; modelAnswer: string; studentAnswer: string },
+) {
+  return callStudyApi<{ correct: boolean; feedback: string }>(
+    `/sessions/${sessionId}/grade-answer`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
     },
   );
 }

@@ -10,11 +10,19 @@ import SaveModal from "./SaveModal";
 import ResearchTab from "./tabs/ResearchTab";
 import AssignmentTab from "./tabs/AssignmentTab";
 import QuizTab from "./tabs/QuizTab";
-import { getStudySessionDetails } from "./tutorApi";
+import { getStudySessionDetails, type TutorMessageDto } from "./tutorApi";
+import type { TutorChatMessage } from "./ChatMessage";
 
 interface TutorWorkspaceProps {
   initialSessionId?: string;
 }
+
+const toChatMessages = (dtos: TutorMessageDto[]): TutorChatMessage[] =>
+  dtos.map((m) => ({
+    id: m._id,
+    role: m.role,
+    text: m.message,
+  }));
 
 /** A tab's self-reported ability to save its current state. */
 export interface SaveHandler {
@@ -42,6 +50,9 @@ const TutorWorkspace: FC<TutorWorkspaceProps> = ({ initialSessionId }) => {
   // picked from Session History) should auto-skip the picker.
   const [freshSessionId, setFreshSessionId] = useState<string | null>(null);
   const [saveModalOpen, setSaveModalOpen] = useState(false);
+  const [savedDataRefreshToken, setSavedDataRefreshToken] = useState(0);
+  const [resumedResearchMessages, setResumedResearchMessages] = useState<TutorChatMessage[]>([]);
+  const [resumedAssignmentMessages, setResumedAssignmentMessages] = useState<TutorChatMessage[]>([]);
   const saveHandlersRef = useRef<Partial<Record<TutorTab, SaveHandler>>>({});
 
   const registerSaveHandler = useCallback(
@@ -50,6 +61,10 @@ const TutorWorkspace: FC<TutorWorkspaceProps> = ({ initialSessionId }) => {
     },
     [],
   );
+
+  const handleTabSaved = useCallback(() => {
+    setSavedDataRefreshToken((n) => n + 1);
+  }, []);
 
   useEffect(() => {
     if (!sessionId) return;
@@ -63,6 +78,17 @@ const TutorWorkspace: FC<TutorWorkspaceProps> = ({ initialSessionId }) => {
         // workspace (intent already implied by prior use) rather than
         // re-asking — the sidebar lets them switch tabs freely anyway.
         setIntentChosen(sourceCount > 0);
+        // Split prior tutor turns back into Research vs Assignment by the
+        // `mode` they were saved with, so resuming a session actually shows
+        // its chat history instead of two blank tabs (quiz attempts aren't
+        // chat-persisted, so the Quiz tab has nothing to hydrate).
+        const allMessages = details.tutorMessages || [];
+        setResumedResearchMessages(
+          toChatMessages(allMessages.filter((m) => (m.mode || "research") === "research")),
+        );
+        setResumedAssignmentMessages(
+          toChatMessages(allMessages.filter((m) => m.mode === "assignment")),
+        );
       })
       .catch(() => {
         setHasSource(false);
@@ -89,6 +115,8 @@ const TutorWorkspace: FC<TutorWorkspaceProps> = ({ initialSessionId }) => {
     setHasSource(false);
     setIntentChosen(false);
     setFreshSessionId(null);
+    setResumedResearchMessages([]);
+    setResumedAssignmentMessages([]);
   };
 
   const handleSelectSession = (id: string) => {
@@ -98,10 +126,14 @@ const TutorWorkspace: FC<TutorWorkspaceProps> = ({ initialSessionId }) => {
 
   const handleSaveActiveTab = async () => {
     const handler = saveHandlersRef.current[activeTab];
-    if (!handler || !handler.hasContent) return;
+    if (!handler || !handler.hasContent) {
+      toast.error("Nothing to save yet in this tab.");
+      return;
+    }
     try {
       await handler.save();
-      toast.success("Saved");
+      toast.success("Saved — open \"Saved Data\" in the sidebar to view it");
+      setSavedDataRefreshToken((n) => n + 1);
     } catch {
       toast.error("Could not save. Please retry.");
     }
@@ -117,10 +149,13 @@ const TutorWorkspace: FC<TutorWorkspaceProps> = ({ initialSessionId }) => {
     const results = await Promise.allSettled(savable.map(([, handler]) => handler.save(projectLabel)));
     const failed = results.filter((r) => r.status === "rejected").length;
     if (failed === 0) {
-      toast.success(`Saved ${savable.length} item${savable.length > 1 ? "s" : ""} to their folders`);
+      toast.success(
+        `Saved ${savable.length} item${savable.length > 1 ? "s" : ""} — open "Saved Data" in the sidebar to view them`,
+      );
     } else {
       toast.error(`Saved ${savable.length - failed} of ${savable.length} items — some failed`);
     }
+    setSavedDataRefreshToken((n) => n + 1);
   };
 
   if (checkingSession) {
@@ -155,6 +190,7 @@ const TutorWorkspace: FC<TutorWorkspaceProps> = ({ initialSessionId }) => {
         currentSessionId={sessionId}
         onSelectSession={handleSelectSession}
         onNewSession={handleNewSession}
+        savedDataRefreshToken={savedDataRefreshToken}
       />
       {/* All three tabs stay mounted so switching never drops in-progress
           state. Each wrapper is `absolute inset-0` to overlap in the same
@@ -178,6 +214,8 @@ const TutorWorkspace: FC<TutorWorkspaceProps> = ({ initialSessionId }) => {
             sessionId={sessionId}
             active={activeTab === "research"}
             onRegisterSaveHandler={registerSaveHandler("research")}
+            onSaved={handleTabSaved}
+            initialMessages={resumedResearchMessages}
           />
         </div>
         <div
@@ -187,6 +225,7 @@ const TutorWorkspace: FC<TutorWorkspaceProps> = ({ initialSessionId }) => {
             sessionId={sessionId}
             active={activeTab === "assignment"}
             onRegisterSaveHandler={registerSaveHandler("assignment")}
+            initialMessages={resumedAssignmentMessages}
           />
         </div>
         <div
@@ -196,6 +235,7 @@ const TutorWorkspace: FC<TutorWorkspaceProps> = ({ initialSessionId }) => {
             sessionId={sessionId}
             active={activeTab === "quiz"}
             onRegisterSaveHandler={registerSaveHandler("quiz")}
+            onSaved={handleTabSaved}
           />
         </div>
       </div>

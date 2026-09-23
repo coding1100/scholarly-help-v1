@@ -3,7 +3,7 @@
 import { FC, useEffect, useState } from "react";
 import { FiBookmark, FiRefreshCw } from "react-icons/fi";
 import toast from "react-hot-toast";
-import { generateStudyArtifact, type StudyArtifactType } from "../tutorApi";
+import { generateStudyArtifact, gradeShortAnswer, type StudyArtifactType } from "../tutorApi";
 import { saveTutorItem } from "../tutorApi";
 import {
   loadTutorMastery,
@@ -31,12 +31,15 @@ interface QuizAnswerRecord {
   correct: boolean;
   selectedIndex: number | null;
   shortAnswerText: string;
+  /** AI-graded feedback for a short-answer response, when available. */
+  gradedFeedback?: string;
 }
 
 interface QuizTabProps {
   sessionId: string | null;
   active: boolean;
   onRegisterSaveHandler?: (handler: SaveHandler) => void;
+  onSaved?: () => void;
 }
 
 type QuizPhase = "idle" | "loading" | "taking" | "scored";
@@ -46,7 +49,7 @@ type ObjectiveFormat = "mcq" | "true_false" | "fill_blank";
 const MIN_QUESTIONS = 2;
 const MAX_QUESTIONS = 30;
 
-const QuizTab: FC<QuizTabProps> = ({ sessionId, active, onRegisterSaveHandler }) => {
+const QuizTab: FC<QuizTabProps> = ({ sessionId, active, onRegisterSaveHandler, onSaved }) => {
   const [phase, setPhase] = useState<QuizPhase>("idle");
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [qIndex, setQIndex] = useState(0);
@@ -57,6 +60,7 @@ const QuizTab: FC<QuizTabProps> = ({ sessionId, active, onRegisterSaveHandler })
   const [mastery, setMastery] = useState<TutorMasterySnapshot | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [shortfallCount, setShortfallCount] = useState<number | null>(null);
+  const [grading, setGrading] = useState(false);
 
   // Pre-quiz setup
   const [quizKind, setQuizKind] = useState<QuizKind>("objective");
@@ -84,7 +88,7 @@ const QuizTab: FC<QuizTabProps> = ({ sessionId, active, onRegisterSaveHandler })
     setShortfallCount(null);
     try {
       const formatHints: string[] = [];
-      if (quizKind !== "subjective") {
+      if (quizKind === "objective") {
         if (objectiveFormats.includes("true_false")) {
           formatHints.push(
             'Some of the multiple-choice questions should be True/False style (exactly 2 options: "True" and "False", correctAnswerIndex 0 or 1).',
@@ -95,6 +99,17 @@ const QuizTab: FC<QuizTabProps> = ({ sessionId, active, onRegisterSaveHandler })
             "Include fill-in-the-blank questions: questionFormat short_answer, phrased as a sentence with a blank (e.g. 'The powerhouse of the cell is the ____.'), answer is the short missing word or phrase.",
           );
         }
+      } else if (quizKind === "mix") {
+        if (objectiveFormats.includes("true_false")) {
+          formatHints.push(
+            'Some of the MULTIPLE-CHOICE half should be True/False style (exactly 2 options: "True" and "False", correctAnswerIndex 0 or 1).',
+          );
+        }
+        // Fill-in-the-blank is deliberately NOT applied in Mix — the
+        // short-answer half of a mixed quiz is meant to be conceptual/
+        // theoretical (see quizUserPrompt's "mixed" branch), and a
+        // fill-in-the-blank hint would collapse that back into an objective
+        // recall question, defeating the point of the subjective half.
       }
       const questionFormat: "mcq" | "short_answer" | "mixed" =
         quizKind === "subjective" ? "short_answer" : quizKind === "mix" ? "mixed" : "mcq";
@@ -160,19 +175,68 @@ const QuizTab: FC<QuizTabProps> = ({ sessionId, active, onRegisterSaveHandler })
   const currentQuestion = questions[qIndex];
   const currentAnswer = answersByIndex[qIndex];
 
-  const submitAnswer = () => {
+  const submitAnswer = async () => {
     if (!currentQuestion) return;
-    const correct =
-      currentQuestion.questionFormat === "mcq"
-        ? selected === currentQuestion.correctAnswerIndex
-        : shortAnswerInput.trim().length > 0 &&
-          shortAnswerInput.trim().toLowerCase() === currentQuestion.answer.trim().toLowerCase();
 
-    setAnswersByIndex((prev) => ({
-      ...prev,
-      [qIndex]: { correct, selectedIndex: selected, shortAnswerText: shortAnswerInput },
-    }));
-    setShowFeedback(true);
+    if (currentQuestion.questionFormat === "mcq") {
+      const correct = selected === currentQuestion.correctAnswerIndex;
+      setAnswersByIndex((prev) => ({
+        ...prev,
+        [qIndex]: { correct, selectedIndex: selected, shortAnswerText: shortAnswerInput },
+      }));
+      setShowFeedback(true);
+      return;
+    }
+
+    // Short answer: exact string matching fails correct answers that are
+    // phrased differently from the model answer (articles, synonyms,
+    // rephrasing), so ask the model to grade it instead. Fall back to a
+    // lenient local comparison if the grading call fails, so a network hiccup
+    // never blocks the student from finishing the quiz.
+    const trimmed = shortAnswerInput.trim();
+    if (!trimmed) {
+      setAnswersByIndex((prev) => ({
+        ...prev,
+        [qIndex]: { correct: false, selectedIndex: null, shortAnswerText: shortAnswerInput },
+      }));
+      setShowFeedback(true);
+      return;
+    }
+
+    setGrading(true);
+    try {
+      const result = sessionId
+        ? await gradeShortAnswer(sessionId, {
+            question: currentQuestion.question,
+            modelAnswer: currentQuestion.answer,
+            studentAnswer: trimmed,
+          })
+        : null;
+      const correct =
+        result?.correct ??
+        trimmed.toLowerCase().replace(/^(a|an|the)\s+/, "") ===
+          currentQuestion.answer.trim().toLowerCase().replace(/^(a|an|the)\s+/, "");
+      setAnswersByIndex((prev) => ({
+        ...prev,
+        [qIndex]: {
+          correct,
+          selectedIndex: null,
+          shortAnswerText: shortAnswerInput,
+          gradedFeedback: result?.feedback,
+        },
+      }));
+    } catch {
+      const correct =
+        trimmed.toLowerCase().replace(/^(a|an|the)\s+/, "") ===
+        currentQuestion.answer.trim().toLowerCase().replace(/^(a|an|the)\s+/, "");
+      setAnswersByIndex((prev) => ({
+        ...prev,
+        [qIndex]: { correct, selectedIndex: null, shortAnswerText: shortAnswerInput },
+      }));
+    } finally {
+      setGrading(false);
+      setShowFeedback(true);
+    }
   };
 
   const goNext = () => {
@@ -256,6 +320,7 @@ const QuizTab: FC<QuizTabProps> = ({ sessionId, active, onRegisterSaveHandler })
         content,
       });
       toast.success("Saved to Saved Quizzes");
+      onSaved?.();
     } catch {
       toast.error("Could not save this quiz attempt. Please retry.");
     }
@@ -337,14 +402,21 @@ const QuizTab: FC<QuizTabProps> = ({ sessionId, active, onRegisterSaveHandler })
             {quizKind !== "subjective" ? (
               <div>
                 <p className="mb-1.5 text-xs font-semibold text-gray-700">
-                  Objective format{quizKind === "mix" ? " (for the objective half)" : ""}
+                  Objective format{quizKind === "mix" ? " (for the multiple-choice half)" : ""}
                 </p>
                 <div className="flex flex-wrap gap-1.5">
-                  {([
-                    { key: "mcq", label: "Multiple Choice" },
-                    { key: "true_false", label: "True / False" },
-                    { key: "fill_blank", label: "Fill in the Blank" },
-                  ] as { key: ObjectiveFormat; label: string }[]).map(({ key, label }) => (
+                  {(
+                    (quizKind === "mix"
+                      ? [
+                          { key: "mcq", label: "Multiple Choice" },
+                          { key: "true_false", label: "True / False" },
+                        ]
+                      : [
+                          { key: "mcq", label: "Multiple Choice" },
+                          { key: "true_false", label: "True / False" },
+                          { key: "fill_blank", label: "Fill in the Blank" },
+                        ]) as { key: ObjectiveFormat; label: string }[]
+                  ).map(({ key, label }) => (
                     <button
                       key={key}
                       type="button"
@@ -474,7 +546,9 @@ const QuizTab: FC<QuizTabProps> = ({ sessionId, active, onRegisterSaveHandler })
               <p className="font-semibold">
                 {currentAnswer?.correct ? "Correct!" : "Not quite."}
               </p>
-              {currentQuestion.explanation ? (
+              {currentQuestion.questionFormat === "short_answer" && currentAnswer?.gradedFeedback ? (
+                <p className="mt-1 text-gray-600">{currentAnswer.gradedFeedback}</p>
+              ) : currentQuestion.explanation ? (
                 <p className="mt-1 text-gray-600">{currentQuestion.explanation}</p>
               ) : null}
             </div>
@@ -491,20 +565,29 @@ const QuizTab: FC<QuizTabProps> = ({ sessionId, active, onRegisterSaveHandler })
             </button>
             <button
               type="button"
-              onClick={showFeedback ? goNext : submitAnswer}
+              onClick={() => {
+                if (showFeedback) {
+                  goNext();
+                } else {
+                  void submitAnswer();
+                }
+              }}
               disabled={
-                !showFeedback &&
-                (currentQuestion.questionFormat === "mcq"
-                  ? selected === null
-                  : !shortAnswerInput.trim())
+                grading ||
+                (!showFeedback &&
+                  (currentQuestion.questionFormat === "mcq"
+                    ? selected === null
+                    : !shortAnswerInput.trim()))
               }
               className="rounded-lg bg-primary-400 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-300 active:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {showFeedback
-                ? qIndex + 1 < questions.length
-                  ? "Next"
-                  : "Finish"
-                : "Submit"}
+              {grading
+                ? "Grading…"
+                : showFeedback
+                  ? qIndex + 1 < questions.length
+                    ? "Next"
+                    : "Finish"
+                  : "Submit"}
             </button>
           </div>
         </div>
