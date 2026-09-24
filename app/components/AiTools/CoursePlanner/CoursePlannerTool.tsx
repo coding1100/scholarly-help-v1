@@ -52,6 +52,7 @@ export const CoursePlannerTool: React.FC = () => {
     userId: "user_client",
     mutedCourseIds: [],
     reminderLeadTimeHours: 24,
+    emailEnabled: false,
   });
 
   // UI Drawer State

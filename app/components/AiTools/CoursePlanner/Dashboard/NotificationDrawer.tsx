@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { FiX, FiBell, FiCheck } from "react-icons/fi";
+import React, { useEffect, useState } from "react";
+import { FiX, FiBell, FiCheck, FiMail } from "react-icons/fi";
 import { NotificationItem, NotificationSettings, CourseCatalogItem } from "@/app/lib/client/coursePlanner/types";
 
 interface Props {
@@ -22,8 +22,21 @@ export const NotificationDrawer: React.FC<Props> = ({
   onUpdateSettings,
 }) => {
   const [activeTab, setActiveTab] = useState<"all" | "attendance" | "deadline" | "adaptive" | "settings">("all");
+  // Local draft so typing an email address doesn't fire a save request on
+  // every keystroke; only committed onBlur/Enter.
+  const [emailDraft, setEmailDraft] = useState(settings.notificationEmail || "");
+  useEffect(() => {
+    setEmailDraft(settings.notificationEmail || "");
+  }, [settings.notificationEmail]);
 
   if (!isOpen) return null;
+
+  const commitEmailDraft = () => {
+    const trimmed = emailDraft.trim();
+    if (trimmed !== (settings.notificationEmail || "")) {
+      onUpdateSettings({ notificationEmail: trimmed || undefined });
+    }
+  };
 
   const filtered = activeTab === "all"
     ? notifications
@@ -75,6 +88,47 @@ export const NotificationDrawer: React.FC<Props> = ({
           {activeTab === "settings" ? (
             <div className="space-y-4">
               <h4 className="text-xs font-semibold text-gray-500 tracking-wide">Notification Settings</h4>
+
+              <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-gray-700 flex items-center gap-1.5">
+                    <FiMail className="w-3.5 h-3.5 text-gray-400" /> Email Notifications
+                  </span>
+                  <button
+                    onClick={() => onUpdateSettings({ emailEnabled: !settings.emailEnabled })}
+                    role="switch"
+                    aria-checked={settings.emailEnabled}
+                    className={`relative w-9 h-5 rounded-full transition-colors ${
+                      settings.emailEnabled ? "bg-primary-400" : "bg-gray-300"
+                    }`}
+                  >
+                    <span
+                      className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${
+                        settings.emailEnabled ? "translate-x-4" : ""
+                      }`}
+                    />
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500">
+                  Get emailed for missed classes, low attendance, and upcoming deadlines.
+                </p>
+                {settings.emailEnabled && (
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Notification Email (optional)</label>
+                    <input
+                      type="email"
+                      value={emailDraft}
+                      onChange={(e) => setEmailDraft(e.target.value)}
+                      onBlur={commitEmailDraft}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                      }}
+                      placeholder="Uses your account email if left blank"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-primary-400/20"
+                    />
+                  </div>
+                )}
+              </div>
 
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">Deadline Reminder Lead Time</label>
