@@ -208,4 +208,6 @@ export interface NotificationSettings {
   userId?: string;
   mutedCourseIds: string[];
   reminderLeadTimeHours: number; // e.g. 1, 24, 48
+  emailEnabled: boolean;
+  notificationEmail?: string;
 }

@@ -249,7 +249,9 @@ export const Step5ScheduleOptions: React.FC<Props> = ({
 
               <button
                 onClick={() => onSelectOption(activeOption)}
-                className="px-4 py-2 bg-primary-400 hover:bg-primary-300 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5"
+                disabled={activeOption.conflicts.length > 0}
+                title={activeOption.conflicts.length > 0 ? "Resolve all conflicts before accepting this schedule" : undefined}
+                className="px-4 py-2 bg-primary-400 hover:bg-primary-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary-400 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5"
               >
                 Accept This Schedule <FiArrowRight className="w-3.5 h-3.5" />
               </button>

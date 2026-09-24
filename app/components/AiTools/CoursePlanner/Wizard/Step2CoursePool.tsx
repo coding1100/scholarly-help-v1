@@ -7,14 +7,33 @@ const EXTRACT_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899", "
 const VALID_DAYS: CourseSection["days"][number][] = ["M", "T", "W", "Th", "F", "Sa", "Su"];
 const MAX_SYLLABUS_WORDS = 1500;
 
+// Maps common day spellings the LLM might still return (full names,
+// three-letter abbreviations, different casing) onto the app's exact day
+// tokens, so a value like "Friday" or "fri" resolves correctly instead of
+// being silently discarded by a strict token match.
+const DAY_ALIASES: Record<string, CourseSection["days"][number]> = {
+  m: "M", mon: "M", monday: "M",
+  t: "T", tue: "T", tues: "T", tuesday: "T",
+  w: "W", wed: "W", wednesday: "W",
+  th: "Th", thu: "Th", thur: "Th", thurs: "Th", thursday: "Th",
+  f: "F", fri: "F", friday: "F",
+  sa: "Sa", sat: "Sa", saturday: "Sa",
+  su: "Su", sun: "Su", sunday: "Su",
+};
+
 // The LLM response is loosely typed JSON at the API boundary — normalize
-// "days" defensively rather than trusting it matches the narrow union.
+// "days" defensively rather than trusting it matches the narrow union. A
+// value that can't be parsed at all must NOT silently default to a
+// fabricated M/W/F schedule (a previous version did this, and a
+// Friday-only section from the syllabus was extracted as also meeting
+// Monday/Wednesday) — an empty/unrecognized value is left empty so the UI
+// can flag it instead of inventing meeting days.
 const normalizeDays = (days: unknown): CourseSection["days"] => {
-  if (!Array.isArray(days)) return ["M", "W", "F"];
-  const valid = days.filter((d): d is CourseSection["days"][number] =>
-    VALID_DAYS.includes(d as any)
-  );
-  return valid.length > 0 ? valid : ["M", "W", "F"];
+  if (!Array.isArray(days)) return [];
+  const valid = days
+    .map((d) => (typeof d === "string" ? DAY_ALIASES[d.trim().toLowerCase()] : undefined))
+    .filter((d): d is CourseSection["days"][number] => !!d && VALID_DAYS.includes(d));
+  return Array.from(new Set(valid));
 };
 
 // A course pool entry as it's POSTed to create a course — sections have no
@@ -185,13 +204,22 @@ export const Step2CoursePool: React.FC<Props> = ({
   // fail, the error message says exactly how many made it in.
   const addExtractedCourses = async (extracted: ExtractedSyllabusCourse[]) => {
     let addedCount = 0;
+    let missingDaysCount = 0;
     for (let i = 0; i < extracted.length; i++) {
-      const succeeded = await onAddCourse(toPoolCourse(extracted[i], courses.length + i));
+      const pooled = toPoolCourse(extracted[i], courses.length + i);
+      if (pooled.sections.some((s) => s.days.length === 0)) missingDaysCount++;
+      const succeeded = await onAddCourse(pooled);
       if (succeeded) addedCount++;
     }
     if (addedCount < extracted.length) {
       setExtractionError(
-        `Added ${addedCount} of ${extracted.length} extracted courses — the rest failed to save. Check the pool below and re-add any missing ones manually.`
+        `Added ${addedCount} of ${extracted.length} extracted courses, the rest failed to save. Check the pool below and re-add any missing ones manually.`
+      );
+    }
+    if (missingDaysCount > 0) {
+      setExtractionNotice(
+        (prev) =>
+          `${prev ? prev + " " : ""}${missingDaysCount} section${missingDaysCount > 1 ? "s" : ""} could not have their meeting days confidently read from the syllabus, please set them manually in the next step.`
       );
     }
   };
