@@ -30,9 +30,11 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# local env files
-.env*.local
+# env files (all of them, not just *.local — .env itself was committed to
+# history before and must never be re-added by an accidental `git add -A`)
+.env
 .env*
+.env*.local
 
 # vercel
 .vercel
