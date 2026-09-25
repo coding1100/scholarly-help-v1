@@ -36,18 +36,6 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${poppins.variable} font-poppins`}>
       <head>
-        {/* Resource Hints for better performance and sharp font loading */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap"
-          rel="stylesheet"
-        />
-
         {/* Force HTTPS for all resources in production only */}
         {process.env.NODE_ENV === "production" &&
           process.env.DISABLE_HTTPS_HEADERS !== "true" && (
@@ -57,11 +45,9 @@ export default function RootLayout({
       <body className={`${poppins.className} font-poppins`} suppressHydrationWarning>
         <OrganizationSchema />
         <main id="main-content">{children}</main>
-
-        {/* Load analytics after hydration without waiting for page load or idle. */}
         <Script
           id="gtm-script"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
           dangerouslySetInnerHTML={{
             __html: `
               (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
