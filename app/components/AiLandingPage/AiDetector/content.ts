@@ -2,12 +2,13 @@ import type { ToolLandingContent } from "../ToolLanding/types";
 
 export const aiDetectorContent: ToolLandingContent = {
   hero: {
-    badge: "2,468 students checked their text this week",
-    titleTop: "Trusted AI detector for ChatGPT,",
-    titleAccent: "Gemini, and all major LLMs",
+    badge: "For working professionals earning their degree online",
+    badgeIcon: "💼",
+    titleTop: "Check your paper",
+    titleAccent: "before your professor does.",
     subtitle:
-      "Paste your text and see whether each sentence reads as AI, human, or mixed.",
-    steps: ["Paste text", "Read the breakdown", "Edit and rescan"],
+      "Working full-time and studying online? See which sentences read as AI, mixed or human, and fix them before you submit.",
+    steps: [],
     toolId: "ai-detector-tool",
   },
   useCases: {

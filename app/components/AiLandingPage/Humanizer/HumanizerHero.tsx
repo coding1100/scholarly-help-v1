@@ -3,13 +3,12 @@ import HumanizerToolEmbed from "./HumanizerToolEmbed";
 import { heroContent } from "./content";
 
 /**
- * Hero for the /tools/ai-humanizer landing page: badge, headline, 3-step
- * indicator, the real humanizer tool embedded as a card, and the stats bar.
- * Mirrors the paraphraser / study-workspace heroes exactly.
+ * Hero for the /tools/ai-humanizer landing page: badge, headline, and the
+ * real humanizer tool embedded as a card.
  *
- * This is a SERVER component so the marketing copy (badge, H1, subheading,
- * steps, stats) is in the server-rendered HTML for SEO. Only the interactive
- * tool is client-rendered, inside HumanizerToolEmbed.
+ * This is a SERVER component so the marketing copy (badge, H1, subheading) is
+ * in the server-rendered HTML for SEO. Only the interactive tool is
+ * client-rendered, inside HumanizerToolEmbed.
  */
 const HumanizerHero: FC = () => (
   <section className="relative overflow-hidden bg-[linear-gradient(180deg,#EAF3FF_0%,#F2F9FF_55%,#F7FBFF_100%)]">
@@ -28,7 +27,8 @@ const HumanizerHero: FC = () => (
     />
 
     <div className="relative mx-auto max-w-[1240px] px-4 pb-16 pt-10 text-center md:pb-20 md:pt-14">
-      <span className="inline-block rounded-full bg-white px-7 py-3 text-sm font-medium text-gray-900 shadow-[0_18px_35px_-12px_rgba(43,28,80,0.2)] md:text-base">
+      <span className="inline-flex items-center gap-2 rounded-full bg-white px-7 py-3 text-sm font-medium text-gray-900 shadow-[0_18px_35px_-12px_rgba(43,28,80,0.2)] md:text-base">
+        <span aria-hidden>🎓</span>
         {heroContent.badge}
       </span>
 
@@ -42,34 +42,6 @@ const HumanizerHero: FC = () => (
       <p className="mx-auto mt-5 max-w-3xl text-base text-gray-800 md:text-lg">
         {heroContent.subtitle}
       </p>
-
-      {/* step indicator */}
-      <div className="mt-8 flex flex-wrap items-center justify-center gap-x-4 gap-y-3">
-        {heroContent.steps.map((step, i) => (
-          <div key={step} className="flex items-center gap-x-4">
-            {i > 0 && (
-              <span
-                aria-hidden
-                className="hidden w-14 border-t-2 border-dotted border-gray-400 sm:block"
-              />
-            )}
-            <span className="flex items-center gap-3">
-              <span
-                className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold ${
-                  i === 0
-                    ? "bg-primary-400 text-white"
-                    : "border border-gray-400 bg-white text-gray-900"
-                }`}
-              >
-                {i + 1}
-              </span>
-              <span className="text-base font-medium text-gray-900 md:text-lg">
-                {step}
-              </span>
-            </span>
-          </div>
-        ))}
-      </div>
 
       {/* the real tool, styled as the hero card */}
       <div

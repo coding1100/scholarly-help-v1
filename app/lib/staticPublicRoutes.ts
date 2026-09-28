@@ -29,7 +29,6 @@ export const STATIC_TOP_LEVEL_SEGMENTS = new Set([
   "on-time-delivery-guarantee",
   "online-class",
   "order",
-  "otp",
   "pay-for-someone-to-write-my-paper",
   "pay-someone-to-do-my-assignment",
   "pay-someone-to-do-my-edgenuity",

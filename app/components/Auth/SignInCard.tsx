@@ -15,7 +15,10 @@ import {
   validateEmail,
   validateSignInPassword,
 } from "@/app/lib/authValidation";
-import { initializeAuthSession, persistAccessToken } from "@/app/lib/authSession";
+import {
+  completeAuthSession,
+  initializeAuthSession,
+} from "@/app/lib/authSession";
 
 interface SignInCardProps {
   switchAuthForm?: string;
@@ -23,12 +26,25 @@ interface SignInCardProps {
   /** Where to return after sign-in. Overrides the `returnUrl` query param
    *  (used when this card is rendered outside a routed page, e.g. in a modal). */
   returnUrl?: string;
+  /**
+   * "link" (default): "Forgot Password?" navigates to /forgot-password, which
+   * emails a reset link. "email": renders "Forgot? Email it to me" instead,
+   * which emails the account's password directly via `onRequestEmailPassword`
+   * — used by the guest auth gate modal, whose passwordless flow never sends
+   * users to a full reset-link page.
+   */
+  forgotPasswordMode?: "link" | "email";
+  /** Required when forgotPasswordMode is "email". Called after the password
+   *  email is sent, so the caller can switch to the "check your email" step. */
+  onRequestEmailPassword?: (email: string) => void;
 }
 
 const SignInCard: FC<SignInCardProps> = ({
   switchAuthForm = "",
   setSwitchAuthForm,
   returnUrl: returnUrlProp,
+  forgotPasswordMode = "link",
+  onRequestEmailPassword,
 }) => {
   const searchParams = useSearchParams();
   const returnUrl = returnUrlProp ?? searchParams.get("returnUrl");
@@ -76,17 +92,7 @@ const SignInCard: FC<SignInCardProps> = ({
 
   const persistSessionAndRedirect = useCallback(
     (data: any) => {
-      persistAccessToken(data.access_token, data.expires_in);
-      localStorage.setItem("user_id", data.user.user_id);
-      localStorage.setItem("user_name", data.user.name);
-      localStorage.setItem("package_type", data.user.package_type);
-      // Always overwrite to avoid stale email from a previous login.
-      const resolvedEmail = String(
-        data?.user?.email || data?.user?.user_email || email,
-      )
-        .trim()
-        .toLowerCase();
-      if (resolvedEmail) localStorage.setItem("user_email", resolvedEmail);
+      completeAuthSession(data, email);
 
       const redirectPath = returnUrl || "/tools/dashboard/";
       const qs = searchParams?.toString() || "";
@@ -102,6 +108,16 @@ const SignInCard: FC<SignInCardProps> = ({
     },
     [returnUrl, searchParams, email],
   );
+
+  // Sending the email itself is owned by SignUpCard's "check your email" step
+  // (the same request-password-email flow) — this just hands the validated
+  // email up to whatever renders that step, so the call only lives in one
+  // place.
+  const handleForgotPasswordEmail = () => {
+    setTouched((p) => ({ ...p, email: true }));
+    if (emailError || !email.trim()) return;
+    onRequestEmailPassword?.(email.trim().toLowerCase());
+  };
 
   const currentPage = usePathname();
   // Check if user is already authenticated
@@ -190,7 +206,18 @@ const SignInCard: FC<SignInCardProps> = ({
           )}
         </div>
         <div>
-          <label className="text-sm font-medium ">Password</label>
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium ">Password</label>
+            {forgotPasswordMode === "email" && (
+              <button
+                type="button"
+                onClick={handleForgotPasswordEmail}
+                className="text-sm font-medium text-[#ff641a] hover:underline"
+              >
+                Forgot? Email it to me
+              </button>
+            )}
+          </div>
           <div className="relative mt-2">
             <input
               type={showPassword ? "text" : "password"}
@@ -226,15 +253,17 @@ const SignInCard: FC<SignInCardProps> = ({
             {submitError}
           </span>
         )}
-        <Link
-          href={buildHrefWithSameQuery(
-            "/forgot-password/",
-            new URLSearchParams(qs),
-          )}
-          className="text-sm hover:underline "
-        >
-          Forgot Password?
-        </Link>
+        {forgotPasswordMode === "link" && (
+          <Link
+            href={buildHrefWithSameQuery(
+              "/forgot-password/",
+              new URLSearchParams(qs),
+            )}
+            className="text-sm hover:underline "
+          >
+            Forgot Password?
+          </Link>
+        )}
 
         <button
           type="submit"

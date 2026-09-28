@@ -7,6 +7,7 @@ import { FiLoader, FiSearch, FiZap } from "react-icons/fi";
 import AiGauge from "../shared/AiGauge";
 import { detectorPrimaryScore, normalizeDetectionResponse, type DetectionResponse } from "../AiDetectorTool/types";
 import { useDetectorConfig } from "../AiDetectorTool/useDetectorConfig";
+import { useHumanizerConfig } from "../HumanizerTool/useHumanizerConfig";
 import { fetchWithAuthRetry } from "@/app/lib/authSession";
 import { waitForJob, type JobStatus } from "@/app/lib/client/jobStream";
 import { isBillingGateError } from "@/app/lib/client/billingGateCodes";
@@ -33,6 +34,7 @@ export default function DraftTools({ draft, disabled, api, requestHeaders, guard
   onApply: (text: string) => void;
 }) {
   const config = useDetectorConfig();
+  const { maxWords: humanizerMaxWords } = useHumanizerConfig();
   const [busy, setBusy] = useState<Action | null>(null);
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<Result | null>(null);
@@ -43,7 +45,7 @@ export default function DraftTools({ draft, disabled, api, requestHeaders, guard
   function run(action: Action) {
     if (disabled || controllerRef.current || !draft.trim()) return;
     const words = countWords(draft);
-    const maximum = action === "detect" ? config.maximum_words : 1500;
+    const maximum = action === "detect" ? config.maximum_words : humanizerMaxWords;
     if (action === "detect" && words < config.minimum_words) {
       toast.error(`Please provide at least ${config.minimum_words} words for AI detection.`);
       return;

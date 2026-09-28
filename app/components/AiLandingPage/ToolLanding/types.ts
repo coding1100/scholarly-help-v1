@@ -28,9 +28,12 @@ export interface BeforeAfterContent {
 export interface ToolLandingContent {
   hero: {
     badge: string;
+    /** Optional emoji rendered before the badge text. */
+    badgeIcon?: string;
     titleTop: string;
     titleAccent: string;
     subtitle: string;
+    /** Numbered step pills under the subtitle. Omit or pass [] to skip them. */
     steps: string[];
     toolId: string;
   };

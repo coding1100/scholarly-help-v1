@@ -52,7 +52,8 @@ const ToolLanding = ({ content: c, tool }: ToolLandingProps) => (
         className="pointer-events-none absolute -bottom-52 left-1/2 h-[560px] w-[900px] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse,#dbeafe_0%,transparent_70%)] opacity-70"
       />
       <div className="relative mx-auto max-w-[1240px] px-4 pb-16 pt-10 text-center md:pb-20 md:pt-14">
-        <span className="inline-block rounded-full bg-white px-7 py-3 text-sm font-medium text-gray-900 shadow-[0_18px_35px_-12px_rgba(43,28,80,0.2)] md:text-base">
+        <span className="inline-flex items-center gap-2 rounded-full bg-white px-7 py-3 text-sm font-medium text-gray-900 shadow-[0_18px_35px_-12px_rgba(43,28,80,0.2)] md:text-base">
+          {c.hero.badgeIcon && <span aria-hidden>{c.hero.badgeIcon}</span>}
           {c.hero.badge}
         </span>
         <h1 className="mt-7 text-4xl font-bold leading-[1.15] text-[#17172B] sm:text-5xl md:text-[56px]">
@@ -64,6 +65,7 @@ const ToolLanding = ({ content: c, tool }: ToolLandingProps) => (
         <p className="mx-auto mt-5 max-w-3xl text-base text-gray-800 md:text-lg">
           {c.hero.subtitle}
         </p>
+        {c.hero.steps.length > 0 && (
         <div className="mt-8 flex flex-wrap items-center justify-center gap-x-4 gap-y-3">
           {c.hero.steps.map((step, index) => (
             <div key={step} className="flex items-center gap-x-4">
@@ -90,6 +92,7 @@ const ToolLanding = ({ content: c, tool }: ToolLandingProps) => (
             </div>
           ))}
         </div>
+        )}
         <div
           id={c.hero.toolId}
           className="mx-auto mt-10 max-w-[1180px] scroll-mt-24 text-left"
