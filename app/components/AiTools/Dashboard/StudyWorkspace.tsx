@@ -57,11 +57,11 @@ const STUDY_MODE = "research" as const;
 type WorkspaceTab = "original" | "notes" | "summary" | "flashcards" | "quizzes";
 
 const TABS: Array<{ id: WorkspaceTab; label: string }> = [
-  { id: "original", label: "Original Content" },
   { id: "notes", label: "AI Notes" },
-  { id: "summary", label: "AI Summary" },
-  { id: "flashcards", label: "AI Flashcards" },
-  { id: "quizzes", label: "AI Quizzes" },
+  { id: "summary", label: "Summary" },
+  { id: "flashcards", label: "Flashcards" },
+  { id: "quizzes", label: "Quizzes" },
+  { id: "original", label: "Original" },
 ];
 
 const TAB_ICON: Record<WorkspaceTab, ReactNode> = {
@@ -1395,7 +1395,7 @@ export default function StudyWorkspace() {
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
-                  className={`inline-flex items-center gap-2 rounded-md px-4 py-2.5 text-base font-medium transition ${
+                  className={`inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition ${
                     activeTab === tab.id
                       ? "bg-white text-[#202447] shadow-sm ring-1 ring-[#cfd6ff]"
                       : "text-[#5f6178] hover:bg-white/70 hover:text-[#2e335f]"

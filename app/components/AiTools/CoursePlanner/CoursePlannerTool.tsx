@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import {
   FiBookOpen,
   FiCalendar,
@@ -267,6 +268,11 @@ export const CoursePlannerTool: React.FC = () => {
   const handleUpdateSettings = (updates: Partial<NotificationSettings>) =>
     runMutation(async () => {
       setSettings(await CoursePlannerService.updateNotificationSettings(updates));
+      toast.success(
+        updates.notificationEmail !== undefined
+          ? "Notification email updated"
+          : "Notification settings updated",
+      );
     });
 
   // Once a semester is finalized, only the sections the student actually
