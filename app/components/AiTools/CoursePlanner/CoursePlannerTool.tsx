@@ -477,6 +477,7 @@ export const CoursePlannerTool: React.FC = () => {
           )}
           {activeTab === "calendar" && (
             <CalendarTab
+              semester={activeSemester}
               courses={coursesForDisplay}
               coursework={coursework}
               calendarEvents={calendarEvents}
