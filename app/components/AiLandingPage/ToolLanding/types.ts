@@ -100,4 +100,6 @@ export interface ToolLandingContent {
 export interface ToolLandingProps {
   content: ToolLandingContent;
   tool: ReactNode;
+  /** Replaces the default gradient hero (badge/title/tool) with a fully custom one. Sections below the hero are unaffected. */
+  hero?: ReactNode;
 }

@@ -7,6 +7,7 @@ import {
 } from "@/app/components/AiLandingPage/MathSolver/content";
 import ToolLanding from "@/app/components/AiLandingPage/ToolLanding/ToolLanding";
 import { MathSolverEmbed } from "@/app/components/AiLandingPage/ToolLanding/ToolEmbeds";
+import MathSolverHero from "@/app/components/AiLandingPage/MathSolver/MathSolverHero";
 
 const path = "/tools/ai-math-solver";
 
@@ -23,7 +24,11 @@ export default function MathSolverLandingPage() {
         metaDescription={mathSolverMeta.description}
         pageUrl={`${getBaseUrl()}${path}`}
       />
-      <ToolLanding content={mathSolverContent} tool={<MathSolverEmbed />} />
+      <ToolLanding
+        content={mathSolverContent}
+        tool={<MathSolverEmbed />}
+        hero={<MathSolverHero />}
+      />
     </MainLayout>
   );
 }

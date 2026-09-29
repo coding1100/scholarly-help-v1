@@ -36,8 +36,9 @@ const StepList = ({ steps }: { steps: LandingStep[] }) => (
   </div>
 );
 
-const ToolLanding = ({ content: c, tool }: ToolLandingProps) => (
+const ToolLanding = ({ content: c, tool, hero }: ToolLandingProps) => (
   <div className="font-poppins">
+    {hero ?? (
     <section className="relative overflow-hidden bg-[linear-gradient(180deg,#EAF3FF_0%,#F2F9FF_55%,#F7FBFF_100%)]">
       <div
         aria-hidden
@@ -107,6 +108,7 @@ const ToolLanding = ({ content: c, tool }: ToolLandingProps) => (
         </div>
       </div>
     </section>
+    )}
 
     {c.beforeAfter ? (
       <section className="bg-white py-16 md:py-20">
