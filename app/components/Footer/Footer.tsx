@@ -21,7 +21,6 @@ import { hideFooterLinks, smsHide } from "../HideLinks/HideLinks";
 // import "./footer.css";
 // import ChatBubble from "@/app/assets/Icons/ChatBubble";
 import chatBubble from "@/app/assets/Images/chatBubble.png";
-import axios from "axios";
 import { FaSnapchat } from "react-icons/fa";
 import { SiYoutubemusic } from "react-icons/si";
 
@@ -30,18 +29,8 @@ const Footer: FC<FooterProps> = ({}) => {
   const currentPage = usePathname();
   const hidelinksfooter = hideFooterLinks.includes(currentPage);
   const hideSMS = smsHide.includes(currentPage);
-  const [GCLID, setGCLID] = useState("");
-  const [url, setUrl] = useState("");
   const [isFooterInView, setIsFooterInView] = useState(false);
   const footerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (window?.location?.href?.includes("gclid=")) {
-      setGCLID(window?.location?.href);
-    }
-
-    setUrl(window?.location?.href);
-  }, []);
 
   useEffect(() => {
     if (!footerRef.current) return;
@@ -64,30 +53,6 @@ const Footer: FC<FooterProps> = ({}) => {
       observer.disconnect();
     };
   }, []);
-
-  const postUrl = `${process.env.NEXT_PUBLIC_API_URL}/order/quote/whatsapp`;
-
-  const postData = {
-    gclid: GCLID,
-    url: url,
-  };
-
-  const apiCall = async () => {
-    try {
-      const res = await axios.post(postUrl, postData, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      console.log("Response:", res.data);
-
-      return res.data;
-    } catch (error) {
-      console.error("Error:", error);
-      throw error;
-    }
-  };
 
   if (currentPage === "/order/") {
     return;
@@ -243,7 +208,6 @@ const Footer: FC<FooterProps> = ({}) => {
             <button
               id="sms-chat"
               className="fixed flex justify-between z-[98] left-0 bg-transparent border-none hidden md:flex"
-              onClick={apiCall}
             >
               <a
                 href={`sms:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER}`}
@@ -263,7 +227,6 @@ const Footer: FC<FooterProps> = ({}) => {
             <button
               id="sms-chat2"
               className="fixed flex justify-between z-[98] left-0 bg-transparent border-none md:hidden flex z-[99999]"
-              onClick={apiCall}
             >
               <a
                 href={`sms:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER}`}
