@@ -149,7 +149,21 @@ const ThankYou: FC<ThankYouProps> = () => {
     url: url,
   };
 
+  const pushWhatsAppClickEvent = (placement: "thank_you_cta") => {
+    try {
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({
+        event: "whatsapp_click",
+        whatsapp_placement: placement,
+        page_path: window.location.pathname,
+      });
+    } catch {
+      // Do not block the WhatsApp action if GTM is unavailable.
+    }
+  };
+
   const apiCall = async () => {
+    pushWhatsAppClickEvent("thank_you_cta");
     try {
       const res = await axios.post(postUrl, postData, {
         headers: {
