@@ -101,7 +101,7 @@ const SaveModal: FC<SaveModalProps> = ({
             >
               <p className="font-semibold text-gray-800">Save All Session Assets</p>
               <p className="mt-0.5 text-xs text-gray-500">
-                Splits and routes everything you've generated this session into its
+                Splits and routes everything you&apos;ve generated this session into its
                 folder, under one project label.
               </p>
             </button>

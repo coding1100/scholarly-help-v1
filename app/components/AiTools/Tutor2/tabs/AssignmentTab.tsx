@@ -69,14 +69,14 @@ const AssignmentTab: FC<AssignmentTabProps> = ({
     <div className={`flex h-full flex-col ${active ? "" : "hidden"}`}>
       <div className="border-b border-gray-200 px-4 py-2 pr-32">
         <p className="text-xs font-semibold text-gray-500">
-          Socratic mode: I'll guide you with questions and hints, not flat answers.
+          Socratic mode: I&apos;ll guide you with questions and hints, not flat answers.
         </p>
       </div>
 
       <div className="flex-1 space-y-3 overflow-y-auto p-4">
         {messages.length === 0 ? (
           <p className="text-sm text-gray-500">
-            Paste your assignment question — I'll walk you through it step by step.
+            Paste your assignment question — I&apos;ll walk you through it step by step.
           </p>
         ) : null}
         {messages.map((message) => (

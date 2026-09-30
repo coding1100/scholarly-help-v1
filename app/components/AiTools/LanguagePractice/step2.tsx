@@ -386,7 +386,7 @@ export default function Step2() {
                 </div>
               </div>
               <div className="text-sm text-gray-600">
-                I'll use this to set your starting difficulty — no pressure.
+                I&apos;ll use this to set your starting difficulty — no pressure.
               </div>
             </div>
             <div className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm shadow-sm">
@@ -425,7 +425,7 @@ export default function Step2() {
               <div className="mt-1.5 text-sm text-gray-600">
                 {level ? (
                   <>
-                    You're currently around{" "}
+                    You&apos;re currently around{" "}
                     <span className="font-bold text-[#155dfc]">{level}</span>.
                   </>
                 ) : (
@@ -631,7 +631,7 @@ export default function Step2() {
           {/* Fallback if no question text yet */}
           {!displayQuestionText && !feedback && (
             <div className="mb-4 rounded-xl border border-gray-100 bg-gradient-to-br from-gray-50 to-blue-50/30 p-4 text-sm text-gray-500 shadow-sm">
-              Tap "Start Assessment" and I'll ask the first question.
+              Tap &quot;Start Assessment&quot; and I&apos;ll ask the first question.
             </div>
           )}
 
@@ -836,7 +836,7 @@ export default function Step2() {
                 />
               </svg>
               <div className="text-xs text-gray-700">
-                <span className="font-semibold">Tip:</span> If you're unsure,
+                <span className="font-semibold">Tip:</span> If you&apos;re unsure,
                 take a guess — guessing is data! 📊
               </div>
             </div>

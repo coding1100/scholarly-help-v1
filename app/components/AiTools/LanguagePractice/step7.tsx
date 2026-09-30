@@ -316,7 +316,7 @@ export default function Step7() {
         {!hasLessonStarted && (
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-sm text-gray-600">
-              Ready to practice? Tap "New practice".
+              Ready to practice? Tap &quot;New practice&quot;.
             </div>
             <button
               type="button"
@@ -580,7 +580,7 @@ export default function Step7() {
         {/* Fallback message when no lesson started */}
         {!hasLessonStarted && (
           <div className="mt-3 rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm text-gray-500">
-            Tap "New practice" to begin.
+            Tap &quot;New practice&quot; to begin.
           </div>
         )}
 

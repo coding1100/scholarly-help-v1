@@ -272,7 +272,7 @@ export default function Step3({
 
               {q.passage && (
                 <div className="bg-gray-500 border border-gray-700 rounded-lg p-4 mb-4">
-                  <p className="text-black leading-relaxed">"{q.passage}"</p>
+                  <p className="text-black leading-relaxed">&quot;{q.passage}&quot;</p>
                 </div>
               )}
 
@@ -351,7 +351,7 @@ export default function Step3({
               <div className="text-center">
                 <HiClock className="text-5xl text-[#51a2ff] mx-auto mb-4" />
                 <h2 className="text-2xl font-bold text-black mb-3">
-                  Time's Up!
+                  Time&apos;s Up!
                 </h2>
                 <p className="text-gray-500 mb-6">
                   Your exam time has ended. Your answers will be submitted

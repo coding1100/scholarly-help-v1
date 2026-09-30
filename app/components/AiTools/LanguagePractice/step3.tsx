@@ -130,7 +130,7 @@ export default function Step3() {
         <div className="mt-1 text-sm text-gray-600">
           {goals.length > 0 ? (
             <>
-              We'll focus on:{" "}
+              We&apos;ll focus on:{" "}
               <span className="font-semibold">{goals.join(", ")}</span>.
             </>
           ) : (

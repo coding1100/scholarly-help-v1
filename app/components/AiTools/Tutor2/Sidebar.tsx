@@ -140,7 +140,7 @@ const Sidebar: FC<SidebarProps> = ({
             {loadingPanel ? <p className="p-2 text-xs text-gray-500">Loading…</p> : null}
             {!loadingPanel && folders.length === 0 ? (
               <p className="p-2 text-xs text-gray-500">
-                Nothing saved yet. Use "Save Note" / "Save Progress" / "Save attempt" in a tab.
+                Nothing saved yet. Use &quot;Save Note&quot; / &quot;Save Progress&quot; / &quot;Save attempt&quot; in a tab.
               </p>
             ) : null}
             {folders.map((folder) => {

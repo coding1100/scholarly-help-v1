@@ -29,8 +29,8 @@ export default function Step1({ onContinue }: Step1Props) {
 
           {/* Description */}
           <p className="text-[#555555] text-sm text-center max-w-lg mx-auto mb-5 leading-relaxed">
-            I'll help you learn bite-sized lessons that fit into your busy
-            schedule. Let's set up your personalized learning plan.
+            I&apos;ll help you learn bite-sized lessons that fit into your busy
+            schedule. Let&apos;s set up your personalized learning plan.
           </p>
 
           {/* Get Started Button */} 

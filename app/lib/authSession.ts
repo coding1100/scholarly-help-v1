@@ -224,8 +224,6 @@ export async function fetchWithAuthRetry(
   return request(refreshedToken);
 }
 
-<<<<<<< HEAD
-=======
 type SignInSessionUser = {
   user_id: string;
   name: string;
@@ -264,5 +262,4 @@ export function completeAuthSession(
   if (resolvedEmail) localStorage.setItem("user_email", resolvedEmail);
 }
 
->>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
 export { SESSION_EXPIRED_EVENT };

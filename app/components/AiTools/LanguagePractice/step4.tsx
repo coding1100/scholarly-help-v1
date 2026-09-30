@@ -489,7 +489,7 @@ export default function Step4() {
           Vocabulary that fits your life
         </div>
         <div className="mt-1 text-sm text-gray-600">
-          We'll learn words in context — then use them immediately.
+          We&apos;ll learn words in context — then use them immediately.
         </div>
         <div className="mt-3">{meta}</div>
       </div>
@@ -499,7 +499,7 @@ export default function Step4() {
         {!hasLessonStarted && (
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-sm text-gray-600">
-              Ready to learn some vocabulary? Tap 'Start lesson' to begin.
+              Ready to learn some vocabulary? Tap &apos;Start lesson&apos; to begin.
             </div>
             <button
               type="button"

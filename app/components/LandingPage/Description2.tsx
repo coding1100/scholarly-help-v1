@@ -35,7 +35,7 @@ const Description2: FC<Description2Props> = ({}) => {
               </p>
               <p className="text-[#263238] text-[17px]">
                 Struggling to balance your job, family, and a demanding
-                chemistry schedule? You don't need a tutor who just explains
+                chemistry schedule? You don&apos;t need a tutor who just explains
                 concepts; you need a manager who executes tasks. Our Online
                 Chemistry Class Help service is designed for nursing and pre-med
                 students who want to take my online chemistry class without the
@@ -48,7 +48,7 @@ const Description2: FC<Description2Props> = ({}) => {
                 ensure your chemistry homework is submitted on time, every time.
                 Stop sacrificing your sleep for stoichiometry. Delegate your
                 full course to Scholarly Help and watch your GPA rise while you
-                focus on what matters most. We don't just help you pass; we help
+                focus on what matters most. We don&apos;t just help you pass; we help
                 you excel.
               </p>
             </div>
@@ -68,7 +68,7 @@ const Description2: FC<Description2Props> = ({}) => {
                 reactions, calculating mole ratio, or identifying organic
                 mechanisms, our PhD-level experts score consistently in the 90%+
                 range. From General Chemistry I to Advanced Physical Chemistry,
-                we guarantee an 'A' or 'B' on every major exam or your money
+                we guarantee an &apos;A&apos; or &apos;B&apos; on every major exam or your money
                 back. Stop panicking about the clock; let us handle the
                 pressure.
               </p>
@@ -81,7 +81,7 @@ const Description2: FC<Description2Props> = ({}) => {
             onClick={scrollToQuote}
             className="rounded-md px-6 cursor-pointer bg-[#ff641a] text-white border border-transparent transition duration-300 text-[15px] max-[768px]:w-full font-medium flex items-center justify-center hover:bg-white hover:text-[#ff641a] hover:border-[#ff641a] h-[54px]"
           >
-            Secure My 'A' or 'B' Grades
+            Secure My &apos;A&apos; or &apos;B&apos; Grades
           </button>
         </div>
       </div>

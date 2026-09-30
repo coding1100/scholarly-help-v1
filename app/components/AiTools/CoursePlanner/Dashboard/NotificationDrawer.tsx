@@ -1,9 +1,3 @@
-<<<<<<< HEAD
-import React, { useEffect, useState } from "react";
-import { FiX, FiBell, FiCheck, FiMail } from "react-icons/fi";
-import { NotificationItem, NotificationSettings, CourseCatalogItem } from "@/app/lib/client/coursePlanner/types";
-
-=======
 import React, { useEffect, useRef, useState } from "react";
 import { FiX, FiBell, FiCheck, FiMail } from "react-icons/fi";
 import { NotificationItem, NotificationSettings, CourseCatalogItem } from "@/app/lib/client/coursePlanner/types";
@@ -19,7 +13,6 @@ const getAccountEmail = (): string => {
   }
 };
 
->>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
 interface Props {
   isOpen: boolean;
   onClose: () => void;
@@ -47,8 +40,6 @@ export const NotificationDrawer: React.FC<Props> = ({
     setEmailDraft(settings.notificationEmail || "");
   }, [settings.notificationEmail]);
 
-<<<<<<< HEAD
-=======
   // Default the notification email to the address the user is logged in
   // with, so it's actually usable out of the box instead of an empty field
   // with just a hint. Fires once per session when email alerts are on but no
@@ -65,7 +56,6 @@ export const NotificationDrawer: React.FC<Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.emailEnabled, settings.notificationEmail]);
 
->>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
   if (!isOpen) return null;
 
   const commitEmailDraft = () => {

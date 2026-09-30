@@ -146,7 +146,7 @@ export default function Step6() {
           Real-world conversation practice
         </div>
         <div className="mt-1 text-sm text-gray-600">
-          Chat naturally — I'll adapt and help you improve as we go.
+          Chat naturally — I&apos;ll adapt and help you improve as we go.
         </div>
         <div className="mt-3">{meta}</div>
       </div>
@@ -198,7 +198,7 @@ export default function Step6() {
         <div className="flex min-h-[200px] flex-col gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4">
           {turns.length === 0 ? (
             <div className="flex h-full items-center justify-center text-sm text-gray-500">
-              Tap "New conversation" to start chatting.
+              Tap &quot;New conversation&quot; to start chatting.
             </div>
           ) : (
             turns.map((t) => (

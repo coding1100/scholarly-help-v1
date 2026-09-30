@@ -56,7 +56,7 @@ export default function Step4({ onBack, onContinue }: Step4Props) {
               <span className="inline-block align-middle">📘</span>
             </p>
             <p className="text-[#666666] text-sm">
-              Select topics you'd like to learn about:
+              Select topics you&apos;d like to learn about:
             </p>
           </div>
 

@@ -149,8 +149,6 @@ const ThankYou: FC<ThankYouProps> = () => {
     url: url,
   };
 
-<<<<<<< HEAD
-=======
   const pushWhatsAppClickEvent = (placement: "thank_you_cta") => {
     try {
       window.dataLayer = window.dataLayer || [];
@@ -164,7 +162,6 @@ const ThankYou: FC<ThankYouProps> = () => {
     }
   };
 
->>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
   const apiCall = async () => {
     pushWhatsAppClickEvent("thank_you_cta");
     try {

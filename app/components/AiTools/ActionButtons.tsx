@@ -15,8 +15,6 @@ interface ActionButtonsProps {
   containerClassName?: string;
   /** Overrides the primary button's color classes (enabled state). */
   submitColorClassName?: string;
-<<<<<<< HEAD
-=======
   /** Overrides the Clear button's label (default "Clear Inputs"). */
   clearButtonText?: string;
   /**
@@ -25,7 +23,6 @@ interface ActionButtonsProps {
    * next to Submit instead. Omit for the default layout.
    */
   leftContent?: React.ReactNode;
->>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
 }
 
 const ActionButtons: React.FC<ActionButtonsProps> = ({
@@ -40,35 +37,14 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
   isClearDisabled,
   containerClassName = "",
   submitColorClassName = "bg-primary-400 hover:bg-primary-300 active:bg-primary-500",
-<<<<<<< HEAD
-=======
   clearButtonText = "Clear Inputs",
   leftContent,
->>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
 }) => {
   const showSecondary = Boolean(secondaryButtonText && onSecondarySubmit);
   // Clear is deliberately NOT coupled to `isDisabled`: that historical
   // coupling locked BOTH buttons on over-limit input, leaving users unable to
   // clear the very text that caused the lock.
   const clearDisabled = isSubmitting || isClearDisabled === true;
-<<<<<<< HEAD
-  return (
-    // Mobile: the primary button stretches to fill the row as a prominent CTA
-    // with Clear compact beside it; md+ keeps the original corner-aligned look.
-    <div className={`flex text-sm items-center justify-between gap-3 md:gap-4 px-4 md:px-8 py-3 bg-white dark:bg-gray-900 transition-colors duration-300 ${containerClassName}`}>
-      <button
-        onClick={onClear}
-        disabled={clearDisabled}
-        className={`p-3 whitespace-nowrap font-medium text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2b7fff] focus:ring-opacity-50 transition-colors duration-300 ${
-          clearDisabled
-            ? "bg-white dark:bg-gray-800 cursor-not-allowed"
-            : "bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
-        }`}
-      >
-        Clear Inputs
-      </button>
-      <div className="flex flex-1 md:flex-initial items-center gap-3">
-=======
   const clearButton = (
     <button
       onClick={onClear}
@@ -101,7 +77,6 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
       )}
       <div className="flex flex-1 md:flex-initial items-center gap-3">
         {leftContent && clearButton}
->>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
         {showSecondary && (
           <button
             onClick={onSecondarySubmit}

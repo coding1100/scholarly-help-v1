@@ -15,7 +15,7 @@ type PageData = Record<string, unknown> & {
   published?: boolean;
 };
 
-export function isDuplicateLandingEditor(
+export function useIsDuplicateLandingEditor(
   pageData: PageData | null | undefined,
 ): boolean {
   const dup = useAdminDuplicateEditorOptional();
@@ -29,7 +29,8 @@ export function AdminDuplicateMetaPanel({
   pageData: PageData;
   updatePageData: (path: string, value: unknown) => void;
 }) {
-  if (!isDuplicateLandingEditor(pageData)) return null;
+  const isDuplicate = useIsDuplicateLandingEditor(pageData);
+  if (!isDuplicate) return null;
 
   const slug = String(
     pageData.dynamicLandingSlug || pageData.id || "",

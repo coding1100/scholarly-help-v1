@@ -419,42 +419,21 @@ const AiDetectorTool: React.FC = () => {
         /* ------------------------------ Input view ------------------------ */
         <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 min-w-0 flex flex-col transition-colors duration-300">
           <TextSummarizerInput
-<<<<<<< HEAD
-            title="AI Detector"
-=======
             title={
               <span className="font-semibold">
                 Paste your essay, discussion post or care plan
               </span>
             }
->>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
             onTextChange={(t) => setText(t)}
             onFileUpload={handleUpload}
             initialText={text}
             placeholder="Paste your text here..."
             maxWords={maximumWords}
             accept=".pdf,.docx,.txt,.png,.jpg,.jpeg,.webp"
-<<<<<<< HEAD
-            scrollable
-          />
-          <div className="space-y-3 border-b border-gray-200 dark:border-gray-700 p-3 transition-colors duration-300">
-            <p className="text-sm text-gray-600 dark:text-gray-300">
-              Checks whether text reads as AI-generated, human-written, or mixed
-              — with sentence-level highlights and plain-language explanations.
-            </p>
-            <p className="rounded-md bg-amber-50 p-2 text-xs leading-5 text-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
-              Disclaimer: No AI detector is 100% accurate, including this one.
-              Scores are calibrated estimates with a confidence range — never
-              treat a score alone as proof of authorship. We do not store your
-              text.
-            </p>
-            {wordCount > 0 && wordCount < minimumWords && (
-=======
             uploadButtonText="Upload document"
             scrollable
           />
           {wordCount > 0 && wordCount < minimumWords && (
->>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
               <div className="text-xs text-gray-500 dark:text-gray-400">
                 {minimumWords - wordCount} more word
                 {minimumWords - wordCount === 1 ? "" : "s"} needed — short text
@@ -467,15 +446,6 @@ const AiDetectorTool: React.FC = () => {
                 before submitting.
               </div>
             )}
-<<<<<<< HEAD
-          </div>
-          <ActionButtons
-            onClear={handleClear}
-            onSubmit={handleDetect}
-            submitButtonText="Check for AI"
-            isSubmitting={loading}
-            isDisabled={!canSubmit}
-=======
           <ActionButtons
             onClear={handleClear}
             onSubmit={handleDetect}
@@ -490,7 +460,6 @@ const AiDetectorTool: React.FC = () => {
                 authorship. We don&apos;t store your text.
               </>
             }
->>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
           />
         </div>
       ) : (

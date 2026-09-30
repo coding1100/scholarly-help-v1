@@ -50,12 +50,12 @@ export default function Step5({
 
           {/* Title */}
           <p className="text-xl font-semibold text-[#333333] text-center mb-3">
-            You're all set!
+            You&apos;re all set!
           </p>
 
           {/* Subtitle */}
           <p className="text-[#666666] text-sm text-center mb-6">
-            Here's your personalized learning plan:
+            Here&apos;s your personalized learning plan:
           </p>
 
           {/* Learning Plan Details */}

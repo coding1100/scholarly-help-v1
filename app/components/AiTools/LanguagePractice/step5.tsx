@@ -455,7 +455,7 @@ export default function Step5() {
         {!hasLessonStarted && (
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-sm text-gray-600">
-              Ready for a new rule? Tap "New lesson".
+              Ready for a new rule? Tap &quot;New lesson&quot;.
             </div>
             <button
               type="button"
@@ -908,7 +908,7 @@ export default function Step5() {
         {/* Fallback message when no lesson started */}
         {!hasLessonStarted && !lastAi && (
           <div className="mt-3 rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm text-gray-500">
-            Tap "New lesson" to begin.
+            Tap &quot;New lesson&quot; to begin.
           </div>
         )}
       </Panel>

@@ -28,18 +28,12 @@ export interface BeforeAfterContent {
 export interface ToolLandingContent {
   hero: {
     badge: string;
-<<<<<<< HEAD
-    titleTop: string;
-    titleAccent: string;
-    subtitle: string;
-=======
     /** Optional emoji rendered before the badge text. */
     badgeIcon?: string;
     titleTop: string;
     titleAccent: string;
     subtitle: string;
     /** Numbered step pills under the subtitle. Omit or pass [] to skip them. */
->>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
     steps: string[];
     toolId: string;
   };
@@ -106,9 +100,6 @@ export interface ToolLandingContent {
 export interface ToolLandingProps {
   content: ToolLandingContent;
   tool: ReactNode;
-<<<<<<< HEAD
-=======
   /** Replaces the default gradient hero (badge/title/tool) with a fully custom one. Sections below the hero are unaffected. */
   hero?: ReactNode;
->>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
 }

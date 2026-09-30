@@ -1,16 +1,10 @@
 ﻿"use client";
 
 import { Suspense } from "react";
-<<<<<<< HEAD
-import CgpaTool from "@/app/components/AiTools/CgpaTool/CgpaTool";
-import { ToolsSuspenseFallback } from "@/app/components/AiTools/ToolsApiLoader";
-import ProductSchema from "@/app/components/ProductSchema";
-=======
 import CollegeGpaCalculator from "@/app/components/AiTools/CgpaTool/CollegeGpaCalculator";
 import { ToolsSuspenseFallback } from "@/app/components/AiTools/ToolsApiLoader";
 import ProductSchema from "@/app/components/ProductSchema";
 import ToolGrid from "@/app/components/AiTools/Dashboard/ToolGrid";
->>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
 // import ThemeToggle from "@/app/components/AiLandingPage/ThemeToggle";
 
 export default function MathSolverPage() {
@@ -32,12 +26,8 @@ export default function MathSolverPage() {
         pageUrl={`${baseUrl}/tools/cgpa-calculator`}
       />
       {/* <ThemeToggle top="top-12" /> */}
-<<<<<<< HEAD
-      <main className="min-h-screen bg-white py-8 dark:bg-gray-900"><CgpaTool /></main>
-=======
       <CollegeGpaCalculator />
       <ToolGrid />
->>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
     </Suspense>
   );
 }

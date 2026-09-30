@@ -137,7 +137,7 @@ export default function Step6({
                     <div className="flex items-center gap-3">
                       <div className="text-2xl">📘</div>
                       <div className="text-[#333333] font-semibold text-base">
-                        Start Today's Lesson
+                        Start Today&apos;s Lesson
                       </div>
                     </div>
                     <div className="flex items-center justify-between w-full mt-5">
@@ -198,7 +198,7 @@ export default function Step6({
                   <div className="text-4xl">💡</div>
                   <div>
                     <div className="text-[#333333] font-semibold text-lg mb-1">
-                      Don't break your streak!
+                      Don&apos;t break your streak!
                     </div>
                     <div className="text-[#666666] text-sm">
                       Complete a lesson today to keep it going
