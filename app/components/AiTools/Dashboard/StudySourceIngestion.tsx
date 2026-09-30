@@ -19,7 +19,10 @@ import {
   setActiveStudySessionId,
   StudySourceKind,
   trackStudySessionCreated,
+<<<<<<< HEAD
   updateStudySessionTitle,
+=======
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
 } from "@/app/utils/studyApiClient";
 import { startStudyRecording } from "@/app/lib/client/studyRecording";
 import { validateStudyUploadFileClient } from "@/app/lib/studyUploadConstraints";
@@ -60,6 +63,39 @@ function uniqueFileSourceName(fileName?: string): string {
   return `${base} (${token})${ext}`;
 }
 
+<<<<<<< HEAD
+=======
+/**
+ * Auto-generate a session title from the first source, so the onboarding card
+ * no longer needs a "Name your session" field. Derives something readable from
+ * whatever the user actually supplied (file name, link host, or pasted text).
+ */
+function autoSessionTitle(
+  nextKind: StudySourceKind,
+  nextFile: File | null,
+  trimmedName: string,
+  trimmedText: string,
+): string {
+  if (nextKind === "file" && nextFile) {
+    const raw = nextFile.name.trim();
+    const dot = raw.lastIndexOf(".");
+    const base = (dot > 0 ? raw.slice(0, dot) : raw).trim();
+    return base.slice(0, 80) || "My Study Session";
+  }
+  if (nextKind === "url" && trimmedName) {
+    try {
+      return new URL(trimmedName).hostname.replace(/^www\./, "");
+    } catch {
+      return trimmedName.slice(0, 80);
+    }
+  }
+  if (trimmedText) {
+    return trimmedText.slice(0, 60).trim() || "Pasted Text";
+  }
+  return "My Study Session";
+}
+
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
 type StudySourceIngestionProps = {
   variant?: "toolbar" | "onboarding";
   experience?: "study" | "tutor";
@@ -84,10 +120,13 @@ export default function StudySourceIngestion({
   const [mode, setMode] = useState<UploadMode>("file");
   const [kind, setKind] = useState<StudySourceKind>("file");
   const [name, setName] = useState("");
+<<<<<<< HEAD
   // "Name your session" (onboarding only). Required before the first source can
   // be added; applied to the active session so naming happens once at creation.
   const [sessionName, setSessionName] = useState("");
   const [sessionNameError, setSessionNameError] = useState<string | null>(null);
+=======
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
   // Onboarding (creation page) vs the in-workspace toolbar variant.
   const isCompact = variant === "onboarding";
   const [text, setText] = useState("");
@@ -133,9 +172,12 @@ export default function StudySourceIngestion({
   // (before the lazy-create fix) still tripped analytics. Gating the button means
   // the create-session + add-source path can only ever start from a valid form.
   //
+<<<<<<< HEAD
   // The session name is only required on the onboarding/creation variant, which
   // is the only place the field is rendered (mirrors onSubmit's `isCompact` check).
   const hasSessionName = !isCompact || sessionName.trim().length > 0;
+=======
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
   // A chosen-but-invalid file (wrong type / too large) must ALSO keep the button
   // disabled — otherwise clicking it just produces the error toast we're trying
   // to eliminate. Surface the reason inline instead.
@@ -143,9 +185,15 @@ export default function StudySourceIngestion({
     () => (file ? validateStudyUploadFileClient(file) : null),
     [file],
   );
+<<<<<<< HEAD
   const canSubmitFile = hasSessionName && !!file && !fileError;
   const canSubmitUrl = hasSessionName && urlValue.trim().length > 0;
   const canSubmitText = hasSessionName && textLength > 0;
+=======
+  const canSubmitFile = !!file && !fileError;
+  const canSubmitUrl = urlValue.trim().length > 0;
+  const canSubmitText = textLength > 0;
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
 
   const setModeStatus = (targetMode: UploadMode, status: InlineStatus | null) => {
     setStatusByMode((prev) => ({ ...prev, [targetMode]: status }));
@@ -160,6 +208,7 @@ export default function StudySourceIngestion({
     }
   };
 
+<<<<<<< HEAD
   // Apply the onboarding "Name your session" value to the active session. Runs
   // once, when the guest adds their first source. Best-effort: a naming failure
   // must never block the source from being saved, so errors are swallowed.
@@ -178,6 +227,8 @@ export default function StudySourceIngestion({
     }
   };
 
+=======
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
   const startRecordingFlow = async () => {
     setModeStatus("record", null);
     if (!sessionId) {
@@ -246,12 +297,15 @@ export default function StudySourceIngestion({
     // NOTE: a missing sessionId is NOT an error here. The session is created
     // lazily below, only once this submission has passed validation — visiting
     // the page must not create one.
+<<<<<<< HEAD
     // Naming is required on the creation page (where the field is shown).
     if (isCompact && !sessionName.trim()) {
       setSessionNameError("Please name your session to continue.");
       toast.error("Please name your session to continue.");
       return;
     }
+=======
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
 
     const nextNameRaw = payloadOverride?.nextName ?? name;
     const nextTextRaw = payloadOverride?.nextText ?? text;
@@ -306,12 +360,21 @@ export default function StudySourceIngestion({
     let createdSessionId: string | null = null;
     try {
       // Create the session on first real intent (a validated source), not on
+<<<<<<< HEAD
       // page load. The name the user typed becomes the session title directly,
       // so no follow-up rename call is needed for a fresh session.
       let targetSessionId = sessionId;
       if (!targetSessionId) {
         const created = await createStudySession(
           sessionName.trim() || "My Study Session",
+=======
+      // page load. The title is auto-generated from whatever was supplied
+      // (file name / link host / pasted text) since there's no name field.
+      let targetSessionId = sessionId;
+      if (!targetSessionId) {
+        const created = await createStudySession(
+          autoSessionTitle(nextKind, nextFile, trimmedName, trimmedText),
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
         );
         targetSessionId = created._id;
         createdSessionId = created._id;
@@ -350,11 +413,14 @@ export default function StudySourceIngestion({
           sourceKind: nextKind,
         });
       }
+<<<<<<< HEAD
       // Only an EXISTING session needs renaming; a lazily-created one was
       // already titled above.
       if (!createdSessionId) {
         await applySessionNameIfProvided();
       }
+=======
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
       // Hand a lazily-created session to the page so it lands in the URL and the
       // workspace mounts against it.
       if (createdSessionId) {
@@ -397,6 +463,7 @@ export default function StudySourceIngestion({
 
   const uploadForm = (
     <div className={`mx-auto ${isCompact ? "" : "rounded-[16px] bg-white p-4 sm:p-5"}`}>
+<<<<<<< HEAD
       {isCompact ? (
         <div className="mb-3">
           <label
@@ -428,11 +495,17 @@ export default function StudySourceIngestion({
           ) : null}
         </div>
       ) : null}
+=======
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
       <p className={`text-center text-[#38405f] ${isCompact ? "text-sm" : "text-base"}`}>
         Select Option
       </p>
       <div
+<<<<<<< HEAD
         className={`grid grid-cols-2 sm:grid-cols-3 ${isCompact ? "mt-1.5 gap-1.5" : "mt-3 gap-2"}`}
+=======
+        className={`grid grid-cols-2 sm:grid-cols-3 ${isCompact ? "mt-3 gap-3" : "mt-3 gap-2"}`}
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
       >
         {UPLOAD_OPTIONS.map((option) => {
           const Icon = option.icon;
@@ -449,8 +522,13 @@ export default function StudySourceIngestion({
                 if (option.value === "text") setKind("text");
                 if (option.value === "record") setKind("youtube");
               }}
+<<<<<<< HEAD
               className={`rounded-[12px] border text-center transition disabled:cursor-not-allowed disabled:opacity-60 ${
                 isCompact ? "p-1.5" : "rounded-[16px] p-2"
+=======
+              className={`rounded-[16px] border text-center transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                isCompact ? "p-3" : "p-2"
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
               } ${
                 active
                   ? "border-[#c7b8ff] bg-[#f1ecff]"
@@ -459,6 +537,7 @@ export default function StudySourceIngestion({
             >
               <div
                 className={`mx-auto inline-flex items-center justify-center rounded-lg bg-[#dfe2ff] text-[#7180ff] ${
+<<<<<<< HEAD
                   isCompact ? "h-7 w-7" : "h-9 w-9"
                 }`}
               >
@@ -467,11 +546,25 @@ export default function StudySourceIngestion({
               <p
                 className={`font-semibold text-[#5f70ff] ${
                   isCompact ? "mt-1 text-sm" : "mt-1.5 text-base"
+=======
+                  isCompact ? "h-9 w-9" : "h-9 w-9"
+                }`}
+              >
+                <Icon className={isCompact ? "h-4 w-4" : "h-4 w-4"} />
+              </div>
+              <p
+                className={`font-semibold text-[#5f70ff] ${
+                  isCompact ? "mt-1.5 text-base" : "mt-1.5 text-base"
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
                 }`}
               >
                 {option.label}
               </p>
+<<<<<<< HEAD
               <p className={`text-[#6c74a5] ${isCompact ? "text-[10px]" : "mt-0.5 text-[11px]"}`}>
+=======
+              <p className={`text-[#6c74a5] ${isCompact ? "text-xs" : "mt-0.5 text-[11px]"}`}>
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
                 {option.subLabel}
               </p>
             </button>
@@ -480,8 +573,13 @@ export default function StudySourceIngestion({
       </div>
 
       <div
+<<<<<<< HEAD
         className={`relative rounded-[14px] border border-[#7f7fff] bg-[#f1ecff] ${
           isCompact ? "mt-2 p-2" : "mt-4 p-3"
+=======
+        className={`relative rounded-[20px] border border-[#7f7fff] bg-[#f1ecff] ${
+          isCompact ? "mt-4 flex min-h-[260px] flex-col p-4" : "mt-4 p-3"
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
         }`}
       >
         {isSourceLoading ? (
@@ -496,7 +594,13 @@ export default function StudySourceIngestion({
           </div>
         ) : null}
         {mode === "file" ? (
+<<<<<<< HEAD
           <div className={isCompact ? "space-y-1.5" : "space-y-2"}>
+=======
+          <div
+            className={isCompact ? "flex flex-1 flex-col gap-1.5" : "space-y-2"}
+          >
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
             <label
               className={`flex w-full items-center justify-between gap-2 rounded-lg border border-[#d6d9f8] bg-white ${
                 isCompact ? "px-2 py-1.5" : "gap-3 rounded-xl px-3 py-2"
@@ -524,6 +628,7 @@ export default function StudySourceIngestion({
               onClick={() => onSubmit({ nextKind: "file", nextFile: file })}
               disabled={isSubmitting || !canSubmitFile}
               aria-busy={isSubmitting}
+<<<<<<< HEAD
               aria-label={isSubmitting ? "Loading" : "Upload File"}
               title={
                 canSubmitFile
@@ -536,10 +641,33 @@ export default function StudySourceIngestion({
               }
               className={`inline-flex w-full items-center justify-center rounded-lg bg-[#5f70ff] text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60 ${
                 isCompact ? "min-h-[34px] py-1.5" : "min-h-[40px] py-2"
+=======
+              aria-label={
+                isSubmitting
+                  ? "Loading"
+                  : isCompact
+                    ? "Create My Study Pack"
+                    : "Upload File"
+              }
+              title={
+                canSubmitFile
+                  ? undefined
+                  : fileError || "Choose a file first"
+              }
+              className={`inline-flex w-full items-center justify-center rounded-lg bg-[#5f70ff] text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60 ${
+                isCompact
+                  ? "mt-auto min-h-[48px] py-3 text-base"
+                  : "min-h-[40px] py-2"
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
               }`}
             >
               {isSubmitting ? (
                 <FiLoader className="h-5 w-5 shrink-0 animate-spin" />
+<<<<<<< HEAD
+=======
+              ) : isCompact ? (
+                "Create My Study Pack"
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
               ) : (
                 "Upload File"
               )}
@@ -609,6 +737,7 @@ export default function StudySourceIngestion({
                 }
                 disabled={isSubmitting || !canSubmitUrl}
                 aria-busy={isSubmitting}
+<<<<<<< HEAD
                 aria-label={isSubmitting ? "Loading" : "Add Link"}
                 title={
                   !canSubmitUrl
@@ -617,10 +746,25 @@ export default function StudySourceIngestion({
                       : "Enter a link first"
                     : undefined
                 }
+=======
+                aria-label={
+                  isSubmitting
+                    ? "Loading"
+                    : isCompact
+                      ? "Create My Study Pack"
+                      : "Add Link"
+                }
+                title={!canSubmitUrl ? "Enter a link first" : undefined}
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
                 className="inline-flex min-h-[40px] min-w-[120px] items-center justify-center rounded-lg bg-[#5f70ff] px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isSubmitting ? (
                   <FiLoader className="h-5 w-5 shrink-0 animate-spin" />
+<<<<<<< HEAD
+=======
+                ) : isCompact ? (
+                  "Create My Study Pack"
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
                 ) : (
                   "Add Link"
                 )}
@@ -670,6 +814,7 @@ export default function StudySourceIngestion({
                 }
                 disabled={isSubmitting || !canSubmitText}
                 aria-busy={isSubmitting}
+<<<<<<< HEAD
                 aria-label={isSubmitting ? "Loading" : "Submit"}
                 title={
                   !canSubmitText
@@ -678,10 +823,25 @@ export default function StudySourceIngestion({
                       : "Paste some text first"
                     : undefined
                 }
+=======
+                aria-label={
+                  isSubmitting
+                    ? "Loading"
+                    : isCompact
+                      ? "Create My Study Pack"
+                      : "Submit"
+                }
+                title={!canSubmitText ? "Paste some text first" : undefined}
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
                 className="inline-flex h-fit min-h-[40px] min-w-[88px] shrink-0 items-center justify-center self-end rounded-lg bg-[#5f70ff] px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isSubmitting ? (
                   <FiLoader className="h-5 w-5 shrink-0 animate-spin" />
+<<<<<<< HEAD
+=======
+                ) : isCompact ? (
+                  "Create My Study Pack"
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
                 ) : (
                   "Submit"
                 )}
@@ -827,13 +987,21 @@ export default function StudySourceIngestion({
             <div className="w-full max-w-[640px]">
               <div className="mb-3 px-2 text-center sm:mb-4">
                 <h1 className="text-[22px] font-bold leading-tight tracking-tight text-[#1a2033] sm:text-[28px] lg:text-[32px]">
+<<<<<<< HEAD
                   {experience === "tutor" ? "Welcome to your AI Tutor" : "Welcome to AI Study Workspace"}
+=======
+                  {experience === "tutor" ? "Welcome to your AI Tutor" : ""}
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
                   {displayName ? `, ${displayName}` : ""}
                 </h1>
                 <p className="mx-auto mt-2 max-w-lg text-xs leading-relaxed text-[#64748b] sm:text-sm">
                   {experience === "tutor"
                     ? "Ask anything, or add course material for source-grounded tutoring and personalized practice."
+<<<<<<< HEAD
                     : "Create your first study session together, select an option below to get started."}
+=======
+                    : ""}
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
                 </p>
               </div>
               <div className="rounded-[28px] bg-white p-3 shadow-[0_8px_40px_rgba(15,23,42,0.06)] sm:rounded-[36px] sm:p-4">

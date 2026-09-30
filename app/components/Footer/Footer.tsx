@@ -21,7 +21,6 @@ import { hideFooterLinks, smsHide } from "../HideLinks/HideLinks";
 // import "./footer.css";
 // import ChatBubble from "@/app/assets/Icons/ChatBubble";
 import chatBubble from "@/app/assets/Images/chatBubble.png";
-import axios from "axios";
 import { FaSnapchat } from "react-icons/fa";
 import { SiYoutubemusic } from "react-icons/si";
 
@@ -30,19 +29,37 @@ const Footer: FC<FooterProps> = ({}) => {
   const currentPage = usePathname();
   const hidelinksfooter = hideFooterLinks.includes(currentPage);
   const hideSMS = smsHide.includes(currentPage);
+<<<<<<< HEAD
   const [GCLID, setGCLID] = useState("");
   const [url, setUrl] = useState("");
+=======
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
   const [isFooterInView, setIsFooterInView] = useState(false);
   const footerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (window?.location?.href?.includes("gclid=")) {
-      setGCLID(window?.location?.href);
-    }
+    if (!footerRef.current) return;
 
-    setUrl(window?.location?.href);
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsFooterInView(entry.isIntersecting);
+      },
+      {
+        threshold: 0.1,
+        // Start treating footer as "in view" a bit earlier (offset from bottom)
+        // so z-[999] drops before it fully reaches the viewport
+        rootMargin: "0px 0px 100px 0px",
+      },
+    );
+
+    observer.observe(footerRef.current);
+
+    return () => {
+      observer.disconnect();
+    };
   }, []);
 
+<<<<<<< HEAD
   useEffect(() => {
     if (!footerRef.current) return;
 
@@ -89,6 +106,8 @@ const Footer: FC<FooterProps> = ({}) => {
     }
   };
 
+=======
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
   if (currentPage === "/order/") {
     return;
   } else if (hidelinksfooter) {
@@ -243,7 +262,10 @@ const Footer: FC<FooterProps> = ({}) => {
             <button
               id="sms-chat"
               className="fixed flex justify-between z-[98] left-0 bg-transparent border-none hidden md:flex"
+<<<<<<< HEAD
               onClick={apiCall}
+=======
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
             >
               <a
                 href={`sms:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER}`}
@@ -263,7 +285,10 @@ const Footer: FC<FooterProps> = ({}) => {
             <button
               id="sms-chat2"
               className="fixed flex justify-between z-[98] left-0 bg-transparent border-none md:hidden flex z-[99999]"
+<<<<<<< HEAD
               onClick={apiCall}
+=======
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
             >
               <a
                 href={`sms:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER}`}

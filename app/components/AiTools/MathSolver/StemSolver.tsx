@@ -1,7 +1,17 @@
 "use client";
 
 import React, { FC, useEffect, useRef, useState } from "react";
+<<<<<<< HEAD
 import { FaRegCopy, FaImage, FaKeyboard, FaSuperscript } from "react-icons/fa";
+=======
+import {
+  FaRegCopy,
+  FaSuperscript,
+  FaCamera,
+  FaUpload,
+  FaTimes,
+} from "react-icons/fa";
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
 import axios from "axios";
 import toast from "react-hot-toast";
 import katex from "katex";
@@ -10,6 +20,11 @@ import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import { sanitizeHtml } from "@/app/utils/sanitizeHtml";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
+<<<<<<< HEAD
+=======
+import { isGuest, hasReachedGuestClickLimit } from "@/app/lib/client/guestClickLimits";
+import { LOAD_SAMPLE_PROBLEM_EVENT, SAMPLE_STATS_PROBLEM } from "./sampleProblem";
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
 import { useToolDraftPersistence } from "@/app/lib/client/useToolDraftPersistence";
 import { useBillingDraftStash } from "@/app/lib/client/useBillingDraftStash";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
@@ -48,11 +63,35 @@ interface StemResponse {
   tokens_used: number;
 }
 
+<<<<<<< HEAD
 const SUBJECTS: { key: Subject; label: string }[] = [
   { key: "general", label: "Auto-detect" },
   { key: "math", label: "Math" },
   { key: "physics", label: "Physics" },
   { key: "chemistry", label: "Chemistry" },
+=======
+type MathCategory =
+  | "auto"
+  | "college-algebra"
+  | "statistics"
+  | "dosage-calc"
+  | "business-math"
+  | "calculus";
+
+/**
+ * Category pills shown to the user. Several map to the same backend `Subject`
+ * ("math") since the STEM solver's subject taxonomy is coarser than these
+ * professional-track labels — the pill only changes what's displayed and
+ * which category is highlighted, not what's sent beyond the shared subject.
+ */
+const CATEGORY_PILLS: { id: MathCategory; label: string; subject: Subject }[] = [
+  { id: "auto", label: "Auto-detect", subject: "general" },
+  { id: "college-algebra", label: "College algebra", subject: "math" },
+  { id: "statistics", label: "Statistics", subject: "math" },
+  { id: "dosage-calc", label: "Dosage calc", subject: "math" },
+  { id: "business-math", label: "Business math", subject: "math" },
+  { id: "calculus", label: "Calculus", subject: "math" },
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
 ];
 
 /**
@@ -155,7 +194,11 @@ const FORMULA_TABS: { id: string; label: string; keys: FormulaKey[] }[] = [
 ];
 
 const inputClass =
+<<<<<<< HEAD
   "w-full p-3 rounded-md focus:outline-none text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-[#2b7fff] transition-colors duration-300";
+=======
+  "w-full p-3 rounded-md focus:outline-none text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-[#565add] transition-colors duration-300";
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
 
 /** Render a bare KaTeX string to an HTML string; falls back to the raw text. */
 function renderKatex(tex: string, displayMode: boolean): string {
@@ -355,6 +398,10 @@ function latexToReadable(input: string): string {
 const StemSolver: FC<{ setFlag: (v: boolean) => void }> = ({ setFlag }) => {
   const [token, setToken] = useState<string | null>(null);
   const [inputMode, setInputMode] = useState<InputMode>("text");
+<<<<<<< HEAD
+=======
+  const [category, setCategory] = useState<MathCategory>("auto");
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
   const [subject, setSubject] = useState<Subject>("general");
   const [problem, setProblem] = useState<string>("");
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -370,7 +417,14 @@ const StemSolver: FC<{ setFlag: (v: boolean) => void }> = ({ setFlag }) => {
     "math-solver",
     (draft) => {
       if (draft.problem) setProblem(draft.problem);
+<<<<<<< HEAD
       if (draft.subject) setSubject(draft.subject);
+=======
+      if (draft.subject) {
+        setSubject(draft.subject);
+        setCategory(draft.subject === "general" ? "auto" : "college-algebra");
+      }
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
     },
   );
 
@@ -382,6 +436,11 @@ const StemSolver: FC<{ setFlag: (v: boolean) => void }> = ({ setFlag }) => {
   });
   const resultRef = useRef<HTMLDivElement>(null);
   const problemRef = useRef<HTMLTextAreaElement>(null);
+<<<<<<< HEAD
+=======
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const uploadInputRef = useRef<HTMLInputElement>(null);
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
 
   /** Insert a symbol/snippet at the textarea cursor; `caretBack` re-positions
    * the caret inside a template (e.g. between fraction braces). */
@@ -435,6 +494,29 @@ const StemSolver: FC<{ setFlag: (v: boolean) => void }> = ({ setFlag }) => {
     };
   }, [imagePreview]);
 
+<<<<<<< HEAD
+=======
+  // Fired by the "Try a sample stats question" link in MathSolverHero, which
+  // sits outside this component tree behind a dynamic import — fills the
+  // question in for the user to look at/edit, but does not auto-submit, so
+  // it never spends their guest solve allowance on their behalf.
+  useEffect(() => {
+    const loadSample = () => {
+      setProblem(SAMPLE_STATS_PROBLEM);
+      setCategory("statistics");
+      setSubject("math");
+      setResult(null);
+      setError("");
+      requestAnimationFrame(() => {
+        problemRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        problemRef.current?.focus();
+      });
+    };
+    window.addEventListener(LOAD_SAMPLE_PROBLEM_EVENT, loadSample);
+    return () => window.removeEventListener(LOAD_SAMPLE_PROBLEM_EVENT, loadSample);
+  }, []);
+
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
   const apiBase = process.env.NEXT_PUBLIC_NGROX_URL;
 
   const onPickImage = (file: File | undefined) => {
@@ -446,6 +528,19 @@ const StemSolver: FC<{ setFlag: (v: boolean) => void }> = ({ setFlag }) => {
     setImageFile(file);
     if (imagePreview) URL.revokeObjectURL(imagePreview);
     setImagePreview(URL.createObjectURL(file));
+<<<<<<< HEAD
+=======
+    setInputMode("image");
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    if (imagePreview) URL.revokeObjectURL(imagePreview);
+    setImagePreview("");
+    setInputMode("text");
+    if (cameraInputRef.current) cameraInputRef.current.value = "";
+    if (uploadInputRef.current) uploadInputRef.current.value = "";
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
   };
 
   const handleClear = () => {
@@ -453,8 +548,16 @@ const StemSolver: FC<{ setFlag: (v: boolean) => void }> = ({ setFlag }) => {
     setImageFile(null);
     if (imagePreview) URL.revokeObjectURL(imagePreview);
     setImagePreview("");
+<<<<<<< HEAD
     setResult(null);
     setError("");
+=======
+    setInputMode("text");
+    setResult(null);
+    setError("");
+    if (cameraInputRef.current) cameraInputRef.current.value = "";
+    if (uploadInputRef.current) uploadInputRef.current.value = "";
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
   };
 
   const handleSolve = async () => {
@@ -642,6 +745,7 @@ const StemSolver: FC<{ setFlag: (v: boolean) => void }> = ({ setFlag }) => {
     <div>
       <ToolsApiLoader show={isSubmitting} />
 
+<<<<<<< HEAD
       {/* Input mode toggle */}
       <div className="inline-flex rounded-md border border-gray-300 dark:border-gray-600 p-1 bg-gray-50 dark:bg-gray-900 mb-4">
         {(
@@ -662,10 +766,34 @@ const StemSolver: FC<{ setFlag: (v: boolean) => void }> = ({ setFlag }) => {
           >
             {m.icon}
             {m.label}
+=======
+      <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">
+        Snap, upload or type your math problem
+      </h2>
+
+      {/* Category pills */}
+      <div className="mb-4 flex flex-wrap gap-2">
+        {CATEGORY_PILLS.map((pill) => (
+          <button
+            key={pill.id}
+            type="button"
+            onClick={() => {
+              setCategory(pill.id);
+              setSubject(pill.subject);
+            }}
+            className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+              category === pill.id
+                ? "border-[#565add] bg-[#565add]/10 text-[#565add] dark:bg-[#565add]/20 dark:text-[#8b8ff5]"
+                : "border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-[#565add]"
+            }`}
+          >
+            {pill.label}
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
           </button>
         ))}
       </div>
 
+<<<<<<< HEAD
       {/* Subject picker */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -798,10 +926,140 @@ const StemSolver: FC<{ setFlag: (v: boolean) => void }> = ({ setFlag }) => {
 
       {error && (
         <div className="p-3 mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
+=======
+      {imagePreview && (
+        <div className="mb-3 flex items-center gap-3 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 px-3 py-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={imagePreview}
+            alt="Attached problem"
+            className="h-10 w-10 rounded object-cover"
+          />
+          <span className="flex-1 truncate text-xs text-gray-600 dark:text-gray-300">
+            Image attached
+          </span>
+          <button
+            type="button"
+            onClick={removeImage}
+            aria-label="Remove attached image"
+            className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+          >
+            <FaTimes className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
+
+      <textarea
+        ref={problemRef}
+        value={problem}
+        onChange={(e) => setProblem(e.target.value)}
+        onPaste={handleLatexPaste}
+        placeholder="Type your problem here, or drop a screenshot from ALEKS, MyMathLab or your textbook…"
+        rows={5}
+        className={inputClass}
+      />
+
+      {showKeyboard && (
+        <div className="mt-2 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 p-2">
+          {/* Category tabs */}
+          <div className="mb-2 flex flex-wrap gap-1 border-b border-gray-200 dark:border-gray-700 pb-2">
+            {FORMULA_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setKeyboardTab(tab.id)}
+                className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
+                  keyboardTab === tab.id
+                    ? "bg-[#565add] text-white"
+                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          {/* Keys for the active tab */}
+          <div className="flex flex-wrap gap-1.5">
+            {(FORMULA_TABS.find((t) => t.id === keyboardTab) ?? FORMULA_TABS[0]).keys.map(
+              (k) => (
+                <button
+                  key={k.label}
+                  type="button"
+                  onClick={() => insertSymbol(k.insert, k.back ?? 0)}
+                  className="min-w-9 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-2.5 py-1.5 text-sm text-gray-700 dark:text-gray-200 hover:border-[#565add] hover:text-[#565add] transition-colors"
+                  title={`Insert ${k.label}`}
+                >
+                  {k.label}
+                </button>
+              ),
+            )}
+          </div>
+        </div>
+      )}
+
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => cameraInputRef.current?.click()}
+            className="flex items-center gap-2 rounded-md border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:border-[#565add] transition-colors"
+          >
+            <FaCamera className="h-3.5 w-3.5" />
+            Take photo
+          </button>
+          <button
+            type="button"
+            onClick={() => uploadInputRef.current?.click()}
+            className="flex items-center gap-2 rounded-md border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:border-[#565add] transition-colors"
+          >
+            <FaUpload className="h-3.5 w-3.5" />
+            Upload screenshot
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowKeyboard((v) => !v)}
+            aria-pressed={showKeyboard}
+            className={`flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm font-medium transition-colors ${
+              showKeyboard
+                ? "border-[#565add] bg-[#565add]/10 text-[#565add] dark:bg-[#565add]/20 dark:text-[#8b8ff5]"
+                : "border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-[#565add]"
+            }`}
+          >
+            <FaSuperscript className="h-3.5 w-3.5" />
+            Symbols
+          </button>
+        </div>
+        {isGuest() && !hasReachedGuestClickLimit() ? (
+          <span className="text-xs text-gray-400 dark:text-gray-500">
+            1 free solve · no signup
+          </span>
+        ) : null}
+      </div>
+
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp,image/gif"
+        capture="environment"
+        className="hidden"
+        onChange={(e) => onPickImage(e.target.files?.[0])}
+      />
+      <input
+        ref={uploadInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp,image/gif"
+        className="hidden"
+        onChange={(e) => onPickImage(e.target.files?.[0])}
+      />
+
+      {error && (
+        <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
         </div>
       )}
 
+<<<<<<< HEAD
       <div className="flex items-center gap-3">
         <button
           onClick={handleSolve}
@@ -821,6 +1079,34 @@ const StemSolver: FC<{ setFlag: (v: boolean) => void }> = ({ setFlag }) => {
         >
           Clear
         </button>
+=======
+      <div className="mt-4 flex flex-col gap-3 border-t border-gray-100 pt-4 dark:border-gray-800 sm:flex-row sm:items-center sm:justify-between">
+        <p className="max-w-sm text-xs text-gray-400 dark:text-gray-500">
+          Explanations are for learning. Always check final answers against
+          your course&apos;s rounding and format rules. We don&apos;t store
+          your problems.
+        </p>
+        <div className="flex items-center justify-end gap-3">
+          <button
+            onClick={handleClear}
+            disabled={isSubmitting}
+            className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white disabled:opacity-50"
+          >
+            Clear
+          </button>
+          <button
+            onClick={handleSolve}
+            disabled={isSubmitting}
+            className={`px-6 py-3 rounded-lg font-semibold text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#565add] transition-colors duration-300 ${
+              isSubmitting
+                ? "bg-[#565add] cursor-not-allowed"
+                : "bg-[#565add] hover:bg-[#656aff]"
+            }`}
+          >
+            {isSubmitting ? "Solving..." : "Solve my problem free"}
+          </button>
+        </div>
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
       </div>
 
       {/* Results */}

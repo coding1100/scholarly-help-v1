@@ -419,13 +419,22 @@ const AiDetectorTool: React.FC = () => {
         /* ------------------------------ Input view ------------------------ */
         <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 min-w-0 flex flex-col transition-colors duration-300">
           <TextSummarizerInput
+<<<<<<< HEAD
             title="AI Detector"
+=======
+            title={
+              <span className="font-semibold">
+                Paste your essay, discussion post or care plan
+              </span>
+            }
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
             onTextChange={(t) => setText(t)}
             onFileUpload={handleUpload}
             initialText={text}
             placeholder="Paste your text here..."
             maxWords={maximumWords}
             accept=".pdf,.docx,.txt,.png,.jpg,.jpeg,.webp"
+<<<<<<< HEAD
             scrollable
           />
           <div className="space-y-3 border-b border-gray-200 dark:border-gray-700 p-3 transition-colors duration-300">
@@ -440,6 +449,12 @@ const AiDetectorTool: React.FC = () => {
               text.
             </p>
             {wordCount > 0 && wordCount < minimumWords && (
+=======
+            uploadButtonText="Upload document"
+            scrollable
+          />
+          {wordCount > 0 && wordCount < minimumWords && (
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
               <div className="text-xs text-gray-500 dark:text-gray-400">
                 {minimumWords - wordCount} more word
                 {minimumWords - wordCount === 1 ? "" : "s"} needed — short text
@@ -452,6 +467,7 @@ const AiDetectorTool: React.FC = () => {
                 before submitting.
               </div>
             )}
+<<<<<<< HEAD
           </div>
           <ActionButtons
             onClear={handleClear}
@@ -459,6 +475,22 @@ const AiDetectorTool: React.FC = () => {
             submitButtonText="Check for AI"
             isSubmitting={loading}
             isDisabled={!canSubmit}
+=======
+          <ActionButtons
+            onClear={handleClear}
+            onSubmit={handleDetect}
+            submitButtonText="Check my paper free"
+            clearButtonText="Clear"
+            isSubmitting={loading}
+            isDisabled={!canSubmit}
+            leftContent={
+              <>
+                No AI detector is 100% accurate, including this one. Scores
+                are estimates with a confidence range, not proof of
+                authorship. We don&apos;t store your text.
+              </>
+            }
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
           />
         </div>
       ) : (

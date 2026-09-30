@@ -1,6 +1,11 @@
 import React, { useState } from "react";
 import { FiPlus, FiFilter, FiTrash2, FiChevronLeft, FiChevronRight } from "react-icons/fi";
+<<<<<<< HEAD
 import { CourseCatalogItem, Coursework, CalendarEvent, CalendarCategory } from "@/app/lib/client/coursePlanner/types";
+=======
+import { CourseCatalogItem, Coursework, CalendarEvent, CalendarCategory, Semester } from "@/app/lib/client/coursePlanner/types";
+import { getClassSessionsOnDate } from "@/app/lib/client/coursePlanner/classSessions";
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
 
 const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
@@ -8,6 +13,10 @@ const MONTH_NAMES = [
 ];
 
 interface Props {
+<<<<<<< HEAD
+=======
+  semester: Semester;
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
   courses: CourseCatalogItem[];
   coursework: Coursework[];
   calendarEvents: CalendarEvent[];
@@ -16,6 +25,10 @@ interface Props {
 }
 
 export const CalendarTab: React.FC<Props> = ({
+<<<<<<< HEAD
+=======
+  semester,
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
   courses,
   coursework,
   calendarEvents,
@@ -122,6 +135,41 @@ export const CalendarTab: React.FC<Props> = ({
           <h3 className="text-sm font-semibold text-gray-800">Upcoming Agenda Events</h3>
 
           <div className="space-y-3">
+<<<<<<< HEAD
+=======
+            {(filterCategory === "all" || filterCategory === "class") &&
+              Array.from({ length: 7 }, (_, i) => {
+                const d = new Date(today);
+                d.setDate(d.getDate() + i);
+                const dayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+                return { dayStr, sessions: getClassSessionsOnDate(dayStr, courses, semester) };
+              })
+                .flatMap(({ dayStr, sessions }) => sessions.map((s) => ({ dayStr, ...s })))
+                .map(({ dayStr, course, section }) => (
+                  <div
+                    key={`${dayStr}_${section.id}`}
+                    className="p-3.5 rounded-lg border flex items-center justify-between"
+                    style={{ backgroundColor: `${course.color}14`, borderColor: `${course.color}40` }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-2.5 h-10 rounded-full" style={{ backgroundColor: course.color || "#3b82f6" }} />
+                      <div>
+                        <span className="font-semibold text-gray-800 text-xs">{course.code}</span>
+                        <span className="text-xs text-gray-500 ml-1">Sec {section.sectionNumber}</span>
+                        <p className="text-xs text-gray-400">
+                          {dayStr} · {section.startTime} - {section.endTime}
+                          {section.location ? ` · ${section.location}` : ""}
+                        </p>
+                      </div>
+                    </div>
+
+                    <span className="px-2.5 py-1 bg-white text-gray-600 text-xs font-semibold rounded-full ring-1 ring-gray-200">
+                      Class
+                    </span>
+                  </div>
+                ))}
+
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
             {coursework
               .filter((cw) => filterCategory === "all" || filterCategory === "coursework")
               .map((cw) => {
@@ -215,6 +263,13 @@ export const CalendarTab: React.FC<Props> = ({
 
               for (let dayNum = 1; dayNum <= daysInMonth; dayNum++) {
                 const dayStr = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(dayNum).padStart(2, "0")}`;
+<<<<<<< HEAD
+=======
+                const dayClasses =
+                  filterCategory === "all" || filterCategory === "class"
+                    ? getClassSessionsOnDate(dayStr, courses, semester)
+                    : [];
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
                 const dayTasks =
                   filterCategory === "all" || filterCategory === "coursework"
                     ? coursework.filter((cw) => cw.dueDate.startsWith(dayStr))
@@ -232,6 +287,19 @@ export const CalendarTab: React.FC<Props> = ({
                     }`}
                   >
                     <span className={`font-semibold text-xs ${isToday ? "text-primary-500" : "text-gray-700"}`}>{dayNum}</span>
+<<<<<<< HEAD
+=======
+                    {dayClasses.map(({ course, section }) => (
+                      <div
+                        key={section.id}
+                        className="p-1 text-white rounded text-[9px] truncate font-semibold"
+                        style={{ backgroundColor: course.color || "#3b82f6" }}
+                        title={`${course.code} · Sec ${section.sectionNumber} · ${section.startTime}-${section.endTime}`}
+                      >
+                        {course.code}
+                      </div>
+                    ))}
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
                     {dayTasks.map((t) => (
                       <div key={t.id} className="p-1 bg-primary-400 text-white rounded text-[9px] truncate font-semibold">
                         {t.title}

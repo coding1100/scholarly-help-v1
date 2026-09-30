@@ -1,11 +1,20 @@
+<<<<<<< HEAD
 "use client";
 import { FC, ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
+=======
+import { FC, ReactNode } from "react";
+import dynamic from "next/dynamic";
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
 
 import AuthProvider from "./context/auth/AuthProvider";
 import AppNav from "./components/LandingPage/Header";
 import Footer from "./components/Footer/Footer";
+<<<<<<< HEAD
+=======
+import FooterGate from "./components/LandingPage/FooterGate";
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
 
 const WhatsApp = dynamic(() => import("./components/WhatsApp/WhatsApp"), {
   ssr: false,
@@ -14,8 +23,8 @@ const WhatsApp = dynamic(() => import("./components/WhatsApp/WhatsApp"), {
 interface MainLayoutProps {
   children: ReactNode;
 }
-
 const MainLayout: FC<MainLayoutProps> = ({ children }) => {
+<<<<<<< HEAD
   const pathname = usePathname();
 
   // Routes where header and footer should be hidden
@@ -51,11 +60,19 @@ const MainLayout: FC<MainLayoutProps> = ({ children }) => {
   const shouldHideHeaderFooter =
     hideHeaderFooterRoutes.includes(pathname || "") || isLandingStylePath;
 
+=======
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
   return (
     <AuthProvider>
       <AppNav />
       {children}
+<<<<<<< HEAD
       {!shouldHideHeaderFooter && <Footer />}
+=======
+      <FooterGate>
+        <Footer />
+      </FooterGate>
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
       <WhatsApp />
     </AuthProvider>
   );

@@ -36,6 +36,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${poppins.variable} font-poppins`}>
       <head>
+<<<<<<< HEAD
         {/* Resource Hints for better performance and sharp font loading */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
@@ -73,6 +74,31 @@ export default function RootLayout({
           }}
         />
 
+=======
+        {/* Force HTTPS for all resources in production only */}
+        {process.env.NODE_ENV === "production" &&
+          process.env.DISABLE_HTTPS_HEADERS !== "true" && (
+          <meta httpEquiv="Content-Security-Policy" content="upgrade-insecure-requests" />
+        )}
+      </head>
+      <body className={`${poppins.className} font-poppins`} suppressHydrationWarning>
+        <OrganizationSchema />
+        <main id="main-content">{children}</main>
+        <Script
+          id="gtm-script"
+          strategy="lazyOnload"
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+              new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+              j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+              'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+              })(window,document,'script','dataLayer','GTM-5ZHV46X');
+            `,
+          }}
+        />
+
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
         {/* Client-side scripts that need pathname */}
         <ClientScripts />
       </body>

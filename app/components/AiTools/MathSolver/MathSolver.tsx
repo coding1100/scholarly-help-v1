@@ -165,6 +165,7 @@ const MathSolver: FC<MathSolverProps> = ({ setFlag }) => {
   return (
     <div className="container relative mx-auto max-w-[840px] px-4 md:px-8 md:pt-8 2xl:max-w-6xl">
       <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 overflow-hidden transition-colors duration-300 rounded-xl">
+<<<<<<< HEAD
         {/* Main Overview Section */}
         <div className="pt-6 pb-2">
           <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-1 transition-colors duration-300 text-center">
@@ -177,6 +178,9 @@ const MathSolver: FC<MathSolverProps> = ({ setFlag }) => {
 
         {/* STEM Solver Component */}
         <div className="p-6 border-t dark:border-gray-700">
+=======
+        <div className="p-6">
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
           <StemSolver setFlag={setFlag} />
         </div>
       </div>

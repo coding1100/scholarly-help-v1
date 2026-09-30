@@ -36,8 +36,14 @@ const StepList = ({ steps }: { steps: LandingStep[] }) => (
   </div>
 );
 
+<<<<<<< HEAD
 const ToolLanding = ({ content: c, tool }: ToolLandingProps) => (
   <div className="font-poppins">
+=======
+const ToolLanding = ({ content: c, tool, hero }: ToolLandingProps) => (
+  <div className="font-poppins">
+    {hero ?? (
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
     <section className="relative overflow-hidden bg-[linear-gradient(180deg,#EAF3FF_0%,#F2F9FF_55%,#F7FBFF_100%)]">
       <div
         aria-hidden
@@ -52,7 +58,12 @@ const ToolLanding = ({ content: c, tool }: ToolLandingProps) => (
         className="pointer-events-none absolute -bottom-52 left-1/2 h-[560px] w-[900px] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse,#dbeafe_0%,transparent_70%)] opacity-70"
       />
       <div className="relative mx-auto max-w-[1240px] px-4 pb-16 pt-10 text-center md:pb-20 md:pt-14">
+<<<<<<< HEAD
         <span className="inline-block rounded-full bg-white px-7 py-3 text-sm font-medium text-gray-900 shadow-[0_18px_35px_-12px_rgba(43,28,80,0.2)] md:text-base">
+=======
+        <span className="inline-flex items-center gap-2 rounded-full bg-white px-7 py-3 text-sm font-medium text-gray-900 shadow-[0_18px_35px_-12px_rgba(43,28,80,0.2)] md:text-base">
+          {c.hero.badgeIcon && <span aria-hidden>{c.hero.badgeIcon}</span>}
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
           {c.hero.badge}
         </span>
         <h1 className="mt-7 text-4xl font-bold leading-[1.15] text-[#17172B] sm:text-5xl md:text-[56px]">
@@ -64,6 +75,10 @@ const ToolLanding = ({ content: c, tool }: ToolLandingProps) => (
         <p className="mx-auto mt-5 max-w-3xl text-base text-gray-800 md:text-lg">
           {c.hero.subtitle}
         </p>
+<<<<<<< HEAD
+=======
+        {c.hero.steps.length > 0 && (
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
         <div className="mt-8 flex flex-wrap items-center justify-center gap-x-4 gap-y-3">
           {c.hero.steps.map((step, index) => (
             <div key={step} className="flex items-center gap-x-4">
@@ -90,6 +105,10 @@ const ToolLanding = ({ content: c, tool }: ToolLandingProps) => (
             </div>
           ))}
         </div>
+<<<<<<< HEAD
+=======
+        )}
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
         <div
           id={c.hero.toolId}
           className="mx-auto mt-10 max-w-[1180px] scroll-mt-24 text-left"
@@ -104,6 +123,10 @@ const ToolLanding = ({ content: c, tool }: ToolLandingProps) => (
         </div>
       </div>
     </section>
+<<<<<<< HEAD
+=======
+    )}
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
 
     {c.beforeAfter ? (
       <section className="bg-white py-16 md:py-20">

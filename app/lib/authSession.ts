@@ -224,4 +224,45 @@ export async function fetchWithAuthRetry(
   return request(refreshedToken);
 }
 
+<<<<<<< HEAD
+=======
+type SignInSessionUser = {
+  user_id: string;
+  name: string;
+  package_type: string;
+  email?: string;
+  user_email?: string;
+};
+
+type SignInSessionPayload = {
+  access_token: string;
+  expires_in?: number;
+  user: SignInSessionUser;
+};
+
+/**
+ * Persists a freshly issued session (access token + user fields) to the
+ * places the rest of the app reads them from. Shared by every auth surface
+ * that ends in "the user is now signed in" (password sign-in, the emailed-
+ * password flow, Google sign-in) so the set of fields we persist can't drift
+ * between them.
+ */
+export function completeAuthSession(
+  data: SignInSessionPayload,
+  fallbackEmail?: string,
+): void {
+  persistAccessToken(data.access_token, data.expires_in);
+  localStorage.setItem("user_id", data.user.user_id);
+  localStorage.setItem("user_name", data.user.name);
+  localStorage.setItem("package_type", data.user.package_type);
+  // Always overwrite to avoid stale email from a previous login.
+  const resolvedEmail = String(
+    data.user.email || data.user.user_email || fallbackEmail || "",
+  )
+    .trim()
+    .toLowerCase();
+  if (resolvedEmail) localStorage.setItem("user_email", resolvedEmail);
+}
+
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
 export { SESSION_EXPIRED_EVENT };

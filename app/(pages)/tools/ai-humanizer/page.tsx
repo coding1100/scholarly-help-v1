@@ -28,7 +28,11 @@ const Page: FC = () => {
         metaDescription={metaContent.description}
         pageUrl={`${normalizedBaseUrl}/tools/ai-humanizer`}
       />
+<<<<<<< HEAD
       <div className="font-poppins">
+=======
+      <div className="font-poppins overflow-x-hidden">
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
         <HumanizerHero />
         <BeforeAfter />
         <UseCases />

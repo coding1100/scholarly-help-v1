@@ -18,6 +18,15 @@ import { rememberFbclidFromUrl } from "@/app/lib/client/smsTracking";
 import { hasRefreshSessionHint } from "@/app/lib/accessTokenStore";
 import { getToolDashboardHref } from "@/app/lib/toolLandingRoutes";
 
+<<<<<<< HEAD
+=======
+declare global {
+  interface Window {
+    dataLayer?: Array<Record<string, any>>;
+  }
+}
+
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
 const Star: React.FC<{ className?: string }> = ({ className }) => (
   <svg
     viewBox="0 0 24 24"
@@ -56,6 +65,18 @@ export default function Header() {
   // header's phone number is redundant there and hidden.
   const isThankYou = pathname === "/thank-you" || pathname === "/thank-you/";
 
+<<<<<<< HEAD
+=======
+  const trackHeaderWhatsAppClick = () => {
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: "whatsapp_click",
+      whatsapp_placement: "header_live_quote",
+      page_path: window.location.pathname,
+    });
+  };
+
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
   // Persist fbclid (cookie + sessionStorage) as early as the header mounts, so a
   // later "Text Us" tap can recover it even if the URL query is gone.
   useEffect(() => {
@@ -618,6 +639,10 @@ export default function Header() {
                     href="https://api.whatsapp.com/send?phone=14108445419"
                     target="_blank"
                     rel="noopener noreferrer"
+<<<<<<< HEAD
+=======
+                    onClick={trackHeaderWhatsAppClick}
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
                     className="inline-flex items-center gap-2 rounded-lg px-4 py-2 cursor-pointer bg-[#41A800] text-white transition duration-200 text-sm font-semibold whitespace-nowrap hover:bg-[#368F00] shadow-[0_4px_12px_rgba(65,168,0,0.28)]"
                   >
                     <svg

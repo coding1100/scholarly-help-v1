@@ -1,11 +1,19 @@
 "use client";
 
+<<<<<<< HEAD
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { FiCopy, FiCheck } from "react-icons/fi";
 import TextSummarizerInput from "@/app/components/AiTools/TextSummarizerInput";
 import ActionButtons from "@/app/components/AiTools/ActionButtons";
+=======
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import axios from "axios";
+import toast from "react-hot-toast";
+import { FiChevronDown, FiDownload } from "react-icons/fi";
+import TextSummarizerInput from "@/app/components/AiTools/TextSummarizerInput";
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
 import AiGauge from "@/app/components/AiTools/shared/AiGauge";
 import { countWords, looksLikeGibberish } from "@/app/utils/text";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
@@ -21,9 +29,21 @@ import {
   type DetectSegment,
 } from "@/app/components/AiTools/AiDetectorTool/types";
 import { useDetectorConfig } from "@/app/components/AiTools/AiDetectorTool/useDetectorConfig";
+<<<<<<< HEAD
 import { fetchWithAuthRetry, getAccessToken } from "@/app/lib/authSession";
 import { cancelJob, waitForJob } from "@/app/lib/client/jobStream";
 import { isBillingGateError } from "@/app/lib/client/billingGateCodes";
+=======
+import { useHumanizerConfig } from "@/app/components/AiTools/HumanizerTool/useHumanizerConfig";
+import { fetchWithAuthRetry, getAccessToken } from "@/app/lib/authSession";
+import { cancelJob, waitForJob } from "@/app/lib/client/jobStream";
+import { isBillingGateError } from "@/app/lib/client/billingGateCodes";
+import {
+  buildDocxBlob,
+  downloadBlob,
+  sanitizeFilename,
+} from "@/app/components/AiTools/MainTool/academicDocumentExport";
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
 
 type HumanizerTone = "natural" | "simple" | "polished" | "academic" | "custom";
 type RewriteIntensity = "normal" | "moderate" | "full";
@@ -54,14 +74,27 @@ type HumanizerResponse = {
 };
 
 /**
+<<<<<<< HEAD
  * Detection state for the "Check AI" panel. Scoring comes entirely from the
  * shared backend detector (POST /tools/ai-detect) — this component renders the
  * result and never scores locally.
+=======
+ * Detection state for the AI-score badges and the "AI Detection" deep-dive
+ * panel. Scoring comes entirely from the shared backend detector
+ * (POST /tools/ai-detect) — this component renders the result and never
+ * scores locally.
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
  */
 type AiDetectionState =
   | { success: true; result: DetectionResponse }
   | { success: false; reason: string };
 
+<<<<<<< HEAD
+=======
+/** Which side's detection (original vs. humanized) the score panel is showing. */
+type DetectionFocus = "original" | "result";
+
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
 const INTENSITY_META: Record<
   RewriteIntensity,
   { label: string; description: string }
@@ -101,7 +134,11 @@ const REGISTER_OPTIONS: Array<{
  */
 function SentenceHighlightedText({ segments }: { segments: DetectSegment[] }) {
   return (
+<<<<<<< HEAD
     <p className="leading-relaxed text-gray-800 dark:text-gray-100 text-sm whitespace-pre-wrap">
+=======
+    <p className="leading-relaxed text-gray-800 dark:text-gray-100 text-sm whitespace-pre-wrap break-words">
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
       {segments.map((seg, i) => {
         const title = `${seg.label} · ${Math.round(seg.prob_ai * 100)}% AI likelihood`;
         if (seg.label === "ai") {
@@ -135,6 +172,56 @@ function SentenceHighlightedText({ segments }: { segments: DetectSegment[] }) {
   );
 }
 
+<<<<<<< HEAD
+=======
+/**
+ * Small pill showing a detector score, e.g. "AI score 91%". Color follows the
+ * same red/amber/green bands as the detection summary copy below, so a badge
+ * and the deep-dive panel it opens never disagree. Clicking it (when a result
+ * is available) opens the AI Detection panel focused on that side.
+ */
+function ScoreBadge({
+  state,
+  loading,
+  onClick,
+}: {
+  state: AiDetectionState | null;
+  loading: boolean;
+  onClick?: () => void;
+}) {
+  if (loading) {
+    return (
+      <span className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-400 dark:bg-gray-700 dark:text-gray-400">
+        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-gray-400" />
+        Scoring…
+      </span>
+    );
+  }
+  if (!state || !state.success) return null;
+
+  const score = detectorPrimaryScore(state.result);
+  const tone =
+    score < 35
+      ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400"
+      : score < 65
+        ? "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
+        : "bg-red-50 text-red-700 dark:bg-red-900/40 dark:text-red-400";
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={!onClick}
+      className={`flex-shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold transition-opacity duration-150 ${tone} ${
+        onClick ? "hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2b7fff]" : "cursor-default"
+      }`}
+    >
+      AI score {score}%
+    </button>
+  );
+}
+
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
 /** Shape returned by POST /tools/humanizer/jobs and GET /tools/humanizer/jobs/:id. */
 type HumanizerJobResponse = {
   job_id: string;
@@ -166,18 +253,40 @@ const HumanizerTool: React.FC = () => {
   const [intensity, setIntensity] = useState<RewriteIntensity>("moderate");
   const [register, setRegister] = useState<RegisterSelection>("auto");
   const [voiceSample, setVoiceSample] = useState("");
+<<<<<<< HEAD
   const [loading, setLoading] = useState(false);
+=======
+  // Both "+ Add your writing sample" and "More options" reveal the SAME
+  // combined panel (writing sample textarea + writing type dropdown) — the
+  // design opens them together as one expand, not two independent ones.
+  const [showMoreOptions, setShowMoreOptions] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
   const [result, setResult] = useState<HumanizerResponse | null>(null);
   const jobRef = useRef<{ id: string; controller: AbortController } | null>(null);
   useEffect(() => () => jobRef.current?.controller.abort(), []);
   const [activePanel, setActivePanel] = useState<"humanized" | "ai_detection">(
     "humanized",
   );
+<<<<<<< HEAD
   const [aiDetection, setAiDetection] = useState<AiDetectionState | null>(null);
   const [aiDetectView, setAiDetectView] = useState<"score" | "highlights">(
     "score",
   );
   const [copied, setCopied] = useState(false);
+=======
+  const [detectionFocus, setDetectionFocus] = useState<DetectionFocus>("result");
+  const [originalDetection, setOriginalDetection] =
+    useState<AiDetectionState | null>(null);
+  const [resultDetection, setResultDetection] =
+    useState<AiDetectionState | null>(null);
+  const [scoringOriginal, setScoringOriginal] = useState(false);
+  const [scoringResult, setScoringResult] = useState(false);
+  const [aiDetectView, setAiDetectView] = useState<"score" | "highlights">(
+    "score",
+  );
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
   const detectorConfig = useDetectorConfig();
 
   type HumanizerDraft = {
@@ -203,10 +312,18 @@ const HumanizerTool: React.FC = () => {
     voiceSample,
   }));
 
+<<<<<<< HEAD
   const { gateOpen, closeGate, guardAiClick } = useGuestGate<HumanizerDraft>({
     getDraft: () => ({ text, intensity, register, voiceSample }),
     stashDraft,
   });
+=======
+  const { gateOpen, openGate, closeGate, guardAiClick } =
+    useGuestGate<HumanizerDraft>({
+      getDraft: () => ({ text, intensity, register, voiceSample }),
+      stashDraft,
+    });
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -214,31 +331,77 @@ const HumanizerTool: React.FC = () => {
     }
   }, []);
 
+<<<<<<< HEAD
   const wordCount = useMemo(() => countWords(text), [text]);
   const canSubmit = text.trim().length > 0 && wordCount <= 1500 && !loading;
+=======
+  const { maxWords } = useHumanizerConfig();
+  const wordCount = useMemo(() => countWords(text), [text]);
+  const canSubmit = text.trim().length > 0 && wordCount <= maxWords && !loading;
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
 
   const rewrittenText = result?.rewritten_text || "";
 
   const handleClear = () => {
     setText("");
     setResult(null);
+<<<<<<< HEAD
     setAiDetection(null);
     setActivePanel("humanized");
     setAiDetectView("score");
+=======
+    setOriginalDetection(null);
+    setResultDetection(null);
+    setActivePanel("humanized");
+    setAiDetectView("score");
+    setShowMoreOptions(false);
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
   };
 
   const handleCopy = async () => {
     if (!rewrittenText) return;
     try {
       await navigator.clipboard.writeText(rewrittenText);
+<<<<<<< HEAD
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
+=======
+      toast.success("Copied to clipboard.");
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
     } catch (e) {
       console.error(e);
       toast.error("Failed to copy.");
     }
   };
 
+<<<<<<< HEAD
+=======
+  const handleDownloadDocx = async () => {
+    if (!rewrittenText) return;
+    setDownloading(true);
+    try {
+      const escaped = rewrittenText
+        .split(/\n{2,}/)
+        .map(
+          (para) =>
+            `<p>${para
+              .replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;")
+              .replace(/\n/g, "<br/>")}</p>`,
+        )
+        .join("");
+      const blob = await buildDocxBlob(escaped, "Humanized Text");
+      downloadBlob(blob, `${sanitizeFilename("humanized-text")}.docx`);
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to build the .docx file.");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
   const handleUploadDocument = async (file: File) => {
     setLoading(true);
     setResult(null);
@@ -262,9 +425,15 @@ const HumanizerTool: React.FC = () => {
       const extracted = String(responseData || "").trim();
       setText(extracted);
 
+<<<<<<< HEAD
       if (countWords(extracted) > 1500) {
         toast.error(
           "This document is over 1500 words. Please trim it before humanizing.",
+=======
+      if (countWords(extracted) > maxWords) {
+        toast.error(
+          `This document is over ${maxWords} words. Please trim it before humanizing.`,
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
         );
       } else {
         toast.success("Document text extracted.");
@@ -280,13 +449,89 @@ const HumanizerTool: React.FC = () => {
     }
   };
 
+<<<<<<< HEAD
   const handleHumanize = async () => {
+=======
+  /**
+   * Scores a single piece of text against the shared detector. Used for the
+   * automatic "AI score" badges on both panels — these ride along on the ONE
+   * guest click already spent on Humanize (no extra allowance consumed) and
+   * fail silently, since scoring is a bonus on top of the rewrite, not a
+   * user-initiated action of its own.
+   */
+  const runDetection = useCallback(
+    async (input: string): Promise<AiDetectionState> => {
+      try {
+        const response = await axios.post(
+          `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/ai-detect`,
+          { text: input, options: { include_segments: true, include_signals: true } },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          },
+        );
+        const detectionResult = (response.data?.data ??
+          response.data) as DetectionResponse;
+        return { success: true, result: detectionResult };
+      } catch (err: any) {
+        const message =
+          err?.response?.data?.message ||
+          err?.response?.data?.error ||
+          err?.message ||
+          "Failed to check AI.";
+        return { success: false, reason: String(message) };
+      }
+    },
+    [token],
+  );
+
+  /** Scores both sides in the background once a humanize run completes. */
+  const scoreBothSides = useCallback(
+    (originalText: string, humanizedText: string) => {
+      const originalWords = countWords(originalText);
+      if (
+        originalWords >= detectorConfig.minimum_words &&
+        originalWords <= detectorConfig.maximum_words
+      ) {
+        setScoringOriginal(true);
+        void runDetection(originalText)
+          .then(setOriginalDetection)
+          .finally(() => setScoringOriginal(false));
+      } else {
+        setOriginalDetection(null);
+      }
+
+      const resultWords = countWords(humanizedText);
+      if (
+        resultWords >= detectorConfig.minimum_words &&
+        resultWords <= detectorConfig.maximum_words
+      ) {
+        setScoringResult(true);
+        void runDetection(humanizedText)
+          .then(setResultDetection)
+          .finally(() => setScoringResult(false));
+      } else {
+        setResultDetection(null);
+      }
+    },
+    [detectorConfig.minimum_words, detectorConfig.maximum_words, runDetection],
+  );
+
+  const runHumanize = async () => {
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
     if (!text.trim()) {
       toast.error("Please enter some text.");
       return;
     }
+<<<<<<< HEAD
     if (wordCount > 1500) {
       toast.error("Please keep input at or under 1500 words.");
+=======
+    if (wordCount > maxWords) {
+      toast.error(`Please keep input at or under ${maxWords} words.`);
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
       return;
     }
     if (looksLikeGibberish(text)) {
@@ -296,6 +541,7 @@ const HumanizerTool: React.FC = () => {
       return;
     }
 
+<<<<<<< HEAD
     // Guests get a small number of free AI actions across all tools; the gate
     // opens instead of calling the AI once the allowance is used up.
     guardAiClick(async () => {
@@ -461,6 +707,114 @@ const HumanizerTool: React.FC = () => {
     !loading;
 
   const detection = aiDetection?.success ? aiDetection.result : null;
+=======
+    setLoading(true);
+    setResult(null);
+    setOriginalDetection(null);
+    setResultDetection(null);
+    setActivePanel("humanized");
+    trackToolGenerate({ toolName: "Humanizer Tool" });
+
+    const submittedText = text;
+
+    try {
+      // ASYNC JOB + POLL. A full humanize run is 30-70s, which is longer than
+      // the API gateway's read timeout — the old synchronous POST returned
+      // 504 Gateway Time-out. We now create a job (returns in ms) and poll it
+      // until it finishes, so no connection is held open for the whole run.
+      //
+      // `loading` deliberately stays true for the ENTIRE poll: it is only
+      // cleared in the finally below, once the job reaches a terminal state.
+      // The user therefore sees one continuous loader, never a flash back to
+      // the idle state between the create call and the first poll.
+      const headers = {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      };
+
+      // Guests (no token) are allowed; the backend accepts guest requests and
+      // the click gate above enforces the free allowance.
+      const createResponse = await axios.post<
+        HumanizerJobResponse | { data?: HumanizerJobResponse }
+      >(
+        `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/humanizer/jobs`,
+        {
+          text,
+          tone_mode: tone,
+          rewrite_intensity: intensity,
+          ...(register !== "auto" ? { register_mode: register } : {}),
+          ...(voiceSample.trim() ? { voice_sample: voiceSample.trim() } : {}),
+          preserve_citations: true,
+          return_diff: true,
+        },
+        { headers },
+      );
+
+      const createdJob = unwrapData<HumanizerJobResponse>(createResponse.data);
+      if (!createdJob?.job_id) {
+        throw new Error("Humanizer did not return a job id.");
+      }
+
+      const controller = new AbortController();
+      jobRef.current?.controller.abort();
+      jobRef.current = { id: createdJob.job_id, controller };
+      const humanizerResult = await waitForJob<HumanizerResponse>({
+        pollUrl: `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/humanizer/jobs/${createdJob.job_id}`,
+        headers, signal: controller.signal,
+        fetcher: fetchWithAuthRetry,
+        parse: (payload) => {
+          const job = unwrapData<HumanizerJobResponse>(payload);
+          return { ...job, result: job.result ?? undefined, error: job.error ?? undefined };
+        },
+      });
+      jobRef.current = null;
+      setResult(humanizerResult);
+      toast.success("Humanized successfully!");
+      scoreBothSides(submittedText, humanizerResult.rewritten_text);
+    } catch (err: any) {
+      if (err?.name === "AbortError" || err?.name === "CanceledError") return;
+      const status = err?.response?.status;
+      const message =
+        err?.response?.data?.message ||
+        err?.response?.data ||
+        err?.message ||
+        "Failed to humanize text.";
+
+      if (status === 401) {
+        toast.error("Session expired. Please sign in again.");
+      } else if (isBillingGateError(err)) {
+        // The global interceptor (ClientScripts.tsx) already opens the
+        // upgrade popup for this — a toast here would be redundant.
+      } else if (status === 403) {
+        toast.error(
+          "You don’t have enough token balance, or the input exceeds limits.",
+        );
+      } else {
+        toast.error(
+          Array.isArray(message) ? message.join(", ") : String(message),
+        );
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleHumanize = () => {
+    // Guests get a small number of free AI actions across all tools; the gate
+    // opens instead of calling the AI once the allowance is used up.
+    guardAiClick(runHumanize);
+  };
+
+  const openScorePanel = (focus: DetectionFocus) => {
+    setDetectionFocus(focus);
+    setAiDetectView("score");
+    setActivePanel("ai_detection");
+  };
+
+  const focusedDetection =
+    detectionFocus === "original" ? originalDetection : resultDetection;
+  const detection = focusedDetection?.success ? focusedDetection.result : null;
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
   const aiPercent = detection ? detectorPrimaryScore(detection) : 0;
   const humanPercent = detection ? detectorHumanContentShare(detection) : 0;
   const aiHeadline = detection
@@ -474,19 +828,36 @@ const HumanizerTool: React.FC = () => {
         : "This text contains predominantly AI-like writing patterns"
     : "";
 
+<<<<<<< HEAD
+=======
+  const originalScore =
+    originalDetection?.success ? detectorPrimaryScore(originalDetection.result) : null;
+  const resultScore =
+    resultDetection?.success ? detectorPrimaryScore(resultDetection.result) : null;
+
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
   return (
     <div className="container relative mx-auto max-w-[840px] px-3 py-4 sm:px-4 md:px-8 md:pt-8 2xl:max-w-6xl">
       <ToolsApiLoader show={loading} />
 
+<<<<<<< HEAD
       <div className="grid grid-cols-1 md:grid-cols-2 items-stretch">
         {/* Input */}
         <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 min-w-0 h-auto flex flex-col transition-colors duration-300">
           <TextSummarizerInput
             title="AI Humanizer"
+=======
+      <div className="grid grid-cols-1 items-stretch overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800 md:grid-cols-2 md:divide-x divide-y md:divide-y-0 divide-gray-200 dark:divide-gray-700">
+        {/* Input */}
+        <div className="min-w-0 flex flex-col transition-colors duration-300">
+          <TextSummarizerInput
+            title="Original text"
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
             onTextChange={(t) => setText(t)}
             onFileUpload={handleUploadDocument}
             initialText={text}
             placeholder="Paste your text here..."
+<<<<<<< HEAD
             maxWords={1500}
             accept=".pdf,.docx,.txt"
           />
@@ -504,6 +875,22 @@ const HumanizerTool: React.FC = () => {
               as a creative assistant for drafting and refining your work.
             </p>
 
+=======
+            maxWords={maxWords}
+            accept=".pdf,.docx,.txt"
+            layout="inline"
+            onClear={handleClear}
+            headerRight={
+              <ScoreBadge
+                state={originalDetection}
+                loading={scoringOriginal}
+                onClick={originalDetection ? () => openScorePanel("original") : undefined}
+              />
+            }
+          />
+
+          <div className="space-y-4 px-4 pb-4 transition-colors duration-300">
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
             {/* Rewrite intensity */}
             <div>
               <label className="block text-sm font-semibold mb-1 text-gray-800 dark:text-gray-100">
@@ -530,6 +917,7 @@ const HumanizerTool: React.FC = () => {
               </div>
             </div>
 
+<<<<<<< HEAD
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="block text-sm font-semibold text-gray-800 dark:text-gray-100">
                 Writing type
@@ -564,11 +952,80 @@ const HumanizerTool: React.FC = () => {
             {wordCount > 1500 && (
               <div className="text-xs font-semibold text-[#fb2c36] dark:text-red-400">
                 Word limit exceeded: {wordCount}/1500. Please trim before
+=======
+            {/* Both labels toggle the same combined panel below — collapsed by
+                default so the card reads short until the user asks for more. */}
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-sm">
+              <button
+                type="button"
+                onClick={() => setShowMoreOptions((v) => !v)}
+                className="font-medium text-primary-400 hover:text-primary-500 dark:text-primary-300"
+                aria-expanded={showMoreOptions}
+              >
+                {showMoreOptions ? "− Hide" : "+ Add"} your writing sample{" "}
+                <span className="font-normal text-gray-500 dark:text-gray-400">
+                  (optional)
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowMoreOptions((v) => !v)}
+                className="inline-flex items-center gap-1 font-medium text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white"
+                aria-expanded={showMoreOptions}
+              >
+                More options
+                <FiChevronDown
+                  className={`h-4 w-4 transition-transform duration-200 ${showMoreOptions ? "rotate-180" : ""}`}
+                />
+              </button>
+            </div>
+
+            {showMoreOptions && (
+              <>
+                <label className="block text-sm font-semibold text-gray-800 dark:text-gray-100">
+                  <span className="block text-xs font-normal text-gray-500 dark:text-gray-400">
+                    Paste something you wrote yourself. The rewrite will match
+                    your style. 1–2 paragraphs works best.
+                  </span>
+                  <textarea
+                    value={voiceSample}
+                    onChange={(event) => setVoiceSample(event.target.value)}
+                    maxLength={12000}
+                    rows={3}
+                    placeholder="Your writing sample"
+                    className="mt-2 block w-full resize-y rounded-md border border-gray-300 bg-white px-2 py-2 text-sm font-normal text-gray-800 placeholder:text-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                  />
+                </label>
+
+                <label className="block text-sm font-semibold text-gray-800 dark:text-gray-100">
+                  Writing type
+                  <select
+                    value={register}
+                    onChange={(event) =>
+                      setRegister(event.target.value as RegisterSelection)
+                    }
+                    className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-2 py-2 text-sm font-normal text-gray-800 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                  >
+                    {REGISTER_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </>
+            )}
+
+            {wordCount > maxWords && (
+              <div className="text-xs font-semibold text-[#fb2c36] dark:text-red-400">
+                Word limit exceeded: {wordCount}/{maxWords}. Please trim before
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
                 submitting.
               </div>
             )}
           </div>
 
+<<<<<<< HEAD
           <ActionButtons
             onClear={handleClear}
             onSubmit={handleHumanize}
@@ -615,6 +1072,73 @@ const HumanizerTool: React.FC = () => {
             {activePanel === "humanized" ? (
               /* Humanized text */
               <div className="flex-1 p-4 overflow-y-auto">
+=======
+          <div className="px-4 pb-4">
+            <button
+              type="button"
+              onClick={handleHumanize}
+              disabled={!canSubmit}
+              className={`w-full rounded-md py-3 text-base font-semibold text-white shadow-sm transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2b7fff] ${
+                canSubmit
+                  ? "bg-primary-400 hover:bg-primary-300 active:bg-primary-500"
+                  : "bg-primary-400 cursor-not-allowed opacity-60"
+              }`}
+            >
+              {loading ? "Humanize, free…" : "Humanize, free"}
+            </button>
+            <p className="mt-3 text-xs leading-5 text-gray-500 dark:text-gray-400">
+              A writing assistant for drafting and refining your own work. AI
+              detectors are not 100% accurate.
+            </p>
+            {loading && jobRef.current && (
+              <button
+                type="button"
+                className="mt-3 rounded-md border border-red-200 px-4 py-2 text-sm font-medium text-red-700"
+                onClick={() => {
+                  const job = jobRef.current;
+                  if (!job) return;
+                  job.controller.abort();
+                  jobRef.current = null;
+                  setLoading(false);
+                  void cancelJob(
+                    `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/humanizer/jobs/${job.id}`,
+                    { Authorization: `Bearer ${token}` },
+                    fetchWithAuthRetry,
+                  ).catch(() => undefined);
+                }}
+              >
+                Cancel humanizing
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Result */}
+        <div className="min-w-0 flex flex-col justify-between transition-colors duration-300">
+          <div className="p-4 pb-0 flex items-center justify-between gap-2">
+            <h2 className="text-base font-semibold text-gray-800 dark:text-gray-100">
+              {activePanel === "ai_detection" ? "AI Detection" : "Humanized"}
+            </h2>
+            {activePanel === "humanized" && (
+              <ScoreBadge
+                state={resultDetection}
+                loading={scoringResult}
+                onClick={resultDetection ? () => openScorePanel("result") : undefined}
+              />
+            )}
+          </div>
+
+          <div className="flex-1 flex flex-col min-h-[12rem] p-4">
+            {activePanel === "humanized" ? (
+              /* Humanized text — dashed while empty, solid green once there's a result. */
+              <div
+                className={`flex-1 min-h-[16rem] rounded-lg border-2 p-4 overflow-y-auto transition-colors duration-300 ${
+                  rewrittenText
+                    ? "border-emerald-400 bg-white dark:border-emerald-700 dark:bg-gray-800"
+                    : "border-dashed border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-800"
+                }`}
+              >
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
                 {loading ? (
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     In process...
@@ -637,21 +1161,66 @@ const HumanizerTool: React.FC = () => {
                     <p className="whitespace-pre-wrap break-words leading-relaxed text-sm text-gray-800 dark:text-gray-100">
                       {rewrittenText}
                     </p>
+<<<<<<< HEAD
                     <div className="mt-4 rounded-md bg-gray-50 p-3 text-xs text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+=======
+                    <div className="mt-4 rounded-md bg-gray-50 p-3 text-xs text-gray-600 break-words dark:bg-gray-900 dark:text-gray-300">
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
                       <strong>What changed:</strong> {result?.quality_issues?.length ? result.quality_issues.join("; ") : `Adjusted sentence structure and word choice using ${result?.rewrite_intensity} intensity while ${result?.citations_preserved ? "preserving" : "reviewing"} citations.`}
                     </div>
                   </>
                 ) : (
+<<<<<<< HEAD
                   <p className="text-sm text-gray-400 dark:text-gray-500">
                     Result will appear here...
                   </p>
+=======
+                  <div className="flex h-full items-center justify-center text-center">
+                    <p className="text-sm text-gray-400 justify-center dark:text-gray-500">
+                      Your humanized text and its AI score will appear here.
+                    </p>
+                  </div>
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
                 )}
               </div>
             ) : (
               /* AI Detection */
               <div className="flex-1 flex flex-col">
+<<<<<<< HEAD
                 {/* Score / Highlights toggle */}
                 {aiDetection?.success && (
+=======
+                {/* Original / Humanized toggle, when both sides have a score */}
+                {(originalDetection || resultDetection) && (
+                  <div className="flex gap-2 p-3 border-b border-gray-200 dark:border-gray-700">
+                    {(
+                      [
+                        { key: "original" as const, label: "Original", available: !!originalDetection },
+                        { key: "result" as const, label: "Humanized", available: !!resultDetection },
+                      ]
+                    ).map(({ key, label, available }) => (
+                      <button
+                        key={key}
+                        type="button"
+                        disabled={!available}
+                        onClick={() => setDetectionFocus(key)}
+                        className={`flex-1 sm:flex-none px-3 py-1.5 rounded-md text-sm border transition-colors duration-300 ${
+                          detectionFocus === key
+                            ? "border-[#2b7fff] text-[#2b7fff] dark:border-[#51a2ff] dark:text-[#51a2ff]"
+                            : available
+                              ? "border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                              : "border-gray-200 dark:border-gray-700 text-gray-300 dark:text-gray-600 cursor-not-allowed"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Score / Highlights toggle */}
+                {detection && (
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
                   <div className="flex gap-2 p-3 border-b border-gray-200 dark:border-gray-700">
                     {(["score", "highlights"] as const).map((v) => (
                       <button
@@ -730,9 +1299,15 @@ const HumanizerTool: React.FC = () => {
                           </div>
                         </div>
                       )}
+<<<<<<< HEAD
                       {aiDetection && !aiDetection.success && (
                         <div className="pt-2 text-xs text-gray-500 dark:text-gray-400">
                           {aiDetection.reason}
+=======
+                      {focusedDetection && !focusedDetection.success && (
+                        <div className="pt-2 text-xs text-gray-500 dark:text-gray-400">
+                          {focusedDetection.reason}
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
                         </div>
                       )}
                     </div>
@@ -767,10 +1342,24 @@ const HumanizerTool: React.FC = () => {
                     />
                   </div>
                 )}
+<<<<<<< HEAD
+=======
+
+                <div className="border-t border-gray-200 p-3 dark:border-gray-700">
+                  <button
+                    type="button"
+                    onClick={() => setActivePanel("humanized")}
+                    className="text-sm font-medium text-primary-400 hover:text-primary-500 dark:text-primary-300"
+                  >
+                    ← Back to humanized text
+                  </button>
+                </div>
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
               </div>
             )}
           </div>
 
+<<<<<<< HEAD
           {result && (
             <div className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700">
               {result.citations_preserved && result.citation_count > 0 && (
@@ -778,10 +1367,90 @@ const HumanizerTool: React.FC = () => {
                   Citations preserved ({result.citation_count})
                 </div>
               )}
+=======
+          {activePanel === "humanized" && rewrittenText && !loading && (
+            <div className="flex flex-wrap items-center gap-2 px-4 pb-4">
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="rounded-md bg-primary-400 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2b7fff]"
+              >
+                Copy text
+              </button>
+              <button
+                type="button"
+                onClick={handleDownloadDocx}
+                disabled={downloading}
+                className="inline-flex items-center gap-1.5 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:text-gray-100 dark:hover:bg-gray-700"
+              >
+                <FiDownload className="h-4 w-4" />
+                {downloading ? "Preparing…" : "Download .docx"}
+              </button>
+              <button
+                type="button"
+                onClick={handleHumanize}
+                disabled={loading}
+                className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:text-gray-100 dark:hover:bg-gray-700"
+              >
+                Rewrite again
+              </button>
+            </div>
+          )}
+
+          {result?.citations_preserved && result.citation_count > 0 && (
+            <div className="px-4 pb-4 text-xs text-emerald-600 dark:text-emerald-400">
+              Citations preserved ({result.citation_count})
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
             </div>
           )}
         </div>
       </div>
+<<<<<<< HEAD
+=======
+
+      {/* Post-humanize upsell: encourages saving a voice sample to a free
+          account. Shows the before/after score transition when both sides
+          were successfully scored; otherwise the CTA still renders without
+          the score line (short inputs fall under the detector's minimum). */}
+      {rewrittenText && !loading && (
+        <div className="mt-6 flex flex-col items-start gap-5 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-5">
+            {originalScore !== null && resultScore !== null && (
+              <>
+                <div className="flex-shrink-0">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    AI Score
+                  </p>
+                  <div className="mt-1 flex items-center gap-2 text-2xl font-bold">
+                    <span className="text-red-500">{originalScore}%</span>
+                    <span className="text-gray-300 dark:text-gray-600">→</span>
+                    <span className="text-emerald-500">{resultScore}%</span>
+                  </div>
+                </div>
+                <div className="hidden h-12 w-px flex-shrink-0 bg-gray-200 dark:bg-gray-700 sm:block" />
+              </>
+            )}
+            <div>
+              <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                Make it sound even more like you
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                Save your voice sample to a free account. Every rewrite after
+                that matches how you actually write.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={openGate}
+            className="w-full flex-shrink-0 rounded-md bg-[#F56200] px-6 py-3 text-sm font-semibold text-white hover:bg-[#ff7a24] sm:w-auto"
+          >
+            Save my voice, free
+          </button>
+        </div>
+      )}
+
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
       <GuestAuthGateModal open={gateOpen} onClose={closeGate} />
     </div>
   );

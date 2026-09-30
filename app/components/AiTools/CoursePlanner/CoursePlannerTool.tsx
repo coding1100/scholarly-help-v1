@@ -1,6 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+<<<<<<< HEAD
+=======
+import toast from "react-hot-toast";
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
 import {
   FiBookOpen,
   FiCalendar,
@@ -267,6 +271,14 @@ export const CoursePlannerTool: React.FC = () => {
   const handleUpdateSettings = (updates: Partial<NotificationSettings>) =>
     runMutation(async () => {
       setSettings(await CoursePlannerService.updateNotificationSettings(updates));
+<<<<<<< HEAD
+=======
+      toast.success(
+        updates.notificationEmail !== undefined
+          ? "Notification email updated"
+          : "Notification settings updated",
+      );
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
     });
 
   // Once a semester is finalized, only the sections the student actually
@@ -471,6 +483,10 @@ export const CoursePlannerTool: React.FC = () => {
           )}
           {activeTab === "calendar" && (
             <CalendarTab
+<<<<<<< HEAD
+=======
+              semester={activeSemester}
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
               courses={coursesForDisplay}
               coursework={coursework}
               calendarEvents={calendarEvents}

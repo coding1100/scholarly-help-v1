@@ -7,6 +7,38 @@ import axios from "axios";
 import { hideWhatsappModule } from "../HideLinks/HideLinks";
 import whatsappIconFooter from "@/app/assets/Images/whatsapplogo.png";
 import whatsappIcon2 from "@/app/assets/Images/whatsappIcon2.png";
+<<<<<<< HEAD
+=======
+
+declare global {
+  interface Window {
+    // Matches the declaration in SocialAuthButtons.tsx / CheckoutConfirmationOverlay.tsx.
+    dataLayer?: Array<Record<string, any>>;
+  }
+}
+
+/**
+ * Pushes a GTM custom event for every WhatsApp button click (both the
+ * desktop pill and the mobile icon-only bubble share this). GTM container
+ * (GTM-5ZHV46X, loaded site-wide in app/layout.tsx) needs a Custom Event
+ * trigger listening for "whatsapp_click" with whatever tags (Ads/TikTok/GA4
+ * conversion) should fire on it — no further app code changes needed for
+ * that part.
+ */
+function pushWhatsAppClickEvent(placement: "desktop_pill" | "mobile_icon") {
+  try {
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: "whatsapp_click",
+      whatsapp_placement: placement,
+      page_path: window.location.pathname,
+    });
+  } catch {
+    // Do not block the WhatsApp action if GTM is unavailable.
+  }
+}
+
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
 const WhatsApp = () => {
   const currentPage = usePathname();
   const hideWhatsapp = hideWhatsappModule.includes(currentPage);
@@ -34,7 +66,14 @@ const WhatsApp = () => {
     url: url,
   };
 
+<<<<<<< HEAD
   const apiCall = async () => {
+=======
+  // GTM tracking fires unconditionally, before the lead-capture POST, so a
+  // failed/slow backend call never suppresses the click event.
+  const apiCall = async (placement: "desktop_pill" | "mobile_icon") => {
+    pushWhatsAppClickEvent(placement);
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
     try {
       const res = await axios.post(postUrl, postData, {
         headers: {
@@ -72,7 +111,11 @@ const WhatsApp = () => {
             <button
               id="whatsapp-chat"
               className="fixed flex justify-between z-[98] left-0 bg-transparent border-none md:flex hidden"
+<<<<<<< HEAD
               onClick={apiCall}
+=======
+              onClick={() => apiCall("desktop_pill")}
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
             >
               <a
                 className="fixed flex font-normal justify-between z-[98] bottom-[60px] left-0 text-[15px] py-[10px] px-[20px] no-underline bg-[#128C7E] ml-[5px] rounded-[50px] items-center min-w-[44px] min-h-[44px]"
@@ -96,7 +139,11 @@ const WhatsApp = () => {
           <button
             id="whatsapp-chat-2"
             className={`fixed flex justify-between z-[98] left-0 border-none flex z-[99999] ${iconOnly ? "" : "md:hidden"}`}
+<<<<<<< HEAD
             onClick={apiCall}
+=======
+            onClick={() => apiCall("mobile_icon")}
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
           >
             <a
               className="fixed flex font-normal justify-between z-[98] bottom-[20px] left-0 text-[15px] py-0 px-[5px] no-underline ml-[5px] rounded-[50px] items-center min-w-[44px] min-h-[44px]"

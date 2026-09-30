@@ -1,6 +1,10 @@
 "use client";
 
+<<<<<<< HEAD
 import { FC, useEffect, useState } from "react";
+=======
+import { FC, useEffect, useRef, useState } from "react";
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
 import { createPortal } from "react-dom";
 import { MdClose } from "react-icons/md";
 import SignUpCard from "@/app/components/Auth/SignUpCard";
@@ -37,10 +41,34 @@ const GuestAuthGateModal: FC<GuestAuthGateModalProps> = ({
 }) => {
   const [mode, setMode] = useState<AuthMode>("signup");
   const [resolvedReturnUrl, setResolvedReturnUrl] = useState<string>("/tools");
+<<<<<<< HEAD
+=======
+  // Set when "Forgot? Email it to me" is clicked on the sign-in card, so
+  // switching to signup mode sends that card straight to its "check your
+  // email" step instead of its normal step 1. `nonce` is bumped on every
+  // click so SignUpCard's dedup guard (which must ignore an unrelated
+  // re-render with the same prop value) doesn't also swallow a genuine
+  // second click for the SAME email — e.g. sign-in → forgot → back →
+  // forgot again — which would otherwise compare equal and silently no-op.
+  const [forgotPasswordRequest, setForgotPasswordRequest] = useState<{
+    email: string;
+    nonce: number;
+  } | null>(null);
+  const forgotPasswordNonceRef = useRef(0);
+  // Mirrors SignUpCard's internal step, so the modal can hide its own
+  // "create an account" heading once SignUpCard renders its own
+  // "check your email" header for that step.
+  const [signupStep, setSignupStep] = useState<"request" | "check">("request");
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
 
   useEffect(() => {
     if (!open) return;
     setMode("signup");
+<<<<<<< HEAD
+=======
+    setForgotPasswordRequest(null);
+    setSignupStep("request");
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
     // Default the return target to wherever the user currently is.
     if (typeof window !== "undefined") {
       setResolvedReturnUrl(
@@ -58,6 +86,13 @@ const GuestAuthGateModal: FC<GuestAuthGateModalProps> = ({
 
   if (!open || typeof document === "undefined") return null;
 
+<<<<<<< HEAD
+=======
+  // The heading/subtext block is SignUpCard's own "Check your email" header
+  // once it's on that step — showing both would duplicate it.
+  const showModalHeading = !(mode === "signup" && signupStep === "check");
+
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
   return createPortal(
     <div
       className="fixed inset-0 z-[9999] flex items-start justify-center overflow-y-auto bg-black/40 p-4 py-10"
@@ -67,6 +102,7 @@ const GuestAuthGateModal: FC<GuestAuthGateModalProps> = ({
         className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
         onMouseDown={(e) => e.stopPropagation()}
       >
+<<<<<<< HEAD
         <div className="mb-4 flex items-start justify-between gap-3">
           <h2 className="text-lg font-semibold text-[#2B1C50]">
             {mode === "signin" ? SIGNIN_HEADING : heading || DEFAULT_SIGNUP_HEADING}
@@ -75,27 +111,62 @@ const GuestAuthGateModal: FC<GuestAuthGateModalProps> = ({
             type="button"
             aria-label="Close"
             className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+=======
+        <div className={`flex items-start justify-between gap-3 ${showModalHeading ? "mb-4" : ""}`}>
+          {showModalHeading && (
+            <h2 className="text-lg font-semibold text-[#2B1C50]">
+              {mode === "signin" ? SIGNIN_HEADING : heading || DEFAULT_SIGNUP_HEADING}
+            </h2>
+          )}
+          <button
+            type="button"
+            aria-label="Close"
+            className={`rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 ${showModalHeading ? "" : "ml-auto"}`}
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
             onClick={onClose}
           >
             <MdClose size={20} />
           </button>
         </div>
 
+<<<<<<< HEAD
         <p className="mb-4 text-sm text-gray-500">
           Your current work is saved and will move to your new account.
         </p>
+=======
+        {showModalHeading && (
+          <p className="mb-4 text-sm text-gray-500">
+            Your current work is saved and will move to your new account.
+          </p>
+        )}
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
 
         {mode === "signin" ? (
           <SignInCard
             switchAuthForm="signin"
             setSwitchAuthForm={setMode}
             returnUrl={resolvedReturnUrl}
+<<<<<<< HEAD
+=======
+            forgotPasswordMode="email"
+            onRequestEmailPassword={(email) => {
+              forgotPasswordNonceRef.current += 1;
+              setForgotPasswordRequest({ email, nonce: forgotPasswordNonceRef.current });
+              setMode("signup");
+            }}
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
           />
         ) : (
           <SignUpCard
             switchAuthForm="signup"
             setSwitchAuthForm={setMode}
             returnUrl={resolvedReturnUrl}
+<<<<<<< HEAD
+=======
+            onStepChange={setSignupStep}
+            startAtCheckWithEmail={forgotPasswordRequest?.email}
+            startAtCheckNonce={forgotPasswordRequest?.nonce}
+>>>>>>> 2995a8003cbf53e9f2219f5b63f9a0fbd94c9eb8
           />
         )}
       </div>
