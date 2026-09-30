@@ -16,7 +16,7 @@ import {
 } from "react-icons/fi";
 import { LuGraduationCap, LuRadical } from "react-icons/lu";
 import { RiDoubleQuotesL } from "react-icons/ri";
-import type { ToolCardData, ToolCategory } from "./ToolCard";
+import type { ToolCardData, ToolCategory, ToolGroup } from "./ToolCard";
 
 /**
  * Single source of truth for every live tool shown in the product — the
@@ -34,6 +34,8 @@ export const TOOLS: ToolCardData[] = [
     icon: FiBookmark,
     badge: "New",
     category: "study-tools",
+    group: "study-lab",
+    keywords: ["notes", "flashcards", "quiz", "summary", "upload"],
     cta: "Open workspace",
   },
   {
@@ -43,6 +45,8 @@ export const TOOLS: ToolCardData[] = [
     icon: FiAlignLeft,
     badge: "Popular",
     category: "study-tools",
+    group: "study-lab",
+    keywords: ["summary", "summarise", "condense", "tldr", "notes"],
     cta: "Summarize now",
   },
   {
@@ -53,6 +57,8 @@ export const TOOLS: ToolCardData[] = [
     icon: LuGraduationCap,
     badge: "New",
     category: "study-tools",
+    group: "study-lab",
+    keywords: ["tutor", "explain", "ask", "socratic", "learn"],
     cta: "Ask a question",
   },
   {
@@ -62,6 +68,8 @@ export const TOOLS: ToolCardData[] = [
     icon: FiBarChart,
     badge: "Free",
     category: "study-tools",
+    group: "study-lab",
+    keywords: ["gpa", "cgpa", "grade", "calculator", "semester"],
     cta: "Calculate GPA",
   },
   {
@@ -71,6 +79,8 @@ export const TOOLS: ToolCardData[] = [
     icon: FiMessageSquare,
     badge: "New",
     category: "study-tools",
+    group: "study-lab",
+    keywords: ["exam", "revision", "practice", "test", "drill"],
     cta: "Start prep",
   },
   {
@@ -80,6 +90,8 @@ export const TOOLS: ToolCardData[] = [
     icon: FiGlobe,
     badge: "New",
     category: "study-tools",
+    group: "study-lab",
+    keywords: ["language", "fluency", "speaking", "vocabulary"],
     cta: "Start practice",
   },
   {
@@ -89,6 +101,8 @@ export const TOOLS: ToolCardData[] = [
     icon: FiZap,
     badge: "New",
     category: "study-tools",
+    group: "study-lab",
+    keywords: ["micro", "bite size", "lesson", "quick learn"],
     cta: "Start learning",
   },
   {
@@ -99,6 +113,8 @@ export const TOOLS: ToolCardData[] = [
     icon: FiCalendar,
     badge: "New",
     category: "study-tools",
+    group: "study-lab",
+    keywords: ["schedule", "timetable", "semester", "attendance", "planner"],
     cta: "Plan my semester",
   },
 
@@ -110,6 +126,8 @@ export const TOOLS: ToolCardData[] = [
     icon: FiFileText,
     badge: "New",
     category: "essay-writing",
+    group: "writer-lab",
+    keywords: ["essay studio", "draft", "write essay", "generator"],
     cta: "Generate essay",
   },
   {
@@ -120,6 +138,8 @@ export const TOOLS: ToolCardData[] = [
     icon: FiCheckCircle,
     badge: "New",
     category: "essay-writing",
+    group: "writer-lab",
+    keywords: ["grade", "rubric", "score", "feedback", "mark"],
     cta: "Grade my essay",
   },
   {
@@ -129,6 +149,8 @@ export const TOOLS: ToolCardData[] = [
     icon: FiRepeat,
     badge: "Free",
     category: "essay-writing",
+    group: "originality",
+    keywords: ["rephrase", "reword", "rewrite", "spinner"],
     cta: "Paraphrase text",
   },
   {
@@ -138,6 +160,8 @@ export const TOOLS: ToolCardData[] = [
     icon: FiType,
     badge: "Popular",
     category: "essay-writing",
+    group: "writer-lab",
+    keywords: ["title", "headline", "name my essay"],
     cta: "Generate title",
   },
   {
@@ -147,6 +171,8 @@ export const TOOLS: ToolCardData[] = [
     icon: FiList,
     badge: "Popular",
     category: "essay-writing",
+    group: "writer-lab",
+    keywords: ["outline", "structure", "plan", "sections"],
     cta: "Build outline",
   },
   {
@@ -156,6 +182,8 @@ export const TOOLS: ToolCardData[] = [
     icon: LuGraduationCap,
     badge: "New",
     category: "essay-writing",
+    group: "originality",
+    keywords: ["humanize", "rewrite", "natural", "bypass ai", "undetectable"],
     cta: "Humanize text",
   },
   {
@@ -166,6 +194,8 @@ export const TOOLS: ToolCardData[] = [
     icon: FiSearch,
     badge: "New",
     category: "essay-writing",
+    group: "originality",
+    keywords: ["ai detection", "detector", "turnitin", "gptzero", "ai score"],
     cta: "Check for AI",
   },
   {
@@ -176,6 +206,8 @@ export const TOOLS: ToolCardData[] = [
     icon: FiSearch,
     badge: "New",
     category: "essay-writing",
+    group: "originality",
+    keywords: ["plagiarism", "originality", "copied", "similarity", "turnitin"],
     cta: "Check originality",
   },
   {
@@ -186,6 +218,8 @@ export const TOOLS: ToolCardData[] = [
     icon: FiCheckCircle,
     badge: "New",
     category: "essay-writing",
+    group: "writer-lab",
+    keywords: ["grammar", "spelling", "punctuation", "proofread", "clarity"],
     cta: "Check my grammar",
   },
 
@@ -197,6 +231,8 @@ export const TOOLS: ToolCardData[] = [
     icon: FiTarget,
     badge: "Popular",
     category: "research",
+    group: "writer-lab",
+    keywords: ["thesis", "statement", "argument", "claim"],
     cta: "Build thesis",
   },
   {
@@ -206,6 +242,8 @@ export const TOOLS: ToolCardData[] = [
     icon: FiSearch,
     badge: "Free",
     category: "research",
+    group: "writer-lab",
+    keywords: ["research question", "rq", "inquiry", "topic"],
     cta: "Generate question",
   },
   {
@@ -215,6 +253,8 @@ export const TOOLS: ToolCardData[] = [
     icon: FiFileText,
     badge: "Popular",
     category: "research",
+    group: "writer-lab",
+    keywords: ["editor", "draft", "research", "write", "document"],
     cta: "Start research",
   },
   {
@@ -224,6 +264,8 @@ export const TOOLS: ToolCardData[] = [
     icon: RiDoubleQuotesL,
     badge: "Popular",
     category: "research",
+    group: "writer-lab",
+    keywords: ["citation", "reference", "bibliography", "apa", "mla", "harvard"],
     cta: "Generate citation",
   },
 
@@ -235,8 +277,10 @@ export const TOOLS: ToolCardData[] = [
     icon: LuRadical,
     badge: "Popular",
     category: "math-science",
+    group: "study-lab",
+    keywords: ["math", "equation", "algebra", "solve", "steps"],
     cta: "Solve equation",
   },
 ];
 
-export type { ToolCardData, ToolCategory };
+export type { ToolCardData, ToolCategory, ToolGroup };

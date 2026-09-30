@@ -7,6 +7,7 @@ import { FiDownload, FiExternalLink, FiFileText, FiRefreshCw, FiSettings, FiUplo
 import { getAccessToken } from "@/app/lib/authSession";
 import { countWords } from "@/app/utils/text";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
+import { recordToolRun } from "@/app/utils/toolHistoryClient";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 import styles from "./PlagiarismCheckerTool.module.css";
@@ -129,6 +130,17 @@ export default function PlagiarismCheckerTool() {
             setProgress(100);
             setPollNotice("");
             setRevisionVisible(true);
+            // Recorded once the report actually lands, so "Recent work" never
+            // shows a scan that was still running or ultimately failed.
+            void recordToolRun({
+              toolKey: "plagiarism-checker",
+              toolName: "Plagiarism Checker",
+              href: "/tools/plagiarism-checker",
+              title: next.title || text,
+              metricLabel: "Similarity",
+              metricAfter: next.result.score,
+              resourceId: next.scan_id,
+            });
             return;
           }
           if (next.status === "failed") throw new Error(next.error || "The scan failed.");

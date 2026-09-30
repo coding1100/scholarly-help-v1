@@ -4,8 +4,22 @@ import { LuZap } from "react-icons/lu";
 import PricingPopup from "./PricingPopup";
 import { usePathname } from "next/navigation";
 import { isGuest } from "@/app/lib/client/guestStudyLimits";
+import ToolHeaderUser from "./ToolHeaderUser";
+import { normalizeToolPath, resolveToolTitle } from "./toolHeaderTitles";
 
-const ToolHeader: React.FC = () => {
+interface ToolHeaderProps {
+  setFlag: (value: boolean) => void;
+  flag: boolean;
+}
+
+/**
+ * Routes where the upgrade CTA is suppressed. Account & billing is the page
+ * for managing the plan, so a second, less specific "Upgrade" button competes
+ * with the real controls sitting a few hundred pixels below it.
+ */
+const HIDE_UPGRADE_ON = new Set(["/tools/account"]);
+
+const ToolHeader: React.FC<ToolHeaderProps> = ({ setFlag, flag }) => {
   const [showPricing, setShowPricing] = useState(false);
   // Guests have no usage/account, so the pricing CTA is hidden for them.
   // Defaults to false during SSR for stable markup until storage is read.
@@ -16,65 +30,35 @@ const ToolHeader: React.FC = () => {
     setGuest(isGuest());
   }, []);
 
-  // Normalize path by removing trailing slash for consistent comparison
-  const normalizedPath = currentPath?.endsWith("/")
-    ? currentPath.slice(0, -1)
-    : currentPath;
+  const normalizedPath = normalizeToolPath(currentPath);
+  const title = resolveToolTitle(currentPath);
+  const showUpgrade = !guest && !HIDE_UPGRADE_ON.has(normalizedPath);
 
   return (
-    <header className="relative flex h-[8vh] flex-shrink-0 items-center justify-between px-4 bg-white border-b ">
-      <div></div>
-      {/* Centered Title */}
-
-      <h1 className="md:text-xl font-semibold text-gray-800 transition-colors duration-300">
-        {normalizedPath === "/tools/paraphraser-tool"
-          ? "AI Paraphraser"
-          : normalizedPath === "/tools/summarizer-tool"
-            ? "AI summarizer"
-            : normalizedPath === "/tools/thesis-generator-tool"
-              ? "AI Thesis Statement Generator"
-              : normalizedPath === "/tools/essay-outline-tool"
-                ? "AI Essay Outline"
-                : normalizedPath === "/tools/essay-title"
-                  ? "AI Essay Title Generator"
-                  : normalizedPath === "/tools/research-question"
-                    ? "AI Research Question Generator"
-                    : normalizedPath === "/tools/math-solver"
-                      ? "Math Solver"
-                      : normalizedPath === "/tools/citation-tool"
-                        ? "AI Citation "
-                        : normalizedPath === "/tools/tutor"
-                          ? "AI Tutor"
-                          : normalizedPath === "/tools/exam-prep"
-                            ? "AI Exam Prep"
-                            : normalizedPath === "/tools/mirco-learning"
-                              ? "AI Micro Learning"
-                              : normalizedPath === "/tools/language-practice"
-                                ? "AI Language Practice"
-                                : normalizedPath === "/tools/study-workspace"
-                                  ? "AI Study Workspace"
-                                : normalizedPath === "/tools/cgpa-calculator"
-                                  ? "CGPA Calculator"
-                                  : normalizedPath === "/tools/plagiarism-checker"
-                                    ? "Plagiarism Checker"
-                                  : ""}
+    <header className="relative flex h-tool-header flex-shrink-0 items-center justify-between gap-4 border-b border-gray-200 bg-white px-4 transition-colors duration-300 dark:border-gray-700 dark:bg-gray-800 sm:px-6">
+      {/* Title is left-aligned and owns the free space, so a long tool name
+          truncates instead of pushing the account controls off-screen. On
+          mobile it starts clear of the floating sidebar toggle. */}
+      <h1 className="min-w-0 flex-1 truncate pl-8 text-lg font-bold text-gray-900 transition-colors duration-300 dark:text-gray-100 sm:text-xl lg:pl-0">
+        {title}
       </h1>
 
-      {/* Right-aligned Button — hidden for guests (no usage/account yet) */}
-      {/* <div className="absolute right-6"> */}
-      {!guest ? (
-        <button
-          type="button"
-          onClick={() => setShowPricing(true)}
-          className="flex font-sans items-center justify-center gap-2 rounded-lg bg-[#4f39f6] pl-3 pr-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#615fff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4f39f6] transition-colors duration-300"
-        >
-          <LuZap className="h-4 w-4 text-white" />
-          See Pricing
-        </button>
-      ) : (
-        <div />
-      )}
-      {/* </div> */}
+      <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+        {showUpgrade ? (
+          <button
+            type="button"
+            onClick={() => setShowPricing(true)}
+            aria-label="Upgrade"
+            className="flex font-sans items-center justify-center gap-2 rounded-lg bg-secondary-500 px-2.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors duration-300 hover:bg-secondary-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-500 sm:pl-3 sm:pr-4"
+          >
+            <LuZap className="h-4 w-4 shrink-0 text-white" />
+            <span className="hidden sm:inline">Upgrade</span>
+          </button>
+        ) : null}
+
+        <ToolHeaderUser setFlag={setFlag} flag={flag} />
+      </div>
+
       {showPricing && <PricingPopup onClose={() => setShowPricing(false)} />}
     </header>
   );

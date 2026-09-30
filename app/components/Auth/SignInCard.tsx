@@ -149,8 +149,12 @@ const SignInCard: FC<SignInCardProps> = ({
         payload,
         { withCredentials: true },
       );
-      setEmail("");
-      setPassword("");
+      // Do NOT clear the fields here. Both are "touched" by this point (set at
+      // the top of this handler), so emptying them makes the required-field
+      // validators fire and paints both inputs red -- and greys out the submit
+      // button -- for the whole time the hard redirect below is in flight.
+      // There is nothing to clear anyway: the next line navigates away.
+      //
       // Backend now wraps responses as { success, message, data }. Unwrap to the
       // session payload, falling back to the raw body for resilience.
       persistSessionAndRedirect(res.data?.data ?? res.data);

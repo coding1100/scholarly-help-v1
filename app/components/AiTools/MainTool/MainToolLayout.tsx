@@ -71,16 +71,12 @@ export const EditorPreferencesContext =
 
 interface MainToolLayoutProps {
   children: React.ReactNode;
-  setFlag: (value: boolean) => void;
-  flag: boolean;
   /** Used for the first-time product tour on workspace editor routes. */
   tourEditorActive?: boolean;
 }
 
 const MainToolLayout: React.FC<MainToolLayoutProps> = ({
   children,
-  setFlag,
-  flag,
   tourEditorActive = false,
 }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -215,8 +211,6 @@ const MainToolLayout: React.FC<MainToolLayoutProps> = ({
               {sidebarOpen && (
                 <MTSidebar
                   onToggle={() => setSidebarOpen(false)}
-                  setFlag={setFlag}
-                  flag={flag}
                   activePanel={activePanel}
                   onPanelToggle={togglePanel}
                   onNewDocument={() => setPromptModalOpen(true)}

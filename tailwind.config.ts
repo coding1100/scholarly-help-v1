@@ -135,6 +135,19 @@ const config: Config = {
       96: '24rem',
     },
     extend: {
+      // Single source of truth for the tools header height. The header, the
+      // loading overlay's offset, and every "fill the space below the header"
+      // panel all derive from this, so the bar can be resized in one place
+      // instead of hunting down hard-coded viewport maths.
+      spacing: {
+        "tool-header": "72px",
+      },
+      height: {
+        "tool-body": "calc(100vh - 72px)",
+      },
+      minHeight: {
+        "tool-body": "calc(100vh - 72px)",
+      },
       container: {
         center: true,
         padding: {

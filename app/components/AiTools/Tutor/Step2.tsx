@@ -23,7 +23,7 @@ export default function Step2({ onContinue, isLoading = false }: Step2Props) {
   };
 
   return (
-    <div className=" min-h-[calc(100vh-8vh)] overflow-y-auto flex mt-10 justify-center p-4 bg-linear-to-br from-gray-100 to-gray-200">
+    <div className=" min-h-tool-body overflow-y-auto flex mt-10 justify-center p-4 bg-linear-to-br from-gray-100 to-gray-200">
       {/* Glassmorphism Card */}
       <div className="w-full max-w-2xl relative">
         <div className="backdrop-blur-xl bg-white/30 border border-white/40 rounded-3xl p-8 shadow-2xl">

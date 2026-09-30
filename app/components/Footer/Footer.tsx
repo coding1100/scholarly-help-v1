@@ -60,7 +60,7 @@ const Footer: FC<FooterProps> = ({}) => {
     return (
       <div>
         <div className="bg-primary-200 md:flex justify-center py-14">
-          <div className=" w-full max-w-7xl mx-auto md:flex justify-between gap-6 max-[768px]:px-10 text-primary-600">
+          <div className=" w-full max-w-7xl mx-auto md:flex justify-between gap-6 max-[767px]:px-10 text-primary-600">
             <div className="md:max-w-[372px]">
               <Link href="/">
                 <Image
@@ -159,7 +159,7 @@ const Footer: FC<FooterProps> = ({}) => {
                     +1 646 480 6092
                   </p>
                 </div>
-                <div className="flex my-2">
+                <div className="flex flex-wrap my-2">
                   <div className="w-5 mr-1">
                     <Facebook color="#2b1c51" />
                   </div>
@@ -173,7 +173,7 @@ const Footer: FC<FooterProps> = ({}) => {
                     <Image src={Tiktok} alt="Tiktok" />
                   </div>
                 </div>
-                <div className="flex my-2">
+                <div className="flex flex-wrap my-2">
                   <div className="w-5 mr-1">
                     <Image
                       width={30}
@@ -250,7 +250,7 @@ const Footer: FC<FooterProps> = ({}) => {
     return (
       <div>
         <div className="bg-primary-200 md:flex justify-center py-14">
-          <div className="w-full max-w-7xl mx-auto md:flex justify-between gap-6 max-[768px]:px-10 text-primary-600">
+          <div className="w-full max-w-7xl mx-auto md:flex justify-between gap-6 max-[767px]:px-10 text-primary-600">
             <div className="md:max-w-[372px]">
               <Link href="/">
                 <Image
@@ -424,7 +424,7 @@ const Footer: FC<FooterProps> = ({}) => {
                       +1 646 480 6092
                     </a>
                   </div>
-                  <div className="flex my-2">
+                  <div className="flex flex-wrap my-2">
                     <div className="w-5 mr-1">
                       <a
                         target="_blank"
@@ -494,7 +494,7 @@ const Footer: FC<FooterProps> = ({}) => {
                     {/* <div className="w-5 h-5 mr-1 rounded-full bg-primary-500"></div> */}
                   </div>
 
-                  <div className="flex my-2">
+                  <div className="flex flex-wrap my-2">
                     <div className="w-5 mr-1">
                       <Image
                         width={30}

@@ -326,7 +326,7 @@ const EssayOutlinetool = () => {
   };
 
   return (
-    <div className="w-[89%] mx-auto h-[calc(100vh-8vh)] p-4 md:p-8 flex flex-col overflow-hidden">
+    <div className="w-[89%] mx-auto h-tool-body p-4 md:p-8 flex flex-col overflow-hidden">
       <ToolsApiLoader show={isSubmitting} />
       <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 transition-colors duration-300 overflow-hidden">
         {/* Left Column */}

@@ -1,8 +1,8 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import LogoNormal from "@/app/assets/Images/logo.png";
 import Link from "next/link";
-import { HiOutlineChevronUpDown } from "react-icons/hi2";
 import {
   HiOutlineBookOpen,
   HiOutlineChatBubbleLeftRight,
@@ -14,9 +14,15 @@ import { BiChevronsLeft } from "react-icons/bi";
 import { usePathname, useRouter } from "next/navigation";
 import axiosInstance from "@/app/axios";
 import toast from "react-hot-toast";
-import { FiTool, FiPlus, FiChevronDown } from "react-icons/fi";
-import AccountPopover from "./AccountPopover";
-import UsageAndPricing from "./UsageAndPricing";
+import {
+  FiTool,
+  FiPlus,
+  FiChevronDown,
+  FiHome,
+  FiClock,
+  FiMessageCircle,
+  FiCreditCard,
+} from "react-icons/fi";
 import PromptModal from "./PromptModal";
 import StudySessionsNav from "./Dashboard/StudySessionsNav";
 import axios from "axios";
@@ -32,12 +38,15 @@ import { isGuest, stashGuestMigrationId } from "@/app/lib/client/guestStudyLimit
 import { upsertFbclidToolContext } from "@/app/utils/fbclidTracking";
 import { __TOOLS_SHEET_EVENT_NAME__ } from "@/app/utils/toolsSheetClient";
 import type { AssistantPanel } from "./MainTool/AcademicAssistantPanel";
-import { TOOLS, type ToolCategory } from "./Dashboard/toolsData";
+import { TOOLS, type ToolGroup } from "./Dashboard/toolsData";
+import { TOOL_GROUPS } from "./Dashboard/toolGroups";
+import {
+  EXPERT_WHATSAPP_HREF,
+  trackExpertWhatsAppClick,
+} from "./Dashboard/ExpertHelpCard";
 
 interface SidebarProps {
   onToggle?: () => void;
-  setFlag: (value: boolean) => void;
-  flag: boolean;
   activePanel?: AssistantPanel | null;
   onPanelToggle?: (panel: AssistantPanel) => void;
   onNewDocument?: () => void;
@@ -46,8 +55,6 @@ interface SidebarProps {
 
 const MTSidebar = ({
   onToggle,
-  setFlag,
-  flag,
   activePanel,
   onPanelToggle,
   onNewDocument,
@@ -67,21 +74,18 @@ const MTSidebar = ({
   // every live tool, already categorized. Nothing hand-maintained here, so
   // this list can't silently fall out of sync with what's actually shipped.
   const tools = TOOLS;
-  const categorySections: Array<{ key: ToolCategory; label: string }> = [
-    { key: "study-tools", label: "Study tools" },
-    { key: "essay-writing", label: "Essay writing" },
-    { key: "research", label: "Research" },
-    { key: "math-science", label: "Math & Science" },
-  ];
+  // Sidebar groups mirror the Study Hub dashboard exactly (see toolGroups.ts)
+  // so a tool sits in the same place on both surfaces.
+  const categorySections = TOOL_GROUPS;
   const toolsByCategory = React.useMemo(() => {
-    const grouped = new Map<ToolCategory, typeof tools>();
+    const grouped = new Map<ToolGroup, typeof tools>();
     for (const section of categorySections) grouped.set(section.key, []);
-    for (const tool of tools) grouped.get(tool.category)?.push(tool);
+    for (const tool of tools) grouped.get(tool.group)?.push(tool);
     return grouped;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tools]);
   const activeToolCategoryKey = React.useMemo(
-    () => tools.find((tool) => tool.href === normalizedRoute)?.category,
+    () => tools.find((tool) => tool.href === normalizedRoute)?.group,
     [tools, normalizedRoute],
   );
   // Accordion: the category containing the current tool starts open, every
@@ -90,8 +94,8 @@ const MTSidebar = ({
   // anything), so it never hides the page you're on — but it also never
   // fights a user who collapsed some other section, since it never touches
   // those.
-  const [openCategories, setOpenCategories] = useState<Set<ToolCategory>>(
-    () => new Set(activeToolCategoryKey ? [activeToolCategoryKey] : ["study-tools"]),
+  const [openCategories, setOpenCategories] = useState<Set<ToolGroup>>(
+    () => new Set(activeToolCategoryKey ? [activeToolCategoryKey] : ["originality"]),
   );
   useEffect(() => {
     if (!activeToolCategoryKey) return;
@@ -99,7 +103,7 @@ const MTSidebar = ({
       prev.has(activeToolCategoryKey) ? prev : new Set(prev).add(activeToolCategoryKey),
     );
   }, [activeToolCategoryKey]);
-  const toggleCategory = (key: ToolCategory) => {
+  const toggleCategory = (key: ToolGroup) => {
     setOpenCategories((prev) => {
       const next = new Set(prev);
       if (next.has(key)) next.delete(key);
@@ -108,8 +112,6 @@ const MTSidebar = ({
     });
   };
   const [showTools, setShowTools] = useState(false);
-  const [userName, setUserName] = useState("User");
-  const [profileImage, setProfileImage] = useState<string | null>(null);
   // Guests (no auth token) are shown as "Guest" with sign-in / sign-up actions.
   // Defaults to false during SSR so the markup is stable until we read storage.
   const [guest, setGuest] = useState(false);
@@ -117,7 +119,6 @@ const MTSidebar = ({
     typeof window !== "undefined" ? getAccessToken() : null;
   const isVerifying = useRef(false);
   const [userToggled, setUserToggled] = useState(false);
-  const [showPopover, setShowPopover] = useState(false);
   const [isPromptModalOpen, setPromptModalOpen] = useState(false);
   // Outline from the sidebar "New document" modal — captured via ref because the
   // modal sets state then calls onStartWriting() in the same tick.
@@ -181,19 +182,14 @@ const MTSidebar = ({
     // },
   ];
 
+  // The signed-in name and avatar are rendered by the header now; the sidebar
+  // only needs to know whether this is a guest, to pick its footer CTA.
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const name = localStorage.getItem("user_name");
-      const image = localStorage.getItem("profile_image");
-      if (name) setUserName(name);
-      if (image) setProfileImage(image);
       setGuest(isGuest());
     }
   }, []);
 
-  // Display label: real name when known, otherwise "Guest" for logged-out
-  // visitors (falls back to "User" only in the brief pre-hydration window).
-  const displayName = guest ? "Guest" : userName;
   const authQs = searchParams?.toString() || "";
   // Carry a returnUrl back to the current workspace URL so that, after auth, the
   // user lands here and the page's migration effect runs (claims the guest's
@@ -508,59 +504,33 @@ const MTSidebar = ({
         "relative flex h-full w-60 flex-col overflow-hidden border-r dark:border-gray-700 bg-gray-100 dark:bg-gray-800 p-4 font-sans text-black dark:text-gray-200 transition-colors duration-300"
       }
     >
-      {/* 1. User Profile Section */}
-      <div className="relative flex-shrink-0 mb-2">
-        <div
-          className={`flex items-center w-full gap-2 rounded-md transition-colors duration-300 ${
-            guest
-              ? ""
-              : "cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-700"
-          }`}
-          // ref={profileRef}
-          onClick={() => {
-            if (guest) return;
-            setShowPopover((prev) => !prev);
-          }}
+      {/* 1. Brand. The signed-in user's avatar, name and account menu used to
+          live here; they now sit in the tools header (ToolHeaderUser), so this
+          slot carries the logo and the mobile collapse control. */}
+      <div className="relative mb-3 flex flex-shrink-0 items-center gap-2">
+        <Link
+          href="/"
+          className="flex min-w-0 items-center gap-2 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400"
         >
-          {/* <div className="flex items-center gap-2"> */}
-          {profileImage ? (
-            <Image
-              src={profileImage}
-              alt="User Profile"
-              width={32}
-              height={32}
-              className="rounded-full object-cover"
-            />
-          ) : (
-            <div className="w-8 h-8 flex items-center justify-center bg-indigo-200 dark:bg-indigo-700 text-indigo-700 dark:text-indigo-200 font-bold rounded-full text-sm uppercase">
-              {displayName.charAt(0)}
-            </div>
-          )}
-          <span className="text-md font-semibold text-gray-800 dark:text-gray-200">
-            {displayName}
-          </span>
-          {/* </div> */}
-
-          {!guest && (
-            <span className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors">
-              <HiOutlineChevronUpDown className="h-4 w-4" />
-            </span>
-          )}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggle?.();
-            }}
-            className="ml-auto text-gray-500 dark:text-gray-400 block lg:hidden hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
-          >
-            <BiChevronsLeft className="h-5 w-5" />
-          </button>
-        </div>
-        {!guest && showPopover && (
-          <div className="absolute left-0 mt-2 z-50">
-            <AccountPopover setFlag={setFlag} flag={flag} />
-          </div>
-        )}
+          <Image
+            src={LogoNormal}
+            alt="ScholarlyHelp"
+            width={142}
+            height={34}
+            className="h-auto w-[142px] max-w-full object-contain"
+            priority
+          />
+        </Link>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggle?.();
+          }}
+          aria-label="Close menu"
+          className="ml-auto block text-gray-500 transition-colors hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 lg:hidden"
+        >
+          <BiChevronsLeft className="h-5 w-5" />
+        </button>
       </div>
 
       <div className="mb-2 min-h-0 flex-1 overflow-y-auto pr-1 scrollbar-hide">
@@ -568,6 +538,60 @@ const MTSidebar = ({
             behind filter pills — the section containing whichever tool is
             currently open starts expanded, and expand/collapse choices the
             user makes stick across navigation. */}
+        {/* Primary destinations, above the tool groups: the hub itself, the
+            user's activity feed, and the done-for-you route out to a human. */}
+        <div className="mb-3 flex flex-col gap-0.5">
+          <Link
+            href={appendQueryString(
+              "/tools/dashboard",
+              searchParams?.toString() || "",
+            )}
+            aria-current={
+              normalizedRoute === "/tools/dashboard" ? "page" : undefined
+            }
+            className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors ${
+              normalizedRoute === "/tools/dashboard"
+                ? "bg-primary-100 font-semibold text-primary-400 dark:bg-primary-500/20"
+                : "text-gray-700 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700"
+            }`}
+          >
+            <FiHome className="h-4 w-4 shrink-0" />
+            <span className="truncate">Study Hub</span>
+          </Link>
+
+          {/* Recent work is account-scoped, so it is meaningless to a guest. */}
+          {!guest && (
+            <Link
+              href={appendQueryString(
+                "/tools/recent-work",
+                searchParams?.toString() || "",
+              )}
+              aria-current={
+                normalizedRoute === "/tools/recent-work" ? "page" : undefined
+              }
+              className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors ${
+                normalizedRoute === "/tools/recent-work"
+                  ? "bg-primary-100 font-semibold text-primary-400 dark:bg-primary-500/20"
+                  : "text-gray-700 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700"
+              }`}
+            >
+              <FiClock className="h-4 w-4 shrink-0" />
+              <span className="truncate">Recent work</span>
+            </Link>
+          )}
+
+          <a
+            href={EXPERT_WHATSAPP_HREF}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => trackExpertWhatsAppClick("sidebar_get_expert_help")}
+            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm font-semibold text-[#1F7A33] transition-colors hover:bg-[#F2FAEC] dark:text-[#9BD97A] dark:hover:bg-[#41A800]/10"
+          >
+            <FiMessageCircle className="h-4 w-4 shrink-0" />
+            <span className="truncate">Get expert help</span>
+          </a>
+        </div>
+
         <div className="flex flex-col gap-0.5">
           {categorySections.map((section) => {
             const sectionTools = toolsByCategory.get(section.key) || [];
@@ -693,9 +717,28 @@ const MTSidebar = ({
             </div>
           </div>
         )}
-        {/* Token limit + See Pricing are not relevant to guests (no usage/account
-            yet) — show only once signed in. */}
-        {!guest && <UsageAndPricing setFlag={setFlag} flag={flag} />}
+        {/* Account settings are meaningless to a guest (no account yet), so
+            this is shown only once signed in. Credit balance and pricing now
+            live in the header's account menu, not here. */}
+        {!guest && (
+          <Link
+            href={appendQueryString(
+              "/tools/account",
+              searchParams?.toString() || "",
+            )}
+            aria-current={
+              normalizedRoute === "/tools/account" ? "page" : undefined
+            }
+            className={`mb-2 flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors ${
+              normalizedRoute === "/tools/account"
+                ? "bg-primary-100 font-semibold text-primary-400 dark:bg-primary-500/20"
+                : "text-gray-700 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700"
+            }`}
+          >
+            <FiCreditCard className="h-4 w-4 shrink-0" />
+            <span className="truncate">Account &amp; billing</span>
+          </Link>
+        )}
       </div>
       <PromptModal
         isOpen={isPromptModalOpen}

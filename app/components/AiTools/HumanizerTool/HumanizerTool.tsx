@@ -22,6 +22,7 @@ import {
 import { useDetectorConfig } from "@/app/components/AiTools/AiDetectorTool/useDetectorConfig";
 import { useHumanizerConfig } from "@/app/components/AiTools/HumanizerTool/useHumanizerConfig";
 import { fetchWithAuthRetry, getAccessToken } from "@/app/lib/authSession";
+import { recordToolRun } from "@/app/utils/toolHistoryClient";
 import { cancelJob, waitForJob } from "@/app/lib/client/jobStream";
 import { isBillingGateError } from "@/app/lib/client/billingGateCodes";
 import {
@@ -409,34 +410,73 @@ const HumanizerTool: React.FC = () => {
     [token],
   );
 
-  /** Scores both sides in the background once a humanize run completes. */
+  /**
+   * Scores both sides in the background once a humanize run completes, then
+   * records the run for the dashboard's "Recent work" panel.
+   *
+   * The history row is written twice on purpose: once as soon as the rewrite
+   * lands (so the run is never lost if scoring is skipped or fails), then
+   * again with the before/after scores once both detections settle. The
+   * backend dedupes on user + tool + title inside a 6h window, so the second
+   * write updates the same row rather than adding one.
+   */
   const scoreBothSides = useCallback(
     (originalText: string, humanizedText: string) => {
-      const originalWords = countWords(originalText);
-      if (
-        originalWords >= detectorConfig.minimum_words &&
-        originalWords <= detectorConfig.maximum_words
-      ) {
-        setScoringOriginal(true);
-        void runDetection(originalText)
-          .then(setOriginalDetection)
-          .finally(() => setScoringOriginal(false));
-      } else {
-        setOriginalDetection(null);
-      }
+      const historyBase = {
+        toolKey: "humanizer",
+        toolName: "Humanizer",
+        href: "/tools/humanizer-tool",
+        title: originalText,
+      };
+      void recordToolRun(historyBase);
 
-      const resultWords = countWords(humanizedText);
-      if (
-        resultWords >= detectorConfig.minimum_words &&
-        resultWords <= detectorConfig.maximum_words
-      ) {
-        setScoringResult(true);
-        void runDetection(humanizedText)
-          .then(setResultDetection)
-          .finally(() => setScoringResult(false));
-      } else {
-        setResultDetection(null);
-      }
+      const scoreSide = (
+        input: string,
+        apply: (state: AiDetectionState | null) => void,
+        setPending: (pending: boolean) => void,
+      ): Promise<AiDetectionState | null> => {
+        const words = countWords(input);
+        if (
+          words < detectorConfig.minimum_words ||
+          words > detectorConfig.maximum_words
+        ) {
+          apply(null);
+          return Promise.resolve(null);
+        }
+        setPending(true);
+        return runDetection(input)
+          .then((state) => {
+            apply(state);
+            return state;
+          })
+          .finally(() => setPending(false));
+      };
+
+      const originalScore = scoreSide(
+        originalText,
+        setOriginalDetection,
+        setScoringOriginal,
+      );
+      const resultScore = scoreSide(
+        humanizedText,
+        setResultDetection,
+        setScoringResult,
+      );
+
+      void Promise.all([originalScore, resultScore]).then(([from, to]) => {
+        const after = to?.success ? detectorPrimaryScore(to.result) : undefined;
+        // No "after" score means there is nothing to add beyond the row that
+        // was already written above.
+        if (typeof after !== "number") return;
+        void recordToolRun({
+          ...historyBase,
+          metricLabel: "AI score",
+          metricBefore: from?.success
+            ? detectorPrimaryScore(from.result)
+            : undefined,
+          metricAfter: after,
+        });
+      });
     },
     [detectorConfig.minimum_words, detectorConfig.maximum_words, runDetection],
   );

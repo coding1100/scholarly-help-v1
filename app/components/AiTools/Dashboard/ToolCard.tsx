@@ -10,14 +10,26 @@ export type ToolCategory =
 
 export type ToolBadge = "Popular" | "Free" | "New" | "Focus";
 
+/**
+ * Study Hub grouping, as shown in the dashboard's tool launcher and the
+ * sidebar. Deliberately separate from `ToolCategory`: that one still drives
+ * the older tab filter used by ToolGrid on the study-workspace, CGPA and
+ * explore pages, and the two taxonomies do not line up one to one.
+ */
+export type ToolGroup = "originality" | "study-lab" | "writer-lab";
+
 export type ToolCardData = {
   name: string;
   description?: string;
   href: string;
   icon: IconType;
   badge?: ToolBadge;
-  /** Category used by the dashboard tab filter. */
+  /** Category used by the legacy ToolGrid tab filter. */
   category: ToolCategory;
+  /** Study Hub group used by the dashboard launcher and the sidebar. */
+  group: ToolGroup;
+  /** Extra terms the launcher search should match, beyond name + description. */
+  keywords?: string[];
   /** Per-tool action label, e.g. "Generate essay". Defaults to "Use tool". */
   cta?: string;
 };

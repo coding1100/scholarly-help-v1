@@ -16,10 +16,12 @@ import {
   type DetectionResponse,
   type EditableSegment,
   type SegmentLabel,
+  detectorPrimaryScore,
   normalizeDetectionResponse,
 } from "./types";
 import { useDetectorConfig } from "./useDetectorConfig";
 import { getAccessToken } from "@/app/lib/authSession";
+import { recordToolRun } from "@/app/utils/toolHistoryClient";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import { useToolDraftPersistence } from "@/app/lib/client/useToolDraftPersistence";
 import { useBillingDraftStash } from "@/app/lib/client/useBillingDraftStash";
@@ -194,6 +196,16 @@ const AiDetectorTool: React.FC = () => {
       setFocusedIndex(null);
       setRescanNeeded(false);
       if (isRescan) addLog("Document rescanned");
+      // Recorded for the dashboard's "Recent work" panel. A rescan of the same
+      // text collapses onto the existing row (backend dedupes on title).
+      void recordToolRun({
+        toolKey: "ai-detector",
+        toolName: "AI Detector",
+        href: "/tools/ai-detector-tool",
+        title: input,
+        metricLabel: "AI score",
+        metricAfter: detectorPrimaryScore(data),
+      });
     } catch (err: any) {
       const status = err?.response?.status;
       const message =

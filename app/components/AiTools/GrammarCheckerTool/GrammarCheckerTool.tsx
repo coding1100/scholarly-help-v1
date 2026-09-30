@@ -14,6 +14,7 @@ import { useBillingDraftStash } from "@/app/lib/client/useBillingDraftStash";
 import { isBillingGateError } from "@/app/lib/client/billingGateCodes";
 import { countWords, looksLikeGibberish } from "@/app/utils/text";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
+import { recordToolRun } from "@/app/utils/toolHistoryClient";
 import { getAccessToken } from "@/app/lib/authSession";
 import EditorPane, { type ResolveAction } from "./EditorPane";
 import GoalsModal from "./GoalsModal";
@@ -249,6 +250,12 @@ const GrammarCheckerTool: React.FC = () => {
     if (!validate(text)) return;
     guardAiClick(async () => {
       trackToolGenerate({ toolName: "Grammar Checker" });
+      void recordToolRun({
+        toolKey: "grammar-checker",
+        toolName: "Grammar Check",
+        href: "/tools/grammar-checker",
+        title: text,
+      });
       setLoading(true);
       setShowRecheckNote(false);
       try {
