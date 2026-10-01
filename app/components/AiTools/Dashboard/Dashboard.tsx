@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import ToolLauncher from "./ToolLauncher";
+import HumanizerTool from "../HumanizerTool/HumanizerTool";
 import RecentWorkPanel from "./RecentWorkPanel";
 import ExpertHelpCard from "./ExpertHelpCard";
 import TopToolsStrip from "./TopToolsStrip";
@@ -38,12 +38,15 @@ export default function Dashboard() {
             today?
           </h1>
           <p className="mt-2 text-base text-gray-600 dark:text-gray-300">
-            Pick a tool to get started, or pick up where you left off.
+            Paste a discussion post or paper and get it back in your natural
+            voice.
           </p>
         </header>
 
         <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
-          <ToolLauncher />
+          <div className="min-w-0">
+            <HumanizerTool embedded />
+          </div>
 
           {/* Right rail. Ordered after the tools in the DOM so keyboard and
               screen-reader users reach the primary task first; on mobile it

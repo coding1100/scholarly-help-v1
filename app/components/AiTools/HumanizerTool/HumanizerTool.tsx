@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { FiChevronDown, FiDownload } from "react-icons/fi";
+import { FiChevronDown, FiDownload, FiEdit3 } from "react-icons/fi";
 import TextSummarizerInput from "@/app/components/AiTools/TextSummarizerInput";
 import AiGauge from "@/app/components/AiTools/shared/AiGauge";
 import { countWords, looksLikeGibberish } from "@/app/utils/text";
@@ -216,7 +216,11 @@ function unwrapData<T>(payload: unknown): T {
   ) as T;
 }
 
-const HumanizerTool: React.FC = () => {
+interface HumanizerToolProps {
+  embedded?: boolean;
+}
+
+const HumanizerTool: React.FC<HumanizerToolProps> = ({ embedded = false }) => {
   const [token, setToken] = useState<string | null>(null);
   const [text, setText] = useState("");
   const tone: HumanizerTone = "natural";
@@ -622,10 +626,33 @@ const HumanizerTool: React.FC = () => {
     resultDetection?.success ? detectorPrimaryScore(resultDetection.result) : null;
 
   return (
-    <div className="container relative mx-auto max-w-[840px] px-3 py-4 sm:px-4 md:px-8 md:pt-8 2xl:max-w-6xl">
+    <div
+      className={
+        embedded
+          ? "relative w-full"
+          : "container relative mx-auto max-w-[840px] px-3 py-4 sm:px-4 md:px-8 md:pt-8 2xl:max-w-6xl"
+      }
+    >
       <ToolsApiLoader show={loading} />
 
-      <div className="grid grid-cols-1 items-stretch overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800 md:grid-cols-2 md:divide-x divide-y md:divide-y-0 divide-gray-200 dark:divide-gray-700">
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        {embedded && (
+          <div className="flex items-center justify-between border-b border-gray-200 px-5 py-3.5 dark:border-gray-700">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-100 text-[#F56200] dark:bg-orange-950/40 dark:text-orange-400">
+                <FiEdit3 className="h-4 w-4" />
+              </div>
+              <span className="font-semibold text-gray-900 dark:text-white">
+                Humanizer
+              </span>
+            </div>
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              About 30 seconds per rewrite
+            </span>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 items-stretch md:grid-cols-2 md:divide-x divide-y md:divide-y-0 divide-gray-200 dark:divide-gray-700">
         {/* Input */}
         <div className="min-w-0 flex flex-col transition-colors duration-300">
           <TextSummarizerInput
@@ -1042,6 +1069,7 @@ const HumanizerTool: React.FC = () => {
           )}
         </div>
       </div>
+    </div>
 
       {/* Post-humanize upsell: encourages saving a voice sample to a free
           account. Shows the before/after score transition when both sides

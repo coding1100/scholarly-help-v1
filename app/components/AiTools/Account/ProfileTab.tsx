@@ -115,15 +115,14 @@ export default function ProfileTab() {
             >
               Email
             </label>
-            {/* Read-only: the address is the account identity in Supabase, so
+            {/* Read-only: the address is the account identity, so
                 changing it needs a verification flow that does not exist yet. */}
             <input
               id="account-email"
               value={email}
               readOnly
-              disabled
               autoComplete="email"
-              className={fieldClass}
+              className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition cursor-default focus:border-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
             />
           </div>
 

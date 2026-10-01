@@ -189,7 +189,7 @@ export default function PlanCreditsTab() {
               type="button"
               onClick={() => goToCheckout("starter_annual")}
               disabled={busy !== null}
-              className="rounded-xl bg-primary-200 px-5 py-2.5 text-sm font-bold text-primary-400 transition hover:bg-primary-300 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-xl bg-[#EEF2FF] px-5 py-2.5 text-sm font-bold text-[#4F46E5] transition hover:bg-[#E0E7FF] disabled:cursor-not-allowed disabled:opacity-60 dark:bg-[#4F46E5]/15 dark:text-[#818cf8] dark:hover:bg-[#4F46E5]/25"
             >
               {busy === "starter_annual" ? "Opening..." : "Switch to yearly and save"}
             </button>

@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { FiX } from "react-icons/fi";
+import { FiX, FiCheck } from "react-icons/fi";
 import {
   billingRequest,
   billingError,
@@ -9,6 +9,10 @@ import {
   PaidPlan,
   planName,
 } from "@/app/utils/billingClient";
+import {
+  EXPERT_WHATSAPP_HREF,
+  trackExpertWhatsAppClick,
+} from "@/app/components/AiTools/Dashboard/ExpertHelpCard";
 
 const plans: PaidPlan[] = ["starter", "starter_annual"];
 const actionLabels: Record<string, string> = {
@@ -19,7 +23,17 @@ const actionLabels: Record<string, string> = {
   resume: "Resume payment",
 };
 
-export default function PricingPopup({ onClose }: { onClose: () => void }) {
+interface PricingPopupProps {
+  onClose: () => void;
+  title?: string;
+  subtitle?: string;
+}
+
+export default function PricingPopup({
+  onClose,
+  title = "You've used your free credits",
+  subtitle = "Unlock all 16 tools for $5/month.",
+}: PricingPopupProps) {
   const [status, setStatus] = useState<BillingStatus | null>(null);
   const [selected, setSelected] = useState<PaidPlan>("starter");
   const [quote, setQuote] = useState<BillingOperation | null>(null);
@@ -117,11 +131,15 @@ export default function PricingPopup({ onClose }: { onClose: () => void }) {
           ),
         );
       } else {
-        setQuote(
-          await billingRequest<BillingOperation>("quote", {
-            plan: selected,
-            returnUrl: `${window.location.pathname}${window.location.search}${window.location.hash}`,
-          }),
+        const quoteOp = await billingRequest<BillingOperation>("quote", {
+          plan: selected,
+          returnUrl: `${window.location.pathname}${window.location.search}${window.location.hash}`,
+        });
+        finish(
+          await billingRequest<BillingOperation>(
+            `operations/${quoteOp.operation_id}/confirm`,
+            {},
+          ),
         );
       }
     } catch (e) {
@@ -154,25 +172,9 @@ export default function PricingPopup({ onClose }: { onClose: () => void }) {
       setBusy(false);
     }
   };
-  const action = status?.actions[selected];
-  const quoteAmount = quote
-    ? new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: quote.currency,
-      }).format(
-        quote.amount /
-          10 **
-            (["ISK", "UGX", "HUF", "TWD"].includes(quote.currency.toUpperCase())
-              ? 2
-              : (new Intl.NumberFormat("en", {
-                  style: "currency",
-                  currency: quote.currency,
-                }).resolvedOptions().maximumFractionDigits ?? 2)),
-      )
-    : "";
   return (
     <div
-      className="fixed inset-0 z-[10001] flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-[10001] flex items-center justify-center bg-black/50 p-4 backdrop-blur-[2px]"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -181,165 +183,193 @@ export default function PricingPopup({ onClose }: { onClose: () => void }) {
         ref={dialog}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="billing-title"
+        aria-labelledby="billing-popup-title"
         tabIndex={-1}
-        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-xl dark:bg-gray-900"
+        className="relative max-h-[92vh] w-full max-w-[420px] overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl dark:bg-gray-900 border border-gray-100 dark:border-gray-800"
       >
+        {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2
-              id="billing-title"
-              className="text-xl font-semibold text-gray-900 dark:text-gray-100"
+              id="billing-popup-title"
+              className="text-[22px] font-bold tracking-tight text-gray-950 dark:text-white"
             >
-              Manage your plan
+              {title}
             </h2>
-            {status && (
-              <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-                {planName(status.plan)}:{" "}
-                {status.available_credits.toLocaleString()} credits available
-              </p>
-            )}
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              {subtitle}
+            </p>
           </div>
           <button
             type="button"
             aria-label="Close billing"
             onClick={onClose}
-            className="rounded p-2 text-gray-500"
+            className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-200 transition-colors"
           >
             <FiX size={20} />
           </button>
         </div>
-        {busy && !status && (
-          <p role="status" className="mt-5 text-sm">
-            Loading your billing details...
-          </p>
-        )}
-        {status?.scheduled_change && (
-          <p className="mt-4 rounded bg-blue-50 p-3 text-sm text-blue-900">
-            {planName(status.scheduled_change.plan)} starts{" "}
-            {new Date(
-              status.scheduled_change.effective_at * 1000,
-            ).toLocaleDateString()}
-            .
-          </p>
-        )}
-        <div className="mt-5 grid grid-cols-1 gap-3">
-          {plans.filter((plan) => plan !== "starter_annual").map((plan) => (
-            <button
-              type="button"
-              key={plan}
-              disabled={busy || !!status?.pending_operation}
-              aria-pressed={selected === plan}
-              onClick={() => {
-                setSelected(plan);
-                setQuote(null);
-                setError(null);
-              }}
-              className={`rounded-xl border p-4 text-left ${selected === plan ? "border-primary-400 bg-primary-100 dark:bg-gray-800" : "border-gray-300"}`}
-            >
-              <span className="block font-semibold">
-                {planName(plan)}
-                {status?.plan === plan ? " (Current)" : ""}
+
+        {/* Full Access Plan Card */}
+        <div className="mt-5 rounded-2xl border-2 border-[#5B4DFB]/40 bg-[#F8F9FE] p-5 dark:border-indigo-500/30 dark:bg-gray-800/60">
+          <div className="flex items-start justify-between">
+            <div>
+              <h3 className="text-base font-bold text-gray-950 dark:text-white">
+                Full Access
+              </h3>
+              <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                All 16 tools, one plan
+              </p>
+            </div>
+            <div className="flex items-baseline">
+              <span className="text-3xl font-extrabold tracking-tight text-gray-950 dark:text-white">
+                $5
               </span>
-              <span className="mt-1 block text-lg">
-                {plan === "starter" ? "$5 / month" : "$40 / year"}
+              <span className="ml-1 text-xs text-gray-500 dark:text-gray-400">
+                / month
               </span>
-              <span className="mt-2 block text-xs">
-                {plan === "starter"
-                  ? "6,440,000 credits and 5 plagiarism scans per month"
-                  : "32,200,000 credits and 20 plagiarism scans per year"}
+            </div>
+          </div>
+
+          <div className="mt-4 space-y-2.5">
+            <div className="flex items-center gap-2.5">
+              <FiCheck className="h-4 w-4 shrink-0 text-[#5B4DFB] stroke-[3]" />
+              <span className="text-xs font-medium text-gray-700 dark:text-gray-200">
+                Unlimited use on all 16 tools
               </span>
-            </button>
-          ))}
+            </div>
+            <div className="flex items-center gap-2.5">
+              <FiCheck className="h-4 w-4 shrink-0 text-[#5B4DFB] stroke-[3]" />
+              <span className="text-xs font-medium text-gray-700 dark:text-gray-200">
+                Longer texts and full results
+              </span>
+            </div>
+            <div className="flex items-center gap-2.5">
+              <FiCheck className="h-4 w-4 shrink-0 text-[#5B4DFB] stroke-[3]" />
+              <span className="text-xs font-medium text-gray-700 dark:text-gray-200">
+                5 plagiarism scans every month
+              </span>
+            </div>
+            <div className="flex items-center gap-2.5">
+              <FiCheck className="h-4 w-4 shrink-0 text-[#5B4DFB] stroke-[3]" />
+              <span className="text-xs font-medium text-gray-700 dark:text-gray-200">
+                Cancel anytime
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            {["Originality", "Study Lab", "Writer Lab", "+ more"].map((tag) => (
+              <span
+                key={tag}
+                className="rounded-full border border-gray-200/80 bg-white px-3 py-1 text-[11px] font-medium text-gray-600 shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
         </div>
-        <p className="mt-3 text-xs text-gray-600 dark:text-gray-300">
-          Unused paid credits carry forward. Plagiarism scans reset each billing
-          period.
-        </p>
-        {quote && (
-          <div className="mt-4 rounded-lg bg-gray-50 p-4 text-sm text-gray-800 dark:bg-gray-800 dark:text-gray-100">
-            <p className="font-semibold">
-              {quote.action === "schedule_change"
-                ? "New plan price"
-                : "Payment"}
-              : {quoteAmount}
-            </p>
-            <p className="mt-2">
-              {quote.allocation.toLocaleString()} credits will be added after
-              payment is confirmed.
-            </p>
-            {quote.action === "schedule_change" ? (
-              <p className="mt-2">
-                No charge today. Starts{" "}
-                {new Date(quote.effective_at! * 1000).toLocaleDateString()}.
-                Final renewal total may include applicable taxes or discounts.
-              </p>
-            ) : quote.resets_billing_date ? (
-              <p className="mt-2">
-                This starts a fresh{" "}
-                {quote.plan === "starter" ? "month" : "year"} now and moves your
-                next renewal date. No unused-time refund is applied. Your
-                existing credits are retained.
-              </p>
-            ) : (
-              <p className="mt-2">
-                Renews automatically{" "}
-                {quote.plan === "starter" ? "monthly" : "yearly"}. Review the
-                final amount on Stripe before paying.
-              </p>
+
+        {/* Primary CTA */}
+        <button
+          type="button"
+          disabled={busy}
+          onClick={act}
+          className="mt-5 flex w-full items-center justify-center rounded-xl bg-[#5B4DFB] py-3.5 px-4 text-sm font-bold text-white shadow-[0_4px_14px_rgba(91,77,251,0.3)] transition hover:bg-[#4E3FF0] active:scale-[0.99] disabled:opacity-60"
+        >
+          {busy ? "Please wait..." : "Continue for $5/month"}
+        </button>
+
+        {/* Secure Checkout / Fair Use */}
+        <div className="mt-2.5 flex items-center justify-center gap-1.5 text-[11px] text-gray-500 dark:text-gray-400">
+          <svg
+            aria-hidden="true"
+            className="h-3.5 w-3.5 text-gray-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+            />
+          </svg>
+          <span>Secure checkout · Unlimited use is subject to fair use</span>
+        </div>
+
+        {/* Divider */}
+        <div className="relative my-4 flex items-center justify-center">
+          <div className="w-full border-t border-gray-200 dark:border-gray-800" />
+          <span className="absolute bg-white px-2.5 text-xs text-gray-400 dark:bg-gray-900">
+            or
+          </span>
+        </div>
+
+        {/* Short on time? / Done-For-You */}
+        <div className="rounded-2xl border border-[#BFE3A8] bg-[#F2FAEC] p-4 sm:p-5 dark:border-[#41A800]/30 dark:bg-[#41A800]/10">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-bold text-gray-950 dark:text-white">
+              Short on time?
+            </span>
+            <span className="rounded-full bg-[#DCF2CE] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#2F7A00] dark:bg-[#41A800]/20 dark:text-[#9BD97A]">
+              Done-for-you
+            </span>
+          </div>
+
+          <p className="mt-1 text-xs text-gray-600 dark:text-gray-300">
+            An expert can take the whole assignment off your plate.
+          </p>
+
+          <a
+            href={EXPERT_WHATSAPP_HREF}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => trackExpertWhatsAppClick("free_credit_limit_popup")}
+            className="mt-3.5 flex w-full items-center justify-center gap-2 rounded-xl bg-[#1F7A33] py-3 px-4 text-xs sm:text-sm font-bold text-white shadow-[0_4px_12px_rgba(31,122,51,0.25)] transition hover:bg-[#186127]"
+          >
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              className="h-4 w-4 shrink-0"
+            >
+              <path d="M20.5 3.5A11.9 11.9 0 0 0 12 0C5.4 0 .1 5.3.1 11.9c0 2.1.6 4.1 1.6 5.9L0 24l6.4-1.7c1.7.9 3.6 1.4 5.6 1.4 6.6 0 11.9-5.3 11.9-11.9 0-3.2-1.2-6.2-3.4-8.3ZM12 21.5c-1.8 0-3.5-.5-5-1.4l-.4-.2-3.8 1 1-3.7-.2-.4a9.6 9.6 0 1 1 8.4 4.7Zm5.3-7.1c-.3-.1-1.7-.850-2-.95-.3-.1-.5-.1-.7.15-.2.3-.75.95-.9 1.15-.2.2-.35.2-.65.05-1.75-.85-2.9-1.55-4.05-3.5-.3-.55.3-.5.9-1.65.1-.2.05-.35 0-.5s-.7-1.6-.9-2.2c-.25-.6-.5-.5-.7-.5h-.6c-.2 0-.5.05-.8.35-.3.3-1.05 1-1.05 2.5s1.1 2.9 1.25 3.1c.15.2 2.15 3.3 5.2 4.6 2 .85 2.75.95 3.75.8.6-.1 1.7-.7 1.95-1.35.25-.65.25-1.2.15-1.35-.05-.1-.25-.2-.55-.3Z" />
+            </svg>
+            Get a quote on WhatsApp
+          </a>
+        </div>
+
+        {/* Error State */}
+        {error && (
+          <div
+            role="alert"
+            className="mt-4 flex items-center justify-between rounded-xl bg-red-50 p-3 text-xs text-red-700 dark:bg-red-950/40 dark:text-red-300"
+          >
+            <span>{error}</span>
+            {error.toLowerCase().includes("sign in") && (
+              <a
+                href={`/sign-in?returnUrl=${encodeURIComponent(
+                  typeof window !== "undefined"
+                    ? window.location.pathname + window.location.search
+                    : "/tools",
+                )}`}
+                className="ml-2 shrink-0 font-semibold underline text-red-800 hover:text-red-900 dark:text-red-200"
+              >
+                Sign in
+              </a>
             )}
           </div>
         )}
-        {!quote && action?.message && (
-          <p className="mt-4 text-sm text-gray-600 dark:text-gray-300">
-            {action.message}
-          </p>
-        )}
-        {error && (
-          <p
-            role="alert"
-            className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700"
-          >
-            {error}
-          </p>
-        )}
-        {!status && !busy ? (
-          <button
-            type="button"
-            onClick={() => setReload((v) => v + 1)}
-            className="mt-4 rounded bg-primary-400 px-4 py-2 text-white"
-          >
-            Retry
-          </button>
-        ) : (
-          <button
-            type="button"
-            disabled={
-              busy ||
-              !action?.action ||
-              status?.review_required ||
-              status?.pending_operation?.status === "review"
-            }
-            onClick={act}
-            className="mt-5 w-full rounded-lg bg-primary-400 px-4 py-3 font-semibold text-white disabled:opacity-50"
-          >
-            {busy
-              ? "Please wait..."
-              : status?.pending_operation
-                ? "Check or resume payment"
-                : quote
-                  ? quote.action === "schedule_change"
-                    ? "Confirm scheduled change"
-                    : "Confirm and continue to payment"
-                  : actionLabels[action?.action || ""] || "Current plan"}
-          </button>
-        )}
+
+        {/* Existing subscriber management link */}
         {status?.subscription_status && (
           <button
             type="button"
             disabled={busy}
             onClick={manage}
-            className="mt-3 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm"
+            className="mt-3 w-full text-center text-xs text-gray-500 underline hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
           >
             Manage payment method or cancellation
           </button>
