@@ -15,7 +15,7 @@ export const beforeAfterContent = {
   eyebrow: "Before vs after",
   title: "From raw text to a clean rewrite",
   subtitle:
-    "ScholarlyHelp's paraphrasing tool free option rewrites your text into a clear, polished version while keeping your original meaning intact.",
+    "ScholarlyHelp's free paraphrasing tool rewrites your text into a clear, polished version while keeping your original meaning intact.",
   pasteLabel: "What You Paste",
   pasteText:
     "In recent years, the widespread adoption of artificial intelligence across industries has significantly transformed the nature of employment, compelling organizations to reconsider the skills their workforce requires. As routine tasks become increasingly automated, employees are expected to develop competencies that machines cannot easily replicate.",
@@ -79,7 +79,7 @@ export const howItWorksContent = {
     {
       title: "Paste your text",
       description:
-        "Drop in a sentence, section, or paragraph up to 200 words for our ai paraphraser free tool to rewrite.",
+        "Drop in a sentence, section, or paragraph up to 200 words for our AI paraphraser free tool to rewrite.",
     },
     {
       title: "Choose your style",
@@ -87,9 +87,9 @@ export const howItWorksContent = {
         "Choose Standard, Creative, Formal, or Casual, or use Custom to spell out exactly what you want now.",
     },
     {
-      title: "Enter your emAIl",
+      title: "Enter your email",
       description:
-        "Enter your emAIl to unlock the complete rewrite and access it in your free ScholarlyHelp dashboard.",
+        "Enter your email to unlock the complete rewrite and access it in your free ScholarlyHelp dashboard.",
     },
     {
       title: "Copy and submit",
@@ -97,7 +97,7 @@ export const howItWorksContent = {
         "Copy the full version, read it over, tweak anything that needs your voice, and it’s yours.",
     },
   ],
-  ctaTitleStart: "Want all 16",
+  ctaTitleStart: "Want all",
   ctaTitleBrand: "ScholarlyHelp",
   ctaTitlePill: "tools",
   ctaTitleEnd: "in one place?",
@@ -214,7 +214,7 @@ export const reviewsContent = {
       quote:
         "My essay was due at midnight, and it was already 11 pm. I ran it through this paraphrasing tool, reworked the draft, then added my own voice back. I submitted with 30 minutes to spare. It really saved me.",
       author: "James K.",
-      detail: "Business, University of Michigan Junior",
+      detail: "Business, University of Michigan, Junior",
     },
     {
       quote:

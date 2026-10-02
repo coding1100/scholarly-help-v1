@@ -4,11 +4,11 @@
 // require touching layout code.
 
 export const heroContent = {
-  badge: "Made for working adults earning a degree online",
-  titleTop: "Turn your AI draft into writing that",
-  titleAccent: "sounds like you",
+  badge: "4,220 students used this tool this week",
+  titleTop: "The best AI humanizer that makes",
+  titleAccent: "your writing sound real",
   subtitle:
-    "Paste a discussion post or paper. Get it back in your natural voice in about 30 seconds. First rewrite is free, no signup.",
+    "Paste your AI-generated content, and our free AI humanizer delivers a natural, human voice instantly.",
 };
 
 export const beforeAfterContent = {
@@ -164,9 +164,9 @@ export const twoWaysContent = {
           "Once you are satisfied, copy the final output and paste it straight into your document.",
       },
       {
-        title: "Add emAIl",
+        title: "Add email",
         description:
-          "Enter your emAIl to save your progress and unlock the full ScholarlyHelp dashboard.",
+          "Enter your email to save your progress and unlock the full ScholarlyHelp dashboard.",
       },
     ],
   },
@@ -281,7 +281,7 @@ export const footerCtaContent = {
 
 /** Page-level SEO. */
 export const metaContent = {
-  title: "AI Humanizer: Free Online Tool | ScholarlyHelp",
+  title: "Free AI Humanizer: Humanize AI Text | ScholarlyHelp",
   description:
-    "Turn AI-generated wording into natural-sounding text while keeping your message clear. Use a free AI humanizer to refine your writing. Humanize it today.",
+    "Humanize AI text with ScholarlyHelp’s free AI humanizer. Turn robotic wording into natural, human-like writing while keeping your message clear. Try it.",
 };

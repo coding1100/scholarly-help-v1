@@ -263,7 +263,7 @@ export const reviewsContent = {
 
 export const faqContent = {
   title: "FAQ",
-  subtitle: "Common questions about this tool",
+  subtitle: "FAQ: Common questions about this tool",
   items: [
     {
       question: "Is this really free?",

@@ -15,55 +15,55 @@ import type { FooterCtaContent } from "@/app/components/AiLandingPage/ToolLandin
 
 export const heroContent: LandingHeroContent = {
   badge: "3,190 students used this tool this week",
-  titleTop: "Make a perfect citation",
-  titleAccent: "in seconds",
+  titleTop: "Make Citations in Seconds with",
+  titleAccent: "Our Citation Generator",
   subtitle:
-    "Paste a DOI, URL, or source details, and the citation generator creates accurate APA, MLA, Harvard, or Chicago references in seconds.",
-  steps: ["Choose Style", "Add Source", "Generate Citation"],
+    "Paste a DOI, URL, or source details, and our free citation generator creates accurate APA, MLA, Harvard, or Chicago references in seconds, with in-text citations included.",
+  steps: ["Choose style", "Add source", "Generate citation"],
   introLine:
-    "Make accurate academic citations in seconds with the ScholarlyHelp citation generator. Get properly formatted references in APA, MLA, Chicago, or Harvard for books, websites, journals, and articles, with in-text citations included.",
+    "Make accurate academic citations in seconds with the ScholarlyHelp citation generator. Get properly formatted references in APA, MLA, Chicago, or Harvard for books, websites, journals, and articles with in-text citations included.",
 };
 
 export const useCasesContent: UseCasesContent = {
   title: "Every student has a reference list to build",
   subtitle:
-    "Whether you're rushing or planning ahead, this free citation generator helps.",
+    "Whether you are rushing or planning, this free citation generator handles every source type in seconds.",
   cards: [
     {
       icon: "⏰",
-      title: "Reference list tonight",
+      title: "Reference list due tonight",
       description:
-        "Paste a DOI or URL and generate a correctly formatted citation in seconds.",
+        "Paste a DOI or URL and get a correctly formatted citation in seconds, without checking style rules yourself.",
     },
     {
       icon: "📚",
       title: "Your literature review",
       description:
-        "Build a consistent bibliography without checking every citation rule yourself.",
+        "Use the APA citation generator to create a consistent bibliography without checking formatting rules for every source.",
     },
     {
       icon: "🎓",
       title: "Thesis or dissertation",
       description:
-        "Keep every chapter in one citation style from start to finish.",
+        "Keep every chapter consistent with the Chicago style citation generator for footnotes and bibliography entries from start to finish.",
     },
     {
       icon: "📄",
       title: "A PDF you found online",
       description:
-        "Upload a PDF and extract source details instead of typing them yourself.",
+        "Upload a PDF and let the tool extract author, title, date, and journal details without retyping every source field.",
     },
     {
       icon: "🔄",
-      title: "Changing the style now",
+      title: "Switching citation styles",
       description:
-        "Switch citation styles without creating the same reference again.",
+        "Need MLA instead of APA? The free MLA citation generator reformats your references without rebuilding the list from scratch.",
     },
     {
       icon: "✅",
       title: "Checking your own work",
       description:
-        "Generate citations as you go and keep your reference list organized.",
+        "Generate citations as you write with our citation generator; keep every entry organised before your final submission.",
     },
   ],
 };
@@ -75,25 +75,27 @@ export const howItWorksContent: HowItWorksContent = {
     {
       title: "Choose a style first",
       description:
-        "Select APA, MLA, Harvard, or Chicago before adding your source.",
+        "Select APA, MLA, Harvard, or Chicago from the dropdown before adding your source to begin creating your citation.",
     },
     {
       title: "Pick the source type",
-      description: "Pick a book, website, journal, or another source type.",
+      description:
+        "Choose a book, website, journal, or another source type; the tool adjusts the required fields automatically.",
     },
     {
-      title: "Autofill, or type it",
+      title: "Autofill or type it",
       description:
-        "Paste a DOI, URL, or PDF, or enter the details yourself.",
+        "Add a DOI, URL, or PDF and let the citation generator fill in the source details, or enter them manually.",
     },
     {
       title: "Save your citations",
-      description: "Add your email to save work and unlock your dashboard.",
+      description:
+        "Add your email to save your work and unlock your free ScholarlyHelp dashboard, with every citation stored and organised by project.",
     },
   ],
-  ctaTitleStart: "Want all 16",
+  ctaTitleStart: "Want all",
   ctaTitleBrand: "ScholarlyHelp",
-  ctaTitlePill: "Tools",
+  ctaTitlePill: "tools",
   ctaTitleEnd: "in one place?",
   ctaBody:
     "Your free ScholarlyHelp dashboard keeps the citation generator, paraphraser, essay title generator, CGPA calculator, and AI humanizer together.",
@@ -104,25 +106,26 @@ export const howItWorksContent: HowItWorksContent = {
 export const whyItWorksContent: WhyItWorksContent = {
   eyebrow: "Why it works",
   title: "Built for accuracy, not guesswork",
-  subtitle: "Uses the latest rules for every supported citation style.",
+  subtitle:
+    "Uses the latest official rules for every supported style so your references are always correct.",
   features: [
     {
       icon: "📚",
-      title: "Supports major styles",
+      title: "Supports every major style",
       description:
-        "Generate citations in APA, MLA, Harvard, and Chicago with just a few clicks.",
+        "Covers APA citation generator, MLA citation generator, Harvard, and Chicago four major styles used across universities worldwide.",
     },
     {
       icon: "⚡",
-      title: "Autofills source details",
+      title: "Auto-fills source details",
       description:
-        "Use a DOI, URL, or PDF to fill citation fields automatically.",
+        "Paste a DOI, URL, or PDF and the tool fills every citation field automatically, so you do not need to type anything.",
     },
     {
       icon: "🔗",
-      title: "Reference and in-text",
+      title: "Reference and in-text together",
       description:
-        "Generate both the full reference and matching in-text citation together.",
+        "Every output includes both the full reference entry and matching in-text citation, ready to copy directly into your academic paper.",
     },
   ],
 };
@@ -131,7 +134,7 @@ export const twoWaysContent: TwoWaysContent = {
   eyebrow: "How to get help",
   title: "Two ways to handle your citations",
   subtitle:
-    "Use the free citation generator yourself, or let our experts build and check your complete reference list.",
+    "Use the free citation generator yourself for quick references, or let our experts build and check your complete reference list.",
   freeColumn: {
     heading: "Free tool, do it yourself",
     sub: "Easy to start.",
@@ -159,7 +162,7 @@ export const twoWaysContent: TwoWaysContent = {
     ],
   },
   expertColumn: {
-    heading: "Expert services — Done for you",
+    heading: "Expert services, done for you",
     sub: "Get a free quote in 2 minutes →",
     steps: [
       {
@@ -196,7 +199,7 @@ export const watchVideoContent: WatchVideoContent = {
 export const expertBannerContent: ExpertBannerContent = {
   tag: "Got 50+ sources to cite?",
   title: "Get a real editor to check your whole bibliography",
-  body: "The tool works perfectly for individual sources. For a complete bibliography across a dissertation or research paper, ScholarlyHelp editors review every entry for accuracy, formatting, and consistency at any length.",
+  body: "The free citation generator works perfectly for individual sources. For a complete bibliography across a dissertation or research paper, our editors can review every entry using a citation generator for APA, MLA citation generator, or Chicago-style citation generator for accuracy, formatting, and consistency.",
   perks: [
     "Any length, no source limit",
     "Every style covered",
@@ -215,19 +218,19 @@ export const reviewsContent: ReviewsContent = {
   reviews: [
     {
       quote:
-        "I had 40 sources to cite in Chicago style and no idea where to start. I pasted each DOI in and had the whole reference list done in twenty minutes.",
+        "I had 40 sources to cite and no idea where to start. I used the Chicago citation generator mode, pasted each DOI, and had the whole reference list done in twenty minutes.",
       author: "Rachel M.",
       detail: "History, Boston University — Senior",
     },
     {
       quote:
-        "The PDF upload is what sold me. I did not have to retype the title and author from a scanned journal article, since it pulled everything from the file.",
+        "The PDF upload is what sold me. I did not have to retype the title and author from a scanned journal article — the citation generator pulled everything from the file.",
       author: "Devon P.",
       detail: "Sociology, Ohio State — Graduate",
     },
     {
       quote:
-        "My professor is strict about APA 7. This got the in-text and the full citation right every time, and it saved me from losing easy marks.",
+        "My professor is strict about APA 7. The APA format citation generator got the in-text and the full citation right every time, and it saved me from losing easy marks.",
       author: "Amara N.",
       detail: "Nursing, Indiana — Junior",
     },
@@ -246,27 +249,27 @@ export const faqContent: FaqContent = {
     {
       question: "Which citation styles are supported?",
       answer:
-        "Generate citations in APA 7th, MLA 9th, Harvard, and Chicago 17th editions for a wide range of source types.",
+        "The tool supports APA citation generator, MLA citation generator, Harvard, and Chicago citation generators four widely used academic styles.",
     },
     {
       question: "How does autofill find the source details?",
       answer:
-        "Paste a DOI or URL, upload a PDF, or search by title to automatically retrieve your source details and generate a citation.",
+        "Paste a DOI or URL, upload a PDF, or search by title. Our AI citation generator retrieves your source details automatically and formats the citation instantly.",
     },
     {
-      question: "What is the difference between the full and in-text citation?",
+      question: "Can I create both full and in-text citations?",
       answer:
-        "The tool generates both your reference list citation and the matching in-text citation in your selected style.",
+        "Yes. A full citation gives all the source details in your reference list, while an in-text citation briefly identifies the source in your paper. Our citation generator supports APA, Chicago, and MLA format citation generator options for creating both.",
     },
     {
       question: "What if autofill cannot find my source?",
       answer:
-        "Enter the source details manually, and the tool will format your citation correctly in the citation style you choose.",
+        "Enter the source details manually, and the tool formats your citation correctly. Manual entry works with the citation generator MLA, APA, Harvard, and Chicago modes.",
     },
     {
       question: "What if I need my whole bibliography checked?",
       answer:
-        "Our academic experts can review your reference list for accuracy, formatting, and consistency before submission.",
+        "Our academic experts review your complete reference list, whether created with the free citation generator or another tool, for accuracy, formatting, and consistency before submission.",
     },
   ],
 };
@@ -276,7 +279,7 @@ export const footerCtaContent: FooterCtaContent = {
   titlePill: "reference list",
   titleEnd: "won't format itself.",
   body: "Use the free citation generator to create citations in seconds, or connect with a ScholarlyHelp editor for expert help.",
-  primaryButton: "Generate a citation free",
+  primaryButton: "Generate a citation for free",
   primaryHref: "#citation-tool",
   secondaryButton: "Talk to an editor →",
   secondaryHref: "/contact-us",
