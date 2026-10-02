@@ -5,12 +5,18 @@ import { useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import {
   FiArrowLeft,
+  FiCheck,
+  FiFileText,
   FiFolderPlus,
   FiLink,
   FiLoader,
   FiMic,
   FiMonitor,
 } from "react-icons/fi";
+import {
+  EXPERT_WHATSAPP_HREF,
+  trackExpertWhatsAppClick,
+} from "./ExpertHelpCard";
 import {
   addStudySource,
   addStudySourceFile,
@@ -126,6 +132,8 @@ export default function StudySourceIngestion({
   const [isStartingRecording, setIsStartingRecording] = useState(false);
   const [isStartingChat, setIsStartingChat] = useState(false);
   const [showToolbarUpload, setShowToolbarUpload] = useState(false);
+  const [onboardingTab, setOnboardingTab] = useState<"file" | "text">("file");
+  const [isDragging, setIsDragging] = useState(false);
   const [statusByMode, setStatusByMode] = useState<Record<UploadMode, InlineStatus | null>>({
     file: null,
     url: null,
@@ -794,41 +802,250 @@ export default function StudySourceIngestion({
   );
 
   if (variant === "onboarding") {
-    return (
-      <>
+    if (experience === "tutor") {
+      return (
         <section className="flex w-full flex-col px-2 py-6 sm:px-4 sm:py-10">
           <div className="flex w-full items-center justify-center">
             <div className="w-full max-w-[640px]">
               <div className="mb-3 px-2 text-center sm:mb-4">
                 <h1 className="text-[22px] font-bold leading-tight tracking-tight text-[#1a2033] sm:text-[28px] lg:text-[32px]">
-                  {experience === "tutor" ? "Welcome to your AI Tutor" : ""}
+                  Welcome to your AI Tutor
                   {displayName ? `, ${displayName}` : ""}
                 </h1>
                 <p className="mx-auto mt-2 max-w-lg text-xs leading-relaxed text-[#64748b] sm:text-sm">
-                  {experience === "tutor"
-                    ? "Ask anything, or add course material for source-grounded tutoring and personalized practice."
-                    : ""}
+                  Ask anything, or add course material for source-grounded tutoring and personalized practice.
                 </p>
               </div>
               <div className="rounded-[28px] bg-white p-3 shadow-[0_8px_40px_rgba(15,23,42,0.06)] sm:rounded-[36px] sm:p-4">
                 {uploadForm}
-                {experience === "tutor" ? (
-                  <div className="mt-3 border-t border-[#eceefa] pt-3 text-center">
-                    <button
-                      type="button"
-                      onClick={startChatWithoutMaterial}
-                      disabled={isStartingChat}
-                      className="rounded-lg border border-[#cfd5ff] bg-[#f7f8ff] px-4 py-2 text-sm font-semibold text-[#4f5dcc] transition hover:bg-[#eef1ff] disabled:opacity-60"
-                    >
-                      {isStartingChat ? "Starting chat…" : "Just chat — no material needed"}
-                    </button>
-                  </div>
-                ) : null}
+                <div className="mt-3 border-t border-[#eceefa] pt-3 text-center">
+                  <button
+                    type="button"
+                    onClick={startChatWithoutMaterial}
+                    disabled={isStartingChat}
+                    className="rounded-lg border border-[#cfd5ff] bg-[#f7f8ff] px-4 py-2 text-sm font-semibold text-[#4f5dcc] transition hover:bg-[#eef1ff] disabled:opacity-60"
+                  >
+                    {isStartingChat ? "Starting chat…" : "Just chat — no material needed"}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </section>
-      </>
+      );
+    }
+
+    return (
+      <section className="flex w-full flex-col items-center justify-center px-4 py-8 sm:py-12">
+        {/* Top Tag Pill */}
+        <div className="mb-4 inline-flex items-center rounded-full border border-gray-200/90 bg-white px-4 py-1 text-xs font-medium text-gray-700 shadow-xs sm:text-sm">
+          For working professionals earning their degree online
+        </div>
+
+        {/* Main Title & Subtitle */}
+        <div className="text-center">
+          <h1 className="text-3xl font-extrabold tracking-tight text-[#111827] sm:text-4xl lg:text-[40px] leading-tight">
+            What are you studying this week?
+          </h1>
+          <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-gray-500 sm:text-base">
+            Upload your readings, lecture or assignment. Get notes, flashcards and a quiz, plus a tutor that knows your material.
+          </p>
+        </div>
+
+        {/* Two-Card Section */}
+        <div className="mt-8 grid w-full max-w-[960px] grid-cols-1 items-stretch gap-6 lg:grid-cols-12 text-left">
+          {/* Left Card: Upload file / Paste text */}
+          <div className="flex flex-col justify-between rounded-3xl border border-gray-100 bg-white p-5 shadow-[0_4px_30px_rgba(0,0,0,0.05)] sm:p-6 lg:col-span-7">
+            <div>
+              {/* Tab Switcher */}
+              <div className="mb-5 grid grid-cols-2 gap-1 rounded-2xl bg-[#F1F3F9] p-1.5">
+                <button
+                  type="button"
+                  onClick={() => setOnboardingTab("file")}
+                  className={`rounded-xl py-2.5 text-sm font-semibold transition ${
+                    onboardingTab === "file"
+                      ? "bg-white text-gray-900 shadow-sm"
+                      : "text-gray-500 hover:text-gray-800"
+                  }`}
+                >
+                  Upload file
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOnboardingTab("text")}
+                  className={`rounded-xl py-2.5 text-sm font-semibold transition ${
+                    onboardingTab === "text"
+                      ? "bg-white text-gray-900 shadow-sm"
+                      : "text-gray-500 hover:text-gray-800"
+                  }`}
+                >
+                  Paste text
+                </button>
+              </div>
+
+              {/* Tab Content */}
+              {onboardingTab === "file" ? (
+                <div
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDragging(true);
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault();
+                    setIsDragging(false);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setIsDragging(false);
+                    const dropped = e.dataTransfer.files?.[0];
+                    if (dropped) setFile(dropped);
+                  }}
+                  className={`relative flex min-h-[190px] flex-col items-center justify-center rounded-2xl border-2 border-dashed p-6 text-center transition sm:p-7 ${
+                    isDragging
+                      ? "border-[#4F46E5] bg-[#EEF2FF]/40"
+                      : "border-[#C7D2FE] bg-white hover:border-[#818CF8]"
+                  }`}
+                >
+                  {file ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#EEF2FF] text-[#4F46E5]">
+                        <FiFileText className="h-6 w-6" />
+                      </div>
+                      <p className="max-w-[260px] truncate text-sm font-semibold text-gray-900 sm:text-base">
+                        {file.name}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {(file.size / 1024).toFixed(1)} KB
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setFile(null)}
+                        className="mt-1 text-xs font-semibold text-red-500 hover:underline"
+                      >
+                        Remove file
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-[#EEF2FF] text-[#4F46E5]">
+                        <svg
+                          className="h-6 w-6"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                          />
+                        </svg>
+                      </div>
+                      <p className="text-sm font-semibold text-gray-900 sm:text-base">
+                        Drop a PDF, Word doc, slides or a photo of your notes
+                      </p>
+                      <p className="mt-1 text-xs text-gray-500 sm:text-sm">
+                        or{" "}
+                        <label className="cursor-pointer font-medium text-[#4F46E5] underline hover:text-[#4338CA]">
+                          browse files
+                          <input
+                            type="file"
+                            accept=".pdf,.txt,.doc,.docx,text/plain,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/*"
+                            className="sr-only"
+                            onChange={(e) => setFile(e.target.files?.[0] || null)}
+                          />
+                        </label>
+                      </p>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <div className="min-h-[190px]">
+                  <textarea
+                    value={text}
+                    onChange={(e) => setText(e.target.value)}
+                    placeholder="Paste your readings, lecture notes, syllabus, or assignment text here..."
+                    rows={6}
+                    className="w-full h-[190px] resize-none rounded-2xl border border-gray-200 p-4 text-sm text-gray-800 placeholder:text-gray-400 focus:border-[#4F46E5] focus:outline-none focus:ring-1 focus:ring-[#4F46E5]"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Bottom Button */}
+            <button
+              type="button"
+              onClick={() => {
+                if (onboardingTab === "file") {
+                  if (!file) {
+                    toast.error("Please choose or drop a file first.");
+                    return;
+                  }
+                  onSubmit({ nextKind: "file", nextFile: file });
+                } else {
+                  if (!text.trim()) {
+                    toast.error("Please paste some text first.");
+                    return;
+                  }
+                  onSubmit({ nextKind: "text", nextText: text });
+                }
+              }}
+              disabled={isSubmitting || (onboardingTab === "file" ? !file : !text.trim())}
+              className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#4F46E5] px-6 py-3.5 text-base font-semibold text-white shadow-sm transition hover:bg-[#4338CA] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isSubmitting ? (
+                <>
+                  <FiLoader className="h-5 w-5 animate-spin" />
+                  <span>Starting study session...</span>
+                </>
+              ) : (
+                <>
+                  <span>Start studying</span>
+                  <span aria-hidden="true">→</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Right Card: Done-for-you Dark Card */}
+          <div className="flex flex-col justify-between rounded-3xl bg-[#0F172A] p-6 text-white shadow-[0_4px_30px_rgba(15,23,42,0.15)] sm:p-7 lg:col-span-5">
+            <div>
+              <span className="mb-4 inline-flex items-center rounded-full bg-[#1E293B] px-3 py-1 text-xs font-semibold text-gray-300">
+                Done-for-you
+              </span>
+              <h2 className="mb-3 text-xl font-bold leading-snug text-white sm:text-2xl">
+                No time to study at all this week?
+              </h2>
+              <p className="mb-6 text-sm leading-relaxed text-gray-400">
+                Our experts can take a class off your plate so you keep your GPA, and your evenings.
+              </p>
+              <div className="flex items-center gap-2 text-xs font-medium text-gray-300 sm:text-sm">
+                <FiCheck className="h-4 w-4 shrink-0 text-emerald-400" />
+                <span>Free quote, no commitment</span>
+              </div>
+            </div>
+
+            <a
+              href={EXPERT_WHATSAPP_HREF}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => trackExpertWhatsAppClick("study_workspace_onboarding")}
+              className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#16A34A] px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#15803D] sm:text-base"
+            >
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="h-4 w-4 shrink-0"
+              >
+                <path d="M20.5 3.5A11.9 11.9 0 0 0 12 0C5.4 0 .1 5.3.1 11.9c0 2.1.6 4.1 1.6 5.9L0 24l6.4-1.7c1.7.9 3.6 1.4 5.6 1.4 6.6 0 11.9-5.3 11.9-11.9 0-3.2-1.2-6.2-3.4-8.3ZM12 21.5c-1.8 0-3.5-.5-5-1.4l-.4-.2-3.8 1 1-3.7-.2-.4a9.6 9.6 0 1 1 8.4 4.7Zm5.3-7.1c-.3-.1-1.7-.850-2-.95-.3-.1-.5-.1-.7.15-.2.3-.75.95-.9 1.15-.2.2-.35.2-.65.05-1.75-.85-2.9-1.55-4.05-3.5-.3-.55.3-.5.9-1.65.1-.2.05-.35 0-.5s-.7-1.6-.9-2.2c-.25-.6-.5-.5-.7-.5h-.6c-.2 0-.5.05-.8.35-.3.3-1.05 1-1.05 2.5s1.1 2.9 1.25 3.1c.15.2 2.15 3.3 5.2 4.6 2 .85 2.75.95 3.75.8.6-.1 1.7-.7 1.95-1.35.25-.65.25-1.2.15-1.35-.05-.1-.25-.2-.55-.3Z" />
+              </svg>
+              <span>Chat on WhatsApp</span>
+            </a>
+          </div>
+        </div>
+      </section>
     );
   }
 
