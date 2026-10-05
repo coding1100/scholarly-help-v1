@@ -16,7 +16,7 @@ function getAuthApiBaseUrl(): string {
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { userId: string } },
+  { params }: { params: Promise<{ userId: string }> },
 ) {
   // Deleting a user is destructive and out of scope for report_admin, a
   // reporting-only role — only a full admin session may do this.
@@ -25,7 +25,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const userId = params.userId;
+  const { userId } = await params;
   if (!userId) {
     return NextResponse.json({ error: "userId is required" }, { status: 400 });
   }

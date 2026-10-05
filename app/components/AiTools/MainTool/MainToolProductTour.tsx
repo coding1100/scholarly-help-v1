@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Joyride, {
+import {
   ACTIONS,
   EVENTS,
+  Joyride,
   STATUS,
-  type CallBackProps,
+  type EventData,
   type Step,
   type TooltipRenderProps,
 } from "react-joyride";
@@ -106,7 +107,7 @@ const TOUR_VARIANTS: Record<
         ? {
             target: '[data-tour="ara-editor"]',
             placement: "top",
-            disableBeacon: true,
+            skipBeacon: true,
             title: "Your document",
             content:
               "Write and structure your paper here. Open Documents in the sidebar to create or switch drafts.",
@@ -114,7 +115,7 @@ const TOUR_VARIANTS: Record<
         : {
             target: '[data-tour="ara-welcome-screen"]',
             placement: "bottom",
-            disableBeacon: true,
+            skipBeacon: true,
             title: "Get started",
             content:
               "Set a title, describe your topic, generate headings, or start from a blank page. You can also import a Word file.",
@@ -124,7 +125,7 @@ const TOUR_VARIANTS: Record<
         {
           target: "body",
           placement: "center",
-          disableBeacon: true,
+          skipBeacon: true,
           title: "Welcome",
           content:
             "This short tour introduces the Academic Research Assistant: your workspace for drafting, sources, and AI help. Use Next to continue, or End tour anytime to finish and save your progress.",
@@ -132,7 +133,7 @@ const TOUR_VARIANTS: Record<
         {
           target: '[data-tour="ara-sidebar"]',
           placement: "right",
-          disableBeacon: true,
+          skipBeacon: true,
           title: "Sidebar",
           content:
             "Use the sidebar for your account, tools list, and token usage. On this tool you will also find New document plus Documents, Library, and AI Chat.",
@@ -140,7 +141,7 @@ const TOUR_VARIANTS: Record<
         {
           target: '[data-tour="ara-assistant-panels"]',
           placement: "right",
-          disableBeacon: true,
+          skipBeacon: true,
           title: "Documents, Library & AI Chat",
           content:
             "Documents lists your drafts. Library stores sources for citations. AI Chat answers questions about your draft using your document as context.",
@@ -148,7 +149,7 @@ const TOUR_VARIANTS: Record<
         {
           target: '[data-tour="ara-main-workspace"]',
           placement: "left",
-          disableBeacon: true,
+          skipBeacon: true,
           title: "Main workspace",
           content:
             "The header shows your document title and actions. The main area is your editor. On smaller screens, use the menu icon to show the sidebar.",
@@ -156,7 +157,7 @@ const TOUR_VARIANTS: Record<
         {
           target: '[data-tour="ara-header"]',
           placement: "bottom",
-          disableBeacon: true,
+          skipBeacon: true,
           title: "Toolbar",
           content:
             "Toggle autocomplete, export your work, publish, or open settings. Title changes sync with your document.",
@@ -165,7 +166,7 @@ const TOUR_VARIANTS: Record<
         {
           target: '[data-tour="ara-main-workspace"]',
           placement: "top",
-          disableBeacon: true,
+          skipBeacon: true,
           title: "Selection & AI",
           content:
             "When you are in the editor, select any text to open the floating toolbar. Use Chat for AI about the selection, Humanizer for tone, or Citation to insert references.",
@@ -182,7 +183,7 @@ const TOUR_VARIANTS: Record<
         ? {
             target: '[data-tour="ara-editor"]',
             placement: "top",
-            disableBeacon: true,
+            skipBeacon: true,
             title: "Your document",
             content:
               "Write and refine your work here. Create a new document from the welcome screen or continue an open draft.",
@@ -190,7 +191,7 @@ const TOUR_VARIANTS: Record<
         : {
             target: '[data-tour="ara-welcome-screen"]',
             placement: "bottom",
-            disableBeacon: true,
+            skipBeacon: true,
             title: "Get started",
             content:
               "Set a title, describe your topic, generate headings, or start from a blank page. You can also import a Word file.",
@@ -200,7 +201,7 @@ const TOUR_VARIANTS: Record<
         {
           target: "body",
           placement: "center",
-          disableBeacon: true,
+          skipBeacon: true,
           title: "Welcome",
           content:
             "This short tour introduces the AI Study Workspace: your focused editor for drafting and AI-assisted writing. Use Next to continue, or End tour anytime to finish and save your progress.",
@@ -208,7 +209,7 @@ const TOUR_VARIANTS: Record<
         {
           target: '[data-tour="ara-sidebar"]',
           placement: "right",
-          disableBeacon: true,
+          skipBeacon: true,
           title: "Sidebar",
           content:
             "Use the sidebar for your account, the tools list, token usage, and How to Use whenever you want to run this tour again.",
@@ -216,7 +217,7 @@ const TOUR_VARIANTS: Record<
         {
           target: '[data-tour="ara-main-workspace"]',
           placement: "left",
-          disableBeacon: true,
+          skipBeacon: true,
           title: "Main workspace",
           content:
             "The header shows your document title and actions. The main area is your editor. On smaller screens, use the menu icon to show the sidebar.",
@@ -224,7 +225,7 @@ const TOUR_VARIANTS: Record<
         {
           target: '[data-tour="ara-header"]',
           placement: "bottom",
-          disableBeacon: true,
+          skipBeacon: true,
           title: "Toolbar",
           content:
             "Toggle autocomplete, export your work, publish, or open settings. Title changes sync with your document.",
@@ -233,7 +234,7 @@ const TOUR_VARIANTS: Record<
         {
           target: '[data-tour="ara-main-workspace"]',
           placement: "top",
-          disableBeacon: true,
+          skipBeacon: true,
           title: "Selection & AI",
           content:
             "When you are in the editor, select any text to open the floating toolbar. Use Chat for AI help on the selection or Humanizer to adjust tone.",
@@ -335,7 +336,7 @@ const MainToolProductTour: React.FC<MainToolProductTourProps> = ({
   );
 
   const handleJoyrideCallback = useCallback(
-    (data: CallBackProps) => {
+    (data: EventData) => {
       const { status, type, action } = data;
 
       if (type === EVENTS.TARGET_NOT_FOUND) {
@@ -375,33 +376,21 @@ const MainToolProductTour: React.FC<MainToolProductTourProps> = ({
       steps={steps}
       run={run}
       continuous
-      showProgress={false}
-      showSkipButton={false}
-      hideCloseButton
-      disableCloseOnEsc
-      disableOverlayClose
       scrollToFirstStep
-      scrollOffset={80}
-      callback={handleJoyrideCallback}
+      onEvent={handleJoyrideCallback}
       tooltipComponent={TooltipComponent}
-      floaterProps={{
-        disableAnimation: false,
-        styles: {
-          floater: { filter: "drop-shadow(0 10px 25px rgba(0,0,0,0.12))" },
-        },
+      options={{
+        showProgress: false,
+        skipBeacon: true,
+        scrollOffset: 80,
+        spotlightRadius: 12,
+        zIndex: 10050,
+        primaryColor: "#2b7fff",
+        textColor: "#1f2937",
+        overlayColor: "rgba(15, 23, 42, 0.72)",
       }}
       styles={{
-        options: {
-          zIndex: 10050,
-          primaryColor: "#2b7fff",
-          textColor: "#1f2937",
-          backgroundColor: "#ffffff",
-          arrowColor: "#ffffff",
-          overlayColor: "rgba(15, 23, 42, 0.72)",
-        },
-        spotlight: {
-          borderRadius: 12,
-        },
+        floater: { filter: "drop-shadow(0 10px 25px rgba(0,0,0,0.12))" },
       }}
       locale={{ back: "Back", next: "Next", last: "Done" }}
     />

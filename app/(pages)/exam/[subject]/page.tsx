@@ -28,7 +28,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 interface PageProps {
-  params: { subject: string };
+  params: Promise<{ subject: string }>;
 }
 
 async function fetchPageData(slug: string) {
@@ -65,8 +65,8 @@ async function fetchPageData(slug: string) {
   }
 }
 
-const Page: React.FC<PageProps> = async ({ params }) => {
-  const { subject } = params;
+const Page = async ({ params }: PageProps) => {
+  const { subject } = await params;
 
   if (!isValidExamSubject(subject)) {
     notFound();
@@ -207,9 +207,10 @@ export function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: {
-  params: { subject: string };
+  params: Promise<{ subject: string }>;
 }): Promise<Metadata> {
-  if (!isValidExamSubject(params.subject)) {
+  const { subject } = await params;
+  if (!isValidExamSubject(subject)) {
     return {
       title: "Not Found",
       description: "The page you are looking for does not exist.",
@@ -220,11 +221,11 @@ export async function generateMetadata({
     const client = await clientPromise;
     const db = client.db("scholarly_help");
 
-    let slugVariations: string[] = [params.subject];
-    if (params.subject.startsWith("exam_")) {
-      slugVariations.push(params.subject.replace("exam_", ""));
+    let slugVariations: string[] = [subject];
+    if (subject.startsWith("exam_")) {
+      slugVariations.push(subject.replace("exam_", ""));
     } else {
-      slugVariations.push(`exam_${params.subject}`);
+      slugVariations.push(`exam_${subject}`);
     }
 
     const orConditions = [];
@@ -247,14 +248,14 @@ export async function generateMetadata({
       const metaTitle =
         pageData.meta?.title ||
         `${
-          params.subject.charAt(0).toUpperCase() +
-          params.subject.slice(1).replace(/-/g, " ")
+          subject.charAt(0).toUpperCase() +
+          subject.slice(1).replace(/-/g, " ")
         } Exam Help`;
       const metaDescription =
         pageData.meta?.description ||
-        `Get expert help with your ${params.subject.replace(/-/g, " ")} exam.`;
+        `Get expert help with your ${subject.replace(/-/g, " ")} exam.`;
       const canonicalUrl =
-        pageData.meta?.canonicalUrl || `${baseUrl}/exam/${params.subject}`;
+        pageData.meta?.canonicalUrl || `${baseUrl}/exam/${subject}`;
 
       return {
         title: metaTitle,
@@ -268,8 +269,8 @@ export async function generateMetadata({
 
   // Fallback metadata
   const subjectTitle =
-    params.subject.charAt(0).toUpperCase() +
-    params.subject.slice(1).replace(/-/g, " ");
+    subject.charAt(0).toUpperCase() +
+    subject.slice(1).replace(/-/g, " ");
 
   const rawBaseUrl =
     process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
@@ -277,11 +278,11 @@ export async function generateMetadata({
     ? rawBaseUrl.slice(0, -1)
     : rawBaseUrl;
 
-  const canonicalUrl = `${baseUrl}/exam/${params.subject}`;
+  const canonicalUrl = `${baseUrl}/exam/${subject}`;
 
   return {
     title: `${subjectTitle} Exam Help - Professional Assistance`,
-    description: `Get expert help with your ${params.subject.replace(
+    description: `Get expert help with your ${subject.replace(
       /-/g,
       " ",
     )} exam.`,

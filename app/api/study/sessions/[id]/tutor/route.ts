@@ -104,14 +104,15 @@ function resolveLearningMode(mode?: string): StudyLearningMode {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const { id } = await params;
     const userId = await getAuthenticatedUserId(request);
     if (!userId) {
       return fail("Unauthorized", 401);
     }
-    const session = await getSession(params.id);
+    const session = await getSession(id);
     if (!session) {
       return fail("Session not found", 404);
     }
@@ -216,7 +217,7 @@ export async function POST(
       // this query benefits from recovered vectors instead of silently degrading
       // to keyword-only forever. Bounded + best-effort; never breaks the tutor.
       try {
-        await reindexStaleStudySources(params.id);
+        await reindexStaleStudySources(id);
       } catch (error) {
         console.error("study.tutor.reindex_stale_failed", error);
       }
@@ -228,12 +229,12 @@ export async function POST(
         keywordScore?: number;
       }> = [];
       try {
-        ranked = await retrieveStudyContext(params.id, message, chunkLimit);
+        ranked = await retrieveStudyContext(id, message, chunkLimit);
       } catch (error) {
         console.error("study.tutor.retrieve_failed", error);
       }
       if (ranked.length === 0) {
-        const { chunks } = await getSessionSourceText(params.id);
+        const { chunks } = await getSessionSourceText(id);
         // Legacy ranker's score counts matched query tokens — a genuine keyword
         // relevance signal, so expose it as keywordScore for the check below.
         ranked = topChunksByQuery(chunks, message, chunkLimit).map((item) => ({
@@ -281,7 +282,7 @@ export async function POST(
       const encoder = new TextEncoder();
       const now = new Date();
       await saveTutorMessage({
-        sessionId: params.id,
+        sessionId: id,
         role: "user",
         message,
         mode: learningMode,
@@ -430,7 +431,7 @@ export async function POST(
               }
             }
             await saveTutorMessage({
-              sessionId: params.id,
+              sessionId: id,
               role: "assistant",
               message: answer || "I could not generate a response. Please retry.",
               mode: learningMode,
@@ -536,7 +537,7 @@ export async function POST(
     const now = new Date();
     await Promise.all([
       saveTutorMessage({
-        sessionId: params.id,
+        sessionId: id,
         role: "user",
         message,
         mode: learningMode,
@@ -559,7 +560,7 @@ export async function POST(
         createdAt: now,
       }),
       saveTutorMessage({
-        sessionId: params.id,
+        sessionId: id,
         role: "assistant",
         message: answer,
         mode: learningMode,

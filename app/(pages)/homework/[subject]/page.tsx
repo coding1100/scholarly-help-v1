@@ -30,9 +30,9 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 interface PageProps {
-  params: {
+  params: Promise<{
     subject: string;
-  };
+  }>;
 }
 
 async function fetchPageData(slug: string) {
@@ -69,21 +69,22 @@ async function fetchPageData(slug: string) {
   }
 }
 
-const Page: React.FC<PageProps> = async ({ params }) => {
-  if (!isValidHomeworkSubject(params.subject)) {
+const Page = async ({ params }: PageProps) => {
+  const { subject } = await params;
+  if (!isValidHomeworkSubject(subject)) {
     notFound();
   }
 
-  const pageData = await fetchPageData(params.subject);
+  const pageData = await fetchPageData(subject);
 
   // If no pageData found, still render the page with default structure
   // This allows the page to work even if data doesn't exist in MongoDB yet
   if (!pageData) {
     // Return a default page structure instead of 404
     const defaultPageData: any = {
-      id: `homework_${params.subject}`,
-      slug: params.subject,
-      pageType: `homework_${params.subject}`,
+      id: `homework_${subject}`,
+      slug: subject,
+      pageType: `homework_${subject}`,
       status: "published",
       meta: { title: "", description: "" },
       heroSection: { mainHeading: "", subHeading: "", description: "" },
@@ -117,8 +118,8 @@ const Page: React.FC<PageProps> = async ({ params }) => {
       faq: { mainHeading: "", faqs: [] },
     };
     const subjectTitle =
-      params.subject.charAt(0).toUpperCase() +
-      params.subject.slice(1).replace(/-/g, " ");
+      subject.charAt(0).toUpperCase() +
+      subject.slice(1).replace(/-/g, " ");
     const rawBaseUrl =
       process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
     const baseUrl = rawBaseUrl.endsWith("/")
@@ -129,11 +130,11 @@ const Page: React.FC<PageProps> = async ({ params }) => {
       <HomeworkDataProvider data={defaultPageData}>
         <ProductSchema
           productTitle={`${subjectTitle} Homework Help - Professional Assistance`}
-          metaDescription={`Get expert help with your ${params.subject.replace(
+          metaDescription={`Get expert help with your ${subject.replace(
             /-/g,
             " ",
           )} homework.`}
-          pageUrl={`${baseUrl}/homework/${params.subject}`}
+          pageUrl={`${baseUrl}/homework/${subject}`}
         />
         <MainLayout>
           <HeroSection />
@@ -164,8 +165,8 @@ const Page: React.FC<PageProps> = async ({ params }) => {
     notFound();
   }
   const subjectTitle =
-    params.subject.charAt(0).toUpperCase() +
-    params.subject.slice(1).replace(/-/g, " ");
+    subject.charAt(0).toUpperCase() +
+    subject.slice(1).replace(/-/g, " ");
   const rawBaseUrl =
     process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
   const baseUrl = rawBaseUrl.endsWith("/")
@@ -174,9 +175,9 @@ const Page: React.FC<PageProps> = async ({ params }) => {
   const productTitle = pageData.meta?.title || `${subjectTitle} Homework Help`;
   const metaDescription =
     pageData.meta?.description ||
-    `Get expert help with your ${params.subject.replace(/-/g, " ")} homework.`;
+    `Get expert help with your ${subject.replace(/-/g, " ")} homework.`;
   const pageUrl =
-    pageData.meta?.canonicalUrl || `${baseUrl}/homework/${params.subject}`;
+    pageData.meta?.canonicalUrl || `${baseUrl}/homework/${subject}`;
 
   return (
     <HomeworkDataProvider data={pageData}>
@@ -214,9 +215,10 @@ export function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: {
-  params: { subject: string };
+  params: Promise<{ subject: string }>;
 }): Promise<Metadata> {
-  if (!isValidHomeworkSubject(params.subject)) {
+  const { subject } = await params;
+  if (!isValidHomeworkSubject(subject)) {
     return {
       title: "Not Found",
       description: "The page you are looking for does not exist.",
@@ -227,11 +229,11 @@ export async function generateMetadata({
     const client = await clientPromise;
     const db = client.db("scholarly_help");
 
-    let slugVariations: string[] = [params.subject];
-    if (params.subject.startsWith("homework_")) {
-      slugVariations.push(params.subject.replace("homework_", ""));
+    let slugVariations: string[] = [subject];
+    if (subject.startsWith("homework_")) {
+      slugVariations.push(subject.replace("homework_", ""));
     } else {
-      slugVariations.push(`homework_${params.subject}`);
+      slugVariations.push(`homework_${subject}`);
     }
 
     const orConditions = [];
@@ -254,17 +256,17 @@ export async function generateMetadata({
       const metaTitle =
         pageData.meta?.title ||
         `${
-          params.subject.charAt(0).toUpperCase() +
-          params.subject.slice(1).replace(/-/g, " ")
+          subject.charAt(0).toUpperCase() +
+          subject.slice(1).replace(/-/g, " ")
         } Homework Help`;
       const metaDescription =
         pageData.meta?.description ||
-        `Get expert help with your ${params.subject.replace(
+        `Get expert help with your ${subject.replace(
           /-/g,
           " ",
         )} homework.`;
       const canonicalUrl =
-        pageData.meta?.canonicalUrl || `${baseUrl}/homework/${params.subject}`;
+        pageData.meta?.canonicalUrl || `${baseUrl}/homework/${subject}`;
 
       return {
         title: metaTitle,
@@ -278,8 +280,8 @@ export async function generateMetadata({
 
   // Fallback metadata
   const subjectTitle =
-    params.subject.charAt(0).toUpperCase() +
-    params.subject.slice(1).replace(/-/g, " ");
+    subject.charAt(0).toUpperCase() +
+    subject.slice(1).replace(/-/g, " ");
 
   const rawBaseUrl =
     process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
@@ -287,11 +289,11 @@ export async function generateMetadata({
     ? rawBaseUrl.slice(0, -1)
     : rawBaseUrl;
 
-  const canonicalUrl = `${baseUrl}/homework/${params.subject}`;
+  const canonicalUrl = `${baseUrl}/homework/${subject}`;
 
   return {
     title: `${subjectTitle} Homework Help - Professional Assistance`,
-    description: `Get expert help with your ${params.subject.replace(
+    description: `Get expert help with your ${subject.replace(
       /-/g,
       " ",
     )} homework.`,

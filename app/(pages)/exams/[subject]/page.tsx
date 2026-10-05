@@ -27,9 +27,9 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 interface PageProps {
-  params: {
+  params: Promise<{
     subject: string;
-  };
+  }>;
 }
 
 async function fetchPageData(slug: string) {
@@ -66,21 +66,22 @@ async function fetchPageData(slug: string) {
   }
 }
 
-const Page: React.FC<PageProps> = async ({ params }) => {
-  if (!isValidExamSubject(params.subject)) {
+const Page = async ({ params }: PageProps) => {
+  const { subject } = await params;
+  if (!isValidExamSubject(subject)) {
     notFound();
   }
 
-  const pageData = await fetchPageData(params.subject);
+  const pageData = await fetchPageData(subject);
 
   // If no pageData found, still render the page with default structure
   // This allows the page to work even if data doesn't exist in MongoDB yet
   if (!pageData) {
     // Return a default page structure instead of 404
     const defaultPageData: any = {
-      id: `exam_${params.subject}`,
-      slug: params.subject,
-      pageType: `exam_${params.subject}`,
+      id: `exam_${subject}`,
+      slug: subject,
+      pageType: `exam_${subject}`,
       status: "published",
       meta: { title: "", description: "" },
       heroSection: { mainHeading: "", subHeading: "", description: "" },
@@ -114,8 +115,8 @@ const Page: React.FC<PageProps> = async ({ params }) => {
       faq: { mainHeading: "", faqs: [] },
     };
     const subjectTitle =
-      params.subject.charAt(0).toUpperCase() +
-      params.subject.slice(1).replace(/-/g, " ");
+      subject.charAt(0).toUpperCase() +
+      subject.slice(1).replace(/-/g, " ");
     const rawBaseUrl =
       process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
     const baseUrl = rawBaseUrl.endsWith("/")
@@ -126,11 +127,11 @@ const Page: React.FC<PageProps> = async ({ params }) => {
       <ExamDataProvider data={defaultPageData}>
         <ProductSchema
           productTitle={`Take My ${subjectTitle} Exam | Professional ${subjectTitle} Exam Help`}
-          metaDescription={`Get expert help with your ${params.subject.replace(
+          metaDescription={`Get expert help with your ${subject.replace(
             /-/g,
             " ",
           )} exams. Professional exam assistance for better grades.`}
-          pageUrl={`${baseUrl}/exams/${params.subject}`}
+          pageUrl={`${baseUrl}/exams/${subject}`}
         />
         <MainLayout>
           <HeroSection />
@@ -161,8 +162,8 @@ const Page: React.FC<PageProps> = async ({ params }) => {
   }
 
   const subjectTitle =
-    params.subject.charAt(0).toUpperCase() +
-    params.subject.slice(1).replace(/-/g, " ");
+    subject.charAt(0).toUpperCase() +
+    subject.slice(1).replace(/-/g, " ");
   const rawBaseUrl =
     process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
   const baseUrl = rawBaseUrl.endsWith("/")
@@ -173,12 +174,12 @@ const Page: React.FC<PageProps> = async ({ params }) => {
     `Take My ${subjectTitle} Exam | Professional ${subjectTitle} Exam Help`;
   const metaDescription =
     pageData.meta?.description ||
-    `Get expert help with your ${params.subject.replace(
+    `Get expert help with your ${subject.replace(
       /-/g,
       " ",
     )} exams. Professional exam assistance for better grades.`;
   const pageUrl =
-    pageData.meta?.canonicalUrl || `${baseUrl}/exams/${params.subject}`;
+    pageData.meta?.canonicalUrl || `${baseUrl}/exams/${subject}`;
 
   return (
     <ExamDataProvider data={pageData}>
@@ -220,9 +221,10 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: {
-  params: { subject: string };
+  params: Promise<{ subject: string }>;
 }): Promise<Metadata> {
-  if (!isValidExamSubject(params.subject)) {
+  const { subject } = await params;
+  if (!isValidExamSubject(subject)) {
     return {
       title: "Not Found",
       description: "The page you are looking for does not exist.",
@@ -233,11 +235,11 @@ export async function generateMetadata({
     const client = await clientPromise;
     const db = client.db("scholarly_help");
 
-    let slugVariations: string[] = [params.subject];
-    if (params.subject.startsWith("exam_")) {
-      slugVariations.push(params.subject.replace("exam_", ""));
+    let slugVariations: string[] = [subject];
+    if (subject.startsWith("exam_")) {
+      slugVariations.push(subject.replace("exam_", ""));
     } else {
-      slugVariations.push(`exam_${params.subject}`);
+      slugVariations.push(`exam_${subject}`);
     }
 
     const orConditions = [];
@@ -259,12 +261,12 @@ export async function generateMetadata({
 
       const metaTitle =
         pageData.meta?.title ||
-        `Take My ${params.subject} Exam | Professional ${params.subject} Exam Help`;
+        `Take My ${subject} Exam | Professional ${subject} Exam Help`;
       const metaDescription =
         pageData.meta?.description ||
-        `Get expert help with your ${params.subject} exams. Professional ${params.subject} exam assistance for better grades.`;
+        `Get expert help with your ${subject} exams. Professional ${subject} exam assistance for better grades.`;
       const canonicalUrl =
-        pageData.meta?.canonicalUrl || `${baseUrl}/exams/${params.subject}`;
+        pageData.meta?.canonicalUrl || `${baseUrl}/exams/${subject}`;
 
       return {
         title: metaTitle,
@@ -286,11 +288,11 @@ export async function generateMetadata({
     ? rawBaseUrl.slice(0, -1)
     : rawBaseUrl;
 
-  const canonicalUrl = `${safeBaseUrl}/exams/${params.subject}`;
+  const canonicalUrl = `${safeBaseUrl}/exams/${subject}`;
 
   return {
-    title: `Take My ${params.subject} Exam | Professional ${params.subject} Exam Help`,
-    description: `Get expert help with your ${params.subject} exams. Professional ${params.subject} exam assistance for better grades.`,
+    title: `Take My ${subject} Exam | Professional ${subject} Exam Help`,
+    description: `Get expert help with your ${subject} exams. Professional ${subject} exam assistance for better grades.`,
     alternates: {
       canonical: canonicalUrl,
     },
