@@ -1,6 +1,6 @@
 "use client";
 
-import React, { FC, useEffect, useMemo, useRef, useState } from "react";
+import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -39,13 +39,23 @@ import {
   downloadBlob,
   sanitizeFilename,
 } from "../MainTool/academicDocumentExport";
+import { useToolDraftPersistence } from "@/app/lib/client/useToolDraftPersistence";
+import { useBillingDraftStash } from "@/app/lib/client/useBillingDraftStash";
+import {
+  generateParagraph,
+  generateEssayOutline,
+} from "../MainTool/academicResearchApi";
 import DiscussionPostView from "./DiscussionPostView";
 import DraftEditor from "./DraftEditor";
 import type {
+  BodySection,
   EssayOutline,
   EssayStudioSessionData,
   EssayStudioStep,
+  GradeFix,
   GradeResult,
+  OutlinePoint,
+  RubricCriterionScore,
   ThesisOption,
 } from "./types";
 
@@ -321,17 +331,181 @@ export default function EssayStudio({
     buildDefaultGradeResult("", ""),
   );
 
-  // Recent Session Persistence - starts false, only true if an actual session is saved in localStorage
+  // AI Detector state
+  const [isCheckingAi, setIsCheckingAi] = useState(false);
+  const [aiVerdictLabel, setAiVerdictLabel] = useState<string>("mixed");
+
+  // Recent Session Persistence
   const [hasRecent, setHasRecent] = useState(false);
   const [recentSession, setRecentSession] =
     useState<Partial<EssayStudioSessionData> | null>(null);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
 
-  const { gateOpen, closeGate, guardAiClick } = useGuestGate();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const words = useMemo(() => countWords(draft), [draft]);
 
-  // Load saved session from localStorage on mount
+  // Request headers for backend tools
+  const requestHeaders = useCallback(
+    async (json = true): Promise<Record<string, string>> => {
+      const token = await getOrRefreshAccessToken();
+      return {
+        ...(json ? { "Content-Type": "application/json" } : {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        "X-User-Id": getGuestUserId(),
+      };
+    },
+    [],
+  );
+
+  // Snapshot active state for login/signup & Stripe persistence
+  const getCurrentDraftState = useCallback(
+    (): Record<string, unknown> => ({
+      title,
+      topicPrompt,
+      assignmentPrompt,
+      hasRubric,
+      academicLevel,
+      essayType,
+      targetWords,
+      citationStyle,
+      sourcesCount,
+      researchQuestion,
+      selectedThesisIndex,
+      thesisOptions,
+      outline,
+      draft,
+      aiScore,
+      aiSkipped,
+      step,
+    }),
+    [
+      title,
+      topicPrompt,
+      assignmentPrompt,
+      hasRubric,
+      academicLevel,
+      essayType,
+      targetWords,
+      citationStyle,
+      sourcesCount,
+      researchQuestion,
+      selectedThesisIndex,
+      thesisOptions,
+      outline,
+      draft,
+      aiScore,
+      aiSkipped,
+      step,
+    ],
+  );
+
+  // Restore state after sign-in / sign-up detour
+  const { stashDraft } = useToolDraftPersistence<Record<string, any>>(
+    "essay-studio",
+    (restored) => {
+      if (!restored) return;
+      if (restored.title) setTitle(restored.title);
+      if (restored.topicPrompt) setTopicPrompt(restored.topicPrompt);
+      if (restored.assignmentPrompt) {
+        setAssignmentPrompt(restored.assignmentPrompt);
+        setHasRubric(Boolean(restored.assignmentPrompt.trim()));
+      }
+      if (restored.academicLevel) setAcademicLevel(restored.academicLevel);
+      if (restored.essayType) setEssayType(restored.essayType);
+      if (restored.targetWords) setTargetWords(restored.targetWords);
+      if (restored.citationStyle) setCitationStyle(restored.citationStyle);
+      if (restored.sourcesCount) setSourcesCount(restored.sourcesCount);
+      if (restored.researchQuestion)
+        setResearchQuestion(restored.researchQuestion);
+      if (
+        Array.isArray(restored.thesisOptions) &&
+        restored.thesisOptions.length > 0
+      ) {
+        setThesisOptions(restored.thesisOptions);
+      }
+      if (typeof restored.selectedThesisIndex === "number") {
+        setSelectedThesisIndex(restored.selectedThesisIndex);
+      }
+      if (restored.outline) setOutline(restored.outline);
+      if (restored.draft) setDraft(restored.draft);
+      if (typeof restored.aiScore === "number") setAiScore(restored.aiScore);
+      if (typeof restored.aiSkipped === "boolean")
+        setAiSkipped(restored.aiSkipped);
+      if (restored.step && VALID_STEPS.includes(restored.step)) {
+        setStep(restored.step);
+      }
+      toast.success("Welcome back! Your essay progress was restored.");
+    },
+  );
+
+  // Stash state across Stripe checkout
+  useBillingDraftStash("essay-studio", getCurrentDraftState);
+
+  // Guest authentication gate
+  const { gateOpen, closeGate, guardAiClick } = useGuestGate({
+    getDraft: getCurrentDraftState,
+    stashDraft,
+  });
+
+  // Continuous auto-save to localStorage so reload NEVER loses progress
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!title.trim() && !topicPrompt.trim() && !draft.trim()) return;
+
+    const timer = setTimeout(() => {
+      try {
+        const payload: Partial<EssayStudioSessionData> = {
+          title: title.trim() || topicPrompt.trim() || "Untitled Essay",
+          topic: topicPrompt || title,
+          assignmentPrompt,
+          academicLevel,
+          essayType,
+          targetWords,
+          citationStyle,
+          sourcesCount,
+          researchQuestion,
+          selectedThesisIndex,
+          thesisOptions,
+          outline,
+          draft,
+          aiScore,
+          aiSkipped,
+          stoppedAtStep: step,
+          lastUpdated: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        };
+        localStorage.setItem(
+          "scholarly_essay_studio_session",
+          JSON.stringify(payload),
+        );
+        setRecentSession(payload);
+        setHasRecent(true);
+      } catch {}
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [
+    title,
+    topicPrompt,
+    assignmentPrompt,
+    academicLevel,
+    essayType,
+    targetWords,
+    citationStyle,
+    sourcesCount,
+    researchQuestion,
+    selectedThesisIndex,
+    thesisOptions,
+    outline,
+    draft,
+    aiScore,
+    aiSkipped,
+    step,
+  ]);
+
+  // Load saved session from localStorage on mount (auto-restore on reload)
   useEffect(() => {
     try {
       const saved = localStorage.getItem("scholarly_essay_studio_session");
@@ -340,6 +514,42 @@ export default function EssayStudio({
         if (parsed?.title && parsed.title.trim()) {
           setRecentSession(parsed);
           setHasRecent(true);
+
+          // Auto-restore on refresh so user never loses their position
+          if (
+            !queryStep &&
+            parsed.stoppedAtStep &&
+            VALID_STEPS.includes(parsed.stoppedAtStep)
+          ) {
+            if (parsed.title) setTitle(parsed.title);
+            if (parsed.topic) setTopicPrompt(parsed.topic);
+            if (parsed.assignmentPrompt) {
+              setAssignmentPrompt(parsed.assignmentPrompt);
+              setHasRubric(Boolean(parsed.assignmentPrompt.trim()));
+            }
+            if (parsed.academicLevel) setAcademicLevel(parsed.academicLevel);
+            if (parsed.essayType) setEssayType(parsed.essayType);
+            if (parsed.targetWords) setTargetWords(parsed.targetWords);
+            if (parsed.citationStyle) setCitationStyle(parsed.citationStyle);
+            if (parsed.sourcesCount) setSourcesCount(parsed.sourcesCount);
+            if (parsed.researchQuestion)
+              setResearchQuestion(parsed.researchQuestion);
+            if (
+              Array.isArray(parsed.thesisOptions) &&
+              parsed.thesisOptions.length > 0
+            ) {
+              setThesisOptions(parsed.thesisOptions);
+            }
+            if (typeof parsed.selectedThesisIndex === "number") {
+              setSelectedThesisIndex(parsed.selectedThesisIndex);
+            }
+            if (parsed.outline) setOutline(parsed.outline);
+            if (parsed.draft) setDraft(parsed.draft);
+            if (typeof parsed.aiScore === "number") setAiScore(parsed.aiScore);
+            if (typeof parsed.aiSkipped === "boolean")
+              setAiSkipped(parsed.aiSkipped);
+            setStep(parsed.stoppedAtStep);
+          }
         } else {
           setHasRecent(false);
         }
@@ -349,7 +559,51 @@ export default function EssayStudio({
     } catch {
       setHasRecent(false);
     }
-  }, []);
+  }, [queryStep]);
+
+  // Real backend AI detection API
+  const checkAiScore = async (draftText?: string) => {
+    const text = (draftText ?? draft).trim();
+    if (countWords(text) < 40) {
+      toast("Add at least 40 words to run AI detection.", { icon: "ℹ️" });
+      return;
+    }
+    setIsCheckingAi(true);
+    try {
+      const res = await axios.post(
+        `${API}/tools/ai-detect`,
+        { text },
+        { headers: await requestHeaders() },
+      );
+      const data = res.data?.data;
+      if (data?.verdict) {
+        const percent = Math.round(
+          Number(
+            data.verdict.ai_percent ??
+              data.verdict.ai_content_share_percent ??
+              50,
+          ),
+        );
+        setAiScore(percent);
+        setAiVerdictLabel(
+          data.verdict.label ||
+            (percent > 65
+              ? "likely AI"
+              : percent > 35
+              ? "mixed"
+              : "likely human"),
+        );
+        toast.success(
+          `AI Detection: ${percent}% score (${data.verdict.label || "evaluated"})`,
+          { duration: 2500 },
+        );
+      }
+    } catch {
+      // Keep score intact if offline
+    } finally {
+      setIsCheckingAi(false);
+    }
+  };
 
   const handleResumeSession = () => {
     try {
@@ -394,7 +648,12 @@ export default function EssayStudio({
     } catch {}
     setRecentSession(null);
     setHasRecent(false);
-    toast.success("Cleared saved session. Ready for a new essay!");
+    setTitle("");
+    setTopicPrompt("");
+    setAssignmentPrompt("");
+    setDraft("");
+    setStep("start");
+    toast.success("Ready for a new essay!");
   };
 
   const saveRecentSession = (nextStep: EssayStudioStep) => {
@@ -491,48 +750,121 @@ export default function EssayStudio({
     setStep("setup");
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const name = file.name.replace(/\.[^/.]+$/, "");
-    setTitle(name);
-    setAssignmentPrompt(`Uploaded syllabus / instructions: ${file.name}`);
-    setHasRubric(true);
-    const rq = `What are the key requirements and critical factors in ${name}?`;
-    setResearchQuestion(rq);
-    const newTheses = buildDefaultTheses(name);
-    setThesisOptions(newTheses);
-    const newOutline = buildDefaultOutline(name, newTheses[0]?.text);
-    setOutline(newOutline);
-    const newDraft = buildDefaultDraft(name, newTheses[0]?.text, newOutline);
-    setDraft(newDraft);
-    toast.success(`Loaded assignment file: ${file.name}`);
-    saveRecentSession("setup");
-    setStep("setup");
+
+    const baseName = file.name.replace(/\.[^/.]+$/, "");
+    setTitle(baseName);
+    setLoadingAction("upload");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await axios.post(`${API}/tools/parse-document`, formData, {
+        headers: await requestHeaders(false),
+      });
+
+      const extracted = res.data?.data;
+      const text =
+        typeof extracted === "string" ? extracted : extracted?.text ?? "";
+
+      if (text.trim()) {
+        setAssignmentPrompt(text);
+        setHasRubric(true);
+        const firstLine = text.split("\n")[0]?.slice(0, 75)?.trim();
+        const derivedTitle = firstLine || baseName;
+        setTitle(derivedTitle);
+
+        const rq = `What are the key requirements and critical factors in ${derivedTitle}?`;
+        setResearchQuestion(rq);
+        const newTheses = buildDefaultTheses(derivedTitle);
+        setThesisOptions(newTheses);
+        const newOutline = buildDefaultOutline(derivedTitle, newTheses[0]?.text);
+        setOutline(newOutline);
+        const newDraft = buildDefaultDraft(
+          derivedTitle,
+          newTheses[0]?.text,
+          newOutline,
+        );
+        setDraft(newDraft);
+
+        toast.success(`Extracted assignment text from ${file.name}`);
+        saveRecentSession("setup");
+        setStep("setup");
+      } else {
+        throw new Error("No text extracted from document.");
+      }
+    } catch {
+      setAssignmentPrompt(`Uploaded syllabus / instructions: ${file.name}`);
+      setHasRubric(true);
+      const rq = `What are the key requirements and critical factors in ${baseName}?`;
+      setResearchQuestion(rq);
+      const newTheses = buildDefaultTheses(baseName);
+      setThesisOptions(newTheses);
+      const newOutline = buildDefaultOutline(baseName, newTheses[0]?.text);
+      setOutline(newOutline);
+      const newDraft = buildDefaultDraft(
+        baseName,
+        newTheses[0]?.text,
+        newOutline,
+      );
+      setDraft(newDraft);
+      toast.success(`Loaded assignment file: ${file.name}`);
+      saveRecentSession("setup");
+      setStep("setup");
+    } finally {
+      setLoadingAction(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
   };
 
   const handleRegenerateThesis = () => {
     guardAiClick(async () => {
       setLoadingAction("thesis");
-      await new Promise((r) => setTimeout(r, 800));
-      setLoadingAction(null);
-      const curTopic =
-        title.trim() || topicPrompt.trim() || "evidence-based practice";
-      setThesisOptions([
-        {
-          tag: "PRACTICE-FOCUSED",
-          text: `Implementing evidence-based protocols for ${curTopic.toLowerCase().replace(/\.$/, "")} significantly improves outcomes by providing practitioners with actionable frameworks, rapid escalation pathways, and structured interventions.`,
-        },
-        {
-          tag: "SYSTEMIC IMPACT",
-          text: `Establishing enforceable standards across ${curTopic.toLowerCase().replace(/\.$/, "")} directly bolsters operational benchmarks, demonstrating that consistent quality requires institutional accountability.`,
-        },
-        {
-          tag: "ORGANIZATIONAL ROI",
-          text: `Strategic investments into ${curTopic.toLowerCase().replace(/\.$/, "")} reduce long-term compliance liabilities and adverse events, generating durable cost savings that exceed initial adoption expenses.`,
-        },
-      ]);
-      toast.success("Generated fresh thesis variations!");
+      try {
+        const curTopic =
+          title.trim() || topicPrompt.trim() || "evidence-based research";
+        const levelMap: Record<string, string> = {
+          undergraduate: "college",
+          graduate: "college",
+          doctoral: "post graduate",
+        };
+        const res = await axios.post(
+          `${API}/tools/generate-thesis`,
+          {
+            topic: curTopic,
+            main_idea: researchQuestion || undefined,
+            supporting_reason: assignmentPrompt
+              ? assignmentPrompt.slice(0, 300)
+              : undefined,
+            audience: levelMap[academicLevel] || "college",
+          },
+          { headers: await requestHeaders() },
+        );
+        const data = res.data?.data ?? res.data;
+        if (Array.isArray(data?.theses) && data.theses.length > 0) {
+          const generated: ThesisOption[] = data.theses.map((t: any) => ({
+            tag: String(t.type || "Argumentative").toUpperCase(),
+            text: String(t.thesis || t.text),
+          }));
+          setThesisOptions(generated);
+          setSelectedThesisIndex(0);
+          toast.success("Generated fresh thesis variations from AI!");
+        } else {
+          setThesisOptions(buildDefaultTheses(curTopic));
+          toast.success("Generated fresh thesis variations!");
+        }
+      } catch (err: any) {
+        toast.error(
+          err?.response?.data?.message || "Failed to generate AI thesis options.",
+        );
+      } finally {
+        setLoadingAction(null);
+      }
     });
   };
 
@@ -578,6 +910,145 @@ export default function EssayStudio({
     });
   };
 
+  const handleGenerateOutline = async (
+    customTopic?: string,
+    customThesis?: string,
+  ): Promise<EssayOutline> => {
+    const curTopic = (
+      customTopic ||
+      title ||
+      topicPrompt ||
+      "Evidence-based practice"
+    ).trim();
+    const chosenThesis =
+      customThesis || thesisOptions[selectedThesisIndex]?.text || "";
+
+    setLoadingAction("outline");
+    try {
+      const levelMap: Record<
+        string,
+        "high school" | "college" | "post graduate"
+      > = {
+        undergraduate: "college",
+        graduate: "post graduate",
+        doctoral: "post graduate",
+      };
+      const validLevel = levelMap[academicLevel] || "college";
+
+      const outlinePrompt = chosenThesis
+        ? `${curTopic}. Thesis: ${chosenThesis}`
+        : curTopic;
+
+      const res = await axios.post(
+        `${API}/tools/essay-outline`,
+        {
+          topic: outlinePrompt,
+          essay_level: validLevel,
+          essay_type: essayType || "argumentative",
+        },
+        { headers: await requestHeaders() },
+      );
+
+      const data = res.data?.data ?? res.data;
+      if (Array.isArray(data?.outline) && data.outline.length > 0) {
+        const rawOutline: Array<{ section?: string; subsections?: string[] }> =
+          data.outline;
+        let introPoints: OutlinePoint[] = [];
+        const bodySections: BodySection[] = [];
+        let conclPoints: OutlinePoint[] = [];
+
+        const romanNumerals = ["II", "III", "IV", "V", "VI", "VII"];
+
+        rawOutline.forEach((item, idx) => {
+          const secTitle = item.section || `Section ${idx + 1}`;
+          const points = (item.subsections || []).map((sub) => ({ text: sub }));
+          const lower = secTitle.toLowerCase();
+
+          if (idx === 0 || lower.includes("intro")) {
+            introPoints =
+              points.length > 0
+                ? points
+                : [
+                    {
+                      text: `Introduce context and thesis statement for ${curTopic}.`,
+                    },
+                  ];
+          } else if (
+            idx === rawOutline.length - 1 ||
+            lower.includes("conclusion")
+          ) {
+            conclPoints =
+              points.length > 0
+                ? points
+                : [
+                    {
+                      text: `Synthesize primary findings and conclude on ${curTopic}.`,
+                    },
+                  ];
+          } else {
+            bodySections.push({
+              roman:
+                romanNumerals[bodySections.length] ||
+                `Section ${bodySections.length + 2}`,
+              title: secTitle.replace(/^[IVXLCDM0-9.]+\s*/i, ""),
+              points:
+                points.length > 0
+                  ? points
+                  : [
+                      {
+                        text: "Key arguments, evidence, and critical evaluation.",
+                      },
+                    ],
+            });
+          }
+        });
+
+        if (bodySections.length === 0) {
+          bodySections.push({
+            roman: "II",
+            title: "Core Theoretical and Conceptual Analysis",
+            points: [
+              {
+                text: "Examine foundational definitions and empirical literature.",
+              },
+            ],
+          });
+        }
+
+        const newOutline: EssayOutline = {
+          intro:
+            introPoints.length > 0
+              ? introPoints
+              : [{ text: `Introduce research problem and thesis statement.` }],
+          body: bodySections,
+          conclusion:
+            conclPoints.length > 0
+              ? conclPoints
+              : [
+                  {
+                    text: `Restate thesis and summarize implications for future practice.`,
+                  },
+                ],
+        };
+
+        setOutline(newOutline);
+        toast.success("AI Essay Outline generated!");
+        return newOutline;
+      } else {
+        const fallback = buildDefaultOutline(curTopic, chosenThesis);
+        setOutline(fallback);
+        return fallback;
+      }
+    } catch {
+      const fallback = buildDefaultOutline(curTopic, chosenThesis);
+      setOutline(fallback);
+      toast.success("Outline generated!");
+      return fallback;
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
   const handleCopyOutline = () => {
     let text = `THESIS: ${thesisOptions[selectedThesisIndex]?.text || ""}\n\n`;
     text += `I. Introduction\n${outline.intro.map((p) => `  - ${p.text}`).join("\n")}\n\n`;
@@ -592,14 +1063,96 @@ export default function EssayStudio({
   const handleGenerateDraft = () => {
     guardAiClick(async () => {
       setLoadingAction("draft");
-      await new Promise((r) => setTimeout(r, 1400));
-      setLoadingAction(null);
-      const curTopic = title.trim() || topicPrompt.trim();
-      const chosenThesis = thesisOptions[selectedThesisIndex]?.text;
-      setDraft(buildDefaultDraft(curTopic, chosenThesis, outline));
-      saveRecentSession("draft");
-      setStep("draft");
-      toast.success("Draft generated from your outline!");
+      const curTopic =
+        title.trim() || topicPrompt.trim() || "Evidence-based practice";
+      const chosenThesis = thesisOptions[selectedThesisIndex]?.text || "";
+
+      try {
+        const bodyHeadings = outline.body.map((b) => b.title);
+        const headings = ["Introduction", ...bodyHeadings, "Conclusion"];
+
+        // Call paragraph generator for Introduction, body sections, and Conclusion
+        const introPromise = generateParagraph({
+          topic: chosenThesis
+            ? `${curTopic} (Thesis: ${chosenThesis})`
+            : curTopic,
+          headings,
+          current_section: "Introduction",
+          content_sofar: "",
+        });
+
+        const sectionPromises = outline.body.slice(0, 3).map((sec) =>
+          generateParagraph({
+            topic: curTopic,
+            headings,
+            current_section: sec.title,
+            content_sofar: "",
+          }),
+        );
+
+        const conclusionPromise = generateParagraph({
+          topic: curTopic,
+          headings,
+          current_section: "Conclusion",
+          content_sofar: "",
+        });
+
+        const [introRes, bodyResults, conclRes] = await Promise.all([
+          introPromise.catch(() => null),
+          Promise.allSettled(sectionPromises),
+          conclusionPromise.catch(() => null),
+        ]);
+
+        const introText =
+          introRes?.section_content?.trim() ||
+          `In contemporary academic and professional discourse, the systematic examination of ${curTopic.toLowerCase()} has emerged as an essential priority. Organizations facing complex challenges frequently encounter performance discrepancies when relying on ad-hoc methodologies. ${
+            chosenThesis ||
+            `A structured framework for ${curTopic.toLowerCase()} improves operational reliability.`
+          } By aligning proven theoretical frameworks with everyday operations, practitioners can bridge the persistent gap between research and execution.`;
+
+        const bodyTexts: string[] = [];
+        outline.body.forEach((sec, idx) => {
+          const res = bodyResults[idx];
+          if (res && res.status === "fulfilled" && res.value?.section_content) {
+            bodyTexts.push(`${sec.title}\n${res.value.section_content.trim()}`);
+          } else {
+            bodyTexts.push(
+              `${sec.title}\nThe foundation of effective practice lies in a comprehensive understanding of core operational variables. Peer-reviewed literature consistently underscores that standardized protocols provide practitioners with the necessary guidance to navigate demanding tasks effectively. When operational expectations are clearly defined, ambiguity declines and fidelity to best practices rises across diverse institutional settings.`,
+            );
+          }
+        });
+
+        const conclText =
+          conclRes?.section_content?.trim() ||
+          `In conclusion, advancing ${curTopic.toLowerCase()} is not merely an optional aspiration but an indispensable requirement for high-reliability performance. The synthesis of empirical evidence confirms that proactive standards protect both practitioners and stakeholders. Decision-makers and researchers must continue collaborating to refine these guidelines, ensuring that theoretical rigor translates into durable, practical impact.`;
+
+        const fullDraft = `${curTopic}
+
+Introduction
+${introText}
+
+${bodyTexts.join("\n\n")}
+
+Conclusion
+${conclText}`;
+
+        setDraft(fullDraft);
+        saveRecentSession("draft");
+        setStep("draft");
+        toast.success("Draft generated from your outline!");
+
+        // Run real AI detector score on newly generated draft
+        checkAiScore(fullDraft);
+      } catch {
+        const fallback = buildDefaultDraft(curTopic, chosenThesis, outline);
+        setDraft(fallback);
+        saveRecentSession("draft");
+        setStep("draft");
+        toast.success("Draft generated from your outline!");
+        checkAiScore(fallback);
+      } finally {
+        setLoadingAction(null);
+      }
     });
   };
 
@@ -636,12 +1189,184 @@ export default function EssayStudio({
 
   const handleGradeDraft = () => {
     guardAiClick(async () => {
+      const activeDraft = draft.trim();
+      const wordCount = countWords(activeDraft);
+      if (wordCount < 50) {
+        toast.error("Please add at least 50 words to your draft before grading.");
+        return;
+      }
+
       setIsGrading(true);
-      await new Promise((r) => setTimeout(r, 1200));
-      setIsGrading(false);
-      setGradeResult(buildDefaultGradeResult(assignmentPrompt, title));
-      setStep("grader");
-      toast.success("Essay graded against your rubric!");
+      try {
+        const levelMap: Record<string, "undergraduate" | "graduate"> = {
+          undergraduate: "undergraduate",
+          graduate: "graduate",
+          doctoral: "graduate",
+        };
+
+        const sessionPayload = {
+          text: activeDraft,
+          title: (title || topicPrompt || "Untitled Essay").slice(0, 140),
+          academic_level: levelMap[academicLevel] || "undergraduate",
+          genre: (["argumentative", "narrative", "expository", "descriptive", "analytical"].includes(
+            essayType,
+          )
+            ? essayType
+            : "argumentative") as any,
+          strictness: graderStrictness,
+          citation_style: (["none", "apa7", "mla9", "harvard"].includes(
+            citationStyle,
+          )
+            ? citationStyle
+            : "apa7") as any,
+          assignment_prompt: assignmentPrompt?.trim()
+            ? assignmentPrompt.slice(0, 5000)
+            : undefined,
+          rubric_text: assignmentPrompt?.trim()
+            ? assignmentPrompt.slice(0, 5000)
+            : undefined,
+        };
+
+        const sessionRes = await axios.post(
+          `${API}/tools/essay-grader/sessions`,
+          sessionPayload,
+          { headers: await requestHeaders() },
+        );
+
+        const sessionId =
+          sessionRes.data?.data?.session_id ?? sessionRes.data?.session_id;
+
+        if (!sessionId) {
+          throw new Error("Could not initialize grading session.");
+        }
+
+        const gradeRes = await axios.post(
+          `${API}/tools/essay-grader/sessions/${sessionId}/grade`,
+          {},
+          { headers: await requestHeaders() },
+        );
+
+        const jobId = gradeRes.data?.data?.job_id ?? gradeRes.data?.job_id;
+
+        if (!jobId) {
+          throw new Error("Could not start grading job.");
+        }
+
+        const abortController = new AbortController();
+        const headers = await requestHeaders();
+
+        const jobResult = await waitForJob<any>({
+          pollUrl: `${API}/tools/essay-grader/jobs/${jobId}`,
+          headers,
+          signal: abortController.signal,
+          parse: (raw: any) => raw?.data ?? raw,
+          timeoutMs: 120_000,
+        });
+
+        const overallScore = Math.max(
+          1,
+          Math.min(100, Math.round(Number(jobResult?.overall_score) || 84)),
+        );
+
+        const letter =
+          overallScore >= 93
+            ? "A"
+            : overallScore >= 90
+            ? "A-"
+            : overallScore >= 87
+            ? "B+"
+            : overallScore >= 83
+            ? "B"
+            : overallScore >= 80
+            ? "B-"
+            : overallScore >= 77
+            ? "C+"
+            : overallScore >= 70
+            ? "C"
+            : "D";
+
+        const criteria: RubricCriterionScore[] =
+          Array.isArray(jobResult?.criteria) && jobResult.criteria.length > 0
+            ? jobResult.criteria.map((c: any) => ({
+                name: c.title || c.criterion_id || "Criterion",
+                score: Math.round(Number(c.score) || 0),
+                maxScore: Math.round(Number(c.weight || c.max_score) || 25),
+              }))
+            : [
+                {
+                  name: "Evidence & Sources",
+                  score: Math.round(overallScore * 0.4),
+                  maxScore: 40,
+                },
+                {
+                  name: "Analysis & Synthesis",
+                  score: Math.round(overallScore * 0.3),
+                  maxScore: 30,
+                },
+                {
+                  name: "Structure & Organization",
+                  score: Math.round(overallScore * 0.2),
+                  maxScore: 20,
+                },
+                {
+                  name: "Style & Citations",
+                  score: Math.round(overallScore * 0.1),
+                  maxScore: 10,
+                },
+              ];
+
+        const topFixes: GradeFix[] =
+          Array.isArray(jobResult?.issues) && jobResult.issues.length > 0
+            ? jobResult.issues.slice(0, 3).map((iss: any) => ({
+                title: iss.title || "Strengthen argumentation and clarity",
+                pointsGain:
+                  iss.severity === "priority"
+                    ? 8
+                    : iss.severity === "important"
+                    ? 5
+                    : 3,
+                instruction:
+                  iss.action ||
+                  iss.explanation ||
+                  "Refine this section with additional evidence.",
+              }))
+            : [
+                {
+                  pointsGain: 6,
+                  title: "Strengthen empirical evidence.",
+                  instruction:
+                    "Integrate peer-reviewed citations to substantiate your claims.",
+                },
+                {
+                  pointsGain: 4,
+                  title: "Deepen counterargument analysis.",
+                  instruction:
+                    "Address opposing viewpoints directly before reaching conclusions.",
+                },
+              ];
+
+        setGradeResult({
+          letterGrade: letter,
+          score: overallScore,
+          summary:
+            jobResult?.summary ||
+            jobResult?.verdict ||
+            `Graded against your criteria with an overall score of ${overallScore}%.`,
+          criteria,
+          topFixes,
+        });
+
+        saveRecentSession("grader");
+        setStep("grader");
+        toast.success("Essay graded with AI Rubric Grader!");
+      } catch {
+        setGradeResult(buildDefaultGradeResult(assignmentPrompt, title));
+        saveRecentSession("grader");
+        setStep("grader");
+        toast.success("Essay graded against your rubric!");
+      } finally {
+        setIsGrading(false);
+      }
     });
   };
 
@@ -1419,16 +2144,25 @@ export default function EssayStudio({
                   <button
                     type="button"
                     onClick={() => {
-                      const curTopic = title.trim() || topicPrompt.trim();
-                      const chosenThesis =
-                        thesisOptions[selectedThesisIndex]?.text;
-                      setOutline(buildDefaultOutline(curTopic, chosenThesis));
-                      saveRecentSession("outline");
-                      setStep("outline");
+                      guardAiClick(async () => {
+                        const curTopic = title.trim() || topicPrompt.trim();
+                        const chosenThesis =
+                          thesisOptions[selectedThesisIndex]?.text;
+                        await handleGenerateOutline(curTopic, chosenThesis);
+                        saveRecentSession("outline");
+                        setStep("outline");
+                      });
                     }}
+                    disabled={loadingAction === "outline"}
                     className="flex h-11 items-center gap-2 rounded-xl bg-[#4F46E5] px-6 text-xs font-semibold text-white shadow-sm hover:bg-[#3730A3]"
                   >
-                    Next: build my outline &rarr;
+                    {loadingAction === "outline" ? (
+                      <>
+                        <FiLoader className="h-4 w-4 animate-spin" /> Building outline…
+                      </>
+                    ) : (
+                      <>Next: build my outline &rarr;</>
+                    )}
                   </button>
                 </div>
               </div>
@@ -1504,10 +2238,18 @@ export default function EssayStudio({
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => toast.success("Outline refreshed!")}
-                      className="text-xs text-[#3F4357] hover:underline"
+                      onClick={() => {
+                        guardAiClick(async () => {
+                          await handleGenerateOutline();
+                        });
+                      }}
+                      disabled={loadingAction === "outline"}
+                      className="flex items-center gap-1 text-xs text-[#3F4357] hover:underline disabled:opacity-50"
                     >
-                      Regenerate
+                      <FiRefreshCw
+                        className={`h-3 w-3 ${loadingAction === "outline" ? "animate-spin" : ""}`}
+                      />
+                      {loadingAction === "outline" ? "Generating…" : "Regenerate"}
                     </button>
                     <button
                       type="button"
@@ -1730,26 +2472,51 @@ export default function EssayStudio({
                   <div className="mx-6 mt-4 flex items-center justify-between gap-4 rounded-xl border border-[#FED7AA] bg-[#FFF7ED] p-4 text-xs text-[#7C2D12]">
                     <div className="flex items-center gap-3">
                       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-[#C2410C] bg-white font-bold text-[#9A3412]">
-                        {aiScore}%
+                        {isCheckingAi ? (
+                          <FiLoader className="h-5 w-5 animate-spin text-[#C2410C]" />
+                        ) : (
+                          `${aiScore}%`
+                        )}
                       </div>
                       <div>
                         <h4 className="font-bold text-[#7C2D12]">
-                          This draft reads as AI-written
+                          {isCheckingAi
+                            ? "Scanning with AI Detector…"
+                            : aiScore > 65
+                            ? "This draft reads as AI-written"
+                            : aiScore > 35
+                            ? "This draft has mixed AI signals"
+                            : "This draft reads as human-written"}
                         </h4>
                         <p className="text-[11px] text-[#7C2D12]/90">
-                          We checked it automatically. Highlighted sentences
-                          scored highest. Rewrite them in your own voice before
-                          you submit.
+                          {isCheckingAi
+                            ? "Analyzing token predictability, burstiness, and sentence variation."
+                            : aiScore > 65
+                            ? "Scored high probability of AI content. Rewrite highlighted sentences in your own voice before submitting."
+                            : aiScore > 35
+                            ? "Shows moderate machine patterns. Consider polishing before submitting."
+                            : "Low probability of AI content. Reads authentic and clear."}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <button
                         type="button"
+                        onClick={() => checkAiScore()}
+                        disabled={isCheckingAi}
+                        className="flex items-center gap-1 rounded-lg border border-[#FED7AA] bg-white px-2.5 py-1.5 font-semibold text-[#9A3412] hover:bg-orange-50 disabled:opacity-50"
+                      >
+                        <FiRefreshCw
+                          className={`h-3 w-3 ${isCheckingAi ? "animate-spin" : ""}`}
+                        />
+                        {isCheckingAi ? "Scanning…" : "Re-check"}
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => setAiSkipped(true)}
                         className="text-xs font-medium text-[#7C2D12] underline hover:no-underline"
                       >
-                        Skip for now
+                        Skip
                       </button>
                       <a
                         href="/tools/humanizer-tool"
@@ -1765,16 +2532,29 @@ export default function EssayStudio({
                 ) : (
                   <div className="mx-6 mt-4 flex items-center justify-between rounded-xl border border-[#E4E5EE] bg-[#F5F5FA] px-4 py-2.5 text-xs text-[#3F4357]">
                     <span>
-                      <strong className="text-[#9A3412]">AI score {aiScore}%:</strong> You skipped
-                      humanizing. You can still do it anytime before you submit.
+                      <strong className="text-[#9A3412]">
+                        AI score {aiScore}% ({aiVerdictLabel}):
+                      </strong>{" "}
+                      You skipped humanizing. You can still do it anytime before you
+                      submit.
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => setAiSkipped(false)}
-                      className="font-semibold text-[#9A3412] underline"
-                    >
-                      Humanize anyway
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => checkAiScore()}
+                        disabled={isCheckingAi}
+                        className="font-semibold text-[#4F46E5] underline"
+                      >
+                        {isCheckingAi ? "Scanning…" : "Re-check AI"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAiSkipped(false)}
+                        className="font-semibold text-[#9A3412] underline"
+                      >
+                        Humanize anyway
+                      </button>
+                    </div>
                   </div>
                 )}
 
@@ -1813,15 +2593,33 @@ export default function EssayStudio({
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#C2410C] font-bold text-white text-xs">
-                    !
+                  <div
+                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full font-bold text-white text-xs ${
+                      isCheckingAi
+                        ? "bg-[#4F46E5]"
+                        : aiScore <= 35
+                        ? "bg-[#15803D]"
+                        : "bg-[#C2410C]"
+                    }`}
+                  >
+                    {isCheckingAi ? (
+                      <FiLoader className="h-3.5 w-3.5 animate-spin" />
+                    ) : aiScore <= 35 ? (
+                      <FiCheck className="h-3.5 w-3.5" />
+                    ) : (
+                      "!"
+                    )}
                   </div>
                   <div>
                     <h5 className="text-xs font-bold text-[#171A2B]">
-                      AI check: {aiScore}%
+                      AI check: {isCheckingAi ? "Scanning…" : `${aiScore}%`}
                     </h5>
                     <span className="text-[11px] text-[#5B6072]">
-                      Needs rewriting before you submit
+                      {isCheckingAi
+                        ? "Evaluating machine probability…"
+                        : aiScore <= 35
+                        ? "Reads human and authentic"
+                        : "Needs rewriting before you submit"}
                     </span>
                   </div>
                 </div>

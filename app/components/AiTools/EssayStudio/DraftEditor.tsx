@@ -20,7 +20,6 @@ import {
   FiCornerDownLeft,
 } from "react-icons/fi";
 import { generateParagraph } from "@/app/components/AiTools/MainTool/academicResearchApi";
-import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import toast from "react-hot-toast";
 
 interface DraftEditorProps {
@@ -69,8 +68,6 @@ export default function DraftEditor({
   onChange,
   guardAiClick = (fn) => fn(),
 }: DraftEditorProps) {
-  const { isGuestOutOfAllowance, ensureGuestClick } = useGuestGate();
-
   const [currentSuggestion, setCurrentSuggestion] = useState<string>("");
   const [suggestionPos, setSuggestionPos] = useState<number | null>(null);
   const [isLoadingSuggestion, setIsLoadingSuggestion] = useState(false);
@@ -214,43 +211,34 @@ export default function DraftEditor({
 
   // Fetch AI suggestion from backend
   const triggerSuggestion = useCallback(
-    async (isManual = false) => {
-      if (!editor) return;
-      if (isLoadingSuggestion) return;
-
-      if (isGuestOutOfAllowance && isGuestOutOfAllowance()) {
-        if (isManual && ensureGuestClick) {
-          ensureGuestClick();
-        }
-        return;
-      }
-
+    async (isManual: boolean = false) => {
+      if (!editor || isLoadingSuggestion) return;
       const { state } = editor;
       const { from, to } = state.selection;
       if (from !== to) return; // Do not suggest if text is highlighted
 
-      const resolvedPos = state.doc.resolve(from);
-      const textBeforeCursor = resolvedPos.parent.textBetween(
-        0,
-        resolvedPos.parentOffset,
-        " ",
-      );
+      // Get preceding document context (up to 400 characters before cursor)
+      const docTextBefore = state.doc.textBetween(0, from, "\n\n", " ");
+      const contentSofar = docTextBefore.slice(-400).trim();
 
-      // Auto-suggest requires reasonable text length and word boundary
-      if (!isManual) {
-        if (textBeforeCursor.trim().length < 12) return;
-        const endsAtBoundary = /[\s.!?;:,]$/.test(textBeforeCursor);
-        if (!endsAtBoundary) return;
+      // Auto-suggest requires at least a couple of characters of context
+      if (!isManual && contentSofar.length < 3) return;
+      if (!contentSofar) {
+        if (isManual) {
+          toast.error("Type a topic or few words first so AI can suggest a continuation.");
+        }
+        return;
       }
-
-      const contentSofar = textBeforeCursor.trim();
-      if (!contentSofar) return;
 
       // Don't re-trigger for identical prefix
       if (!isManual && contentSofar === lastSuggestedTextRef.current) return;
       lastSuggestedTextRef.current = contentSofar;
 
       const pos = from;
+
+      if (isManual) {
+        toast.loading("Thinking of continuation…", { id: "ghost-loading", duration: 3000 });
+      }
 
       // Show inline loading dots
       try {
@@ -276,6 +264,7 @@ export default function DraftEditor({
           content_sofar: contentSofar,
         });
 
+        toast.dismiss("ghost-loading");
         const rawText = pickParagraphApiText(res);
         if (!rawText || !rawText.trim()) {
           handleDismiss();
@@ -289,7 +278,8 @@ export default function DraftEditor({
 
         // Format clean continuation
         let cleanText = rawText.trim();
-        if (!cleanText.startsWith(" ") && !textBeforeCursor.endsWith(" ")) {
+        const immediateCharBefore = docTextBefore.slice(-1);
+        if (!cleanText.startsWith(" ") && immediateCharBefore && !/\s/.test(immediateCharBefore)) {
           cleanText = " " + cleanText;
         }
 
@@ -304,6 +294,7 @@ export default function DraftEditor({
           }),
         );
       } catch {
+        toast.dismiss("ghost-loading");
         handleDismiss();
         if (isManual) {
           toast.error("Could not fetch paragraph suggestion.");
@@ -317,13 +308,11 @@ export default function DraftEditor({
       isLoadingSuggestion,
       topic,
       headings,
-      isGuestOutOfAllowance,
-      ensureGuestClick,
       handleDismiss,
     ],
   );
 
-  // Debounced auto-completion while user is typing
+  // Debounced auto-completion while user is typing (fast 650ms debounce)
   useEffect(() => {
     if (!editor || !autoCompleteEnabled) return;
 
@@ -339,7 +328,7 @@ export default function DraftEditor({
 
       debounceTimerRef.current = setTimeout(() => {
         void triggerSuggestion(false);
-      }, 1800);
+      }, 650);
     };
 
     editor.on("update", handleDocChange);
