@@ -30,6 +30,7 @@ const GROUP_LEAD_ORDER: Record<ToolGroup, string[]> = {
     "/tools/study-workspace",
   ],
   "writer-lab": [
+    "/tools/essay-studio",
     "/tools/essay-generator",
     "/tools/citation-tool",
     "/tools/grammar-checker",
@@ -69,7 +70,7 @@ const TOP_TOOL_HREFS = [
   "/tools/ai-detector-tool",
   "/tools/tutor",
   "/tools/plagiarism-checker",
-  "/tools/essay-generator",
+  "/tools/essay-studio",
 ];
 
 export const TOP_TOOLS: ToolCardData[] = TOP_TOOL_HREFS.map((href) =>

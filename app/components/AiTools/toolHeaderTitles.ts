@@ -11,7 +11,8 @@ import { TOOLS } from "./Dashboard/toolsData";
 const CURATED_TITLES: Record<string, string> = {
   "/tools/dashboard": "Study Hub",
   "/tools/recent-work": "Recent work",
-  "/tools/account": "Account & billing",
+  "/tools/essay-studio": "AI Essay Studio",
+  "/tools/essay-generator": "AI Essay Studio",
   "/tools/paraphraser-tool": "AI Paraphraser",
   "/tools/summarizer-tool": "AI Summarizer",
   "/tools/thesis-generator-tool": "AI Thesis Statement Generator",

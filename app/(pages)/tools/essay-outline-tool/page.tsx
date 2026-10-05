@@ -1,13 +1,12 @@
-﻿"use client";
+"use client";
 
 import React, { useState } from "react";
 import { Suspense } from "react";
 import ToolsLayout from "@/app/components/AiTools/ToolsLayout";
-import EssayOutlinetool from "@/app/components/AiTools/EssayOutline-tool";
+import EssayStudio from "@/app/components/AiTools/EssayStudio/EssayStudio";
 import { ToolsSuspenseFallback } from "@/app/components/AiTools/ToolsApiLoader";
 import ToolWithExplore from "@/app/components/AiTools/ToolWithExplore";
 import ProductSchema from "@/app/components/ProductSchema";
-// import ThemeToggle from "@/app/components/AiLandingPage/ThemeToggle";
 
 const Page = () => {
   const [flag, setFlag] = useState(false);
@@ -20,14 +19,13 @@ const Page = () => {
   return (
     <Suspense fallback={<ToolsSuspenseFallback />}>
       <ProductSchema
-        productTitle="Essay Outline Generator - Scholarly Help"
-        metaDescription="Create structured essay outlines in seconds with a free essay outline generator that organizes your thesis, arguments, and supporting points."
+        productTitle="AI Essay Outline Generator - Scholarly Help"
+        metaDescription="Create structured essay outlines in seconds with a free essay outline generator that organizes your thesis, arguments, and supporting points in Essay Studio."
         pageUrl={`${baseUrl}/tools/essay-outline-tool`}
       />
-      {/* <ThemeToggle top="top-12" /> */}
       <ToolsLayout setFlag={setFlag} flag={flag}>
         <ToolWithExplore>
-          <EssayOutlinetool />
+          <EssayStudio initialStep="outline" />
         </ToolWithExplore>
       </ToolsLayout>
     </Suspense>

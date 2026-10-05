@@ -3,6 +3,7 @@ const TOOL_LANDING_DESTINATIONS: Readonly<Record<string, string>> = {
   "/tools/ai-course-planner": "/tools/course-planner",
   "/tools/ai-detector": "/tools/ai-detector-tool",
   "/tools/ai-essay-generator": "/tools/essay-generator",
+  "/tools/ai-essay-studio": "/tools/essay-studio",
   "/tools/ai-essay-title-generator": "/tools/essay-title",
   "/tools/ai-grammar-check": "/tools/grammar-checker",
   "/tools/ai-humanizer": "/tools/humanizer-tool",

@@ -71,15 +71,26 @@ export const TOOLS: ToolCardData[] = [
 
   // Essay writing
   {
-    name: "AI Essay Generator",
-    description: "Build a structured academic draft from a topic and requirements.",
-    href: "/tools/essay-generator",
+    name: "Essay Studio",
+    description:
+      "All-in-one essay builder: thesis, outline, draft generator, AI check & essay grader.",
+    href: "/tools/essay-studio",
     icon: FiFileText,
     badge: "New",
     category: "essay-writing",
     group: "writer-lab",
-    keywords: ["essay studio", "draft", "write essay", "generator"],
-    cta: "Generate essay",
+    keywords: [
+      "essay studio",
+      "essay builder",
+      "draft",
+      "write essay",
+      "generator",
+      "grader",
+      "thesis",
+      "outline",
+      "discussion post",
+    ],
+    cta: "Open Essay Studio",
   },
   {
     name: "Essay Grader",

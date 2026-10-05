@@ -1,13 +1,12 @@
-﻿"use client";
+"use client";
 
 import React, { useState } from "react";
 import { Suspense } from "react";
 import ToolsLayout from "@/app/components/AiTools/ToolsLayout";
-import ThesisGenerator from "@/app/components/AiTools/ThesisGenerator-tool";
+import EssayStudio from "@/app/components/AiTools/EssayStudio/EssayStudio";
 import { ToolsSuspenseFallback } from "@/app/components/AiTools/ToolsApiLoader";
 import ToolWithExplore from "@/app/components/AiTools/ToolWithExplore";
 import ProductSchema from "@/app/components/ProductSchema";
-// import ThemeToggle from "@/app/components/AiLandingPage/ThemeToggle";
 
 const Page = () => {
   const [flag, setFlag] = useState<boolean>(false);
@@ -20,14 +19,13 @@ const Page = () => {
   return (
     <Suspense fallback={<ToolsSuspenseFallback />}>
       <ProductSchema
-        productTitle="Thesis Statement Generator - Scholarly Help"
-        metaDescription="Generate clear, arguable thesis statements for your essays and research papers with Scholarly Help's AI tool."
+        productTitle="AI Thesis Statement Generator - Scholarly Help"
+        metaDescription="Generate clear, arguable thesis statements for your essays and research papers in Essay Studio."
         pageUrl={`${baseUrl}/tools/thesis-generator-tool`}
       />
-      {/* <ThemeToggle top="top-12" /> */}
       <ToolsLayout setFlag={setFlag} flag={flag}>
         <ToolWithExplore>
-          <ThesisGenerator />
+          <EssayStudio initialStep="thesis" />
         </ToolWithExplore>
       </ToolsLayout>
     </Suspense>
