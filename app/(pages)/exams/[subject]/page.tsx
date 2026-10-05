@@ -59,7 +59,7 @@ async function fetchPageData(slug: string) {
     const content = await db.collection("exam").findOne(query);
     // Do not close shared client
 
-    return content as any;
+    return content ? JSON.parse(JSON.stringify(content)) : null;
   } catch (error) {
     console.error("Error fetching page data:", error);
     return null;

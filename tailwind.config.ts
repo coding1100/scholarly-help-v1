@@ -1,4 +1,6 @@
 import type { Config } from "tailwindcss";
+// @ts-ignore
+import tailwindScrollbarHide from "tailwind-scrollbar-hide";
 
 const config: Config = {
   darkMode: "class",
@@ -178,6 +180,6 @@ const config: Config = {
   // files, so the manual blocklist gave no real size benefit while breaking
   // pages. Removed entirely to restore default behavior (all utilities enabled)
   // across the whole site.
-  plugins: [require("tailwind-scrollbar-hide")],
+  plugins: [tailwindScrollbarHide],
 };
 export default config;
