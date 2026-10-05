@@ -241,6 +241,16 @@ function buildDefaultGradeResult(
   };
 }
 
+const VALID_STEPS: EssayStudioStep[] = [
+  "start",
+  "setup",
+  "thesis",
+  "outline",
+  "draft",
+  "grader",
+  "discussion",
+];
+
 export default function EssayStudio({
   embedded = false,
   initialStep = "start",
@@ -250,22 +260,13 @@ export default function EssayStudio({
 }) {
   const searchParams = useSearchParams();
   const queryStep = searchParams?.get("step") as EssayStudioStep | null;
-  const validSteps: EssayStudioStep[] = [
-    "start",
-    "setup",
-    "thesis",
-    "outline",
-    "draft",
-    "grader",
-    "discussion",
-  ];
   const resolvedStep =
-    queryStep && validSteps.includes(queryStep) ? queryStep : initialStep;
+    queryStep && VALID_STEPS.includes(queryStep) ? queryStep : initialStep;
 
   const [step, setStep] = useState<EssayStudioStep>(resolvedStep);
 
   useEffect(() => {
-    if (queryStep && validSteps.includes(queryStep)) {
+    if (queryStep && VALID_STEPS.includes(queryStep)) {
       setStep(queryStep);
     }
   }, [queryStep]);
