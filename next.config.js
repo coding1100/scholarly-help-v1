@@ -222,8 +222,10 @@ const nextConfig = {
       },
       // HTML pages - enable bfcache by NOT setting no-store
       // bfcache requires: no unload listeners, no Cache-Control: no-store
+      // Excludes /_next/static and /_next/image: as the last matching rule this
+      // would otherwise override their long-lived Cache-Control with max-age=0.
       {
-        source: '/((?!api).*)',
+        source: '/((?!api|_next/static|_next/image).*)',
         headers: [
           {
             key: 'Cache-Control',
