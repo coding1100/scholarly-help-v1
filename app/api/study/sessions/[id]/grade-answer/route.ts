@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { fail, getAuthenticatedUserId, ok } from "@/app/lib/server/study/http";
+import { fail, getAuthenticatedUserId, getClientIp, ok } from "@/app/lib/server/study/http";
 import { getSession } from "@/app/lib/server/study/repo";
 import { generateGeminiText, GeminiConfigError } from "@/app/lib/server/ai/gemini";
 import { consumeStudyAiQuota } from "@/app/lib/server/study/rateLimit";
@@ -60,10 +60,12 @@ export async function POST(
     }
 
     const isGuest = userId.startsWith("guest_") || userId.startsWith("guest:");
+    const clientIp = isGuest ? getClientIp(request) : null;
     const quota = consumeStudyAiQuota({
       key: `grade-answer:${userId}`,
       limit: isGuest ? 30 : 200,
       windowMs: 60 * 60 * 1000,
+      ip: clientIp ? { key: `grade-answer:ip:${clientIp}`, limit: 150 } : null,
     });
     if (!quota.allowed) {
       return fail(`Rate limit reached. Try again in ${quota.retryAfterSeconds} seconds.`, 429);

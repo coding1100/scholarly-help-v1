@@ -7,10 +7,7 @@ import OrganizationSchema from "./components/OrganizationSchema";
 
 import ClientScripts from "./components/ClientScripts";
 
-// Optimize font loading - next/font self-hosts fonts (NO CDN calls)
-// display "optional": if Poppins isn't ready within the block period the
-// metric-matched fallback stays for this page view (no late swap repaint).
-// The swap repaint was registering as LCP (~3.5s) on slow connections.
+// next/font self-hosts Poppins, so the page makes no Google Fonts requests.
 const poppins = Poppins({
   subsets: ["latin"],
   display: "swap",
@@ -18,6 +15,19 @@ const poppins = Poppins({
   weight: ["300", "400", "500", "600", "700", "800", "900"],
   preload: true,
   fallback: ["Poppins", "system-ui", "-apple-system", "Segoe UI", "sans-serif"],
+  adjustFontFallback: false,
+});
+
+// Italic faces join the same "Poppins" family so <em>/<i>/`italic` text gets
+// real italic glyphs. Not preloaded: they only download when italic text renders.
+// Its variable is applied on <html> only so the @font-face rules are emitted.
+const poppinsItalic = Poppins({
+  subsets: ["latin"],
+  style: "italic",
+  display: "swap",
+  variable: "--font-poppins-italic",
+  weight: ["400", "600", "700"],
+  preload: false,
   adjustFontFallback: false,
 });
 
@@ -32,7 +42,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${poppins.variable} font-poppins`}>
+    <html lang="en" className={`${poppins.variable} ${poppinsItalic.variable} font-poppins`}>
       <head>
         {/* Force HTTPS for all resources in production only */}
         {process.env.NODE_ENV === "production" &&

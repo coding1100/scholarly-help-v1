@@ -46,8 +46,18 @@ export async function getAuthenticatedUserId(request: NextRequest) {
   const guestId = request.headers.get("x-user-id")?.trim() || "";
   if (/^guest_[a-z0-9]{12,80}$/i.test(guestId)) return guestId;
 
-  const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "anonymous";
-  return `guest:${ip.split(",")[0].trim()}`;
+  return `guest:${getClientIp(request) || "anonymous"}`;
+}
+
+/**
+ * Visitor IP. nginx overwrites X-Real-IP and X-Forwarded-For with $remote_addr,
+ * so behind it these hold the real client address, not a client-supplied one.
+ */
+export function getClientIp(request: NextRequest): string | null {
+  const ip =
+    request.headers.get("x-real-ip") ||
+    request.headers.get("x-forwarded-for")?.split(",")[0];
+  return ip?.trim() || null;
 }
 
 /** Registered-user identity must always come from a valid bearer token. */
