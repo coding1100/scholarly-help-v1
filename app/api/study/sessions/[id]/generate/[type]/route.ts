@@ -35,14 +35,17 @@ const GENERATE_ESTIMATED_COMPLETION_TOKENS = 5000;
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string; type: string } },
+  { params }: { params: Promise<{ id: string; type: string }> },
 ) {
+  let resolvedType: string | undefined;
   try {
+    const { id, type: rawType } = await params;
+    resolvedType = rawType;
     const userId = await getAuthenticatedUserId(request);
     if (!userId) {
       return fail("Unauthorized", 401);
     }
-    const session = await getSession(params.id);
+    const session = await getSession(id);
     if (!session) {
       return fail("Session not found", 404);
     }
@@ -59,12 +62,12 @@ export async function POST(
       return fail(`Generation rate limit reached. Try again in ${quota.retryAfterSeconds} seconds.`, 429);
     }
 
-    const type = params.type as StudyArtifactType;
+    const type = rawType as StudyArtifactType;
     if (!ALLOWED_TYPES.has(type)) {
       return fail("Unsupported generation type");
     }
 
-    const { mergedText: storedText } = await getSessionSourceText(params.id);
+    const { mergedText: storedText } = await getSessionSourceText(id);
     // Defense in depth: sources ingested before the shared cleaner existed (or
     // via any legacy path) may still hold ToC/cover boilerplate — clean again at
     // generation time so regenerating an OLD session also produces clean output.
@@ -125,7 +128,7 @@ export async function POST(
     try {
       // The repo returns raw documents whose static type only guarantees ids;
       // artifacts always carry `type` + `content` (see upsertArtifact).
-      const artifacts = (await listArtifacts(params.id)) as Array<{
+      const artifacts = (await listArtifacts(id)) as Array<{
         type?: StudyArtifactType;
         content?: unknown;
       }>;
@@ -151,7 +154,7 @@ export async function POST(
     // Generation is always live AI now (no offline stub), so a returned result
     // is a real one — persist it. On regeneration this overwrites the previous
     // version with the fresh output.
-    await upsertArtifact(params.id, type, content);
+    await upsertArtifact(id, type, content);
 
     if (!isGuest) {
       reportBillingUsage({
@@ -181,6 +184,6 @@ export async function POST(
       error instanceof Error && error.message
         ? error.message
         : "Failed to generate artifact";
-    return fail(`Failed to generate ${params.type}: ${detail}`, 502);
+    return fail(`Failed to generate ${resolvedType || "artifact"}: ${detail}`, 502);
   }
 }

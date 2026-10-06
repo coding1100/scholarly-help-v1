@@ -43,14 +43,15 @@ function gradingUserPrompt(input: {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const { id } = await params;
     const userId = await getAuthenticatedUserId(request);
     if (!userId) {
       return fail("Unauthorized", 401);
     }
-    const session = await getSession(params.id);
+    const session = await getSession(id);
     if (!session) {
       return fail("Session not found", 404);
     }

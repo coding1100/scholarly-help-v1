@@ -26,7 +26,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 interface PageProps {
-  params: { subject: string };
+  params: Promise<{ subject: string }>;
 }
 
 import { getMongoDb } from "@/app/lib/mongodb";
@@ -54,8 +54,8 @@ async function fetchPageData(slug: string) {
   }
 }
 
-const Page: React.FC<PageProps> = async ({ params }) => {
-  const { subject } = params;
+const Page = async ({ params }: PageProps) => {
+  const { subject } = await params;
 
   const pageData = await fetchPageData(subject);
 
@@ -209,9 +209,10 @@ export function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: {
-  params: { subject: string };
+  params: Promise<{ subject: string }>;
 }): Promise<Metadata> {
-  if (!isValidAssignmentSubject(params.subject)) {
+  const { subject } = await params;
+  if (!isValidAssignmentSubject(subject)) {
     return {
       title: "Not Found",
       description: "The page you are looking for does not exist.",
@@ -221,10 +222,10 @@ export async function generateMetadata({
   try {
     const db = await getMongoDb();
     if (db) {
-      await migratePagesDuplicateToAssignments(db, params.subject);
+      await migratePagesDuplicateToAssignments(db, subject);
       const pageData = (await findAssignmentSubjectDocument(
         db,
-        params.subject,
+        subject,
       )) as {
         meta?: { title?: string; description?: string; canonicalUrl?: string };
         status?: string;
@@ -240,18 +241,18 @@ export async function generateMetadata({
       const metaTitle =
         pageData.meta?.title ||
         `${
-          params.subject.charAt(0).toUpperCase() +
-          params.subject.slice(1).replace(/-/g, " ")
+          subject.charAt(0).toUpperCase() +
+          subject.slice(1).replace(/-/g, " ")
         } Assignment Help`;
       const metaDescription =
         pageData.meta?.description ||
-        `Get expert help with your ${params.subject.replace(
+        `Get expert help with your ${subject.replace(
           /-/g,
           " ",
         )} assignment.`;
       const canonicalUrl =
         pageData.meta?.canonicalUrl ||
-        `${baseUrl}/assignment/${params.subject}`;
+        `${baseUrl}/assignment/${subject}`;
 
       return {
         title: metaTitle,
@@ -266,8 +267,8 @@ export async function generateMetadata({
 
   // Fallback metadata
   const subjectTitle =
-    params.subject.charAt(0).toUpperCase() +
-    params.subject.slice(1).replace(/-/g, " ");
+    subject.charAt(0).toUpperCase() +
+    subject.slice(1).replace(/-/g, " ");
 
   const rawBaseUrl =
     process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
@@ -275,11 +276,11 @@ export async function generateMetadata({
     ? rawBaseUrl.slice(0, -1)
     : rawBaseUrl;
 
-  const canonicalUrl = `${baseUrl}/assignment/${params.subject}`;
+  const canonicalUrl = `${baseUrl}/assignment/${subject}`;
 
   return {
     title: `${subjectTitle} Assignment Help - Professional Assistance`,
-    description: `Get expert help with your ${params.subject.replace(
+    description: `Get expert help with your ${subject.replace(
       /-/g,
       " ",
     )} assignment.`,

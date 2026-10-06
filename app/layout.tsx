@@ -5,9 +5,7 @@ import "./globals.css";
 import { Metadata } from "next";
 import OrganizationSchema from "./components/OrganizationSchema";
 
-const ClientScripts = dynamic(() => import("./components/ClientScripts"), {
-  ssr: false,
-});
+import ClientScripts from "./components/ClientScripts";
 
 // Optimize font loading - next/font self-hosts fonts (NO CDN calls)
 // display "optional": if Poppins isn't ready within the block period the

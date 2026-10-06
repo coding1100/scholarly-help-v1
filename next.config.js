@@ -46,7 +46,6 @@ const nextConfig = {
   compress: true,
 
   // Optimize production builds
-  swcMinify: true,
   productionBrowserSourceMaps: false,
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
@@ -54,7 +53,6 @@ const nextConfig = {
 
   // Optimize CSS - Next.js automatically removes unused CSS in production
   // Combined with PurgeCSS in postcss.config.js for maximum optimization
-  optimizeFonts: true,
 
   eslint: {
     ignoreDuringBuilds: true,

@@ -22,19 +22,16 @@ import SubSubjectsSection from "@/app/components/LandingPage/SubSubjects";
 import FinalCTA from "@/app/components/FinalCTA/FinalCTA";
 import ProductSchema from "@/app/components/ProductSchema";
 
-const GetQouteDynamic = dynamicImport(
-  () => import("@/app/components/LandingPage/GetQoute"),
-  { ssr: false },
-);
+import GetQouteDynamic from "@/app/components/LandingPage/GetQouteClient";
 
 // Force dynamic rendering to prevent caching
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 interface PageProps {
-  params: {
+  params: Promise<{
     subject: string;
-  };
+  }>;
 }
 
 async function fetchPageData(slug: string) {
@@ -83,29 +80,30 @@ async function fetchPageData(slug: string) {
 
     // Do not close shared client
 
-    return content as any;
+    return content ? JSON.parse(JSON.stringify(content)) : null;
   } catch (error) {
     console.error("Error fetching page data:", error);
     return null;
   }
 }
 
-const Page: React.FC<PageProps> = async ({ params }) => {
+const Page = async ({ params }: PageProps) => {
+  const { subject } = await params;
   // Check if the subject is valid
-  if (!subjects.includes(params.subject as SubjectType)) {
+  if (!subjects.includes(subject as SubjectType)) {
     notFound();
   }
 
-  const pageData = await fetchPageData(params.subject);
+  const pageData = await fetchPageData(subject);
 
   // If no pageData found, still render the page with default structure
   // This allows the page to work even if data doesn't exist in MongoDB yet
   if (!pageData) {
     // Return a default page structure instead of 404
     const defaultPageData: any = {
-      id: `online_class_${params.subject}`,
-      slug: params.subject,
-      pageType: `online_class_${params.subject}`,
+      id: `online_class_${subject}`,
+      slug: subject,
+      pageType: `online_class_${subject}`,
       status: "published",
       meta: { title: "", description: "" },
       heroSection: { mainHeading: "", subHeading: "", description: "" },
@@ -139,8 +137,8 @@ const Page: React.FC<PageProps> = async ({ params }) => {
       faq: { mainHeading: "", faqs: [] },
     };
     const subjectTitle =
-      params.subject.charAt(0).toUpperCase() +
-      params.subject.slice(1).replace(/-/g, " ");
+      subject.charAt(0).toUpperCase() +
+      subject.slice(1).replace(/-/g, " ");
     const rawBaseUrl =
       process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
     const baseUrl = rawBaseUrl.endsWith("/")
@@ -151,11 +149,11 @@ const Page: React.FC<PageProps> = async ({ params }) => {
       <OnlineClassDataProvider data={defaultPageData}>
         <ProductSchema
           productTitle={`${subjectTitle} Online Class Help - Professional Assistance`}
-          metaDescription={`Get expert help with your ${params.subject.replace(
+          metaDescription={`Get expert help with your ${subject.replace(
             /-/g,
             " ",
           )} online classes.`}
-          pageUrl={`${baseUrl}/online-class/${params.subject}`}
+          pageUrl={`${baseUrl}/online-class/${subject}`}
         />
         <MainLayout>
           <HeroSection />
@@ -189,8 +187,8 @@ const Page: React.FC<PageProps> = async ({ params }) => {
     notFound();
   }
   const subjectTitle =
-    params.subject.charAt(0).toUpperCase() +
-    params.subject.slice(1).replace(/-/g, " ");
+    subject.charAt(0).toUpperCase() +
+    subject.slice(1).replace(/-/g, " ");
   const rawBaseUrl =
     process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
   const baseUrl = rawBaseUrl.endsWith("/")
@@ -200,12 +198,12 @@ const Page: React.FC<PageProps> = async ({ params }) => {
     pageData.meta?.title || `${subjectTitle} Online Class Help`;
   const metaDescription =
     pageData.meta?.description ||
-    `Get expert help with your ${params.subject.replace(
+    `Get expert help with your ${subject.replace(
       /-/g,
       " ",
     )} online classes.`;
   const pageUrl =
-    pageData.meta?.canonicalUrl || `${baseUrl}/online-class/${params.subject}`;
+    pageData.meta?.canonicalUrl || `${baseUrl}/online-class/${subject}`;
 
   return (
     <OnlineClassDataProvider data={pageData}>
@@ -249,9 +247,10 @@ export function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: {
-  params: { subject: string };
+  params: Promise<{ subject: string }>;
 }): Promise<Metadata> {
-  if (!subjects.includes(params.subject as SubjectType)) {
+  const { subject } = await params;
+  if (!subjects.includes(subject as SubjectType)) {
     return {
       title: "Not Found",
       description: "The page you are looking for does not exist.",
@@ -262,11 +261,11 @@ export async function generateMetadata({
     const client = await clientPromise;
     const db = client.db("scholarly_help");
 
-    let slugVariations: string[] = [params.subject];
-    if (params.subject.startsWith("online_class_")) {
-      slugVariations.push(params.subject.replace("online_class_", ""));
+    let slugVariations: string[] = [subject];
+    if (subject.startsWith("online_class_")) {
+      slugVariations.push(subject.replace("online_class_", ""));
     } else {
-      slugVariations.push(`online_class_${params.subject}`);
+      slugVariations.push(`online_class_${subject}`);
     }
 
     const orConditions = [];
@@ -289,18 +288,18 @@ export async function generateMetadata({
       const metaTitle =
         pageData.meta?.title ||
         `${
-          params.subject.charAt(0).toUpperCase() +
-          params.subject.slice(1).replace(/-/g, " ")
+          subject.charAt(0).toUpperCase() +
+          subject.slice(1).replace(/-/g, " ")
         } Online Class Help`;
       const metaDescription =
         pageData.meta?.description ||
-        `Get expert help with your ${params.subject.replace(
+        `Get expert help with your ${subject.replace(
           /-/g,
           " ",
         )} online classes.`;
       const canonicalUrl =
         pageData.meta?.canonicalUrl ||
-        `${baseUrl}/online-class/${params.subject}`;
+        `${baseUrl}/online-class/${subject}`;
 
       return {
         title: metaTitle,
@@ -314,8 +313,8 @@ export async function generateMetadata({
 
   // Fallback metadata
   const subjectTitle =
-    params.subject.charAt(0).toUpperCase() +
-    params.subject.slice(1).replace(/-/g, " ");
+    subject.charAt(0).toUpperCase() +
+    subject.slice(1).replace(/-/g, " ");
 
   const rawBaseUrl =
     process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
@@ -323,11 +322,11 @@ export async function generateMetadata({
     ? rawBaseUrl.slice(0, -1)
     : rawBaseUrl;
 
-  const canonicalUrl = `${baseUrl}/online-class/${params.subject}`;
+  const canonicalUrl = `${baseUrl}/online-class/${subject}`;
 
   return {
     title: `${subjectTitle} Online Class Help - Professional Assistance`,
-    description: `Get expert help with your ${params.subject.replace(
+    description: `Get expert help with your ${subject.replace(
       /-/g,
       " ",
     )} online classes.`,

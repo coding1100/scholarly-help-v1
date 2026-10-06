@@ -12,14 +12,14 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 type PageProps = {
-  searchParams?: Record<string, string | string[] | undefined>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
 function first(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
 
-function toSearchParams(searchParams: PageProps["searchParams"]) {
+function toSearchParams(searchParams: Record<string, string | string[] | undefined> | undefined) {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(searchParams || {})) {
     const item = first(value);
@@ -66,7 +66,8 @@ function locationLabel(row: {
 }
 
 export default async function ToolUsagePage({ searchParams }: PageProps) {
-  const params = toSearchParams(searchParams);
+  const resolvedSearchParams = await searchParams;
+  const params = toSearchParams(resolvedSearchParams);
   const filters = parseToolUsageFilters(params);
   const report = await getToolUsageReport(filters);
   const cookieStore = await cookies();

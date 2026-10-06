@@ -6,9 +6,7 @@ import AppNav from "./components/LandingPage/Header";
 import Footer from "./components/Footer/Footer";
 import FooterGate from "./components/LandingPage/FooterGate";
 
-const WhatsApp = dynamic(() => import("./components/WhatsApp/WhatsApp"), {
-  ssr: false,
-});
+import WhatsApp from "./components/WhatsApp/WhatsApp";
 
 interface MainLayoutProps {
   children: ReactNode;
