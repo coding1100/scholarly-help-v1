@@ -7,7 +7,7 @@ import {
   saveTutorMessage,
 } from "@/app/lib/server/study/repo";
 import { retrieveStudyContext } from "@/app/lib/server/study/studyRag";
-import { fail, getAuthenticatedUserId, ok } from "@/app/lib/server/study/http";
+import { fail, getAuthenticatedUserId, getClientIp, ok } from "@/app/lib/server/study/http";
 import {
   generateGeminiMultimodalText,
   generateGeminiText,
@@ -120,10 +120,12 @@ export async function POST(
       return fail("Forbidden", 403);
     }
     const isGuest = userId.startsWith("guest_") || userId.startsWith("guest:");
+    const clientIp = isGuest ? getClientIp(request) : null;
     const quota = consumeStudyAiQuota({
       key: `tutor:${userId}`,
       limit: isGuest ? 10 : 120,
       windowMs: 60 * 60 * 1000,
+      ip: clientIp ? { key: `tutor:ip:${clientIp}`, limit: 50 } : null,
     });
     if (!quota.allowed) {
       return fail(`Tutor rate limit reached. Try again in ${quota.retryAfterSeconds} seconds.`, 429);

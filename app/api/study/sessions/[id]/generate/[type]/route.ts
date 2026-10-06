@@ -6,7 +6,7 @@ import {
   listArtifacts,
   upsertArtifact,
 } from "@/app/lib/server/study/repo";
-import { fail, getAuthenticatedUserId, ok } from "@/app/lib/server/study/http";
+import { fail, getAuthenticatedUserId, getClientIp, ok } from "@/app/lib/server/study/http";
 import { cleanSourceText } from "@/app/lib/server/study/documentClean";
 import { GeminiConfigError } from "@/app/lib/server/ai/gemini";
 import {
@@ -53,10 +53,12 @@ export async function POST(
       return fail("Forbidden", 403);
     }
     const isGuest = userId.startsWith("guest_") || userId.startsWith("guest:");
+    const clientIp = isGuest ? getClientIp(request) : null;
     const quota = consumeStudyAiQuota({
       key: `generate:${userId}`,
       limit: isGuest ? 8 : 60,
       windowMs: 60 * 60 * 1000,
+      ip: clientIp ? { key: `generate:ip:${clientIp}`, limit: 40 } : null,
     });
     if (!quota.allowed) {
       return fail(`Generation rate limit reached. Try again in ${quota.retryAfterSeconds} seconds.`, 429);
