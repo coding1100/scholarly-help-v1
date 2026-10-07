@@ -8,7 +8,6 @@ const TOOL_PATHS = [
   "/tools/",
 
   // Tool landing pages
-  "/tools/ai-academic-research/",
   "/tools/ai-course-planner/",
   "/tools/ai-detector/",
   "/tools/ai-essay-generator/",
@@ -19,24 +18,9 @@ const TOOL_PATHS = [
   "/tools/ai-paraphraser/",
   "/tools/ai-study-workspace/",
   "/tools/ai-summarizer/",
-  "/tools/ai-thesis-generator/",
   "/tools/ai-thesis-statement-generator/",
   "/tools/citation-generator/",
-  "/tools/essay-title-generator/",
   "/tools/research-question-generator/",
-
-  // Tool pages with their own canonical metadata
-  "/tools/ai-detector-tool/",
-  "/tools/cgpa-calculator/",
-  "/tools/course-planner/",
-  "/tools/grammar-checker/",
-  "/tools/miles-to-millimeters/",
-  "/tools/plagiarism-checker/",
-
-  // Top-level tool pages
-  "/cgpa-calculator/",
-  "/math-solver/",
-  "/research-question/",
 ] as const;
 
 export function GET() {
