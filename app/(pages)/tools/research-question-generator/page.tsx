@@ -33,8 +33,8 @@ const Page: FC = () => {
   return (
     <MainLayout>
       <ProductSchema
-        productTitle="Free Research Question Generator | ScholarlyHelp"
-        metaDescription="Turn any topic into focused research questions with the free ScholarlyHelp research question generator."
+        productTitle="Research Question Generator | ScholarlyHelp Free Tools"
+        metaDescription="Create focused research questions from any topic with our free AI tool for essays, papers, theses & academic research. Generate better questions today."
         pageUrl={`${normalizedBaseUrl}/tools/research-question-generator`}
       />
       <div className="font-poppins">
@@ -67,9 +67,9 @@ export function generateMetadata(): Metadata {
   const canonicalUrl = `${normalizedBaseUrl}/tools/research-question-generator`;
 
   return {
-    title: "Research Question Generator: Free | ScholarlyHelp",
+    title: "Research Question Generator | ScholarlyHelp Free Tools",
     description:
-      "Need a strong research question? A research question generator helps create focused ideas for essays, papers, theses, and projects. Generate yours today.",
+      "Create focused research questions from any topic with our free AI tool for essays, papers, theses & academic research. Generate better questions today.",
     alternates: {
       canonical: canonicalUrl,
     },

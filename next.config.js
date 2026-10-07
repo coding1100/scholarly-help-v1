@@ -129,7 +129,6 @@ const nextConfig = {
       'ai-summarizer',
       'ai-thesis-generator',
       'citation-generator',
-      'essay-title-generator',
     ];
     return [
       {
@@ -152,6 +151,22 @@ const nextConfig = {
       {
         source: '/tools/homework-helper',
         destination: '/tools/tutor',
+        permanent: true,
+      },
+      // Old landing pages retired in favour of the newer tool landings.
+      {
+        source: '/essay-title-generator',
+        destination: '/tools/ai-essay-title-generator/',
+        permanent: true,
+      },
+      {
+        source: '/tools/essay-title-generator',
+        destination: '/tools/ai-essay-title-generator/',
+        permanent: true,
+      },
+      {
+        source: '/research-question',
+        destination: '/tools/research-question-generator/',
         permanent: true,
       },
       ...movedLandings.map((slug) => ({
