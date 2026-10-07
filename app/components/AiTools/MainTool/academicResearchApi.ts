@@ -2,6 +2,7 @@
 
 import axios, { type AxiosError, type AxiosRequestConfig } from "axios";
 import { fetchWithAuthRetry, getAccessToken } from "@/app/lib/authSession";
+import { readSse } from "@/app/lib/client/sse";
 
 export const ACADEMIC_PAYWALL_MESSAGE =
   "Your token balance is exhausted. Please upgrade to continue using AI tools.";
@@ -272,75 +273,54 @@ export const humanizeText = (payload: {
     headers: { "Content-Type": "application/json" },
   });
 
-// Streams humanized tokens from the backend SSE streaming endpoint
-export async function* streamHumanizeText(
-  payload: {
-    text: string;
-    tone?: HumanizerTone;
-    rewrite_intensity?: RewriteIntensity;
-    custom_tone_instruction?: string;
-    register_mode?: HumanizerRegister;
-    voice_sample?: string;
-  },
-  signal?: AbortSignal,
-): AsyncGenerator<string, void, unknown> {
-  const baseUrl = (process.env.NEXT_PUBLIC_NGROX_URL || "").replace(/\/$/, "");
-  const response = await fetchWithAuthRetry(`${baseUrl}/tools/humanizer/stream`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      text: payload.text,
-      tone_mode: payload.tone || "natural",
-      rewrite_intensity: payload.rewrite_intensity || "moderate",
-      ...(payload.custom_tone_instruction
-        ? { custom_tone_instruction: payload.custom_tone_instruction }
-        : {}),
-      ...(payload.register_mode ? { register_mode: payload.register_mode } : {}),
-      ...(payload.voice_sample ? { voice_sample: payload.voice_sample } : {}),
-      preserve_citations: true,
-      return_diff: false,
-    }),
-    signal,
+/** A non-2xx response from the streaming route, with its parsed JSON body. */
+export class HumanizerStreamError extends Error {
+  constructor(
+    readonly status: number,
+    readonly body: { message?: string | string[] } | null,
+  ) {
+    super(
+      [body?.message].flat().filter(Boolean).join(", ") ||
+        `Streaming failed with status ${status}`,
+    );
+    this.name = "HumanizerStreamError";
+  }
+}
+
+/**
+ * Runs a fast single-pass humanize over SSE. `onText` receives each streamed
+ * chunk; the promise resolves with the server-computed result. A stream that
+ * ends without a result event is a failure, never a partial success.
+ */
+export async function streamHumanizeText<TResult>(
+  body: object,
+  { signal, onText }: { signal?: AbortSignal; onText: (chunk: string) => void },
+): Promise<TResult> {
+  const response = await fetchWithAuthRetry(
+    `${getApiBaseUrl()}/tools/humanizer/stream`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal,
+    },
+  );
+  if (!response.ok) {
+    throw new HumanizerStreamError(
+      response.status,
+      await response.json().catch(() => null),
+    );
+  }
+
+  let result: TResult | undefined;
+  await readSse(response, (data) => {
+    const event = data as { text?: string; result?: TResult; error?: string };
+    if (event.error) throw new Error(event.error);
+    if (typeof event.text === "string") onText(event.text);
+    if (event.result) result = event.result;
   });
-
-  if (!response.ok || !response.body) {
-    throw new Error(`Streaming failed with status ${response.status}`);
-  }
-
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const chunks = buffer.split("\n\n");
-    buffer = chunks.pop() ?? "";
-    for (const chunk of chunks) {
-      for (const line of chunk.split("\n")) {
-        const trimmed = line.trim();
-        if (!trimmed.startsWith("data:")) continue;
-        const dataStr = trimmed.slice(5).trim();
-        if (!dataStr || dataStr === "[DONE]") continue;
-        const parsed = JSON.parse(dataStr);
-        if (parsed.error) throw new Error(parsed.error);
-        if (typeof parsed.text === "string") yield parsed.text;
-      }
-    }
-  }
-
-  if (buffer.trim()) {
-    for (const line of buffer.split("\n")) {
-      const trimmed = line.trim();
-      if (!trimmed.startsWith("data:")) continue;
-      const dataStr = trimmed.slice(5).trim();
-      if (!dataStr || dataStr === "[DONE]") continue;
-      const parsed = JSON.parse(dataStr);
-      if (parsed.error) throw new Error(parsed.error);
-      if (typeof parsed.text === "string") yield parsed.text;
-    }
-  }
+  if (!result) throw new Error("The humanizer stream ended without a result.");
+  return result;
 }
 
 export type ParaphraseToneMode =
