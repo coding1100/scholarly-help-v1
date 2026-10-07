@@ -154,10 +154,16 @@ export async function getOrRefreshAccessToken(): Promise<string | null> {
  */
 export function installAxiosAuthRefresh(): () => void {
   const requestInterceptor = axios.interceptors.request.use(async (config) => {
-    if (
-      !isBackendRequest(config.url, config.baseURL) ||
-      isAuthRequest(config.url)
-    ) {
+    if (!isBackendRequest(config.url, config.baseURL)) {
+      return config;
+    }
+
+    // Distributed trace correlation identifier attached to all backend requests
+    if (!config.headers.has('x-request-id')) {
+      config.headers.set('x-request-id', newIdempotencyKey());
+    }
+
+    if (isAuthRequest(config.url)) {
       return config;
     }
 
@@ -209,6 +215,10 @@ export async function fetchWithAuthRetry(
   const method = String(init.method || 'GET').toUpperCase();
   if (!['GET', 'HEAD', 'OPTIONS'].includes(method) && !stableHeaders.has('Idempotency-Key')) {
     stableHeaders.set('Idempotency-Key', newIdempotencyKey());
+  }
+  // Distributed trace correlation identifier
+  if (!stableHeaders.has('x-request-id')) {
+    stableHeaders.set('x-request-id', newIdempotencyKey());
   }
   const request = async (token: string | null) => {
     const headers = new Headers(stableHeaders);

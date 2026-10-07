@@ -15,6 +15,13 @@ axiosInstance.interceptors.request.use(
     if (authToken) {
       config.headers.Authorization = `Bearer ${authToken}`;
     }
+    // Distributed trace correlation identifier
+    if (!config.headers["x-request-id"]) {
+      config.headers["x-request-id"] =
+        typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+          ? crypto.randomUUID()
+          : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+    }
     return config;
   },
   (error) => {

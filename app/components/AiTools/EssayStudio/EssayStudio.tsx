@@ -39,6 +39,8 @@ import {
   downloadBlob,
   sanitizeFilename,
 } from "../MainTool/academicDocumentExport";
+// Cross-tool document sync store
+import { useDocumentStore } from "@/app/lib/client/useDocumentStore";
 import { useToolDraftPersistence } from "@/app/lib/client/useToolDraftPersistence";
 import { useBillingDraftStash } from "@/app/lib/client/useBillingDraftStash";
 import {
@@ -318,6 +320,33 @@ export default function EssayStudio({
   const [aiSkipped, setAiSkipped] = useState(false);
   const [copiedDraft, setCopiedDraft] = useState(false);
   const [downloadingDocx, setDownloadingDocx] = useState(false);
+  const setActiveDocument = useDocumentStore((state) => state.setActiveDocument);
+
+  // Converts HTML draft to structured plain text preserving paragraphs and decoding entities
+  const htmlToParagraphText = (html: string): string => {
+    if (!html) return "";
+    const prepared = html
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/(p|div|h[1-6])>/gi, "\n\n")
+      .replace(/<li[^>]*>/gi, "• ")
+      .replace(/<\/li>/gi, "\n");
+    const doc = new DOMParser().parseFromString(prepared, "text/html");
+    const text = doc.body.textContent || "";
+    return text
+      .replace(/[ \t\u00A0]+/g, " ")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+  };
+
+  const handleOpenHumanizer = () => {
+    const formattedText = htmlToParagraphText(draft);
+    if (!formattedText) return;
+    setActiveDocument({
+      text: formattedText,
+      title,
+      sourceTool: "essay_studio",
+    });
+  };
 
   // Grader Step State
   const [graderRubricMode, setGraderRubricMode] = useState<"prof" | "std">(
@@ -2520,6 +2549,7 @@ ${conclText}`;
                       </button>
                       <a
                         href="/tools/humanizer-tool"
+                        onClick={handleOpenHumanizer}
                         className="flex items-center gap-1.5 rounded-lg bg-[#D2440F] px-3.5 py-2 font-semibold text-white shadow-sm hover:bg-[#b5370a]"
                       >
                         Humanize draft{" "}

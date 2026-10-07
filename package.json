@@ -72,7 +72,8 @@
     "slick-carousel": "^1.8.1",
     "tailwind-merge": "^2.5.4",
     "tailwind-scrollbar-hide": "^1.1.7",
-    "word-extractor": "^1.0.4"
+    "word-extractor": "^1.0.4",
+    "zustand": "^5.0.15"
   },
   "devDependencies": {
     "@fullhuman/postcss-purgecss": "^8.0.0",

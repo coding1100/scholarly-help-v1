@@ -24,7 +24,17 @@ import { useHumanizerConfig } from "@/app/components/AiTools/HumanizerTool/useHu
 import { fetchWithAuthRetry, getAccessToken } from "@/app/lib/authSession";
 import { recordToolRun } from "@/app/utils/toolHistoryClient";
 import { cancelJob, waitForJob } from "@/app/lib/client/jobStream";
-import { isBillingGateError } from "@/app/lib/client/billingGateCodes";
+import {
+  dispatchBillingGateEvent,
+  isBillingGateError,
+  isBillingGateResponseBody,
+} from "@/app/lib/client/billingGateCodes";
+import {
+  HumanizerStreamError,
+  streamHumanizeText,
+} from "@/app/components/AiTools/MainTool/academicResearchApi";
+// Cross-tool document sync store
+import { useDocumentStore } from "@/app/lib/client/useDocumentStore";
 import {
   buildDocxBlob,
   downloadBlob,
@@ -88,6 +98,10 @@ const INTENSITY_META: Record<
 };
 
 const INTENSITY_ORDER: RewriteIntensity[] = ["normal", "moderate", "full"];
+
+/** Fast mode (single-pass SSE stream) is offered only when this flag is on. */
+const HUMANIZER_STREAMING_ENABLED =
+  process.env.NEXT_PUBLIC_HUMANIZER_STREAMING === "true";
 const REGISTER_OPTIONS: Array<{
   value: RegisterSelection;
   label: string;
@@ -234,7 +248,14 @@ const HumanizerTool: React.FC<HumanizerToolProps> = ({ embedded = false }) => {
   const [loading, setLoading] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [result, setResult] = useState<HumanizerResponse | null>(null);
-  const jobRef = useRef<{ id: string; controller: AbortController } | null>(null);
+  const [fastMode, setFastMode] = useState(false);
+  const [streamingText, setStreamingText] = useState("");
+  // Set when a fast-mode run failed before any text arrived; offers a manual retry.
+  const [streamFailed, setStreamFailed] = useState(false);
+  // `id` is the background job id; null while a fast-mode stream is running.
+  const jobRef = useRef<{ id: string | null; controller: AbortController } | null>(
+    null,
+  );
   useEffect(() => () => jobRef.current?.controller.abort(), []);
   const [activePanel, setActivePanel] = useState<"humanized" | "ai_detection">(
     "humanized",
@@ -274,6 +295,23 @@ const HumanizerTool: React.FC<HumanizerToolProps> = ({ embedded = false }) => {
     voiceSample,
   }));
 
+  const activeDocText = useDocumentStore((state) => state.activeText);
+  const sourceTool = useDocumentStore((state) => state.sourceTool);
+  const clearDocument = useDocumentStore((state) => state.clearDocument);
+
+  // Consumes handed-off draft and clears shared store to prevent ghost fills
+  useEffect(() => {
+    if (!activeDocText) return;
+    const shouldLoad = !text.trim() || sourceTool === "essay_studio";
+    if (shouldLoad) {
+      setText(activeDocText);
+      toast.success(
+        `Draft loaded from ${sourceTool === "essay_studio" ? "Essay Studio" : "workspace"}`,
+      );
+    }
+    clearDocument();
+  }, [activeDocText, text, sourceTool, clearDocument]);
+
   const { gateOpen, openGate, closeGate, guardAiClick } =
     useGuestGate<HumanizerDraft>({
       getDraft: () => ({ text, intensity, register, voiceSample }),
@@ -295,6 +333,7 @@ const HumanizerTool: React.FC<HumanizerToolProps> = ({ embedded = false }) => {
   const handleClear = () => {
     setText("");
     setResult(null);
+    setStreamFailed(false);
     setOriginalDetection(null);
     setResultDetection(null);
     setActivePanel("humanized");
@@ -341,6 +380,7 @@ const HumanizerTool: React.FC<HumanizerToolProps> = ({ embedded = false }) => {
   const handleUploadDocument = async (file: File) => {
     setLoading(true);
     setResult(null);
+    setStreamFailed(false);
     try {
       const formData = new FormData();
       formData.append("file", file);
@@ -485,7 +525,72 @@ const HumanizerTool: React.FC<HumanizerToolProps> = ({ embedded = false }) => {
     [detectorConfig.minimum_words, detectorConfig.maximum_words, runDetection],
   );
 
-  const runHumanize = async () => {
+  /** Default path: background job + poll through the full rewrite pipeline. */
+  const runJob = async (payload: object): Promise<HumanizerResponse> => {
+    // ASYNC JOB + POLL. A full humanize run is 30-70s, which is longer than
+    // the API gateway's read timeout, so the old synchronous POST returned
+    // 504 Gateway Time-out. We now create a job (returns in ms) and poll it
+    // until it finishes, so no connection is held open for the whole run.
+    //
+    // `loading` deliberately stays true for the ENTIRE poll: it is only
+    // cleared in the caller's finally, once the job reaches a terminal state.
+    // The user therefore sees one continuous loader, never a flash back to
+    // the idle state between the create call and the first poll.
+    const headers = {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    };
+
+    // Guests (no token) are allowed; the backend accepts guest requests and
+    // the click gate above enforces the free allowance.
+    const createResponse = await axios.post<
+      HumanizerJobResponse | { data?: HumanizerJobResponse }
+    >(`${process.env.NEXT_PUBLIC_NGROX_URL}/tools/humanizer/jobs`, payload, {
+      headers,
+    });
+
+    const createdJob = unwrapData<HumanizerJobResponse>(createResponse.data);
+    if (!createdJob?.job_id) {
+      throw new Error("Humanizer did not return a job id.");
+    }
+
+    const controller = new AbortController();
+    jobRef.current?.controller.abort();
+    jobRef.current = { id: createdJob.job_id, controller };
+    return waitForJob<HumanizerResponse>({
+      pollUrl: `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/humanizer/jobs/${createdJob.job_id}`,
+      headers, signal: controller.signal,
+      fetcher: fetchWithAuthRetry,
+      parse: (payload) => {
+        const job = unwrapData<HumanizerJobResponse>(payload);
+        return { ...job, result: job.result ?? undefined, error: job.error ?? undefined };
+      },
+    });
+  };
+
+  /**
+   * Fast mode: single-pass SSE stream with a live preview. Never falls back to
+   * the job pipeline on its own, so one click is always one billed run.
+   */
+  const runStream = (
+    payload: object,
+    onFirstText: () => void,
+  ): Promise<HumanizerResponse> => {
+    const controller = new AbortController();
+    jobRef.current?.controller.abort();
+    jobRef.current = { id: null, controller };
+    let streamed = "";
+    return streamHumanizeText<HumanizerResponse>(payload, {
+      signal: controller.signal,
+      onText: (chunk) => {
+        if (!streamed) onFirstText();
+        streamed += chunk;
+        setStreamingText(streamed);
+      },
+    });
+  };
+
+  const runHumanize = async (mode: "auto" | "standard" = "auto") => {
     if (!text.trim()) {
       toast.error("Please enter some text.");
       return;
@@ -503,81 +608,63 @@ const HumanizerTool: React.FC<HumanizerToolProps> = ({ embedded = false }) => {
 
     setLoading(true);
     setResult(null);
+    setStreamingText("");
+    setStreamFailed(false);
     setOriginalDetection(null);
     setResultDetection(null);
     setActivePanel("humanized");
     trackToolGenerate({ toolName: "Humanizer Tool" });
 
     const submittedText = text;
+    const payload = {
+      text,
+      tone_mode: tone,
+      rewrite_intensity: intensity,
+      ...(register !== "auto" ? { register_mode: register } : {}),
+      ...(voiceSample.trim() ? { voice_sample: voiceSample.trim() } : {}),
+      preserve_citations: true,
+      return_diff: true,
+    };
+    const streaming =
+      HUMANIZER_STREAMING_ENABLED && fastMode && mode !== "standard";
+    let receivedText = false;
 
     try {
-      // ASYNC JOB + POLL. A full humanize run is 30-70s, which is longer than
-      // the API gateway's read timeout — the old synchronous POST returned
-      // 504 Gateway Time-out. We now create a job (returns in ms) and poll it
-      // until it finishes, so no connection is held open for the whole run.
-      //
-      // `loading` deliberately stays true for the ENTIRE poll: it is only
-      // cleared in the finally below, once the job reaches a terminal state.
-      // The user therefore sees one continuous loader, never a flash back to
-      // the idle state between the create call and the first poll.
-      const headers = {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      };
-
-      // Guests (no token) are allowed; the backend accepts guest requests and
-      // the click gate above enforces the free allowance.
-      const createResponse = await axios.post<
-        HumanizerJobResponse | { data?: HumanizerJobResponse }
-      >(
-        `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/humanizer/jobs`,
-        {
-          text,
-          tone_mode: tone,
-          rewrite_intensity: intensity,
-          ...(register !== "auto" ? { register_mode: register } : {}),
-          ...(voiceSample.trim() ? { voice_sample: voiceSample.trim() } : {}),
-          preserve_citations: true,
-          return_diff: true,
-        },
-        { headers },
-      );
-
-      const createdJob = unwrapData<HumanizerJobResponse>(createResponse.data);
-      if (!createdJob?.job_id) {
-        throw new Error("Humanizer did not return a job id.");
-      }
-
-      const controller = new AbortController();
-      jobRef.current?.controller.abort();
-      jobRef.current = { id: createdJob.job_id, controller };
-      const humanizerResult = await waitForJob<HumanizerResponse>({
-        pollUrl: `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/humanizer/jobs/${createdJob.job_id}`,
-        headers, signal: controller.signal,
-        fetcher: fetchWithAuthRetry,
-        parse: (payload) => {
-          const job = unwrapData<HumanizerJobResponse>(payload);
-          return { ...job, result: job.result ?? undefined, error: job.error ?? undefined };
-        },
-      });
+      const humanizerResult = streaming
+        ? await runStream(payload, () => {
+            receivedText = true;
+          })
+        : await runJob(payload);
       jobRef.current = null;
       setResult(humanizerResult);
       toast.success("Humanized successfully!");
       scoreBothSides(submittedText, humanizerResult.rewritten_text);
     } catch (err: any) {
       if (err?.name === "AbortError" || err?.name === "CanceledError") return;
-      const status = err?.response?.status;
+      const streamError = err instanceof HumanizerStreamError ? err : null;
+      const status = streamError ? streamError.status : err?.response?.status;
       const message =
         err?.response?.data?.message ||
         err?.response?.data ||
         err?.message ||
         "Failed to humanize text.";
+      // Standard mode can only help with transport or server failures, never
+      // with auth, billing or validation rejections.
+      if (streaming && !receivedText && (!status || status >= 500)) {
+        setStreamFailed(true);
+      }
 
       if (status === 401) {
         toast.error("Session expired. Please sign in again.");
+      } else if (
+        streamError &&
+        isBillingGateResponseBody(streamError.status, streamError.body)
+      ) {
+        // fetch bypasses the axios interceptor, so open the upgrade popup here.
+        dispatchBillingGateEvent();
       } else if (isBillingGateError(err)) {
         // The global interceptor (ClientScripts.tsx) already opens the
-        // upgrade popup for this — a toast here would be redundant.
+        // upgrade popup for this, so a toast here would be redundant.
       } else if (status === 403) {
         toast.error(
           "You don’t have enough token balance, or the input exceeds limits.",
@@ -589,13 +676,19 @@ const HumanizerTool: React.FC<HumanizerToolProps> = ({ embedded = false }) => {
       }
     } finally {
       setLoading(false);
+      setStreamingText("");
     }
   };
 
   const handleHumanize = () => {
     // Guests get a small number of free AI actions across all tools; the gate
     // opens instead of calling the AI once the allowance is used up.
-    guardAiClick(runHumanize);
+    guardAiClick(() => runHumanize());
+  };
+
+  // Explicit, user-initiated retry after a fast-mode failure: a new billed run.
+  const handleRetryStandard = () => {
+    guardAiClick(() => runHumanize("standard"));
   };
 
   const openScorePanel = (focus: DetectionFocus) => {
@@ -633,7 +726,7 @@ const HumanizerTool: React.FC<HumanizerToolProps> = ({ embedded = false }) => {
           : "container relative mx-auto max-w-[840px] px-3 py-4 sm:px-4 md:px-8 md:pt-8 2xl:max-w-6xl"
       }
     >
-      <ToolsApiLoader show={loading} />
+      <ToolsApiLoader show={loading && !streamingText} />
 
       <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
         {embedded && (
@@ -700,6 +793,24 @@ const HumanizerTool: React.FC<HumanizerToolProps> = ({ embedded = false }) => {
                 {INTENSITY_META[intensity].description}
               </div>
             </div>
+
+            {HUMANIZER_STREAMING_ENABLED && (
+              <label className="flex items-start gap-2 text-sm text-gray-800 dark:text-gray-100">
+                <input
+                  type="checkbox"
+                  checked={fastMode}
+                  onChange={(event) => setFastMode(event.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-gray-300 dark:border-gray-600"
+                />
+                <span>
+                  <span className="font-semibold">Fast mode (live preview)</span>
+                  <span className="block text-xs text-gray-500 dark:text-gray-400">
+                    Shows the rewrite as it is written. Skips the deeper rewrite
+                    passes, so the result can read less natural.
+                  </span>
+                </span>
+              </label>
+            )}
 
             {/* Both labels toggle the same combined panel below — collapsed by
                 default so the card reads short until the user asks for more. */}
@@ -799,11 +910,14 @@ const HumanizerTool: React.FC<HumanizerToolProps> = ({ embedded = false }) => {
                   job.controller.abort();
                   jobRef.current = null;
                   setLoading(false);
-                  void cancelJob(
-                    `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/humanizer/jobs/${job.id}`,
-                    { Authorization: `Bearer ${token}` },
-                    fetchWithAuthRetry,
-                  ).catch(() => undefined);
+                  // Aborting the fetch closes a stream; only jobs need a cancel call.
+                  if (job.id) {
+                    void cancelJob(
+                      `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/humanizer/jobs/${job.id}`,
+                      { Authorization: `Bearer ${token}` },
+                      fetchWithAuthRetry,
+                    ).catch(() => undefined);
+                  }
                 }}
               >
                 Cancel humanizing
@@ -832,15 +946,33 @@ const HumanizerTool: React.FC<HumanizerToolProps> = ({ embedded = false }) => {
               /* Humanized text — dashed while empty, solid green once there's a result. */
               <div
                 className={`flex-1 min-h-[16rem] rounded-lg border-2 p-4 overflow-y-auto transition-colors duration-300 ${
-                  rewrittenText
+                  rewrittenText || streamingText
                     ? "border-emerald-400 bg-white dark:border-emerald-700 dark:bg-gray-800"
                     : "border-dashed border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-800"
                 }`}
               >
-                {loading ? (
+                {loading && streamingText ? (
+                  <p className="whitespace-pre-wrap break-words leading-relaxed text-sm text-gray-800 dark:text-gray-100">
+                    {streamingText}
+                    <span className="ml-1 inline-block h-4 w-1.5 animate-pulse bg-[#2b7fff] align-middle" />
+                  </p>
+                ) : loading ? (
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     In process...
                   </p>
+                ) : streamFailed ? (
+                  <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      Fast mode could not finish this rewrite.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleRetryStandard}
+                      className="rounded-md border border-[#2b7fff] px-4 py-2 text-sm font-medium text-[#2b7fff] hover:bg-blue-50 dark:hover:bg-blue-950/40"
+                    >
+                      Try standard mode
+                    </button>
+                  </div>
                 ) : rewrittenText ? (
                   <>
                     <div className="mb-3 flex flex-wrap gap-2 text-xs">
