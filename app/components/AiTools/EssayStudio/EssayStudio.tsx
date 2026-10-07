@@ -322,8 +322,22 @@ export default function EssayStudio({
   const [downloadingDocx, setDownloadingDocx] = useState(false);
   const setActiveDocument = useDocumentStore((state) => state.setActiveDocument);
 
-  // Converts HTML draft to structured plain text preserving paragraphs
+  // Converts HTML draft to structured plain text preserving paragraphs and decoding entities
   const htmlToParagraphText = (html: string): string => {
+    if (!html) return "";
+    if (typeof window !== "undefined" && typeof DOMParser !== "undefined") {
+      const prepared = html
+        .replace(/<br\s*\/?>/gi, "\n")
+        .replace(/<\/(p|div|h[1-6])>/gi, "\n\n")
+        .replace(/<li[^>]*>/gi, "• ")
+        .replace(/<\/li>/gi, "\n");
+      const doc = new DOMParser().parseFromString(prepared, "text/html");
+      const text = doc.body.textContent || "";
+      return text
+        .replace(/[ \t]+/g, " ")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim();
+    }
     return html
       .replace(/<br\s*\/?>/gi, "\n")
       .replace(/<\/(p|div|h[1-6])>/gi, "\n\n")
@@ -331,13 +345,13 @@ export default function EssayStudio({
       .replace(/<\/li>/gi, "\n")
       .replace(/<[^>]+>/g, "")
       .replace(/&nbsp;/g, " ")
-      .replace(/&amp;/g, "&")
       .replace(/&lt;/g, "<")
       .replace(/&gt;/g, ">")
       .replace(/&quot;/g, '"')
       .replace(/&#39;/g, "'")
       .replace(/&mdash;/g, "—")
       .replace(/&ndash;/g, "–")
+      .replace(/&amp;/g, "&")
       .replace(/[ \t]+/g, " ")
       .replace(/\n{3,}/g, "\n\n")
       .trim();
