@@ -14,7 +14,6 @@ const TOOL_LANDING_DESTINATIONS: Readonly<Record<string, string>> = {
   "/tools/ai-thesis-generator": "/tools/thesis-generator-tool",
   "/tools/ai-thesis-statement-generator": "/tools/thesis-generator-tool",
   "/tools/citation-generator": "/tools/citation-tool",
-  "/tools/essay-title-generator": "/tools/essay-title",
   "/tools/research-question-generator": "/tools/research-question",
 };
 

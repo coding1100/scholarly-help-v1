@@ -33,8 +33,8 @@ const Page: FC = () => {
   return (
     <MainLayout>
       <ProductSchema
-        productTitle="Free Essay Title Generator | ScholarlyHelp"
-        metaDescription="Use the free ScholarlyHelp essay title generator to get strong, relevant titles in seconds. Enter your topic and pick your favorite."
+        productTitle="Essay Title Generator | Free AI Titles | ScholarlyHelp"
+        metaDescription="Generate relevant essay titles with our free AI tool. Choose a style and get clear, academic title ideas for essays, research papers & assignments now."
         pageUrl={`${normalizedBaseUrl}/tools/ai-essay-title-generator`}
       />
       <div className="font-poppins">
@@ -64,9 +64,9 @@ export function generateMetadata(): Metadata {
   const canonicalUrl = `${normalizedBaseUrl}/tools/ai-essay-title-generator`;
 
   return {
-    title: "Essay Title Generator: Free Online | ScholarlyHelp",
+    title: "Essay Title Generator | Free AI Titles | ScholarlyHelp",
     description:
-      "Struggling to name your essay? An essay title generator gives you relevant options based on your topic and preferred style. Find your ideal title now.",
+      "Generate relevant essay titles with our free AI tool. Choose a style and get clear, academic title ideas for essays, research papers & assignments now.",
     alternates: {
       canonical: canonicalUrl,
     },
