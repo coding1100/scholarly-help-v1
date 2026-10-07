@@ -154,10 +154,16 @@ export async function getOrRefreshAccessToken(): Promise<string | null> {
  */
 export function installAxiosAuthRefresh(): () => void {
   const requestInterceptor = axios.interceptors.request.use(async (config) => {
-    if (
-      !isBackendRequest(config.url, config.baseURL) ||
-      isAuthRequest(config.url)
-    ) {
+    if (!isBackendRequest(config.url, config.baseURL)) {
+      return config;
+    }
+
+    // Distributed trace correlation identifier attached to all backend requests
+    if (!config.headers.has('x-request-id')) {
+      config.headers.set('x-request-id', newIdempotencyKey());
+    }
+
+    if (isAuthRequest(config.url)) {
       return config;
     }
 
@@ -168,10 +174,6 @@ export function installAxiosAuthRefresh(): () => void {
     const method = String(config.method || 'get').toUpperCase();
     if (!['GET', 'HEAD', 'OPTIONS'].includes(method) && !config.headers.has('Idempotency-Key')) {
       config.headers.set('Idempotency-Key', newIdempotencyKey());
-    }
-    // Distributed trace correlation identifier
-    if (!config.headers.has('x-request-id')) {
-      config.headers.set('x-request-id', newIdempotencyKey());
     }
     return config;
   });
