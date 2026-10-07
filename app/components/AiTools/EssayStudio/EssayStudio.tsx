@@ -39,6 +39,8 @@ import {
   downloadBlob,
   sanitizeFilename,
 } from "../MainTool/academicDocumentExport";
+// Cross-tool document sync store
+import { useDocumentStore } from "@/app/lib/client/useDocumentStore";
 import { useToolDraftPersistence } from "@/app/lib/client/useToolDraftPersistence";
 import { useBillingDraftStash } from "@/app/lib/client/useBillingDraftStash";
 import {
@@ -318,6 +320,17 @@ export default function EssayStudio({
   const [aiSkipped, setAiSkipped] = useState(false);
   const [copiedDraft, setCopiedDraft] = useState(false);
   const [downloadingDocx, setDownloadingDocx] = useState(false);
+  const setActiveDocument = useDocumentStore((state) => state.setActiveDocument);
+
+  // Syncs current draft to shared store for seamless tool handoff
+  const handleOpenHumanizer = () => {
+    const plainText = draft.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    setActiveDocument({
+      text: plainText,
+      title,
+      sourceTool: "essay_studio",
+    });
+  };
 
   // Grader Step State
   const [graderRubricMode, setGraderRubricMode] = useState<"prof" | "std">(
@@ -2520,6 +2533,7 @@ ${conclText}`;
                       </button>
                       <a
                         href="/tools/humanizer-tool"
+                        onClick={handleOpenHumanizer}
                         className="flex items-center gap-1.5 rounded-lg bg-[#D2440F] px-3.5 py-2 font-semibold text-white shadow-sm hover:bg-[#b5370a]"
                       >
                         Humanize draft{" "}
@@ -2635,6 +2649,7 @@ ${conclText}`;
                     <div className="flex items-center gap-3 text-xs">
                       <a
                         href="/tools/humanizer-tool"
+                        onClick={handleOpenHumanizer}
                         className="font-semibold text-[#9A3412] hover:underline"
                       >
                         Unlock with Pro

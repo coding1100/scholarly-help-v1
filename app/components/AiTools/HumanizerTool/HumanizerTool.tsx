@@ -25,6 +25,8 @@ import { fetchWithAuthRetry, getAccessToken } from "@/app/lib/authSession";
 import { recordToolRun } from "@/app/utils/toolHistoryClient";
 import { cancelJob, waitForJob } from "@/app/lib/client/jobStream";
 import { isBillingGateError } from "@/app/lib/client/billingGateCodes";
+// Cross-tool document sync store
+import { useDocumentStore } from "@/app/lib/client/useDocumentStore";
 import {
   buildDocxBlob,
   downloadBlob,
@@ -273,6 +275,21 @@ const HumanizerTool: React.FC<HumanizerToolProps> = ({ embedded = false }) => {
     register,
     voiceSample,
   }));
+
+  const activeDocText = useDocumentStore((state) => state.activeText);
+  const sourceTool = useDocumentStore((state) => state.sourceTool);
+  const clearDocument = useDocumentStore((state) => state.clearDocument);
+
+  // Auto-populates input draft from connected tools
+  useEffect(() => {
+    if (activeDocText && !text.trim()) {
+      setText(activeDocText);
+      toast.success(
+        `Draft loaded from ${sourceTool === "essay_studio" ? "Essay Studio" : "workspace"}`,
+      );
+      clearDocument();
+    }
+  }, [activeDocText, text, sourceTool, clearDocument]);
 
   const { gateOpen, openGate, closeGate, guardAiClick } =
     useGuestGate<HumanizerDraft>({
