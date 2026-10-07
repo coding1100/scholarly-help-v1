@@ -7,4 +7,5 @@ Disallow: /sign-in/?returnUrl=/tools/summarizer-tool
 Disallow: /sign-in/?returnUrl=/tools/thesis-generator-tool
 
 sitemap: https://scholarlyhelp.com/sitemap.xml
+sitemap: https://scholarlyhelp.com/tools-sitemap.xml
 
