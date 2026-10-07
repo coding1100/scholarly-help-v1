@@ -224,14 +224,32 @@ const nextConfig = {
       // bfcache requires: no unload listeners, no Cache-Control: no-store
       // Excludes /_next/static and /_next/image: as the last matching rule this
       // would otherwise override their long-lived Cache-Control with max-age=0.
+      // s-maxage lets CloudFront share a public page for 60s and serve it stale
+      // for up to 5 min while refetching; browsers still revalidate (max-age=0).
+      // Safe because public pages read no cookies, headers or searchParams on
+      // the server, so every visitor gets the same HTML.
       {
-        source: '/((?!api|_next/static|_next/image).*)',
+        source: '/((?!api|admin|_next/static|_next/image).*)',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=0, must-revalidate',
+            value: 'public, max-age=0, s-maxage=60, stale-while-revalidate=300',
           },
           // Permissions-Policy to help with bfcache
+          {
+            key: 'Permissions-Policy',
+            value: 'unload=()',
+          },
+        ],
+      },
+      // Admin pages depend on the admin session: never keep them in a shared cache.
+      {
+        source: '/admin/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'private, max-age=0, must-revalidate',
+          },
           {
             key: 'Permissions-Policy',
             value: 'unload=()',
