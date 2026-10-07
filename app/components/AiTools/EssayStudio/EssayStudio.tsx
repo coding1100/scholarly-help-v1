@@ -322,11 +322,25 @@ export default function EssayStudio({
   const [downloadingDocx, setDownloadingDocx] = useState(false);
   const setActiveDocument = useDocumentStore((state) => state.setActiveDocument);
 
-  // Syncs current draft to shared store for seamless tool handoff
+  // Converts HTML draft to structured plain text preserving paragraphs
+  const htmlToParagraphText = (html: string): string => {
+    return html
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/(p|div|h[1-6])>/gi, "\n\n")
+      .replace(/<li>/gi, "• ")
+      .replace(/<\/li>/gi, "\n")
+      .replace(/<[^>]+>/g, "")
+      .replace(/&nbsp;/g, " ")
+      .replace(/[ \t]+/g, " ")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+  };
+
   const handleOpenHumanizer = () => {
-    const plainText = draft.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    const formattedText = htmlToParagraphText(draft);
+    if (!formattedText) return;
     setActiveDocument({
-      text: plainText,
+      text: formattedText,
       title,
       sourceTool: "essay_studio",
     });
@@ -2649,7 +2663,6 @@ ${conclText}`;
                     <div className="flex items-center gap-3 text-xs">
                       <a
                         href="/tools/humanizer-tool"
-                        onClick={handleOpenHumanizer}
                         className="font-semibold text-[#9A3412] hover:underline"
                       >
                         Unlock with Pro

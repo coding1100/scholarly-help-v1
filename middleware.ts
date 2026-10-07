@@ -67,9 +67,10 @@ async function getAdminSessionRole(
   }
 }
 
-/** Rewrite unknown single-segment paths to /landing/{slug}/ (published check runs in the page). */
+// Rewrite unknown single-segment paths to /landing/{slug}/ with trace headers
 function maybeRewriteDynamicLanding(
   request: NextRequest,
+  requestHeaders: Headers,
 ): NextResponse | null {
   const segment = getSinglePathSegment(request.nextUrl.pathname);
   if (!segment || isReservedTopLevelSegment(segment)) {
@@ -81,7 +82,7 @@ function maybeRewriteDynamicLanding(
     request.url,
   );
   rewriteUrl.search = request.nextUrl.search;
-  return NextResponse.rewrite(rewriteUrl);
+  return NextResponse.rewrite(rewriteUrl, { request: { headers: requestHeaders } });
 }
 
 export async function middleware(request: NextRequest) {
@@ -112,13 +113,12 @@ export async function middleware(request: NextRequest) {
   // a global client-side click allowance (see guestClickLimits) that opens an
   // in-app sign-in / sign-up gate on the 5th AI action — so there is no longer a
   // blanket middleware auth redirect for /tools/* routes.
-  const landingRewrite = maybeRewriteDynamicLanding(request);
-
   // Distributed trace correlation identifier
   const requestId = request.headers.get("x-request-id") || crypto.randomUUID();
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-request-id", requestId);
 
+  const landingRewrite = maybeRewriteDynamicLanding(request, requestHeaders);
   const res = landingRewrite || NextResponse.next({ request: { headers: requestHeaders } });
   res.headers.set("x-request-id", requestId);
   return res;

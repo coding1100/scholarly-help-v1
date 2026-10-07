@@ -169,6 +169,10 @@ export function installAxiosAuthRefresh(): () => void {
     if (!['GET', 'HEAD', 'OPTIONS'].includes(method) && !config.headers.has('Idempotency-Key')) {
       config.headers.set('Idempotency-Key', newIdempotencyKey());
     }
+    // Distributed trace correlation identifier
+    if (!config.headers.has('x-request-id')) {
+      config.headers.set('x-request-id', newIdempotencyKey());
+    }
     return config;
   });
 
@@ -209,6 +213,10 @@ export async function fetchWithAuthRetry(
   const method = String(init.method || 'GET').toUpperCase();
   if (!['GET', 'HEAD', 'OPTIONS'].includes(method) && !stableHeaders.has('Idempotency-Key')) {
     stableHeaders.set('Idempotency-Key', newIdempotencyKey());
+  }
+  // Distributed trace correlation identifier
+  if (!stableHeaders.has('x-request-id')) {
+    stableHeaders.set('x-request-id', newIdempotencyKey());
   }
   const request = async (token: string | null) => {
     const headers = new Headers(stableHeaders);

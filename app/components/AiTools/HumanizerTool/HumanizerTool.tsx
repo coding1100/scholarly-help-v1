@@ -280,15 +280,17 @@ const HumanizerTool: React.FC<HumanizerToolProps> = ({ embedded = false }) => {
   const sourceTool = useDocumentStore((state) => state.sourceTool);
   const clearDocument = useDocumentStore((state) => state.clearDocument);
 
-  // Auto-populates input draft from connected tools
+  // Consumes handed-off draft and clears shared store to prevent ghost fills
   useEffect(() => {
-    if (activeDocText && !text.trim()) {
+    if (!activeDocText) return;
+    const shouldLoad = !text.trim() || sourceTool === "essay_studio";
+    if (shouldLoad) {
       setText(activeDocText);
       toast.success(
         `Draft loaded from ${sourceTool === "essay_studio" ? "Essay Studio" : "workspace"}`,
       );
-      clearDocument();
     }
+    clearDocument();
   }, [activeDocText, text, sourceTool, clearDocument]);
 
   const { gateOpen, openGate, closeGate, guardAiClick } =
