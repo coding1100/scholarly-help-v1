@@ -2,7 +2,8 @@
 
 import { Dispatch, SetStateAction, useRef, useState } from "react";
 import { FiCheck, FiHelpCircle, FiSkipForward, FiX } from "react-icons/fi";
-import { TutorQuizResultItem } from "@/app/components/AiTools/Tutor/tutorExperience";
+// Active tutor mastery contract
+import { TutorQuizResultItem } from "@/app/components/AiTools/Tutor2/tutorMastery";
 
 type QuizItem = {
   id: string;
