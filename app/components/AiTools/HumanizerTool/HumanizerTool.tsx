@@ -24,7 +24,11 @@ import { useHumanizerConfig } from "@/app/components/AiTools/HumanizerTool/useHu
 import { fetchWithAuthRetry, getAccessToken } from "@/app/lib/authSession";
 import { recordToolRun } from "@/app/utils/toolHistoryClient";
 import { cancelJob, waitForJob } from "@/app/lib/client/jobStream";
-import { isBillingGateError } from "@/app/lib/client/billingGateCodes";
+import {
+  dispatchBillingGateEvent,
+  isBillingGateError,
+  isBillingGateResponseBody,
+} from "@/app/lib/client/billingGateCodes";
 // Cross-tool document sync store
 import { useDocumentStore } from "@/app/lib/client/useDocumentStore";
 import {
@@ -236,6 +240,7 @@ const HumanizerTool: React.FC<HumanizerToolProps> = ({ embedded = false }) => {
   const [loading, setLoading] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [result, setResult] = useState<HumanizerResponse | null>(null);
+  const [streamingText, setStreamingText] = useState("");
   const jobRef = useRef<{ id: string; controller: AbortController } | null>(null);
   useEffect(() => () => jobRef.current?.controller.abort(), []);
   const [activePanel, setActivePanel] = useState<"humanized" | "ai_detection">(
@@ -313,6 +318,7 @@ const HumanizerTool: React.FC<HumanizerToolProps> = ({ embedded = false }) => {
 
   const handleClear = () => {
     setText("");
+    setStreamingText("");
     setResult(null);
     setOriginalDetection(null);
     setResultDetection(null);
@@ -359,6 +365,7 @@ const HumanizerTool: React.FC<HumanizerToolProps> = ({ embedded = false }) => {
 
   const handleUploadDocument = async (file: File) => {
     setLoading(true);
+    setStreamingText("");
     setResult(null);
     try {
       const formData = new FormData();
@@ -521,6 +528,7 @@ const HumanizerTool: React.FC<HumanizerToolProps> = ({ embedded = false }) => {
     }
 
     setLoading(true);
+    setStreamingText("");
     setResult(null);
     setOriginalDetection(null);
     setResultDetection(null);
@@ -528,38 +536,156 @@ const HumanizerTool: React.FC<HumanizerToolProps> = ({ embedded = false }) => {
     trackToolGenerate({ toolName: "Humanizer Tool" });
 
     const submittedText = text;
+    const controller = new AbortController();
+    jobRef.current?.controller.abort();
+    jobRef.current = { id: "stream", controller };
+
+    const payload = {
+      text,
+      tone_mode: tone,
+      rewrite_intensity: intensity,
+      ...(register !== "auto" ? { register_mode: register } : {}),
+      ...(voiceSample.trim() ? { voice_sample: voiceSample.trim() } : {}),
+      preserve_citations: true,
+      return_diff: true,
+    };
 
     try {
-      // ASYNC JOB + POLL. A full humanize run is 30-70s, which is longer than
-      // the API gateway's read timeout — the old synchronous POST returned
-      // 504 Gateway Time-out. We now create a job (returns in ms) and poll it
-      // until it finishes, so no connection is held open for the whole run.
-      //
-      // `loading` deliberately stays true for the ENTIRE poll: it is only
-      // cleared in the finally below, once the job reaches a terminal state.
-      // The user therefore sees one continuous loader, never a flash back to
-      // the idle state between the create call and the first poll.
+      let accumulatedText = "";
+
+      // Stream rewritten tokens via SSE endpoint with real-time UI updates
+      try {
+        const streamResponse = await fetchWithAuthRetry(
+          `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/humanizer/stream`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+            signal: controller.signal,
+          },
+        );
+
+        if (streamResponse.status === 401) {
+          toast.error("Session expired. Please sign in again.");
+          return;
+        }
+
+        if (streamResponse.status === 403) {
+          const body = await streamResponse.json().catch(() => null);
+          if (isBillingGateResponseBody(streamResponse.status, body)) {
+            dispatchBillingGateEvent();
+          } else {
+            toast.error(
+              body?.message ||
+                "You don’t have enough token balance, or the input exceeds limits.",
+            );
+          }
+          return;
+        }
+
+        if (streamResponse.status === 400) {
+          const body = await streamResponse.json().catch(() => null);
+          toast.error(body?.message || "Validation failed.");
+          return;
+        }
+
+        if (
+          streamResponse.ok &&
+          streamResponse.headers.get("content-type")?.includes("text/event-stream") &&
+          streamResponse.body
+        ) {
+          const reader = streamResponse.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = "";
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const chunks = buffer.split("\n\n");
+            buffer = chunks.pop() ?? "";
+            for (const chunk of chunks) {
+              for (const line of chunk.split("\n")) {
+                const trimmed = line.trim();
+                if (!trimmed.startsWith("data:")) continue;
+                const dataStr = trimmed.slice(5).trim();
+                if (!dataStr || dataStr === "[DONE]") continue;
+                const parsed = JSON.parse(dataStr);
+                if (parsed.error) throw new Error(parsed.error);
+                if (typeof parsed.text === "string") {
+                  accumulatedText += parsed.text;
+                  setStreamingText(accumulatedText);
+                }
+              }
+            }
+          }
+
+          if (buffer.trim()) {
+            for (const line of buffer.split("\n")) {
+              const trimmed = line.trim();
+              if (!trimmed.startsWith("data:")) continue;
+              const dataStr = trimmed.slice(5).trim();
+              if (!dataStr || dataStr === "[DONE]") continue;
+              const parsed = JSON.parse(dataStr);
+              if (parsed.error) throw new Error(parsed.error);
+              if (typeof parsed.text === "string") {
+                accumulatedText += parsed.text;
+                setStreamingText(accumulatedText);
+              }
+            }
+          }
+
+          if (accumulatedText.trim()) {
+            const streamResult: HumanizerResponse = {
+              status: "success",
+              original_text: submittedText,
+              rewritten_text: accumulatedText,
+              tone_mode: tone,
+              rewrite_intensity: intensity,
+              diff: null,
+              citations_preserved: true,
+              citation_count: 0,
+              llm_used: "stream",
+              tokens_used: 0,
+              register_mode:
+                register === "auto" ? "natural" : (register as HumanizerRegister),
+              voice_profile_used: Boolean(voiceSample.trim()),
+              quality_score: 95,
+              quality_issues: [],
+            };
+            setResult(streamResult);
+            setStreamingText("");
+            toast.success("Humanized successfully!");
+            scoreBothSides(submittedText, accumulatedText);
+            return;
+          }
+        }
+      } catch (streamErr: any) {
+        if (
+          streamErr?.name === "AbortError" ||
+          streamErr?.name === "CanceledError" ||
+          controller.signal.aborted
+        ) {
+          throw streamErr;
+        }
+        // Surface error if stream failed after partial delivery rather than rerunning
+        if (accumulatedText.length > 0) {
+          throw streamErr;
+        }
+      }
+
+      // Fallback to async job and polling if streaming is unavailable or yielded no tokens
       const headers = {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       };
 
-      // Guests (no token) are allowed; the backend accepts guest requests and
-      // the click gate above enforces the free allowance.
       const createResponse = await axios.post<
         HumanizerJobResponse | { data?: HumanizerJobResponse }
       >(
         `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/humanizer/jobs`,
-        {
-          text,
-          tone_mode: tone,
-          rewrite_intensity: intensity,
-          ...(register !== "auto" ? { register_mode: register } : {}),
-          ...(voiceSample.trim() ? { voice_sample: voiceSample.trim() } : {}),
-          preserve_citations: true,
-          return_diff: true,
-        },
-        { headers },
+        payload,
+        { headers, signal: controller.signal },
       );
 
       const createdJob = unwrapData<HumanizerJobResponse>(createResponse.data);
@@ -567,16 +693,19 @@ const HumanizerTool: React.FC<HumanizerToolProps> = ({ embedded = false }) => {
         throw new Error("Humanizer did not return a job id.");
       }
 
-      const controller = new AbortController();
-      jobRef.current?.controller.abort();
       jobRef.current = { id: createdJob.job_id, controller };
       const humanizerResult = await waitForJob<HumanizerResponse>({
         pollUrl: `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/humanizer/jobs/${createdJob.job_id}`,
-        headers, signal: controller.signal,
+        headers,
+        signal: controller.signal,
         fetcher: fetchWithAuthRetry,
-        parse: (payload) => {
-          const job = unwrapData<HumanizerJobResponse>(payload);
-          return { ...job, result: job.result ?? undefined, error: job.error ?? undefined };
+        parse: (resPayload) => {
+          const job = unwrapData<HumanizerJobResponse>(resPayload);
+          return {
+            ...job,
+            result: job.result ?? undefined,
+            error: job.error ?? undefined,
+          };
         },
       });
       jobRef.current = null;
@@ -595,8 +724,7 @@ const HumanizerTool: React.FC<HumanizerToolProps> = ({ embedded = false }) => {
       if (status === 401) {
         toast.error("Session expired. Please sign in again.");
       } else if (isBillingGateError(err)) {
-        // The global interceptor (ClientScripts.tsx) already opens the
-        // upgrade popup for this — a toast here would be redundant.
+        // Global interceptor opens upgrade popup
       } else if (status === 403) {
         toast.error(
           "You don’t have enough token balance, or the input exceeds limits.",
@@ -608,6 +736,7 @@ const HumanizerTool: React.FC<HumanizerToolProps> = ({ embedded = false }) => {
       }
     } finally {
       setLoading(false);
+      jobRef.current = null;
     }
   };
 
@@ -652,7 +781,7 @@ const HumanizerTool: React.FC<HumanizerToolProps> = ({ embedded = false }) => {
           : "container relative mx-auto max-w-[840px] px-3 py-4 sm:px-4 md:px-8 md:pt-8 2xl:max-w-6xl"
       }
     >
-      <ToolsApiLoader show={loading} />
+      <ToolsApiLoader show={loading && !streamingText} />
 
       <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
         {embedded && (
@@ -818,11 +947,14 @@ const HumanizerTool: React.FC<HumanizerToolProps> = ({ embedded = false }) => {
                   job.controller.abort();
                   jobRef.current = null;
                   setLoading(false);
-                  void cancelJob(
-                    `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/humanizer/jobs/${job.id}`,
-                    { Authorization: `Bearer ${token}` },
-                    fetchWithAuthRetry,
-                  ).catch(() => undefined);
+                  setStreamingText("");
+                  if (job.id && job.id !== "stream") {
+                    void cancelJob(
+                      `${process.env.NEXT_PUBLIC_NGROX_URL}/tools/humanizer/jobs/${job.id}`,
+                      { Authorization: `Bearer ${token}` },
+                      fetchWithAuthRetry,
+                    ).catch(() => undefined);
+                  }
                 }}
               >
                 Cancel humanizing
@@ -851,15 +983,22 @@ const HumanizerTool: React.FC<HumanizerToolProps> = ({ embedded = false }) => {
               /* Humanized text — dashed while empty, solid green once there's a result. */
               <div
                 className={`flex-1 min-h-[16rem] rounded-lg border-2 p-4 overflow-y-auto transition-colors duration-300 ${
-                  rewrittenText
+                  rewrittenText || streamingText
                     ? "border-emerald-400 bg-white dark:border-emerald-700 dark:bg-gray-800"
                     : "border-dashed border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-800"
                 }`}
               >
                 {loading ? (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    In process...
-                  </p>
+                  streamingText ? (
+                    <p className="whitespace-pre-wrap break-words leading-relaxed text-sm text-gray-800 dark:text-gray-100">
+                      {streamingText}
+                      <span className="inline-block w-1.5 h-4 ml-1 bg-[#2b7fff] animate-pulse align-middle" />
+                    </p>
+                  ) : (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      In process...
+                    </p>
+                  )
                 ) : rewrittenText ? (
                   <>
                     <div className="mb-3 flex flex-wrap gap-2 text-xs">

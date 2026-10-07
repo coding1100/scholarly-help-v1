@@ -1,7 +1,7 @@
 "use client";
 
 import axios, { type AxiosError, type AxiosRequestConfig } from "axios";
-import { getAccessToken } from "@/app/lib/authSession";
+import { fetchWithAuthRetry, getAccessToken } from "@/app/lib/authSession";
 
 export const ACADEMIC_PAYWALL_MESSAGE =
   "Your token balance is exhausted. Please upgrade to continue using AI tools.";
@@ -271,6 +271,77 @@ export const humanizeText = (payload: {
     },
     headers: { "Content-Type": "application/json" },
   });
+
+// Streams humanized tokens from the backend SSE streaming endpoint
+export async function* streamHumanizeText(
+  payload: {
+    text: string;
+    tone?: HumanizerTone;
+    rewrite_intensity?: RewriteIntensity;
+    custom_tone_instruction?: string;
+    register_mode?: HumanizerRegister;
+    voice_sample?: string;
+  },
+  signal?: AbortSignal,
+): AsyncGenerator<string, void, unknown> {
+  const baseUrl = (process.env.NEXT_PUBLIC_NGROX_URL || "").replace(/\/$/, "");
+  const response = await fetchWithAuthRetry(`${baseUrl}/tools/humanizer/stream`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      text: payload.text,
+      tone_mode: payload.tone || "natural",
+      rewrite_intensity: payload.rewrite_intensity || "moderate",
+      ...(payload.custom_tone_instruction
+        ? { custom_tone_instruction: payload.custom_tone_instruction }
+        : {}),
+      ...(payload.register_mode ? { register_mode: payload.register_mode } : {}),
+      ...(payload.voice_sample ? { voice_sample: payload.voice_sample } : {}),
+      preserve_citations: true,
+      return_diff: false,
+    }),
+    signal,
+  });
+
+  if (!response.ok || !response.body) {
+    throw new Error(`Streaming failed with status ${response.status}`);
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const chunks = buffer.split("\n\n");
+    buffer = chunks.pop() ?? "";
+    for (const chunk of chunks) {
+      for (const line of chunk.split("\n")) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith("data:")) continue;
+        const dataStr = trimmed.slice(5).trim();
+        if (!dataStr || dataStr === "[DONE]") continue;
+        const parsed = JSON.parse(dataStr);
+        if (parsed.error) throw new Error(parsed.error);
+        if (typeof parsed.text === "string") yield parsed.text;
+      }
+    }
+  }
+
+  if (buffer.trim()) {
+    for (const line of buffer.split("\n")) {
+      const trimmed = line.trim();
+      if (!trimmed.startsWith("data:")) continue;
+      const dataStr = trimmed.slice(5).trim();
+      if (!dataStr || dataStr === "[DONE]") continue;
+      const parsed = JSON.parse(dataStr);
+      if (parsed.error) throw new Error(parsed.error);
+      if (typeof parsed.text === "string") yield parsed.text;
+    }
+  }
+}
 
 export type ParaphraseToneMode =
   | "standard"
