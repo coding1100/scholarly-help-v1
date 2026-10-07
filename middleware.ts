@@ -113,9 +113,15 @@ export async function middleware(request: NextRequest) {
   // in-app sign-in / sign-up gate on the 5th AI action — so there is no longer a
   // blanket middleware auth redirect for /tools/* routes.
   const landingRewrite = maybeRewriteDynamicLanding(request);
-  if (landingRewrite) return landingRewrite;
 
-  return NextResponse.next();
+  // Distributed trace correlation identifier
+  const requestId = request.headers.get("x-request-id") || crypto.randomUUID();
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-request-id", requestId);
+
+  const res = landingRewrite || NextResponse.next({ request: { headers: requestHeaders } });
+  res.headers.set("x-request-id", requestId);
+  return res;
 }
 
 export const config = {
