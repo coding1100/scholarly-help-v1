@@ -18,7 +18,7 @@ declare global {
 /**
  * Pushes a GTM custom event for every WhatsApp button click (both the
  * desktop pill and the mobile icon-only bubble share this). GTM container
- * (GTM-5ZHV46X, loaded site-wide by app/components/ClientScripts.tsx) needs a Custom Event
+ * (GTM-5ZHV46X, loaded site-wide in app/layout.tsx) needs a Custom Event
  * trigger listening for "whatsapp_click" with whatever tags (Ads/TikTok/GA4
  * conversion) should fire on it — no further app code changes needed for
  * that part.
