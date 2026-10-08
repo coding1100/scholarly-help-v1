@@ -122,6 +122,12 @@ jobs:
 
             # Create new directory and extract
             mkdir -p current
+            # Remove the previous build's server output first. It holds Next.js's
+            # runtime page cache (.next/server/route-cache); extracting on top of it
+            # kept pages cached by older builds, served with a stale build ID, which
+            # turned client-side navigation (e.g. form -> /thank-you) into full
+            # reloads. .next/static is kept so tabs opened before the deploy still load.
+            rm -rf current/.next/server
             tar -xzf /tmp/deploy.tar.gz -C current/
             cd current
 
