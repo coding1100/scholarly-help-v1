@@ -155,7 +155,10 @@ export default function BelowFoldLanding({ children }: BelowFoldLandingProps) {
     };
   }, []);
 
-  if (!ready) return null;
+  // Hold one screen of space until the sections mount. Returning nothing let the
+  // footer render inside the first screen and then jump down when they arrived,
+  // which was the page's layout shift (CLS).
+  if (!ready) return <div className="min-h-screen" aria-hidden="true" />;
 
   return (
     <>

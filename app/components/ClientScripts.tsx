@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
 import Script from "next/script";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
@@ -9,6 +9,7 @@ import { initializeAuthSession, installAxiosAuthRefresh } from "@/app/lib/authSe
 import { hasRefreshSessionHint } from "@/app/lib/accessTokenStore";
 import BillingGate from "@/app/components/AiTools/BillingGate";
 import CheckoutConfirmationOverlay from "@/app/components/AiTools/CheckoutConfirmationOverlay";
+import { useAfterFirstInteraction } from "@/app/hooks/useAfterFirstInteraction";
 
 /**
  * Global handler for the backend's two "you need to upgrade" gates:
@@ -21,6 +22,47 @@ import CheckoutConfirmationOverlay from "@/app/components/AiTools/CheckoutConfir
  * pattern this app already uses for the Study Workspace's "study:auth-gate".
  */
 const BILLING_GATE_CODES = new Set(["FREE_RUN_LIMIT_EXCEEDED", "INSUFFICIENT_CREDITS"]);
+
+// GTM (and the pixels it loads), LiveChat and HelpCrunch wait for the visitor's
+// first tap, key or scroll, or this many ms, so they stay out of the page load.
+const THIRD_PARTY_DELAY_MS = 10_000;
+
+// Visiting these pages is itself a conversion in GTM (URL-based triggers), so
+// GTM loads straight away there instead of waiting.
+const CONVERSION_PATHS = new Set([
+  "/thank-you",
+  "/thank-you-2",
+  "/thank-you-3",
+  "/scan/payment-successful",
+]);
+
+/**
+ * True as soon as the page pushes a tracked event to the dataLayer (for example
+ * a lead or purchase conversion fired on load), so GTM loads in time to send it
+ * instead of waiting for an interaction the visitor may never make.
+ */
+function useDataLayerEventQueued(): boolean {
+  const [queued, setQueued] = useState(false);
+
+  useEffect(() => {
+    const dataLayer = (window.dataLayer = window.dataLayer || []);
+    if (dataLayer.some((entry) => entry?.event)) {
+      setQueued(true);
+      return;
+    }
+    const originalPush = dataLayer.push;
+    dataLayer.push = (...entries) => {
+      const length = originalPush.apply(dataLayer, entries);
+      if (entries.some((entry) => entry?.event)) setQueued(true);
+      return length;
+    };
+    return () => {
+      dataLayer.push = originalPush;
+    };
+  }, []);
+
+  return queued;
+}
 
 function installFreeRunQuotaHandler(): () => void {
   const interceptor = axios.interceptors.response.use(
@@ -48,6 +90,7 @@ declare global {
       integration_name: string;
       product_name: string;
     };
+    dataLayer?: Array<Record<string, any>>;
   }
 }
 
@@ -58,6 +101,10 @@ export default function ClientScripts() {
     currentPage === "/about-us" || currentPage === "/about-us/";
 
   const ShowLiveChat = isHomePage;
+  const interacted = useAfterFirstInteraction(THIRD_PARTY_DELAY_MS);
+  const trackingEventQueued = useDataLayerEventQueued();
+  const isConversionPage = CONVERSION_PATHS.has((currentPage || "").replace(/\/+$/, ""));
+  const thirdPartyReady = interacted || trackingEventQueued || isConversionPage;
 
   useEffect(() => {
     const message = sessionStorage.getItem("auth:success-toast");
@@ -142,9 +189,25 @@ export default function ClientScripts() {
           own doc comment for why this exists alongside the invoice.paid webhook). */}
       <CheckoutConfirmationOverlay />
 
+      {thirdPartyReady && (
+        <Script
+          id="gtm-script"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+              new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+              j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+              'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+              })(window,document,'script','dataLayer','GTM-5ZHV46X');
+            `,
+          }}
+        />
+      )}
+
       {/* LiveChat - load script only on home page */}
-      {ShowLiveChat && (
-        <Script id="livechat-script" strategy="lazyOnload">
+      {ShowLiveChat && thirdPartyReady && (
+        <Script id="livechat-script" strategy="afterInteractive">
           {`
           window.__lc = window.__lc || {};
           window.__lc.license = 19303287;
@@ -156,8 +219,8 @@ export default function ClientScripts() {
       )}
 
       {/* HelpCrunch - only on /about-us/ page, loaded lazily */}
-      {isAboutPage && (
-        <Script id="helpcrunch-sdk" strategy="lazyOnload">
+      {isAboutPage && thirdPartyReady && (
+        <Script id="helpcrunch-sdk" strategy="afterInteractive">
           {`
             window.helpcrunchSettings = {
               organization: 'scholarlyhelp',
