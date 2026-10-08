@@ -15,7 +15,7 @@ declare global {
 
 /**
  * Pushes a GTM conversion event for the ads team (GTM container is loaded
- * site-wide by ClientScripts.tsx — GTM-5ZHV46X). Fired exactly once, from the
+ * site-wide in app/layout.tsx — GTM-5ZHV46X). Fired exactly once, from the
  * one place in the app that has actually confirmed payment server-side (see
  * the component doc comment below), so it can't fire on an abandoned/failed
  * Stripe session and can't double-fire on refresh (stripParams() removes the
