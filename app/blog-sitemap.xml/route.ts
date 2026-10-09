@@ -1,0 +1,32 @@
+// Sitemap for the blog, served at /blog-sitemap.xml. Lists live, indexable posts
+// plus the blog index and archive pages that have at least one live post.
+import { getBlogCollections } from "@/app/lib/blog/db";
+import { liveFilter, postUrl, siteBaseUrl } from "@/app/lib/blog/utils";
+
+export const revalidate = 300;
+
+export async function GET() {
+  const base = siteBaseUrl();
+  const c = await getBlogCollections();
+  const entries: { loc: string; lastmod?: string }[] = [{ loc: `${base}/blog/` }];
+
+  if (c) {
+    const posts = await c.posts
+      .find({ ...liveFilter(), "seo.noindex": { $ne: true } }, { projection: { slug: 1, updatedAt: 1, categoryId: 1, authorId: 1 } })
+      .sort({ publishAt: -1 })
+      .toArray();
+    for (const p of posts) entries.push({ loc: `${base}${postUrl(p.slug)}`, lastmod: p.updatedAt });
+
+    const usedCategories = new Set(posts.map((p) => p.categoryId).filter(Boolean));
+    const categories = await c.categories.find({ _id: { $in: [...usedCategories] as string[] } }).toArray();
+    for (const cat of categories) entries.push({ loc: `${base}/blog/category/${cat.slug}/` });
+  }
+
+  const urls = entries
+    .map((e) => `<url>\n<loc>${e.loc}</loc>${e.lastmod ? `\n<lastmod>${e.lastmod}</lastmod>` : ""}\n</url>`)
+    .join("\n");
+  return new Response(
+    `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`,
+    { headers: { "Content-Type": "application/xml; charset=utf-8" } },
+  );
+}
