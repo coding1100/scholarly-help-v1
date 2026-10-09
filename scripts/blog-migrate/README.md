@@ -27,9 +27,12 @@ What it reads:
   FAQ, closing CTA, author and view count (these come from Elementor template fields the API
   doesn't expose)
 
-Intentionally not migrated (listed in the report):
-- The "95% Success Rate / 10K+ Students…" stats strip (identical on every post)
-- The "Need Professional Help with Your Research?" box (its buttons link to `#`)
+Template parts (edited once in Admin → Blog → Settings, not per post):
+- The "95% Success Rate / 10K+ Students…" stats strip becomes a "Stats strip" block at the same spot
+- The "Need Professional Help with Your Research?" box is shown at the end of every article
+  (on WordPress its buttons linked to `#`; the new defaults are `/order/` and `/academic-research/`)
+
+Reported in the migration report:
 - CTA buttons that have no link on WordPress (the heading/text is kept, the button is dropped)
 
 ## Switchover checklist (production)

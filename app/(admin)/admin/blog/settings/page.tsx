@@ -5,7 +5,7 @@ import AdminButton from "@/app/components/Admin/AdminButton";
 import { useAdminSuccess } from "@/app/components/Admin/AdminSuccessProvider";
 import { useAdminPageTitleOptional } from "@/app/components/Admin/AdminPageTitleContext";
 import { Field, ImageField, inputClass, Panel } from "@/app/components/Admin/Blog/fields";
-import type { BlogSettings } from "@/app/lib/blog/types";
+import type { BlogSettings, HelpBox } from "@/app/lib/blog/types";
 
 export default function BlogSettingsPage() {
   const pageTitle = useAdminPageTitleOptional();
@@ -78,6 +78,73 @@ export default function BlogSettingsPage() {
           />
         </Field>
         <ImageField label="Header image" value={settings.indexImageUrl} onChange={(indexImageUrl) => setSettings({ ...settings, indexImageUrl })} />
+      </Panel>
+
+      <Panel title="Stats strip">
+        <label className="flex items-center gap-2 text-sm font-semibold text-[#1a2456]">
+          <input
+            type="checkbox"
+            className="h-4 w-4"
+            checked={settings.statsStrip.enabled}
+            onChange={(e) => setSettings({ ...settings, statsStrip: { ...settings.statsStrip, enabled: e.target.checked } })}
+          />
+          Show the stats strip
+        </label>
+        <p className="text-xs text-[#6b7280]">Appears wherever a post has a “Stats strip” block. Same numbers on every post.</p>
+        {settings.statsStrip.items.map((item, i) => {
+          const setItem = (patch: Partial<typeof item>) =>
+            setSettings({
+              ...settings,
+              statsStrip: { ...settings.statsStrip, items: settings.statsStrip.items.map((it, j) => (j === i ? { ...it, ...patch } : it)) },
+            });
+          return (
+            <div key={i} className="grid grid-cols-[110px_1fr_auto] gap-2">
+              <input className={inputClass} placeholder="95%" value={item.value} onChange={(e) => setItem({ value: e.target.value })} aria-label={`Stat ${i + 1} value`} />
+              <input className={inputClass} placeholder="Success Rate" value={item.label} onChange={(e) => setItem({ label: e.target.value })} aria-label={`Stat ${i + 1} label`} />
+              <button
+                type="button"
+                className="text-sm text-[#da0e0e] hover:underline"
+                onClick={() => setSettings({ ...settings, statsStrip: { ...settings.statsStrip, items: settings.statsStrip.items.filter((_, j) => j !== i) } })}
+              >
+                Remove
+              </button>
+            </div>
+          );
+        })}
+        <button
+          type="button"
+          className="text-sm font-semibold text-[#283c88] hover:underline"
+          onClick={() => setSettings({ ...settings, statsStrip: { ...settings.statsStrip, items: [...settings.statsStrip.items, { value: "", label: "" }] } })}
+        >
+          + Add stat
+        </button>
+      </Panel>
+
+      <Panel title="Help box (end of every article)">
+        {(() => {
+          const help = settings.helpBox;
+          const setHelp = (patch: Partial<HelpBox>) => setSettings({ ...settings, helpBox: { ...help, ...patch } });
+          return (
+            <>
+              <label className="flex items-center gap-2 text-sm font-semibold text-[#1a2456]">
+                <input type="checkbox" className="h-4 w-4" checked={help.enabled} onChange={(e) => setHelp({ enabled: e.target.checked })} />
+                Show the help box on every post
+              </label>
+              <Field label="Heading">
+                <input className={inputClass} value={help.heading} onChange={(e) => setHelp({ heading: e.target.value })} />
+              </Field>
+              <Field label="Text">
+                <textarea className={`${inputClass} min-h-[80px]`} value={help.text} onChange={(e) => setHelp({ text: e.target.value })} />
+              </Field>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field label="Main button label"><input className={inputClass} value={help.primaryLabel} onChange={(e) => setHelp({ primaryLabel: e.target.value })} /></Field>
+                <Field label="Main button link"><input className={inputClass} value={help.primaryUrl} placeholder="/order/" onChange={(e) => setHelp({ primaryUrl: e.target.value })} /></Field>
+                <Field label="Second button label"><input className={inputClass} value={help.secondaryLabel} onChange={(e) => setHelp({ secondaryLabel: e.target.value })} /></Field>
+                <Field label="Second button link"><input className={inputClass} value={help.secondaryUrl} placeholder="/academic-research/" onChange={(e) => setHelp({ secondaryUrl: e.target.value })} /></Field>
+              </div>
+            </>
+          );
+        })()}
       </Panel>
 
       <Panel title="Newsletter sign-ups">

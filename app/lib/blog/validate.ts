@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import { safeUrl, sanitizeRichText, toPlainText } from "./sanitize";
 import { slugify } from "./utils";
-import type { BlogBlock, BlogPost, FeatureIcon, HeroCta, PostSeo } from "./types";
+import { DEFAULT_BLOG_SETTINGS, type BlogBlock, type BlogPost, type BlogSettings, type FeatureIcon, type HeroCta, type PostSeo } from "./types";
 
 export class ValidationError extends Error {}
 
@@ -61,6 +61,8 @@ export function normalizeBlock(value: unknown): BlogBlock | null {
         .slice(0, 12);
       return items.length ? { id, type: "linkCards", items } : null;
     }
+    case "stats":
+      return { id, type: "stats" };
     case "video": {
       const url = safeUrl(o.url);
       return url ? { id, type: "video", url } : null;
@@ -131,6 +133,36 @@ export function normalizePostInput(body: unknown): PostInput {
     blocks: arr(o.blocks).map(normalizeBlock).filter((b): b is BlogBlock => !!b).slice(0, 300),
     seo: normalizedSeo,
     commentsEnabled: o.commentsEnabled !== false,
+  };
+}
+
+/** Validates the admin blog settings form, falling back to defaults for missing parts. */
+export function normalizeSettingsInput(body: unknown): BlogSettings {
+  const o = obj(body);
+  const stats = obj(o.statsStrip);
+  const help = obj(o.helpBox);
+  const d = DEFAULT_BLOG_SETTINGS;
+  return {
+    commentsEnabled: o.commentsEnabled !== false,
+    indexTitle: str(o.indexTitle, 120) || d.indexTitle,
+    indexIntro: arr(o.indexIntro).map((p) => str(p, 1000)).filter(Boolean).slice(0, 5),
+    indexImageUrl: safeUrl(o.indexImageUrl),
+    statsStrip: {
+      enabled: stats.enabled !== false,
+      items: arr(stats.items)
+        .map((i) => ({ value: str(obj(i).value, 20), label: str(obj(i).label, 60) }))
+        .filter((i) => i.value || i.label)
+        .slice(0, 12),
+    },
+    helpBox: {
+      enabled: help.enabled !== false,
+      heading: str(help.heading, 200),
+      text: str(help.text, 1000),
+      primaryLabel: str(help.primaryLabel, 60),
+      primaryUrl: safeUrl(help.primaryUrl),
+      secondaryLabel: str(help.secondaryLabel, 60),
+      secondaryUrl: safeUrl(help.secondaryUrl),
+    },
   };
 }
 

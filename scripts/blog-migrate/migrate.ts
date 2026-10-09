@@ -330,7 +330,7 @@ async function main() {
     `- Index header: ${settingsNote}`,
     `- Word coverage below 85%: ${lowCoverage.length ? lowCoverage.map((r) => r.slug).join(", ") : "none"}`,
     ``,
-    `## Content intentionally not migrated`,
+    `## Needs attention`,
     ...[...allWarnings].map(([w, n]) => `- ${w} — ${n} post(s)`),
     ...(images.failed.length ? [``, `## Image upload failures`, ...images.failed.map((f) => `- ${f}`)] : []),
     ``,

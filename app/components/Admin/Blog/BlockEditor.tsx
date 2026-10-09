@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import type { BlogBlock, BlogBlockType, FeatureIcon } from "@/app/lib/blog/types";
 import { Field, ImageField, inputClass } from "./fields";
 
@@ -15,6 +16,7 @@ const BLOCK_LABELS: Record<BlogBlockType, string> = {
   featureGrid: "Feature cards",
   cta: "Call to action",
   linkCards: "Link cards",
+  stats: "Stats strip",
   video: "YouTube video",
   faq: "FAQ",
 };
@@ -32,6 +34,7 @@ export function emptyBlock(type: BlogBlockType): BlogBlock {
     case "featureGrid": return { id, type, title: "", items: [{ icon: "star", title: "", text: "" }] };
     case "cta": return { id, type, heading: "", text: "", buttonLabel: "", buttonUrl: "" };
     case "linkCards": return { id, type, items: [{ imageUrl: "", title: "", url: "" }] };
+    case "stats": return { id, type };
     case "video": return { id, type, url: "" };
     case "faq": return { id, type, title: "Frequently Asked Questions", items: [{ question: "", answer: "" }] };
   }
@@ -80,6 +83,13 @@ function BlockFields({ block, onChange }: { block: BlogBlock; onChange: (b: Blog
             <input className={inputClass} value={block.buttonUrl} onChange={(e) => onChange({ ...block, buttonUrl: e.target.value })} />
           </Field>
         </div>
+      );
+    case "stats":
+      return (
+        <p className="text-sm text-[#4b5563]">
+          Shows the stats strip (e.g. “95% Success Rate”). Its numbers are edited once for all posts in{" "}
+          <Link href="/admin/blog/settings" target="_blank" className="font-semibold text-[#283c88] underline">Blog Settings</Link> (opens in a new tab).
+        </p>
       );
     case "linkCards":
       return (

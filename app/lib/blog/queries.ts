@@ -24,7 +24,13 @@ export async function getBlogSettings(): Promise<BlogSettings> {
   const doc = c ? await c.settings.findOne({ _id: "settings" }) : null;
   if (!doc) return DEFAULT_BLOG_SETTINGS;
   const { _id, ...settings } = doc;
-  return { ...DEFAULT_BLOG_SETTINGS, ...settings };
+  // Nested settings saved before a field existed fall back to its default.
+  return {
+    ...DEFAULT_BLOG_SETTINGS,
+    ...settings,
+    statsStrip: settings.statsStrip ?? DEFAULT_BLOG_SETTINGS.statsStrip,
+    helpBox: settings.helpBox ?? DEFAULT_BLOG_SETTINGS.helpBox,
+  };
 }
 
 export async function listLivePosts(

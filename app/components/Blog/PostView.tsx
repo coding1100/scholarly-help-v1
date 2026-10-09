@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import type { BlogAuthor, BlogPost, BlogTerm } from "@/app/lib/blog/types";
+import type { BlogAuthor, BlogPost, BlogTerm, HelpBox, StatsStrip } from "@/app/lib/blog/types";
 import type { PostSummary } from "@/app/lib/blog/queries";
 import {
   buildToc,
@@ -10,7 +10,7 @@ import {
   readingTimeMinutes,
   siteBaseUrl,
 } from "@/app/lib/blog/utils";
-import { BlogBlocks, CtaButton, YouTubeEmbed } from "./BlogBlocks";
+import { BlogBlocks, CtaButton, HelpBoxView, YouTubeEmbed } from "./BlogBlocks";
 import { BlogCard } from "./BlogCard";
 import { CalendarIcon, ChatIcon, ClockIcon, ShareIcons, UserIcon } from "./BlogIcons";
 import TableOfContents from "./TableOfContents";
@@ -27,6 +27,8 @@ export type PostViewData = {
   categories: BlogTerm[];
   comments: { _id: string; name: string; body: string; createdAt: string }[];
   commentsOpen: boolean;
+  stats: StatsStrip;
+  helpBox: HelpBox;
   preview?: boolean;
 };
 
@@ -68,7 +70,7 @@ function jsonLd(data: PostViewData) {
 }
 
 export default function PostView(data: PostViewData) {
-  const { post, category, author, related, recent, categories, comments, commentsOpen, preview } = data;
+  const { post, category, author, related, recent, categories, comments, commentsOpen, stats, helpBox, preview } = data;
   const { blocks, toc, anchors } = buildToc(post.blocks);
   const shareUrl = encodeURIComponent(`${siteBaseUrl()}${postUrl(post.slug)}`);
   const shareTitle = encodeURIComponent(post.title);
@@ -145,13 +147,14 @@ export default function PostView(data: PostViewData) {
           <div className="blog-card-panel">
             <div className="blog-content">
               {/* Like the WordPress template: intro first, then the featured image (when the header shows a video). */}
-              <BlogBlocks blocks={blocks.slice(0, 1)} anchors={anchors} />
+              <BlogBlocks blocks={blocks.slice(0, 1)} anchors={anchors} stats={stats} />
               {post.heroVideoUrl && post.coverImage && (
                 <div className="blog-figure-img">
                   <Image src={post.coverImage.url} alt={post.coverImage.alt || post.title} width={1200} height={675} sizes="(max-width: 1100px) 100vw, 760px" style={{ width: "100%", height: "auto" }} />
                 </div>
               )}
-              <BlogBlocks blocks={blocks.slice(1)} anchors={anchors} />
+              <BlogBlocks blocks={blocks.slice(1)} anchors={anchors} stats={stats} />
+              <HelpBoxView help={helpBox} />
             </div>
             {!preview && <CommentSection postId={post._id} comments={comments} open={commentsOpen} />}
           </div>

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withBlogDb } from "@/app/lib/blog/api";
 import { revalidateBlog } from "@/app/lib/blog/revalidate";
-import { safeUrl, toPlainText } from "@/app/lib/blog/sanitize";
-import { DEFAULT_BLOG_SETTINGS, type BlogSettings } from "@/app/lib/blog/types";
+import { normalizeSettingsInput } from "@/app/lib/blog/validate";
+import { DEFAULT_BLOG_SETTINGS } from "@/app/lib/blog/types";
 
 export const dynamic = "force-dynamic";
 
@@ -17,16 +17,7 @@ export async function GET() {
 
 export async function PUT(request: NextRequest) {
   return withBlogDb(async (c) => {
-    const body = await request.json();
-    const settings: BlogSettings = {
-      commentsEnabled: body?.commentsEnabled !== false,
-      indexTitle: toPlainText(body?.indexTitle, 120) || DEFAULT_BLOG_SETTINGS.indexTitle,
-      indexIntro: (Array.isArray(body?.indexIntro) ? body.indexIntro : [])
-        .map((p: unknown) => toPlainText(p, 1000))
-        .filter(Boolean)
-        .slice(0, 5),
-      indexImageUrl: safeUrl(body?.indexImageUrl),
-    };
+    const settings = normalizeSettingsInput(await request.json());
     await c.settings.updateOne({ _id: "settings" }, { $set: settings }, { upsert: true });
     revalidateBlog();
     return NextResponse.json({ settings });

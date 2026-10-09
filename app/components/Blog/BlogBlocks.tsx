@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import type { BlogBlock } from "@/app/lib/blog/types";
+import type { BlogBlock, HelpBox, StatsStrip } from "@/app/lib/blog/types";
 import { youtubeId } from "@/app/lib/blog/utils";
 import { FeatureIconSvg, PlusIcon } from "./BlogIcons";
 
@@ -30,8 +30,53 @@ function CtaButton({ label, url }: { label: string; url: string }) {
 
 export { CtaButton };
 
+export function StatsStripView({ stats }: { stats: StatsStrip }) {
+  if (!stats.enabled || !stats.items.length) return null;
+  return (
+    <div className="blog-stats">
+      {stats.items.map((item, i) => (
+        <div key={i} className="blog-stat">
+          <strong>{item.value}</strong>
+          <span>{item.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function HelpBoxView({ help }: { help: HelpBox }) {
+  if (!help.enabled || !help.heading) return null;
+  const button = (label: string, url: string, cls: string) =>
+    label && url ? (
+      /^https?:\/\//.test(url) ? (
+        <a href={url} className={cls} target="_blank" rel="noopener noreferrer">{label}</a>
+      ) : (
+        // No prefetch: /order/ initialises Stripe on load, which only needs to happen on click.
+        <Link href={url} className={cls} prefetch={false}>{label}</Link>
+      )
+    ) : null;
+  return (
+    <aside className="blog-help">
+      <h2>{help.heading}</h2>
+      {help.text && <p>{help.text}</p>}
+      <div className="blog-help-actions">
+        {button(help.primaryLabel, help.primaryUrl, "blog-pill blog-pill-solid")}
+        {button(help.secondaryLabel, help.secondaryUrl, "blog-pill blog-pill-ghost")}
+      </div>
+    </aside>
+  );
+}
+
 /** Renders stored post blocks. Rich-text HTML is sanitized on save, so it is safe to inject here. */
-export function BlogBlocks({ blocks, anchors }: { blocks: BlogBlock[]; anchors: Record<string, string> }) {
+export function BlogBlocks({
+  blocks,
+  anchors,
+  stats,
+}: {
+  blocks: BlogBlock[];
+  anchors: Record<string, string>;
+  stats: StatsStrip;
+}) {
   return (
     <>
       {blocks.map((block) => {
@@ -92,6 +137,8 @@ export function BlogBlocks({ blocks, anchors }: { blocks: BlogBlock[]; anchors: 
                 ))}
               </div>
             );
+          case "stats":
+            return <StatsStripView key={block.id} stats={stats} />;
           case "video":
             return (
               <div key={block.id} className="blog-video">

@@ -31,6 +31,7 @@ export type BlogBlock =
       buttonUrl: string;
     }
   | { id: string; type: "linkCards"; items: { imageUrl: string; title: string; url: string }[] }
+  | { id: string; type: "stats" } // renders the stats strip configured in blog settings
   | { id: string; type: "video"; url: string }
   | { id: string; type: "faq"; title?: string; items: { question: string; answer: string }[] };
 
@@ -98,11 +99,27 @@ export type BlogComment = {
   createdAt: string;
 };
 
+export type StatsStrip = { enabled: boolean; items: { value: string; label: string }[] };
+
+export type HelpBox = {
+  enabled: boolean;
+  heading: string;
+  text: string;
+  primaryLabel: string;
+  primaryUrl: string;
+  secondaryLabel: string;
+  secondaryUrl: string;
+};
+
 export type BlogSettings = {
   commentsEnabled: boolean;
   indexTitle: string;
   indexIntro: string[];
   indexImageUrl: string;
+  /** Shown wherever a post has a "stats" block. */
+  statsStrip: StatsStrip;
+  /** Shown at the end of every article. */
+  helpBox: HelpBox;
 };
 
 export const DEFAULT_BLOG_SETTINGS: BlogSettings = {
@@ -113,4 +130,24 @@ export const DEFAULT_BLOG_SETTINGS: BlogSettings = {
     "Our posts are written by experienced educators and professionals. No confusing jargon—just straightforward ideas you can use right away. From time-saving hacks to real student success stories, we cover what matters most.",
   ],
   indexImageUrl: "",
+  statsStrip: {
+    enabled: true,
+    items: [
+      { value: "95%", label: "Success Rate" },
+      { value: "10K+", label: "Students Helped" },
+      { value: "500+", label: "Expert Writers" },
+      { value: "24/7", label: "Support Available" },
+      { value: "A+", label: "Grade Guarantee" },
+      { value: "100%", label: "Confidential" },
+    ],
+  },
+  helpBox: {
+    enabled: true,
+    heading: "Need Professional Help with Your Research?",
+    text: "Our team of PhD-qualified experts is ready to guide you through every stage of your academic journey. From topic selection to final submission, we provide personalized support that ensures excellence.",
+    primaryLabel: "Get Started Today",
+    primaryUrl: "/order/",
+    secondaryLabel: "View Our Services",
+    secondaryUrl: "/academic-research/",
+  },
 };

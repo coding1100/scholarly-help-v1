@@ -28,7 +28,8 @@ const page = `<html><body><div data-elementor-type="single-post" data-elementor-
          <div data-elementor-type="container">${c(w("image-box", '<figure><a href="https://scholarlyhelp.com/exams/statistics/"><img src="https://scholarlyhelp.com/blog/wp-content/uploads/a.webp"></a></figure><h3 class="elementor-image-box-title"><a href="https://scholarlyhelp.com/exams/statistics/">Statistics Exam</a></h3>'))}</div>`)}
       ${heading("h2", "Frequently Asked Questions")}
       ${w("elementskit-accordion", '<div class="elementskit-card"><a class="elementskit-btn-link">Q1?</a><div class="elementskit-card-body">A1.</div></div>')}
-      ${c(heading("h2", "Need Professional Help?") + heading("p", "Static") + button("Get Started", "#"))}
+      ${c(heading("h2", "Need Professional Help with Your Research?") + heading("p", "Static") + button("Get Started", "#"))}
+      ${c(heading("h2", "Some Other Box") + button("Dead", "#"))}
     `)}
     ${c(w("html", "Table of Contents") + w("shortcode", "10.5k"))}
   `)}
@@ -49,23 +50,23 @@ describe("convertPostPage", () => {
   });
 
   it("converts the article column into ordered blocks", () => {
-    expect(r.blocks.map((b) => b.type)).toEqual(["richText", "richText", "featureGrid", "cta", "richText", "cta", "linkCards", "faq"]);
+    expect(r.blocks.map((b) => b.type)).toEqual(["richText", "richText", "featureGrid", "cta", "stats", "richText", "cta", "linkCards", "faq"]);
     // The intro is its own block so the template can place the featured image right after it.
     expect(String(r.blocks[0].html)).toContain("Intro paragraph.");
     expect(String(r.blocks[0].html)).not.toContain("Hidden");
     expect(String(r.blocks[1].html)).toContain("<h2>Section One</h2>");
     expect(r.blocks[2]).toMatchObject({ items: [{ icon: "clock", title: "Total Time", text: "130 minutes" }, { title: "Questions" }] });
     expect(r.blocks[3]).toMatchObject({ heading: "Mid CTA", text: "Mid text", buttonUrl: "https://scholarlyhelp.com/homework/" });
-    expect(String(r.blocks[4].html)).toContain("<h2>Body Heading</h2>");
-    expect(r.blocks[5]).toMatchObject({ heading: "Inline CTA", bullets: ["Point A", "Point B"], buttonLabel: "Essay Help" });
-    expect(r.blocks[6]).toMatchObject({ items: [{ title: "Statistics Exam", url: "https://scholarlyhelp.com/exams/statistics/" }] });
-    expect(r.blocks[7]).toEqual({ type: "faq", title: "Frequently Asked Questions", items: [{ question: "Q1?", answer: "A1." }] });
+    expect(String(r.blocks[5].html)).toContain("<h2>Body Heading</h2>");
+    expect(r.blocks[6]).toMatchObject({ heading: "Inline CTA", bullets: ["Point A", "Point B"], buttonLabel: "Essay Help" });
+    expect(r.blocks[7]).toMatchObject({ items: [{ title: "Statistics Exam", url: "https://scholarlyhelp.com/exams/statistics/" }] });
+    expect(r.blocks[8]).toEqual({ type: "faq", title: "Frequently Asked Questions", items: [{ question: "Q1?", answer: "A1." }] });
   });
 
-  it("skips static template parts and reports them", () => {
-    expect(r.warnings.some((w) => w.startsWith("skipped static stats strip"))).toBe(true);
-    expect(r.warnings.some((w) => w.includes("Need Professional Help?"))).toBe(true);
+  it("turns the static stats strip into a stats block and leaves the help box to the template", () => {
     expect(JSON.stringify(r.blocks)).not.toContain("Success Rate");
+    expect(r.warnings.some((w) => w.includes("Need Professional Help"))).toBe(false);
+    expect(r.warnings).toContain('skipped CTA with no working link ("Some Other Box")');
   });
 
   it("keeps a header CTA whose button has no link, without the button", () => {

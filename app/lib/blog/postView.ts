@@ -29,6 +29,8 @@ export async function loadPostView(post: BlogPost, preview = false): Promise<Pos
     categories,
     comments,
     commentsOpen: settings.commentsEnabled && post.commentsEnabled,
+    stats: settings.statsStrip,
+    helpBox: settings.helpBox,
     preview,
   };
 }

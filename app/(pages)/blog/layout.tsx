@@ -17,7 +17,7 @@ const merriweatherSans = Merriweather_Sans({
   variable: "--font-merriweather-sans",
 });
 const inter = Inter({ subsets: ["latin"], weight: ["400", "700", "800"], display: "swap", variable: "--font-inter" });
-const roboto = Roboto({ subsets: ["latin"], weight: ["400", "500"], display: "swap", variable: "--font-roboto" });
+const roboto = Roboto({ subsets: ["latin"], weight: ["400", "500", "600", "800", "900"], display: "swap", variable: "--font-roboto" });
 
 export default function BlogLayout({ children }: { children: ReactNode }) {
   return (

@@ -2,7 +2,7 @@
 // Pure (no network/DB) so it can be unit tested against saved HTML.
 import { load, type CheerioAPI, type Cheerio } from "cheerio";
 import type { AnyNode, Element } from "domhandler";
-import type { FeatureIcon, HeroCta } from "@/app/lib/blog/types";
+import { DEFAULT_BLOG_SETTINGS, type FeatureIcon, type HeroCta } from "@/app/lib/blog/types";
 
 export type RawBlock = Record<string, unknown> & { type: string };
 
@@ -137,7 +137,8 @@ function handleContainer($: CheerioAPI, $c: Cheerio<Element>, out: Emitter, warn
         })),
       });
     } else {
-      warnings.push(`skipped static stats strip (${boxes.map((b) => clean(b.text())).join(", ").slice(0, 80)})`);
+      // Icon-less boxes are the static "95% Success Rate…" strip; its numbers live in blog settings.
+      out.block({ type: "stats" });
     }
     return;
   }
@@ -161,7 +162,9 @@ function handleContainer($: CheerioAPI, $c: Cheerio<Element>, out: Emitter, warn
   if (isCta) {
     const cta = ctaFrom($, $c);
     if (!cta) {
-      warnings.push(`skipped CTA with no working link ("${clean(widgets.filter((_, w) => widgetType($(w)) === "heading").first().text())}")`);
+      const heading = clean(widgets.filter((_, w) => widgetType($(w)) === "heading").first().text());
+      // The standard help box is rendered by the post template from blog settings.
+      if (heading !== DEFAULT_BLOG_SETTINGS.helpBox.heading) warnings.push(`skipped CTA with no working link ("${heading}")`);
       return;
     }
     const bullets = widgets
