@@ -51,6 +51,16 @@ export function normalizeBlock(value: unknown): BlogBlock | null {
       const bullets = arr(o.bullets).map((b) => str(b, 300)).filter(Boolean).slice(0, 12);
       return cta ? { id, type: "cta", ...cta, ...(bullets.length ? { bullets } : {}) } : null;
     }
+    case "linkCards": {
+      const items = arr(o.items)
+        .map((i) => {
+          const it = obj(i);
+          return { imageUrl: safeUrl(it.imageUrl), title: str(it.title, 150), url: safeUrl(it.url) };
+        })
+        .filter((i) => i.title && i.url)
+        .slice(0, 12);
+      return items.length ? { id, type: "linkCards", items } : null;
+    }
     case "video": {
       const url = safeUrl(o.url);
       return url ? { id, type: "video", url } : null;

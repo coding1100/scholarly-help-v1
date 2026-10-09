@@ -36,6 +36,8 @@ export function blockText(block: BlogBlock): string {
       return [block.title, ...block.items.flatMap((i) => [i.question, i.answer])].join(" ");
     case "image":
       return block.caption || "";
+    case "linkCards":
+      return block.items.map((i) => i.title).join(" ");
     default:
       return "";
   }
@@ -140,7 +142,8 @@ export function formatPostTime(iso: string | null): string {
 }
 
 export function formatViews(views: number): string {
-  if (views >= 1000) return `${(views / 1000).toFixed(views >= 100_000 ? 0 : 1)}k`;
+  // Same style as the former WordPress counter, e.g. 10089 -> "10.089k".
+  if (views >= 1000) return `${(views / 1000).toFixed(views >= 100_000 ? 0 : 3).replace(/\.?0+$/, "")}k`;
   return String(views);
 }
 

@@ -14,6 +14,7 @@ const BLOCK_LABELS: Record<BlogBlockType, string> = {
   image: "Image",
   featureGrid: "Feature cards",
   cta: "Call to action",
+  linkCards: "Link cards",
   video: "YouTube video",
   faq: "FAQ",
 };
@@ -30,6 +31,7 @@ export function emptyBlock(type: BlogBlockType): BlogBlock {
     case "image": return { id, type, url: "", alt: "", caption: "" };
     case "featureGrid": return { id, type, title: "", items: [{ icon: "star", title: "", text: "" }] };
     case "cta": return { id, type, heading: "", text: "", buttonLabel: "", buttonUrl: "" };
+    case "linkCards": return { id, type, items: [{ imageUrl: "", title: "", url: "" }] };
     case "video": return { id, type, url: "" };
     case "faq": return { id, type, title: "Frequently Asked Questions", items: [{ question: "", answer: "" }] };
   }
@@ -77,6 +79,28 @@ function BlockFields({ block, onChange }: { block: BlogBlock; onChange: (b: Blog
           <Field label="Button link" hint="A site path like /take-my-class/ or a full https:// URL.">
             <input className={inputClass} value={block.buttonUrl} onChange={(e) => onChange({ ...block, buttonUrl: e.target.value })} />
           </Field>
+        </div>
+      );
+    case "linkCards":
+      return (
+        <div className="space-y-3">
+          {block.items.map((item, i) => {
+            const setItem = (patch: Partial<typeof item>) =>
+              onChange({ ...block, items: block.items.map((it, j) => (j === i ? { ...it, ...patch } : it)) });
+            return (
+              <div key={i} className="space-y-2 rounded-lg border border-[#e2e8f4] p-3">
+                <ImageField label={`Card ${i + 1} image`} value={item.imageUrl} onChange={(imageUrl) => setItem({ imageUrl })} />
+                <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
+                  <input className={inputClass} placeholder="Title" value={item.title} onChange={(e) => setItem({ title: e.target.value })} />
+                  <input className={inputClass} placeholder="Link, e.g. /homework/" value={item.url} onChange={(e) => setItem({ url: e.target.value })} />
+                  <button type="button" className="text-sm text-[#da0e0e] hover:underline" onClick={() => onChange({ ...block, items: block.items.filter((_, j) => j !== i) })}>Remove</button>
+                </div>
+              </div>
+            );
+          })}
+          <button type="button" className="text-sm font-semibold text-[#283c88] hover:underline" onClick={() => onChange({ ...block, items: [...block.items, { imageUrl: "", title: "", url: "" }] })}>
+            + Add card
+          </button>
         </div>
       );
     case "featureGrid":

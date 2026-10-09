@@ -77,6 +77,21 @@ export function BlogBlocks({ blocks, anchors }: { blocks: BlogBlock[]; anchors: 
                 <CtaButton label={block.buttonLabel} url={block.buttonUrl} />
               </aside>
             );
+          case "linkCards":
+            return (
+              <div key={block.id} className="blog-link-cards">
+                {block.items.map((item, i) => (
+                  <Link key={i} href={item.url} className="blog-link-card">
+                    {item.imageUrl && (
+                      <span className="blog-link-card-img">
+                        <Image src={item.imageUrl} alt="" fill sizes="(max-width: 640px) 100vw, 240px" style={{ objectFit: "cover" }} />
+                      </span>
+                    )}
+                    <span className="blog-link-card-title">{item.title}</span>
+                  </Link>
+                ))}
+              </div>
+            );
           case "video":
             return (
               <div key={block.id} className="blog-video">

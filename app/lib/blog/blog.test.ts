@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { safeUrl, sanitizeRichText, toPlainText } from "./sanitize";
 import { normalizeBlock, normalizePostInput, ValidationError } from "./validate";
-import { buildToc, isPostLive, readingTimeMinutes, slugify, youtubeId } from "./utils";
+import { buildToc, formatViews, isPostLive, readingTimeMinutes, slugify, youtubeId } from "./utils";
 import type { BlogBlock } from "./types";
 
 describe("sanitizeRichText", () => {
@@ -112,6 +112,12 @@ describe("utils", () => {
     expect(youtubeId("https://youtu.be/dQw4w9WgXcQ")).toBe("dQw4w9WgXcQ");
     expect(youtubeId("https://www.youtube.com/embed/dQw4w9WgXcQ")).toBe("dQw4w9WgXcQ");
     expect(youtubeId("https://vimeo.com/123")).toBeNull();
+  });
+
+  it("formats views like the WordPress counter", () => {
+    expect(formatViews(999)).toBe("999");
+    expect(formatViews(10089)).toBe("10.089k");
+    expect(formatViews(2000)).toBe("2k");
   });
 
   it("slugify and reading time", () => {

@@ -30,6 +30,7 @@ export type BlogBlock =
       buttonLabel: string;
       buttonUrl: string;
     }
+  | { id: string; type: "linkCards"; items: { imageUrl: string; title: string; url: string }[] }
   | { id: string; type: "video"; url: string }
   | { id: string; type: "faq"; title?: string; items: { question: string; answer: string }[] };
 
