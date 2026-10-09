@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react";
 import PlagiarismCheckerTool from "@/app/components/AiTools/PlagiarismCheckerTool/PlagiarismCheckerTool";
 import ToolWithExplore from "@/app/components/AiTools/ToolWithExplore";
+import DoneForYouCard from "@/app/components/AiTools/DoneForYouCard";
 import ToolsLayout from "@/app/components/AiTools/ToolsLayout";
 import { ToolsSuspenseFallback } from "@/app/components/AiTools/ToolsApiLoader";
 import ProductSchema from "@/app/components/ProductSchema";
@@ -18,7 +19,7 @@ export default function PlagiarismCheckerPage() {
         pageUrl={`${base}/tools/plagiarism-checker`}
       />
       <ToolsLayout setFlag={setFlag} flag={flag}>
-        <ToolWithExplore><PlagiarismCheckerTool /></ToolWithExplore>
+        <ToolWithExplore rail={<DoneForYouCard placement="plagiarism_done_for_you" />}><PlagiarismCheckerTool /></ToolWithExplore>
       </ToolsLayout>
     </Suspense>
   );

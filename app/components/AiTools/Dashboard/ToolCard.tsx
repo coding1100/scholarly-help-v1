@@ -32,6 +32,11 @@ export type ToolCardData = {
   keywords?: string[];
   /** Per-tool action label, e.g. "Generate essay". Defaults to "Use tool". */
   cta?: string;
+  /**
+   * Kept out of the dashboard grid and the sidebar. Its routes redirect to a
+   * live tool (see redirects in next.config.js).
+   */
+  hidden?: boolean;
 };
 
 // Note: this project's Tailwind config REPLACES the default palette — only

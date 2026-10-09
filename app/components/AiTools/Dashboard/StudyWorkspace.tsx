@@ -536,7 +536,8 @@ export default function StudyWorkspace() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("sessionId");
 
-  const [activeTab, setActiveTab] = useState<WorkspaceTab>("original");
+  // New content opens on AI Notes; the Original tab stays one click away.
+  const [activeTab, setActiveTab] = useState<WorkspaceTab>("notes");
   // Per-artifact loading so regenerating one tab doesn't disable/​spin the other
   // three (they share no work). Keyed by StudyArtifactType.
   const [loadingByType, setLoadingByType] = useState<
@@ -670,13 +671,13 @@ export default function StudyWorkspace() {
     const onSourceAdded = (event: Event) => {
       const detail = (event as CustomEvent<{ sessionId?: string }>).detail;
       if (!detail?.sessionId || detail.sessionId !== sessionId) return;
-      setActiveTab("original");
+      setActiveTab("notes");
       setRefreshTick((prev) => prev + 1);
     };
     const onSessionChanged = (event: Event) => {
       const detail = (event as CustomEvent<{ sessionId?: string }>).detail;
       if (!detail?.sessionId || detail.sessionId !== sessionId) return;
-      setActiveTab("original");
+      setActiveTab("notes");
       setRefreshTick((prev) => prev + 1);
     };
     const onRecordingStarted = (event: Event) => {

@@ -15,15 +15,16 @@ import { RiDoubleQuotesL } from "react-icons/ri";
 import type { ToolCardData, ToolCategory, ToolGroup } from "./ToolCard";
 
 /**
- * Single source of truth for every live tool shown in the product — the
+ * Single source of truth for every live tool in the product. The
  * dashboard grid (ToolGrid.tsx) and the AI tools sidebar (MTSidebar.tsx)
  * both render from this same list, so the two surfaces can never drift out
- * of sync with which tools actually exist.
+ * of sync with which tools actually exist. Tools marked `hidden` are left
+ * out of both, and their routes redirect (see next.config.js).
  */
 export const TOOLS: ToolCardData[] = [
   // Study tools
   {
-    name: "Study Workspace",
+    name: "AI Tutor",
     description:
       "Upload content and generate notes, summaries, flashcards, quizzes, and tutor help.",
     href: "/tools/study-workspace",
@@ -32,7 +33,7 @@ export const TOOLS: ToolCardData[] = [
     category: "study-tools",
     group: "study-lab",
     keywords: ["notes", "flashcards", "quiz", "summary", "upload"],
-    cta: "Open workspace",
+    cta: "Open AI Tutor",
   },
   {
     name: "Summarizer Tool",
@@ -44,9 +45,10 @@ export const TOOLS: ToolCardData[] = [
     group: "study-lab",
     keywords: ["summary", "summarise", "condense", "tldr", "notes"],
     cta: "Summarize now",
+    hidden: true,
   },
   {
-    name: "Tutor Tool",
+    name: "Tutor (Legacy)",
     description:
       "Upload your material, then research deep-dive, solve assignments Socratically, or take a quiz — all grounded in your own document.",
     href: "/tools/tutor",
@@ -56,6 +58,7 @@ export const TOOLS: ToolCardData[] = [
     group: "study-lab",
     keywords: ["tutor", "explain", "ask", "socratic", "learn"],
     cta: "Ask a question",
+    hidden: true,
   },
   {
     name: "CGPA Calculator",
@@ -73,7 +76,7 @@ export const TOOLS: ToolCardData[] = [
   {
     name: "Essay Studio",
     description:
-      "All-in-one essay builder: thesis, outline, draft generator, AI check & essay grader.",
+      "All-in-one essay builder: thesis, outline, draft generator, plus a discussion board assistant.",
     href: "/tools/essay-studio",
     icon: FiFileText,
     badge: "New",
@@ -85,7 +88,6 @@ export const TOOLS: ToolCardData[] = [
       "draft",
       "write essay",
       "generator",
-      "grader",
       "thesis",
       "outline",
       "discussion post",
@@ -125,6 +127,7 @@ export const TOOLS: ToolCardData[] = [
     group: "writer-lab",
     keywords: ["title", "headline", "name my essay"],
     cta: "Generate title",
+    hidden: true,
   },
   {
     name: "Essay Outline Tool",
@@ -136,6 +139,7 @@ export const TOOLS: ToolCardData[] = [
     group: "writer-lab",
     keywords: ["outline", "structure", "plan", "sections"],
     cta: "Build outline",
+    hidden: true,
   },
   {
     name: "Humanizer Tool",
@@ -196,6 +200,7 @@ export const TOOLS: ToolCardData[] = [
     group: "writer-lab",
     keywords: ["thesis", "statement", "argument", "claim"],
     cta: "Build thesis",
+    hidden: true,
   },
   {
     name: "Research Question Generator",
@@ -218,6 +223,7 @@ export const TOOLS: ToolCardData[] = [
     group: "writer-lab",
     keywords: ["editor", "draft", "research", "write", "document"],
     cta: "Start research",
+    hidden: true,
   },
   {
     name: "Citation Generator",
@@ -244,5 +250,8 @@ export const TOOLS: ToolCardData[] = [
     cta: "Solve equation",
   },
 ];
+
+/** The tools users can browse to: the dashboard grid and the sidebar. */
+export const VISIBLE_TOOLS = TOOLS.filter((tool) => !tool.hidden);
 
 export type { ToolCardData, ToolCategory, ToolGroup };

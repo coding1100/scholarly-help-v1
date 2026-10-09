@@ -5,16 +5,12 @@ import toast from "react-hot-toast";
 import {
   FiCopy,
   FiEdit3,
-  FiMessageCircle,
   FiRefreshCw,
   FiZap,
   FiCheck,
   FiArrowLeft,
 } from "react-icons/fi";
-import {
-  EXPERT_WHATSAPP_HREF,
-  trackExpertWhatsAppClick,
-} from "../Dashboard/ExpertHelpCard";
+import DoneForYouCard from "../DoneForYouCard";
 
 interface DiscussionPostViewProps {
   onBackToStudio: () => void;
@@ -127,7 +123,7 @@ export default function DiscussionPostView({
           <FiArrowLeft className="h-4 w-4" /> Back to Essay Studio
         </button>
         <span className="text-xs font-semibold uppercase tracking-wider text-[#5B6072]">
-          Discussion Board Helper
+          Discussion Board Assistant
         </span>
       </div>
 
@@ -394,27 +390,11 @@ export default function DiscussionPostView({
           </div>
 
           {/* Done for you card */}
-          <div className="flex flex-col gap-2.5 rounded-2xl bg-[#171A2B] p-5 text-white">
-            <span className="self-start rounded-full bg-[#262A44] px-2.5 py-0.5 text-[11px] font-semibold text-[#C7C9FF]">
-              Done-for-you
-            </span>
-            <span className="text-base font-bold">
-              Due by Sunday and working long shifts?
-            </span>
-            <p className="text-xs leading-relaxed text-[#D5D7E3]">
-              Send your weekly discussion board prompt. Our academic experts
-              draft your initial post and two peer responses with real citations.
-            </p>
-            <a
-              href={EXPERT_WHATSAPP_HREF}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => trackExpertWhatsAppClick("discussion_post")}
-              className="mt-1 flex h-10 items-center justify-center gap-2 rounded-xl bg-[#15803D] text-xs font-semibold text-white shadow-sm hover:bg-[#166534]"
-            >
-              <FiMessageCircle className="h-4 w-4" /> Message on WhatsApp
-            </a>
-          </div>
+          <DoneForYouCard
+            placement="discussion_post"
+            title="Due by Sunday and working long shifts?"
+            body="Send your weekly discussion board prompt. Our academic experts draft your initial post and two peer responses with real citations."
+          />
         </div>
       </div>
     </div>

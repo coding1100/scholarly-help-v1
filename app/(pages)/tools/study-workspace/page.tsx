@@ -12,7 +12,7 @@ export default function StudyWorkspacePage() {
   return (
     <Suspense fallback={<div className="h-72 animate-pulse bg-gray-200" />}>
       <ProductSchema
-        productTitle="Study Workspace - Scholarly Help"
+        productTitle="AI Tutor - Scholarly Help"
         metaDescription="Organize study materials and learn faster with AI-generated notes, flashcards, quizzes, and tutoring in one workspace."
         pageUrl={`${baseUrl}/tools/study-workspace`}
       />

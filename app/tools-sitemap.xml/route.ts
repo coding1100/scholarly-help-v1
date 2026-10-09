@@ -5,20 +5,15 @@
 // Service pages stay in public/sitemap.xml.
 
 const TOOL_PATHS = [
-  "/tools/",
-
   // Tool landing pages
   "/tools/ai-course-planner/",
   "/tools/ai-detector/",
   "/tools/ai-essay-generator/",
-  "/tools/ai-essay-title-generator/",
   "/tools/ai-grammar-check/",
   "/tools/ai-humanizer/",
   "/tools/ai-math-solver/",
   "/tools/ai-paraphraser/",
   "/tools/ai-study-workspace/",
-  "/tools/ai-summarizer/",
-  "/tools/ai-thesis-statement-generator/",
   "/tools/citation-generator/",
   "/tools/research-question-generator/",
 ] as const;

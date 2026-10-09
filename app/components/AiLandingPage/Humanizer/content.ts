@@ -100,7 +100,7 @@ export const howItWorksContent = {
   ctaTitlePill: "tools",
   ctaTitleEnd: "in one place?",
   ctaBody:
-    "Your free ScholarlyHelp dashboard keeps the AI humanizer, paraphraser, summarizer, essay title generator, and citation tool ready in one place.",
+    "Your free ScholarlyHelp dashboard keeps the AI humanizer, paraphraser, AI tutor, essay studio, and citation tool ready in one place.",
   ctaButton: "Explore all tools →",
   ctaHref: "/tools",
 };

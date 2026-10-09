@@ -79,7 +79,7 @@ export const aiDetectorContent: ToolLandingContent = {
     ],
     ctaTitle: "Want access to all ScholarlyHelp tools?",
     ctaBody:
-      "Sign up for free to access the humaniser, paraphraser, summarizer, citation tool, and more from one dashboard.",
+      "Sign up for free to access the humaniser, paraphraser, AI tutor, citation tool, and more from one dashboard.",
     ctaButton: "Explore all tools →",
     ctaHref: "/tools",
   },

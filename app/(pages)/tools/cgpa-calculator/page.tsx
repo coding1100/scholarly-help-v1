@@ -1,13 +1,14 @@
-﻿"use client";
+"use client";
 
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
+import ToolsLayout from "@/app/components/AiTools/ToolsLayout";
 import CollegeGpaCalculator from "@/app/components/AiTools/CgpaTool/CollegeGpaCalculator";
 import { ToolsSuspenseFallback } from "@/app/components/AiTools/ToolsApiLoader";
+import ToolWithExplore from "@/app/components/AiTools/ToolWithExplore";
 import ProductSchema from "@/app/components/ProductSchema";
-import ToolGrid from "@/app/components/AiTools/Dashboard/ToolGrid";
-// import ThemeToggle from "@/app/components/AiLandingPage/ThemeToggle";
 
-export default function MathSolverPage() {
+export default function CgpaCalculatorPage() {
+  const [flag, setFlag] = useState<boolean>(false);
   const rawBaseUrl =
     process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
   const baseUrl = rawBaseUrl.endsWith("/")
@@ -15,19 +16,17 @@ export default function MathSolverPage() {
     : rawBaseUrl;
 
   return (
-    <Suspense
-      fallback={
-        <ToolsSuspenseFallback />
-      }
-    >
+    <Suspense fallback={<ToolsSuspenseFallback />}>
       <ProductSchema
         productTitle="CGPA Calculator - Scholarly Help"
         metaDescription="Calculate your CGPA and GPA instantly with a free CGPA calculator for students. Add courses, credits, and grades to track your academic performance."
         pageUrl={`${baseUrl}/tools/cgpa-calculator`}
       />
-      {/* <ThemeToggle top="top-12" /> */}
-      <CollegeGpaCalculator />
-      <ToolGrid />
+      <ToolsLayout setFlag={setFlag} flag={flag}>
+        <ToolWithExplore>
+          <CollegeGpaCalculator />
+        </ToolWithExplore>
+      </ToolsLayout>
     </Suspense>
   );
 }

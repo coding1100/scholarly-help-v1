@@ -39,7 +39,7 @@ function TutorPageContent() {
   return (
     <>
       <ProductSchema
-        productTitle="AI Tutor - Scholarly Help"
+        productTitle="Tutor (Legacy) - Scholarly Help"
         metaDescription="Learn from your course material with source-grounded tutoring, adaptive practice, and progress tracking."
         pageUrl={`${baseUrl}/tools/tutor`}
       />

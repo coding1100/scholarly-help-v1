@@ -17,8 +17,8 @@ export default function Page() {
   return (
     <Suspense fallback={<ToolsSuspenseFallback />}>
       <ProductSchema
-        productTitle="AI Essay Studio & Writing Lab | All-in-One Essay Builder"
-        metaDescription="Build thesis statements, generate detailed outlines, draft structured essays, check AI detection scores, and grade against academic rubrics in one unified studio."
+        productTitle="Essay Studio & Writing Lab | All-in-One Essay Builder"
+        metaDescription="Build thesis statements, generate detailed outlines, draft structured essays, and write discussion board posts in one unified studio."
         pageUrl={`${normalizedBaseUrl}/tools/essay-studio`}
       />
       <ToolsLayout setFlag={setFlag} flag={flag}>

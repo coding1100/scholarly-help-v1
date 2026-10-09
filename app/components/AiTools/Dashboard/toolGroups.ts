@@ -1,4 +1,4 @@
-import { TOOLS } from "./toolsData";
+import { VISIBLE_TOOLS } from "./toolsData";
 import type { ToolCardData, ToolGroup } from "./ToolCard";
 
 /**
@@ -24,10 +24,9 @@ const GROUP_LEAD_ORDER: Record<ToolGroup, string[]> = {
     "/tools/plagiarism-checker",
   ],
   "study-lab": [
-    "/tools/tutor",
+    "/tools/study-workspace",
     "/tools/math-solver",
     "/tools/cgpa-calculator",
-    "/tools/study-workspace",
   ],
   "writer-lab": [
     "/tools/essay-studio",
@@ -56,7 +55,7 @@ export function groupedTools(): Array<{
     ...group,
     tools: orderWithinGroup(
       group.key,
-      TOOLS.filter((tool) => tool.group === group.key),
+      VISIBLE_TOOLS.filter((tool) => tool.group === group.key),
     ),
   }));
 }
@@ -68,13 +67,13 @@ export function groupedTools(): Array<{
  */
 const TOP_TOOL_HREFS = [
   "/tools/ai-detector-tool",
-  "/tools/tutor",
+  "/tools/study-workspace",
   "/tools/plagiarism-checker",
   "/tools/essay-studio",
 ];
 
 export const TOP_TOOLS: ToolCardData[] = TOP_TOOL_HREFS.map((href) =>
-  TOOLS.find((tool) => tool.href === href),
+  VISIBLE_TOOLS.find((tool) => tool.href === href),
 ).filter((tool): tool is ToolCardData => Boolean(tool));
 
 /** Case-insensitive match over name, description and keywords. */
