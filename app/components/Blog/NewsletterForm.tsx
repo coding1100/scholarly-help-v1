@@ -26,7 +26,7 @@ export default function NewsletterForm() {
 
   return (
     <div className="blog-newsletter">
-      <h3>Get the latest research tips and academic insights delivered</h3>
+      <div className="blog-newsletter-title">Get the latest research tips and academic insights delivered</div>
       <p>Join 25,000+ students worldwide</p>
       {state.status === "done" ? (
         <p className="blog-form-msg" role="status">{state.message}</p>

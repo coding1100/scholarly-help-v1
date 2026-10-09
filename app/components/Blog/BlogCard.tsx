@@ -22,9 +22,10 @@ export function BlogCard({ post, category, priority }: { post: PostSummary; cate
         )}
       </Link>
       <div className="blog-card-body">
-        <h2 className="blog-card-title">
+        {/* Not a heading, as in the WordPress template (keeps the page outline to the article). */}
+        <div className="blog-card-title">
           <Link href={href}>{post.title}</Link>
-        </h2>
+        </div>
         <Link href={href} className="blog-card-more">
           Read More »
         </Link>

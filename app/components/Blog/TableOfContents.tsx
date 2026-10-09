@@ -26,7 +26,7 @@ export default function TableOfContents({ items }: { items: TocItem[] }) {
   return (
     <nav className="blog-card-panel blog-toc" aria-label="Table of contents">
       <div className="blog-toc-head">
-        <h2 className="blog-side-title" style={{ margin: 0 }}>Table of Contents</h2>
+        <div className="blog-side-title" style={{ margin: 0 }}>Table of Contents</div>
         <button type="button" className="blog-toc-btn" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-label="Toggle table of contents">
           <ListIcon className="h-4 w-4" />
         </button>

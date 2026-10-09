@@ -133,7 +133,7 @@ export default function PostView(data: PostViewData) {
           {post.heroCta && (
             <div className="blog-hero-cta">
               <div>
-                <h2>{post.heroCta.heading}</h2>
+                <h4 className="blog-hero-cta-title">{post.heroCta.heading}</h4>
                 {post.heroCta.text && <p>{post.heroCta.text}</p>}
               </div>
               <CtaButton label={post.heroCta.buttonLabel} url={post.heroCta.buttonUrl} />
@@ -163,7 +163,7 @@ export default function PostView(data: PostViewData) {
             <TableOfContents items={toc} />
             {preview ? null : <ViewCounter postId={post._id} initialViews={post.views} offset={post.importedViews ?? 0} />}
             <div className="blog-card-panel blog-side-center">
-              <h2 className="blog-side-title">Share This Article</h2>
+              <div className="blog-side-title">Share This Article</div>
               <div className="blog-share">
                 <a href={`https://wa.me/?text=${shareTitle}%20${shareUrl}`} target="_blank" rel="noopener noreferrer" aria-label="Share on WhatsApp">{ShareIcons.whatsapp}</a>
                 <a href={`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`} target="_blank" rel="noopener noreferrer" aria-label="Share on Facebook">{ShareIcons.facebook}</a>
@@ -173,7 +173,7 @@ export default function PostView(data: PostViewData) {
             </div>
             {related.length > 0 && (
               <div className="blog-card-panel">
-                <h2 className="blog-side-title blog-side-center">Related Articles</h2>
+                <div className="blog-side-title blog-side-center">Related Articles</div>
                 <div className="blog-related">
                   {related.map((r) => (
                     <Link key={r._id} href={postUrl(r.slug)}>
@@ -200,7 +200,7 @@ export default function PostView(data: PostViewData) {
               )}
             </div>
             <div>
-              <h2>{author.name}</h2>
+              <div className="blog-author-name">{author.name}</div>
               {author.bio && <p>{author.bio}</p>}
               <Link href={`/blog/author/${author.slug}/`} className="blog-outline-btn">View More From {author.name}</Link>
             </div>
@@ -209,7 +209,7 @@ export default function PostView(data: PostViewData) {
 
         {recent.length > 0 && (
           <section className="blog-container" aria-labelledby="recent-posts">
-            <h2 id="recent-posts" className="blog-section-title">Recent Posts</h2>
+            <div id="recent-posts" className="blog-section-title">Recent Posts</div>
             <div className="blog-grid">
               {recent.map((r) => (
                 <BlogCard key={r._id} post={r} category={r.categoryId ? byId.get(r.categoryId) : undefined} />
@@ -220,7 +220,7 @@ export default function PostView(data: PostViewData) {
 
         {post.finalCta && (
           <section className="blog-final-cta">
-            <h2>{post.finalCta.heading}</h2>
+            <h5 className="blog-final-cta-title">{post.finalCta.heading}</h5>
             {post.finalCta.text && <p>{post.finalCta.text}</p>}
             <CtaButton label={post.finalCta.buttonLabel} url={post.finalCta.buttonUrl} />
           </section>

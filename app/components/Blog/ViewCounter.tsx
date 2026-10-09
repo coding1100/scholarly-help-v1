@@ -30,7 +30,7 @@ export default function ViewCounter({ postId, initialViews, offset = 0 }: { post
 
   return (
     <div className="blog-card-panel blog-side-center">
-      <h2 className="blog-side-title">Article Engagement</h2>
+      <div className="blog-side-title">Article Engagement</div>
       <div className="blog-views">
         <strong>{formatViews(views + offset)}</strong>
         <span>Total Views</span>

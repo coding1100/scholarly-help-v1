@@ -57,7 +57,7 @@ export function HelpBoxView({ help }: { help: HelpBox }) {
     ) : null;
   return (
     <aside className="blog-help">
-      <h2>{help.heading}</h2>
+      <div className="blog-help-title">{help.heading}</div>
       {help.text && <p>{help.text}</p>}
       <div className="blog-help-actions">
         {button(help.primaryLabel, help.primaryUrl, "blog-pill blog-pill-solid")}
@@ -100,7 +100,7 @@ export function BlogBlocks({
                   {block.items.map((item, i) => (
                     <div key={i} className="blog-feature">
                       <FeatureIconSvg icon={item.icon} />
-                      <h3>{item.title}</h3>
+                      <div className="blog-feature-title">{item.title}</div>
                       {item.text && <p>{item.text}</p>}
                     </div>
                   ))}
@@ -111,7 +111,7 @@ export function BlogBlocks({
             return (
               <aside key={block.id} className="blog-cta">
                 <div>
-                  <h3>{block.heading}</h3>
+                  <div className="blog-cta-title">{block.heading}</div>
                   {block.text && <p>{block.text}</p>}
                   {block.bullets && block.bullets.length > 0 && (
                     <ul className="blog-cta-list">
@@ -132,7 +132,7 @@ export function BlogBlocks({
                         <Image src={item.imageUrl} alt="" fill sizes="(max-width: 640px) 100vw, 240px" style={{ objectFit: "cover" }} />
                       </span>
                     )}
-                    <span className="blog-link-card-title">{item.title}</span>
+                    <h3 className="blog-link-card-title">{item.title}</h3>
                   </Link>
                 ))}
               </div>
