@@ -1,7 +1,8 @@
 /*
  * WordPress -> Next.js blog migration. Re-runnable: posts are matched by their
  * WordPress id, terms by slug, and uploaded images are cached, so running it
- * again updates content instead of duplicating it.
+ * again updates content instead of duplicating it. Real view counts are never
+ * overwritten; the WordPress count is stored separately as importedViews.
  *
  *   npx vite-node -c vitest.config.ts scripts/blog-migrate/migrate.ts -- [options]
  *
@@ -201,7 +202,7 @@ async function migrateIndexSettings(c: BlogCollections, images: ImageMigrator) {
     indexIntro: intro.slice(0, 5),
     indexImageUrl: await images.map(img),
   };
-  await c.settings.updateOne({ _id: "settings" }, { $set: settings, $setOnInsert: { commentsEnabled: true } }, { upsert: true });
+  await c.settings.updateOne({ _id: "settings" }, { $set: settings, $setOnInsert: { commentsEnabled: false } }, { upsert: true });
   return settings;
 }
 
@@ -287,16 +288,16 @@ async function main() {
         row.notes = page.warnings.join("; ");
 
         if (c) {
-          const existing = await c.posts.findOne({ wpId: wp.id }, { projection: { _id: 1, views: 1 } });
+          const existing = await c.posts.findOne({ wpId: wp.id }, { projection: { _id: 1 } });
           const now = `${wp.modified_gmt}Z`;
           if (existing) {
             await c.posts.updateOne(
               { _id: existing._id },
-              { $set: { ...input, updatedAt: now, views: Math.max(existing.views ?? 0, page.views) } },
+              { $set: { ...input, updatedAt: now, importedViews: page.views } },
             );
             row.status = "updated";
           } else {
-            const doc: BlogPost = { _id: randomUUID(), ...input, views: page.views, wpId: wp.id, createdAt: `${wp.date_gmt}Z`, updatedAt: now };
+            const doc: BlogPost = { _id: randomUUID(), ...input, views: 0, importedViews: page.views, wpId: wp.id, createdAt: `${wp.date_gmt}Z`, updatedAt: now };
             await c.posts.insertOne(doc);
             row.status = "created";
           }

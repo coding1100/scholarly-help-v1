@@ -69,7 +69,10 @@ export type BlogPost = {
   blocks: BlogBlock[];
   seo: PostSeo;
   commentsEnabled: boolean;
+  /** Real views counted by this site (one per visitor session; admins and bots excluded). */
   views: number;
+  /** View count carried over from WordPress; added to `views` only for the public counter. */
+  importedViews?: number;
   wpId?: number; // set by the WordPress migration, used to re-sync idempotently
   createdAt: string;
   updatedAt: string;
@@ -123,7 +126,7 @@ export type BlogSettings = {
 };
 
 export const DEFAULT_BLOG_SETTINGS: BlogSettings = {
-  commentsEnabled: true,
+  commentsEnabled: false,
   indexTitle: "Scholarly Help Blogs",
   indexIntro: [
     "Need help with school or college? Our blog is here for you. Find quick tips, clear guides, and honest advice to make your academic journey easier.",

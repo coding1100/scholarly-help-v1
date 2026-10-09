@@ -161,7 +161,7 @@ export default function PostView(data: PostViewData) {
 
           <aside className="blog-sidebar">
             <TableOfContents items={toc} />
-            {preview ? null : <ViewCounter postId={post._id} initialViews={post.views} />}
+            {preview ? null : <ViewCounter postId={post._id} initialViews={post.views} offset={post.importedViews ?? 0} />}
             <div className="blog-card-panel blog-side-center">
               <h2 className="blog-side-title">Share This Article</h2>
               <div className="blog-share">

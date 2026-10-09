@@ -15,6 +15,7 @@ type Row = {
   categoryId: string | null;
   updatedAt: string;
   views: number;
+  importedViews?: number;
 };
 
 function statusOf(row: Row) {
@@ -83,7 +84,7 @@ export default function BlogPostsPage() {
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Category</th>
               <th className="px-4 py-3">Publish date</th>
-              <th className="px-4 py-3 text-right">Views</th>
+              <th className="px-4 py-3 text-right" title="Real visitor views counted by this site. Admins and bots are not counted.">Real views</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
@@ -105,7 +106,12 @@ export default function BlogPostsPage() {
                   <td className="px-4 py-3"><span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${s.cls}`}>{s.label}</span></td>
                   <td className="px-4 py-3 text-[#374151]">{p.categoryId ? catName.get(p.categoryId) ?? "—" : "—"}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-[#374151]">{p.publishAt ? new Date(p.publishAt).toLocaleDateString() : "—"}</td>
-                  <td className="px-4 py-3 text-right text-[#374151]">{p.views.toLocaleString()}</td>
+                  <td className="px-4 py-3 text-right text-[#374151]">
+                    {p.views.toLocaleString()}
+                    {p.importedViews ? (
+                      <div className="text-xs text-[#9ca3af]" title="Shown publicly on top of real views">+{p.importedViews.toLocaleString()} from WordPress</div>
+                    ) : null}
+                  </td>
                   <td className="whitespace-nowrap px-4 py-3 text-right">
                     <Link href={`/admin/blog/${p._id}`} className="mr-3 text-[#283c88] hover:underline">Edit</Link>
                     {s.label === "Published" ? (

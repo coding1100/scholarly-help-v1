@@ -32,6 +32,13 @@ Template parts (edited once in Admin → Blog → Settings, not per post):
 - The "Need Professional Help with Your Research?" box is shown at the end of every article
   (on WordPress its buttons linked to `#`; the new defaults are `/order/` and `/academic-research/`)
 
+View counts: WordPress's counter started every post near 10,000, so its numbers are stored as
+`importedViews` and only added to the public "Total Views" figure. The admin shows real views,
+counted from zero (one per visitor session; signed-in admins and bots are not counted). Re-running
+the migration never overwrites real views.
+
+Comments are off by default; turn them on in Admin → Blog → Settings.
+
 Reported in the migration report:
 - CTA buttons that have no link on WordPress (the heading/text is kept, the button is dropped)
 

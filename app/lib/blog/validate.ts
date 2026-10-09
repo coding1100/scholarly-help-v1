@@ -143,7 +143,7 @@ export function normalizeSettingsInput(body: unknown): BlogSettings {
   const help = obj(o.helpBox);
   const d = DEFAULT_BLOG_SETTINGS;
   return {
-    commentsEnabled: o.commentsEnabled !== false,
+    commentsEnabled: o.commentsEnabled === true,
     indexTitle: str(o.indexTitle, 120) || d.indexTitle,
     indexIntro: arr(o.indexIntro).map((p) => str(p, 1000)).filter(Boolean).slice(0, 5),
     indexImageUrl: safeUrl(o.indexImageUrl),

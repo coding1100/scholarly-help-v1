@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
     const posts = await c.posts
       .find(query, {
-        projection: { title: 1, slug: 1, status: 1, publishAt: 1, categoryId: 1, authorId: 1, updatedAt: 1, views: 1 },
+        projection: { title: 1, slug: 1, status: 1, publishAt: 1, categoryId: 1, authorId: 1, updatedAt: 1, views: 1, importedViews: 1 },
       })
       .sort({ updatedAt: -1 })
       .limit(1000)

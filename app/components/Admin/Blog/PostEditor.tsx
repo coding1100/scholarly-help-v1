@@ -12,7 +12,7 @@ import { slugify } from "@/app/lib/blog/utils";
 import BlockEditor from "./BlockEditor";
 import { Field, ImageField, inputClass, Panel } from "./fields";
 
-type Draft = Omit<BlogPost, "_id" | "views" | "createdAt" | "updatedAt" | "wpId">;
+type Draft = Omit<BlogPost, "_id" | "views" | "importedViews" | "createdAt" | "updatedAt" | "wpId">;
 
 const EMPTY: Draft = {
   title: "",
@@ -65,7 +65,7 @@ export default function PostEditor({ postId }: { postId?: string }) {
   const { showSuccess } = useAdminSuccess();
   const pageTitle = useAdminPageTitleOptional();
   const [draft, setDraft] = useState<Draft>(EMPTY);
-  const [meta, setMeta] = useState<{ views: number; updatedAt?: string; slug?: string } | null>(null);
+  const [meta, setMeta] = useState<{ views: number; importedViews?: number; updatedAt?: string; slug?: string } | null>(null);
   const [slugTouched, setSlugTouched] = useState(!!postId);
   const [categories, setCategories] = useState<BlogTerm[]>([]);
   const [tags, setTags] = useState<BlogTerm[]>([]);
@@ -96,9 +96,9 @@ export default function PostEditor({ postId }: { postId?: string }) {
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error("Post not found"))))
       .then(({ post }: { post: BlogPost }) => {
         if (!active) return;
-        const { _id, views, createdAt, updatedAt, wpId, ...rest } = post;
+        const { _id, views, importedViews, createdAt, updatedAt, wpId, ...rest } = post;
         setDraft({ ...EMPTY, ...rest });
-        setMeta({ views, updatedAt, slug: post.slug });
+        setMeta({ views, importedViews, updatedAt, slug: post.slug });
       })
       .catch((e) => active && setError(e.message))
       .finally(() => active && setLoading(false));
@@ -135,9 +135,9 @@ export default function PostEditor({ postId }: { postId?: string }) {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Save failed");
       const saved: BlogPost = data.post;
-      const { _id, views, createdAt, updatedAt, wpId, ...rest } = saved;
+      const { _id, views, importedViews, createdAt, updatedAt, wpId, ...rest } = saved;
       setDraft({ ...EMPTY, ...rest });
-      setMeta({ views, updatedAt, slug: saved.slug });
+      setMeta({ views, importedViews, updatedAt, slug: saved.slug });
       setDirty(false);
       const wasPublished = draft.status === "published";
       const scheduled = saved.status === "published" && !!saved.publishAt && new Date(saved.publishAt) > new Date();
@@ -180,7 +180,12 @@ export default function PostEditor({ postId }: { postId?: string }) {
           <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${statusLabel === "Published" ? "bg-[#dcfce7] text-[#166534]" : statusLabel === "Scheduled" ? "bg-[#dbeafe] text-[#1e40af]" : "bg-[#e5e7eb] text-[#374151]"}`}>
             {statusLabel}
           </span>
-          {meta && <span>{meta.views} views</span>}
+          {meta && (
+            <span title="Real visitor views counted by this site. Admins and bots are not counted.">
+              {meta.views.toLocaleString()} real views
+              {meta.importedViews ? ` (+${meta.importedViews.toLocaleString()} from WordPress shown publicly)` : ""}
+            </span>
+          )}
           {meta?.updatedAt && <span>Saved {new Date(meta.updatedAt).toLocaleString()}</span>}
           {dirty && <span className="font-semibold text-[#c99700]">Unsaved changes</span>}
         </div>
