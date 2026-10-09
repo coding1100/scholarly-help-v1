@@ -18,6 +18,12 @@ describe("sanitizeRichText", () => {
     expect(html).toBe("<h2>T</h2><ul><li><strong>a</strong></li></ul><table><tbody><tr><td>1</td></tr></tbody></table>");
   });
 
+  it("drops empty paragraphs but keeps image paragraphs", () => {
+    expect(sanitizeRichText('<p>a</p><p></p><p>  </p><p><img src="https://x.com/i.png" alt=""></p>')).toBe(
+      '<p>a</p><p><img src="https://x.com/i.png" alt="" /></p>',
+    );
+  });
+
   it("opens external links in a new tab safely, leaves internal links alone", () => {
     expect(sanitizeRichText('<a href="https://example.com">x</a>')).toContain('rel="noopener noreferrer"');
     expect(sanitizeRichText('<a href="/homework/" target="_blank">x</a>')).toBe('<a href="/homework/">x</a>');

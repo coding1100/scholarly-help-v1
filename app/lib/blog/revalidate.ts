@@ -11,8 +11,6 @@ export function revalidateBlog() {
     revalidatePath("/(pages)/blog", "page");
     revalidatePath("/blog");
     revalidatePath("/blog/");
-    revalidatePath("/blog/feed");
-    revalidatePath("/blog-sitemap.xml");
   } catch (error) {
     console.error("Blog revalidation failed:", error);
   }

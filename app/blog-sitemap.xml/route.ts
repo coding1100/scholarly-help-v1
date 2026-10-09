@@ -3,7 +3,9 @@
 import { getBlogCollections } from "@/app/lib/blog/db";
 import { liveFilter, postUrl, siteBaseUrl } from "@/app/lib/blog/utils";
 
-export const revalidate = 300;
+// Rendered per request so new posts appear immediately (a cheap query; the CDN
+// still caches it briefly via the site's s-maxage header).
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   const base = siteBaseUrl();

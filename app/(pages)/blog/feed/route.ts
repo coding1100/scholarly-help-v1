@@ -2,7 +2,9 @@ import { getBlogCollections } from "@/app/lib/blog/db";
 import { liveFilter, postUrl, siteBaseUrl } from "@/app/lib/blog/utils";
 
 // RSS 2.0 feed at /blog/feed/ (same URL WordPress used).
-export const revalidate = 300;
+// Rendered per request so new posts appear immediately (a cheap query; the CDN
+// still caches it briefly via the site's s-maxage header).
+export const dynamic = "force-dynamic";
 
 const xml = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");

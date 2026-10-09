@@ -18,6 +18,8 @@ const RICH_TEXT_OPTIONS: sanitizeHtml.IOptions = {
   allowedSchemes: ["http", "https", "mailto", "tel"],
   allowedSchemesAppliedToAttributes: ["href", "src"],
   allowProtocolRelative: false,
+  // Drop empty paragraphs (the editor leaves a trailing <p></p>), but keep ones holding an image.
+  exclusiveFilter: (frame) => frame.tag === "p" && !frame.text.trim() && frame.mediaChildren.length === 0,
   transformTags: {
     a: (tagName, attribs) => {
       const href = attribs.href || "";
