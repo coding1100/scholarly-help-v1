@@ -23,6 +23,18 @@ function gradesNeededForTarget(
   return requiredGpa;
 }
 
+function isFilled(course: Course) {
+  return Boolean(
+    course.name.trim() || course.gradeLetter || course.credits.trim(),
+  );
+}
+
+/** Keeps exactly one empty row at the end, so there is always a row to type into. */
+function withTrailingEmptyRow(courses: Course[]) {
+  const last = courses[courses.length - 1];
+  return !last || isFilled(last) ? [...courses, createEmptyCourse()] : courses;
+}
+
 export default function CollegeGpaCalculator() {
   const initial = useMemo(() => createInitialState(), []);
   const [state, setState] = useState<CalculatorState>(initial);
@@ -47,15 +59,11 @@ export default function CollegeGpaCalculator() {
       const courses = prev.semesters[0].courses.map((c) =>
         c.id === id ? { ...c, ...patch } : c,
       );
-      const last = courses[courses.length - 1];
-      const lastIsFilled =
-        last && (last.name.trim() || last.gradeLetter || last.credits.trim());
-      const nextCourses = lastIsFilled
-        ? [...courses, createEmptyCourse()]
-        : courses;
       return {
         ...prev,
-        semesters: [{ ...prev.semesters[0], courses: nextCourses }],
+        semesters: [
+          { ...prev.semesters[0], courses: withTrailingEmptyRow(courses) },
+        ],
       };
     });
   }
@@ -66,10 +74,7 @@ export default function CollegeGpaCalculator() {
       return {
         ...prev,
         semesters: [
-          {
-            ...prev.semesters[0],
-            courses: courses.length ? courses : [createEmptyCourse()],
-          },
+          { ...prev.semesters[0], courses: withTrailingEmptyRow(courses) },
         ],
       };
     });
@@ -116,7 +121,7 @@ export default function CollegeGpaCalculator() {
             </div>
 
             <div className="flex flex-col gap-4">
-              {semester.courses.map((course) => (
+              {semester.courses.map((course, index) => (
                 <div
                   key={course.id}
                   className="grid grid-cols-1 items-center gap-2 sm:grid-cols-[1fr_130px_96px_28px] sm:gap-4"
@@ -160,7 +165,10 @@ export default function CollegeGpaCalculator() {
                     type="button"
                     onClick={() => removeCourse(course.id)}
                     aria-label="Remove course"
-                    className="flex h-8 w-8 items-center justify-center self-center justify-self-end rounded-md text-slate-300 hover:text-slate-500 dark:text-slate-600 dark:hover:text-slate-400"
+                    disabled={
+                      index === semester.courses.length - 1 && !isFilled(course)
+                    }
+                    className="flex h-8 w-8 disabled:invisible items-center justify-center self-center justify-self-end rounded-md text-slate-300 hover:text-slate-500 dark:text-slate-600 dark:hover:text-slate-400"
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                       <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -185,7 +193,7 @@ export default function CollegeGpaCalculator() {
                 className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
                   state.preferences.includePreviousInCgpa
                     ? "bg-[#565add]"
-                    : "bg-slate-200 dark:bg-slate-700"
+                    : "bg-gray-300 dark:bg-gray-600"
                 }`}
               >
                 <span
@@ -242,6 +250,48 @@ export default function CollegeGpaCalculator() {
 
           {/* Right: result cards */}
           <div className="flex flex-col gap-5">
+            <div className="rounded-2xl bg-[#0f1729] p-6 text-white shadow-sm">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-xs text-slate-300">Semester GPA</div>
+                  <div className="mt-1.5 text-3xl font-bold text-white">
+                    {formatGpaMaybe(semesterTotals.gpa)}
+                  </div>
+                  <div className="mt-1.5 text-xs text-slate-400">
+                    {semesterTotals.totalCredits} credits
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-slate-300">Cumulative GPA</div>
+                  <div className="mt-1.5 text-3xl font-bold text-[#ffb648]">
+                    {formatGpaMaybe(cumulativeTotals.cgpa)}
+                  </div>
+                  <div className="mt-1.5 text-xs text-slate-400">
+                    {cumulativeTotals.finalCredits} credits
+                  </div>
+                </div>
+              </div>
+              <ShowCalculation
+                semesterTotals={semesterTotals}
+                cumulativeTotals={cumulativeTotals}
+              />
+            </div>
+
+            {needed !== null ? (
+              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                  {needed} away from a {targetGpa.toFixed(1)}
+                </div>
+                <a
+                  href="#calculation"
+                  className="mt-2 inline-flex items-center gap-1.5 text-sm text-[#565add] hover:underline"
+                >
+                  See exactly what grades you need next term
+                  <FaArrowRight className="text-[11px]" aria-hidden="true" />
+                </a>
+              </div>
+            ) : null}
+
             <DoneForYouCard
               placement="cgpa_calculator_card"
               title="Working full-time while taking classes?"

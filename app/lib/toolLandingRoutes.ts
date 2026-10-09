@@ -1,4 +1,4 @@
-const TOOL_LANDING_DESTINATIONS: Readonly<Record<string, string>> = {
+export const TOOL_LANDING_DESTINATIONS: Readonly<Record<string, string>> = {
   "/tools/ai-academic-research": "/tools/academic-research-assistant",
   "/tools/ai-course-planner": "/tools/course-planner",
   "/tools/ai-detector": "/tools/ai-detector-tool",

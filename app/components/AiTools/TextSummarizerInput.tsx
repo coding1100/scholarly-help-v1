@@ -16,9 +16,8 @@ interface TextSummarizerInputProps {
   uploadButtonText?: string;
   showWordLimit?: boolean;
   /**
-   * Lets long content scroll inside the textarea (visible scrollbar) instead
-   * of being clipped by the default overflow-hidden. Opt-in so existing tools
-   * keep their current look.
+   * Taller textarea (h-72 instead of h-48). Both sizes scroll with a visible
+   * scrollbar once the text is longer than the box.
    */
   scrollable?: boolean;
   /** Optional content (e.g. a score badge) rendered right-aligned in the header, next to the title. */
@@ -157,7 +156,7 @@ const TextSummarizerInput: React.FC<TextSummarizerInputProps> = ({
             className={`w-full p-3 rounded-md focus:outline-none resize-none text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors duration-300 ${
               scrollable
                 ? "h-72 overflow-y-auto custom-scrollbar"
-                : "h-48 overflow-hidden scrollbar-hide"
+                : "h-48 overflow-y-auto custom-scrollbar"
             }`}
             placeholder={placeholder}
             value={inputText}
@@ -224,7 +223,7 @@ const TextSummarizerInput: React.FC<TextSummarizerInputProps> = ({
           className={`w-full p-3 py-4 rounded-md focus:outline-none resize-none text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors duration-300 ${
             scrollable
               ? "h-72 overflow-y-auto custom-scrollbar"
-              : "h-48 overflow-hidden scrollbar-hide"
+              : "h-48 overflow-y-auto custom-scrollbar"
           }`}
           placeholder={placeholder}
           value={inputText}
