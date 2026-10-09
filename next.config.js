@@ -190,8 +190,6 @@ const nextConfig = {
         '/tools/academic-research-assistant': '/tools/essay-studio/',
         '/tools/ai-academic-research': '/tools/essay-studio/',
         '/academic-research': '/tools/essay-studio/',
-        // The tools hub was the Academic Research landing page.
-        '/tools': '/tools/dashboard/',
       }).map(([source, destination]) => ({
         source,
         destination,

@@ -5,6 +5,8 @@
 // Service pages stay in public/sitemap.xml.
 
 const TOOL_PATHS = [
+  "/tools/",
+
   // Tool landing pages
   "/tools/ai-course-planner/",
   "/tools/ai-detector/",

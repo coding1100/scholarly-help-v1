@@ -11,6 +11,7 @@ import Faq from "@/app/components/LandingPage/Faq";
 import { getPageData } from "@/app/lib/mongodb";
 import { AcademicResearchDataProvider } from "./AcademicResearchDataProvider";
 import { mergeAcademicResearchContent } from "@/app/components/MainToolLanding/mergeAcademicResearchContent";
+import { withoutHiddenPickTools } from "@/app/lib/hiddenToolLinks";
 import { defaultAcademicResearchContent } from "@/app/components/MainToolLanding/MainToolContent";
 import DeadLine from "@/app/components/MainToolLanding/DeadLine";
 import { ExpertQuoteModalProvider } from "@/app/components/MainToolLanding/ExpertQuoteModal";
@@ -32,7 +33,11 @@ interface PageProps {}
 
 const Page = async ({}: PageProps) => {
   const pageData = await fetchAcademicResearchData();
-  const content = mergeAcademicResearchContent(pageData);
+  const merged = mergeAcademicResearchContent(pageData);
+  const content = {
+    ...merged,
+    pickSection: withoutHiddenPickTools(merged.pickSection),
+  };
   const rawBaseUrl =
     process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
   const baseUrl = rawBaseUrl.endsWith("/")
