@@ -57,7 +57,7 @@ const ToolLanding = ({ content: c, tool, hero }: ToolLandingProps) => (
           {c.hero.badgeIcon && <span aria-hidden>{c.hero.badgeIcon}</span>}
           {c.hero.badge}
         </span>
-        <h1 className="mt-7 text-4xl font-bold leading-[1.15] text-[#17172B] sm:text-5xl md:text-[56px]">
+        <h1 className="mt-7 text-4xl font-bold leading-[1.15] text-[#17172B] sm:text-5xl sm:leading-[1.15] md:text-[56px]">
           {c.hero.titleTop}
           <span className="mt-1 block text-[#F56200]">
             {c.hero.titleAccent}
@@ -242,7 +242,7 @@ const ToolLanding = ({ content: c, tool, hero }: ToolLandingProps) => (
     </section>
     <section className="bg-[#8375D9] pb-20 pt-14 md:pb-24 md:pt-16">
       <div className="mx-auto max-w-[1240px] px-4 text-center">
-        <h2 className="text-3xl font-bold leading-tight text-white md:text-5xl">
+        <h2 className="text-3xl font-bold leading-tight text-white md:text-5xl md:leading-tight">
           {c.howItWorks.ctaTitle}
         </h2>
         <p className="mx-auto mt-6 max-w-3xl text-base leading-8 text-white/95 md:text-lg">
