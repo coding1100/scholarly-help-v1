@@ -28,7 +28,7 @@ const GrammarCheckerHero: FC = () => (
         {heroContent.badge}
       </span>
 
-      <h1 className="mt-7 text-4xl font-bold leading-[1.15] text-[#17172B] sm:text-5xl md:text-[56px]">
+      <h1 className="mt-7 text-4xl font-bold leading-[1.15] text-[#17172B] sm:text-5xl sm:leading-[1.15] md:text-[56px]">
         {heroContent.titleTop}{" "}
         <span className="mt-1 block text-[#F56200]">
           {heroContent.titleAccent}

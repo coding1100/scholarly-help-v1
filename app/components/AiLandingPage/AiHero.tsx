@@ -104,7 +104,7 @@ const AiHero: FC<AiHeroProps> = ({ heroContent, imgSection }) => {
     >
       <div className="mx-auto flex w-full flex-col pb-24 px-5 sm:px-10 xl:container xl:px-10">
         <h1
-          className={`sm:mb-[31px] mb-5 text-center text-3xl font-medium leading-tight text-[#101828] dark:text-gray-100 sm:text-5xl lg:text-[62px] lg:leading-[1.05] transition-all duration-1000 ${
+          className={`sm:mb-[31px] mb-5 text-center text-3xl font-medium leading-tight text-[#101828] dark:text-gray-100 sm:text-5xl sm:leading-tight lg:text-[62px] lg:leading-[1.05] transition-all duration-1000 ${
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
           dangerouslySetInnerHTML={{
