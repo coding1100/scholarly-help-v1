@@ -1,7 +1,7 @@
 "use client";
 
 import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
 import toast from "react-hot-toast";
 import {
@@ -22,12 +22,7 @@ import {
   FiSearch,
   FiTrash2,
   FiUpload,
-  FiZap,
 } from "react-icons/fi";
-import {
-  EXPERT_WHATSAPP_HREF,
-  trackExpertWhatsAppClick,
-} from "../Dashboard/ExpertHelpCard";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import { getGuestUserId } from "@/app/lib/client/guestStudyLimits";
@@ -47,6 +42,7 @@ import {
   generateParagraph,
   generateEssayOutline,
 } from "../MainTool/academicResearchApi";
+import DoneForYouCard from "../DoneForYouCard";
 import DiscussionPostView from "./DiscussionPostView";
 import DraftEditor from "./DraftEditor";
 import type {
@@ -253,6 +249,23 @@ function buildDefaultGradeResult(
   };
 }
 
+/**
+ * The step to store as the studio's resume point. The grader screen is not a
+ * studio step, so saving from it keeps whatever step the studio last stored.
+ */
+function studioResumeStep(current: EssayStudioStep): EssayStudioStep {
+  if (current !== "grader") return current;
+  try {
+    const stored = JSON.parse(
+      localStorage.getItem("scholarly_essay_studio_session") || "null",
+    )?.stoppedAtStep;
+    if (stored && stored !== "grader" && VALID_STEPS.includes(stored)) {
+      return stored;
+    }
+  } catch {}
+  return "draft";
+}
+
 const VALID_STEPS: EssayStudioStep[] = [
   "start",
   "setup",
@@ -270,18 +283,45 @@ export default function EssayStudio({
   embedded?: boolean;
   initialStep?: EssayStudioStep;
 }) {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const queryStep = searchParams?.get("step") as EssayStudioStep | null;
+  // The studio flow ends at Draft. The grader screen belongs only to the
+  // standalone Essay Grader page, so a "grader" step reaching the studio (an
+  // older saved session, a ?step=grader link) lands on Draft instead.
+  const isGraderPage = initialStep === "grader";
+  const resolveStep = useCallback(
+    (target: EssayStudioStep): EssayStudioStep =>
+      target === "grader" && !isGraderPage ? "draft" : target,
+    [isGraderPage],
+  );
   const resolvedStep =
-    queryStep && VALID_STEPS.includes(queryStep) ? queryStep : initialStep;
+    queryStep && VALID_STEPS.includes(queryStep)
+      ? resolveStep(queryStep)
+      : initialStep;
 
   const [step, setStep] = useState<EssayStudioStep>(resolvedStep);
 
   useEffect(() => {
     if (queryStep && VALID_STEPS.includes(queryStep)) {
-      setStep(queryStep);
+      setStep(resolveStep(queryStep));
+    } else {
+      // The Discussion Board lives at ?step=discussion (the sidebar links
+      // there), so dropping the param leaves it for the studio start screen.
+      setStep((current) => (current === "discussion" ? "start" : current));
     }
-  }, [queryStep]);
+  }, [queryStep, resolveStep]);
+
+  const setDiscussionInUrl = (open: boolean) => {
+    const params = new URLSearchParams(searchParams?.toString() || "");
+    if (open) params.set("step", "discussion");
+    else params.delete("step");
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, {
+      scroll: false,
+    });
+  };
 
   // Project state - clean defaults
   const [title, setTitle] = useState("");
@@ -461,7 +501,7 @@ export default function EssayStudio({
       if (typeof restored.aiSkipped === "boolean")
         setAiSkipped(restored.aiSkipped);
       if (restored.step && VALID_STEPS.includes(restored.step)) {
-        setStep(restored.step);
+        setStep(resolveStep(restored.step));
       }
       toast.success("Welcome back! Your essay progress was restored.");
     },
@@ -499,7 +539,7 @@ export default function EssayStudio({
           draft,
           aiScore,
           aiSkipped,
-          stoppedAtStep: step,
+          stoppedAtStep: studioResumeStep(step),
           lastUpdated: new Date().toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
@@ -577,7 +617,9 @@ export default function EssayStudio({
             if (typeof parsed.aiScore === "number") setAiScore(parsed.aiScore);
             if (typeof parsed.aiSkipped === "boolean")
               setAiSkipped(parsed.aiSkipped);
-            setStep(parsed.stoppedAtStep);
+            // The Essay Grader page grades the restored draft; only the
+            // studio resumes at the step the user left.
+            if (!isGraderPage) setStep(resolveStep(parsed.stoppedAtStep));
           }
         } else {
           setHasRecent(false);
@@ -588,7 +630,7 @@ export default function EssayStudio({
     } catch {
       setHasRecent(false);
     }
-  }, [queryStep]);
+  }, [queryStep, isGraderPage, resolveStep]);
 
   // Real backend AI detection API
   const checkAiScore = async (draftText?: string) => {
@@ -664,7 +706,7 @@ export default function EssayStudio({
       if (typeof parsed.aiSkipped === "boolean") setAiSkipped(parsed.aiSkipped);
 
       const targetStep = parsed.stoppedAtStep || "setup";
-      setStep(targetStep);
+      setStep(resolveStep(targetStep));
       toast.success(`Resumed: ${parsed.title || "saved essay"}`);
     } catch {
       toast.error("Could not load saved session.");
@@ -705,7 +747,7 @@ export default function EssayStudio({
         draft,
         aiScore,
         aiSkipped,
-        stoppedAtStep: nextStep,
+        stoppedAtStep: studioResumeStep(nextStep),
         lastUpdated: "Just now",
       };
       localStorage.setItem(
@@ -1406,10 +1448,14 @@ ${conclText}`;
       { id: "thesis", num: 2, label: "Thesis", sub: "optional" },
       { id: "outline", num: 3, label: "Outline" },
       { id: "draft", num: 4, label: "Draft" },
-      { id: "grader", num: 5, label: "Check", alert: aiScore > 50 },
+      ...(isGraderPage
+        ? [{ id: "grader", num: 5, label: "Check", alert: aiScore > 50 }]
+        : []),
     ];
     return (
-      <div className="grid grid-cols-5 gap-2 rounded-2xl border border-[#E4E5EE] bg-white p-1.5 shadow-sm">
+      <div
+        className={`grid ${isGraderPage ? "grid-cols-5" : "grid-cols-4"} gap-2 rounded-2xl border border-[#E4E5EE] bg-white p-1.5 shadow-sm`}
+      >
         {stepsConfig.map((s) => {
           const isActive = step === s.id;
           return (
@@ -1454,31 +1500,14 @@ ${conclText}`;
     customHeadline?: string,
     customBody?: string,
   ) => (
-    <div className="flex flex-col gap-3 rounded-2xl bg-[#171A2B] p-5 text-white shadow-md">
-      <span className="self-start rounded-full bg-[#262A44] px-3 py-1 text-xs font-semibold text-[#C7C9FF]">
-        Done-for-you
-      </span>
-      <h3 className="text-base font-bold leading-snug">
-        {customHeadline || "No time to write it at all?"}
-      </h3>
-      <p className="text-xs leading-relaxed text-[#D5D7E3]">
-        {customBody ||
-          "A writer in your field can take the whole paper, built to your rubric and on time."}
-      </p>
-      <div className="flex items-center gap-2 text-xs text-[#D5D7E3]">
-        <FiCheck className="h-4 w-4 text-emerald-400" /> Free quote, no
-        commitment
-      </div>
-      <a
-        href={EXPERT_WHATSAPP_HREF}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={() => trackExpertWhatsAppClick("essay_studio")}
-        className="mt-1 flex h-11 items-center justify-center gap-2 rounded-xl bg-[#15803D] text-xs font-semibold text-white shadow-sm transition hover:bg-[#166534]"
-      >
-        <FiMessageCircle className="h-4 w-4" /> Get a quote on WhatsApp
-      </a>
-    </div>
+    <DoneForYouCard
+      placement="essay_studio"
+      title={customHeadline || "No time to write it at all?"}
+      body={
+        customBody ||
+        "A writer in your field can take the whole paper, built to your rubric and on time."
+      }
+    />
   );
 
   return (
@@ -1584,7 +1613,7 @@ ${conclText}`;
               <h3 className="mb-3 text-sm font-semibold text-[#3F4357]">
                 Only need part of it?
               </h3>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <button
                   type="button"
                   onClick={() => {
@@ -1644,33 +1673,6 @@ ${conclText}`;
                   </div>
                   <FiArrowRight className="h-4 w-4 shrink-0 text-[#4F46E5]" />
                 </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!draft) {
-                      const def = title || "Evidence-based practice in healthcare";
-                      setDraft(buildDefaultDraft(def));
-                    }
-                    setStep("grader");
-                  }}
-                  className="flex items-center justify-between gap-3 rounded-2xl border border-[#D9DCE6] bg-white p-4 text-left shadow-sm transition hover:border-[#4F46E5]"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FFF7ED] text-[#C2410C]">
-                      <FiZap className="h-5 w-5" />
-                    </div>
-                    <div className="min-w-0">
-                      <h4 className="text-xs font-bold text-[#171A2B] truncate">
-                        Check my draft
-                      </h4>
-                      <span className="text-[11px] text-[#5B6072] block truncate">
-                        AI score and rubric grade
-                      </span>
-                    </div>
-                  </div>
-                  <FiArrowRight className="h-4 w-4 shrink-0 text-[#4F46E5]" />
-                </button>
               </div>
             </div>
           </div>
@@ -1683,14 +1685,14 @@ ${conclText}`;
             <div className="flex flex-col gap-2.5 rounded-2xl border border-[#E4E5EE] bg-[#F8F9FC] p-4 text-left shadow-sm">
               <div className="flex items-center gap-2.5 text-[#4F46E5]">
                 <FiMessageCircle className="h-5 w-5 shrink-0" />
-                <span className="text-xs font-bold text-[#171A2B]">Discussion Post Tool</span>
+                <span className="text-xs font-bold text-[#171A2B]">Discussion Board Assistant</span>
               </div>
               <p className="text-xs text-[#5B6072] leading-relaxed">
                 Need this week&apos;s discussion board post &amp; 2 classmate replies?
               </p>
               <button
                 type="button"
-                onClick={() => setStep("discussion")}
+                onClick={() => setDiscussionInUrl(true)}
                 className="mt-1 flex h-9 items-center justify-center gap-1.5 rounded-xl border border-[#CBD5E1] bg-white text-xs font-semibold text-[#4F46E5] hover:bg-gray-50 transition shadow-sm"
               >
                 Open Discussion Tool &rarr;
@@ -2698,23 +2700,25 @@ ${conclText}`;
                   </div>
                 </div>
 
-                <div className="mt-2 border-t border-[#EEF0F5] pt-3">
-                  <button
-                    type="button"
-                    onClick={handleGradeDraft}
-                    disabled={isGrading}
-                    className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#4F46E5] text-xs font-semibold text-white shadow-sm hover:bg-[#3730A3]"
-                  >
-                    {isGrading ? (
-                      <>
-                        <FiLoader className="h-4 w-4 animate-spin" /> Evaluating
-                        grade…
-                      </>
-                    ) : (
-                      <>Grade my essay in Essay Grader &rarr;</>
-                    )}
-                  </button>
-                </div>
+                {isGraderPage && (
+                  <div className="mt-2 border-t border-[#EEF0F5] pt-3">
+                    <button
+                      type="button"
+                      onClick={handleGradeDraft}
+                      disabled={isGrading}
+                      className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#4F46E5] text-xs font-semibold text-white shadow-sm hover:bg-[#3730A3]"
+                    >
+                      {isGrading ? (
+                        <>
+                          <FiLoader className="h-4 w-4 animate-spin" /> Evaluating
+                          grade…
+                        </>
+                      ) : (
+                        <>Grade my essay in Essay Grader &rarr;</>
+                      )}
+                    </button>
+                  </div>
+                )}
               </div>
 
               {renderDoneForYouCard()}
@@ -2878,7 +2882,7 @@ ${conclText}`;
       {step === "discussion" && (
         <div className="py-4">
           <DiscussionPostView
-            onBackToStudio={() => setStep("start")}
+            onBackToStudio={() => setDiscussionInUrl(false)}
             guardAiClick={guardAiClick}
           />
         </div>

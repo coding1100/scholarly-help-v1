@@ -114,7 +114,7 @@ export const howItWorksContent = {
   ctaTitlePill: "tools?",
   ctaTitleEnd: "",
   ctaBody:
-    "Sign up for free to access the grammar checker, humanizer, paraphraser, summarizer, citation tool, and more from one dashboard.",
+    "Sign up for free to access the grammar checker, humanizer, paraphraser, AI tutor, citation tool, and more from one dashboard.",
   ctaButton: "Explore all tools →",
   ctaHref: "/tools",
 };

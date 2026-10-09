@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { Suspense, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import LogoNormal from "@/app/assets/Images/logo.png";
 import Link from "next/link";
@@ -11,7 +11,7 @@ import {
   HiOutlineSparkles,
 } from "react-icons/hi2";
 import { BiChevronsLeft } from "react-icons/bi";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import axiosInstance from "@/app/axios";
 import toast from "react-hot-toast";
 import {
@@ -53,6 +53,40 @@ interface SidebarProps {
   onStartTour?: () => void;
 }
 
+const ESSAY_STUDIO_HREF = "/tools/essay-studio";
+
+const SUB_LINK_CLASS =
+  "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm leading-5 transition-colors";
+const SUB_LINK_IDLE =
+  "hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300";
+
+/**
+ * Essay Studio's Discussion Board view lives at ?step=discussion. Only the
+ * query changes when moving in and out of it, which does not re-render the
+ * sidebar, so this link reads the live search params itself (inside its own
+ * Suspense boundary, as useSearchParams requires).
+ */
+function DiscussionBoardLink({ href }: { href: string }) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const isActive =
+    pathname?.replace(/\/$/, "") === ESSAY_STUDIO_HREF &&
+    searchParams?.get("step") === "discussion";
+  return (
+    <Link
+      href={href}
+      className={`${SUB_LINK_CLASS} ${
+        isActive
+          ? "font-semibold text-primary-400 bg-primary-100 dark:bg-primary-500/20"
+          : SUB_LINK_IDLE
+      }`}
+    >
+      <FiMessageCircle className="h-4 w-4 shrink-0" />
+      <span className="truncate">Discussion Board Assistant</span>
+    </Link>
+  );
+}
+
 const MTSidebar = ({
   onToggle,
   activePanel,
@@ -66,6 +100,14 @@ const MTSidebar = ({
     typeof window !== "undefined" ? window.location.search.slice(1) : "";
   const searchParams =
     typeof window !== "undefined" ? new URLSearchParams(currentQs) : null;
+  // Tool links carry the current query (tracking params) forward, except
+  // Essay Studio's `step`, which only the Discussion Board link sets.
+  const toolLinkQuery = (step?: string) => {
+    const params = new URLSearchParams(currentQs);
+    params.delete("step");
+    if (step) params.set("step", step);
+    return params.toString();
+  };
   // Normalize route by removing trailing slash for consistent comparison
   const normalizedRoute = currentRoute?.endsWith("/")
     ? currentRoute.slice(0, -1)
@@ -80,7 +122,9 @@ const MTSidebar = ({
   const toolsByCategory = React.useMemo(() => {
     const grouped = new Map<ToolGroup, typeof tools>();
     for (const section of categorySections) grouped.set(section.key, []);
-    for (const tool of tools) grouped.get(tool.group)?.push(tool);
+    for (const tool of tools) {
+      if (!tool.hidden) grouped.get(tool.group)?.push(tool);
+    }
     return grouped;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tools]);
@@ -614,16 +658,14 @@ const MTSidebar = ({
                     {sectionTools.map((tool) => {
                       const isAcademicAssistant =
                         tool.href === "/tools/academic-research-assistant";
+                      const isEssayStudio = tool.href === ESSAY_STUDIO_HREF;
                       const isActive = normalizedRoute === tool.href;
                       const ToolIcon = tool.icon;
 
                       return (
                         <div key={tool.href} className="w-full">
                           <Link
-                            href={appendQueryString(
-                              tool.href,
-                              searchParams?.toString() || "",
-                            )}
+                            href={appendQueryString(tool.href, toolLinkQuery())}
                             className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm leading-5 transition-colors ${
                               isActive
                                 ? "font-semibold text-primary-400 bg-primary-100 dark:bg-primary-500/20"
@@ -633,6 +675,27 @@ const MTSidebar = ({
                             <ToolIcon className="h-4 w-4 shrink-0" />
                             <span className="truncate">{tool.name}</span>
                           </Link>
+                          {isEssayStudio && (
+                            <div className="mt-1 mb-1 ml-2 border-l border-gray-200 pl-3 dark:border-gray-700">
+                              <Suspense
+                                fallback={
+                                  <span className={`${SUB_LINK_CLASS} ${SUB_LINK_IDLE}`}>
+                                    <FiMessageCircle className="h-4 w-4 shrink-0" />
+                                    <span className="truncate">
+                                      Discussion Board Assistant
+                                    </span>
+                                  </span>
+                                }
+                              >
+                                <DiscussionBoardLink
+                                  href={appendQueryString(
+                                    ESSAY_STUDIO_HREF,
+                                    toolLinkQuery("discussion"),
+                                  )}
+                                />
+                              </Suspense>
+                            </div>
+                          )}
                           {isAcademicAssistant && isAssistantRoute && (
                             <div
                               data-tour="ara-assistant-panels"

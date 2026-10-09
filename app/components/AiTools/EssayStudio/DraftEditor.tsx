@@ -147,6 +147,10 @@ export default function DraftEditor({
   }, []);
 
   const editor = useEditor({
+    // Server-rendered when the page opens straight on the Draft step
+    // (?step=draft or a restored session); Tiptap throws unless told to
+    // defer the first render to the client.
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },

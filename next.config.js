@@ -174,6 +174,29 @@ const nextConfig = {
         destination: `/tools/${slug}`,
         permanent: true,
       })),
+      // Hidden tools: their workspaces and landing pages send visitors to the
+      // live tool that covers the same job. Temporary (307) so a tool can be
+      // brought back without browsers having cached the redirect.
+      ...Object.entries({
+        '/tools/summarizer-tool': '/tools/study-workspace/',
+        '/tools/ai-summarizer': '/tools/study-workspace/',
+        '/tools/tutor': '/tools/study-workspace/',
+        '/tools/essay-title': '/tools/essay-studio/',
+        '/tools/ai-essay-title-generator': '/tools/essay-studio/',
+        '/tools/essay-outline-tool': '/tools/essay-studio/',
+        '/tools/thesis-generator-tool': '/tools/essay-studio/',
+        '/tools/ai-thesis-generator': '/tools/essay-studio/',
+        '/tools/ai-thesis-statement-generator': '/tools/essay-studio/',
+        '/tools/academic-research-assistant': '/tools/essay-studio/',
+        '/tools/ai-academic-research': '/tools/essay-studio/',
+        '/academic-research': '/tools/essay-studio/',
+        // The tools hub was the Academic Research landing page.
+        '/tools': '/tools/dashboard/',
+      }).map(([source, destination]) => ({
+        source,
+        destination,
+        permanent: false,
+      })),
     ];
   },
 

@@ -233,7 +233,7 @@ const TextSummarizerInput: React.FC<TextSummarizerInputProps> = ({
 
         {/* Buttons shown only when no text is entered */}
         {inputText.trim() === "" && (
-          <div className="w-full absolute top-[110px] left-1/2 transform -translate-x-1/2 flex space-x-3 justify-center">
+          <div className="w-full absolute top-[110px] left-1/2 transform -translate-x-1/2 flex flex-wrap justify-center gap-3 px-4 text-sm whitespace-nowrap">
             <button
               onClick={handlePasteText}
               className="flex items-center space-x-2 px-2 md:px-4 py-2 text-gray-800 dark:text-gray-100 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-[#2b7fff] focus:ring-opacity-50 transition-colors duration-300"

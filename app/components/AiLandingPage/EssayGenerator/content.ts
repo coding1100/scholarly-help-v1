@@ -100,7 +100,7 @@ export const howItWorksContent = {
   "ctaTitleBrand": "ScholarlyHelp",
   "ctaTitlePill": "tools?",
   "ctaTitleEnd": "",
-  "ctaBody": "Sign up for free to access the AI Essay Generator, paraphraser, summarizer, citation tool, and more from one dashboard.",
+  "ctaBody": "Sign up for free to access the AI Essay Generator, paraphraser, AI tutor, citation tool, and more from one dashboard.",
   "ctaButton": "Explore all tools →",
   "ctaHref": "/tools"
 };

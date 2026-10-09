@@ -101,7 +101,7 @@ export const mathSolverContent: ToolLandingContent = {
     ],
     ctaTitle: "Want access to all ScholarlyHelp tools?",
     ctaBody:
-      "Sign up free to access the math solver, paraphraser, summarizer, citation tool, and more from one dashboard.",
+      "Sign up free to access the math solver, paraphraser, AI tutor, citation tool, and more from one dashboard.",
     ctaButton: "Explore all tools →",
     ctaHref: "/tools",
   },

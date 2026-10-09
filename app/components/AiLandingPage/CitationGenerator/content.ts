@@ -98,7 +98,7 @@ export const howItWorksContent: HowItWorksContent = {
   ctaTitlePill: "tools",
   ctaTitleEnd: "in one place?",
   ctaBody:
-    "Your free ScholarlyHelp dashboard keeps the citation generator, paraphraser, essay title generator, CGPA calculator, and AI humanizer together.",
+    "Your free ScholarlyHelp dashboard keeps the citation generator, paraphraser, essay studio, CGPA calculator, and AI humanizer together.",
   ctaButton: "Explore all tools →",
   ctaHref: "/tools",
 };
