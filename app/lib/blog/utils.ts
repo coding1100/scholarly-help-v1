@@ -147,6 +147,15 @@ export function formatViews(views: number): string {
   return String(views);
 }
 
+/** Same robots directives Yoast sent on indexable WordPress blog pages. */
+export const INDEXABLE_ROBOTS = {
+  index: true,
+  follow: true,
+  "max-image-preview": "large",
+  "max-snippet": -1,
+  "max-video-preview": -1,
+} as const;
+
 export function siteBaseUrl(): string {
   return (process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com").replace(/\/+$/, "");
 }

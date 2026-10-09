@@ -18,6 +18,8 @@ export async function archiveMetadata(kind: TermKind, slug: string): Promise<Met
     title: `${term.name} - Scholarly Help Blog`,
     description: term.description || `${LABEL[kind].prefix}: ${term.name} articles from the Scholarly Help blog.`,
     alternates: { canonical: `${siteBaseUrl()}/blog/${LABEL[kind].path}/${term.slug}/` },
+    // Like the WordPress/Yoast setup: archives are for visitors, not search results.
+    robots: { index: false, follow: true },
   };
 }
 

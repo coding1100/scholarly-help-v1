@@ -3,7 +3,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 import PostView from "@/app/components/Blog/PostView";
 import { findRedirect, getLivePostBySlug } from "@/app/lib/blog/queries";
 import { loadPostView } from "@/app/lib/blog/postView";
-import { postUrl, siteBaseUrl } from "@/app/lib/blog/utils";
+import { INDEXABLE_ROBOTS, postUrl, siteBaseUrl } from "@/app/lib/blog/utils";
 
 export const revalidate = 300;
 
@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title,
     description,
     alternates: { canonical: url },
-    robots: post.seo.noindex ? { index: false, follow: true } : undefined,
+    robots: post.seo.noindex ? { index: false, follow: true } : INDEXABLE_ROBOTS,
     openGraph: {
       type: "article",
       url,

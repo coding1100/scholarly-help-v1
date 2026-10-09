@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { BlogGrid } from "@/app/components/Blog/BlogCard";
 import { getBlogSettings, getTerms, listLivePosts } from "@/app/lib/blog/queries";
-import { siteBaseUrl } from "@/app/lib/blog/utils";
+import { INDEXABLE_ROBOTS, siteBaseUrl } from "@/app/lib/blog/utils";
 
 // Admin saves call revalidatePath() for instant updates; the TTL also picks up scheduled posts.
 export const revalidate = 300;
@@ -14,6 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: "Blog - Scholarly Help",
     description: settings.indexIntro[0],
     alternates: { canonical: url, types: { "application/rss+xml": `${siteBaseUrl()}/blog/feed/` } },
+    robots: INDEXABLE_ROBOTS,
     openGraph: { type: "website", url, title: settings.indexTitle, description: settings.indexIntro[0], siteName: "Scholarly Help" },
   };
 }

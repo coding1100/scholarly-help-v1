@@ -1,5 +1,5 @@
-// Sitemap for the blog, served at /blog-sitemap.xml. Lists live, indexable posts
-// plus the blog index and archive pages that have at least one live post.
+// Sitemap for the blog, served at /blog-sitemap.xml. Lists the blog index and live,
+// indexable posts. Archives are noindex (as on WordPress), so they are left out.
 import { getBlogCollections } from "@/app/lib/blog/db";
 import { liveFilter, postUrl, siteBaseUrl } from "@/app/lib/blog/utils";
 
@@ -14,14 +14,10 @@ export async function GET() {
 
   if (c) {
     const posts = await c.posts
-      .find({ ...liveFilter(), "seo.noindex": { $ne: true } }, { projection: { slug: 1, updatedAt: 1, categoryId: 1, authorId: 1 } })
+      .find({ ...liveFilter(), "seo.noindex": { $ne: true } }, { projection: { slug: 1, updatedAt: 1 } })
       .sort({ publishAt: -1 })
       .toArray();
     for (const p of posts) entries.push({ loc: `${base}${postUrl(p.slug)}`, lastmod: p.updatedAt });
-
-    const usedCategories = new Set(posts.map((p) => p.categoryId).filter(Boolean));
-    const categories = await c.categories.find({ _id: { $in: [...usedCategories] as string[] } }).toArray();
-    for (const cat of categories) entries.push({ loc: `${base}/blog/category/${cat.slug}/` });
   }
 
   const urls = entries
