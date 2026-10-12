@@ -1,3 +1,9 @@
+/*
+ * Named explicitly: Tailwind 3's PostCSS plugin keeps the last @config path it
+ * saw (admin.css, tools.css) and applies it to later files that have none, so
+ * without this the global sheet could be built from another route's config.
+ */
+@config "../tailwind.config.ts";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

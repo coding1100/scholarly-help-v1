@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import "@/app/tools.css";
 import MainLayout from "@/app/MainLayout";
 import MainToolHero from "@/app/components/MainToolLanding/MainToolHero";
 import MainToolHelp from "@/app/components/MainToolLanding/MainToolHelp";

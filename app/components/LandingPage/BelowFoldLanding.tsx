@@ -155,7 +155,10 @@ export default function BelowFoldLanding({ children }: BelowFoldLandingProps) {
     };
   }, []);
 
-  if (!ready) return null;
+  // Hold one screen of space until the sections mount. Without it the footer
+  // is server-rendered straight under the hero, inside the first mobile
+  // viewport, and gets pushed down when the sections arrive (CLS 0.11).
+  if (!ready) return <div aria-hidden="true" className="min-h-screen" />;
 
   return (
     <>

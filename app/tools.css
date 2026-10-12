@@ -1,0 +1,11 @@
+/*
+ * Tool stylesheet. Imported by app/(pages)/tools/layout.tsx and by the
+ * tool landing pages outside /tools, so none of it ships on marketing routes.
+ *
+ * Generated from tailwind.tools.config.ts; preflight/base comes from
+ * globals.css (loaded by the root layout on every route), so only
+ * components + utilities are emitted.
+ */
+@config "../tailwind.tools.config.ts";
+@tailwind components;
+@tailwind utilities;
