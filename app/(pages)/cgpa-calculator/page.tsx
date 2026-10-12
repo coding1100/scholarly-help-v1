@@ -1,5 +1,6 @@
 import { FC } from "react";
 import { Metadata } from "next";
+import "@/app/tools.css";
 import AiHero from "@/app/components/AiLandingPage/AiHero";
 // import AiTrust from "@/app/components/AiLandingPage/AITrust";
 // import KeyFeatures from "@/app/components/AiLandingPage/KeyFeatures";

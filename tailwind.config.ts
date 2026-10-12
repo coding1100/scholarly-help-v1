@@ -6,15 +6,20 @@ const config: Config = {
   darkMode: "class",
   // Admin routes are excluded here; their utilities are generated separately
   // into app/(admin)/admin.css (see tailwind.admin.config.ts) so the global
-  // stylesheet loaded by marketing pages stays small.
+  // stylesheet loaded by marketing pages stays small. Tool markup is
+  // excluded for the same reason and lives in app/tools.css (see
+  // tailwind.tools.config.ts), except the tool components ClientScripts
+  // mounts on every page.
   content: [
     "./app/page.tsx",
     "./app/layout.tsx",
     "./app/MainLayout.tsx",
     "./app/components/*.{tsx,jsx,ts,js}",
-    "./app/components/!(Admin)/**/*.{tsx,jsx,ts,js}",
+    "./app/components/!(Admin|AiTools|AiLandingPage|MainToolLanding|ToolsGrid)/**/*.{tsx,jsx,ts,js}",
+    "./app/components/AiTools/{BillingGate,PricingPopup,CheckoutConfirmationOverlay}.tsx",
     "./app/lib/**/*.{ts,tsx}",
-    "./app/(pages)/**/*.{tsx,jsx,ts,js}",
+    "./app/(pages)/*.{tsx,jsx,ts,js}",
+    "./app/(pages)/!(tools)/**/*.{tsx,jsx,ts,js}",
   ],
   safelist: ['animate-pulse'],
   blocklist: ['dark'],

@@ -8,13 +8,27 @@ import OrganizationSchema from "./components/OrganizationSchema";
 import ClientScripts from "./components/ClientScripts";
 
 // next/font self-hosts Poppins, so the page makes no Google Fonts requests.
+// Only the weights used above the fold are preloaded; each preload competes
+// with the render-blocking stylesheet for bandwidth on mobile.
 const poppins = Poppins({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-poppins",
-  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  weight: ["400", "500", "600", "700"],
   preload: true,
   fallback: ["Poppins", "system-ui", "-apple-system", "Segoe UI", "sans-serif"],
+  adjustFontFallback: false,
+});
+
+// Rarely used weights (font-light, font-extrabold, font-black) join the same
+// "Poppins" family but are fetched only when text using them renders.
+// Applied on <html> only so the @font-face rules are emitted.
+const poppinsRareWeights = Poppins({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-poppins-rare",
+  weight: ["300", "800", "900"],
+  preload: false,
   adjustFontFallback: false,
 });
 
@@ -42,7 +56,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${poppins.variable} ${poppinsItalic.variable} font-poppins`}>
+    <html lang="en" className={`${poppins.variable} ${poppinsRareWeights.variable} ${poppinsItalic.variable} font-poppins`}>
       <head>
         {/* Force HTTPS for all resources in production only */}
         {process.env.NODE_ENV === "production" &&
