@@ -36,8 +36,10 @@ export type ToolUsageSummary = {
 export const TOOL_USAGE_TOOL_OPTIONS = [
   "AI Detector Tool",
   "AI Thesis Statement Generator",
+  "AI Tutor",
   "CGPA Calculator",
   "Citation Tool",
+  "Course Planner",
   "Essay Outline Tool",
   "Essay Generator",
   "Essay Grader",

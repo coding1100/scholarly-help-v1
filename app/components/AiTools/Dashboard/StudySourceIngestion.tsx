@@ -25,6 +25,7 @@ import {
 import { startStudyRecording } from "@/app/lib/client/studyRecording";
 import { validateStudyUploadFileClient } from "@/app/lib/studyUploadConstraints";
 import { incrementGuestSessionCount, isGuest } from "@/app/lib/client/guestStudyLimits";
+import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 
 type UploadMode = "file" | "url" | "text" | "record";
 type InlineTone = "success" | "error" | "info";
@@ -302,6 +303,7 @@ export default function StudySourceIngestion({
             ? trimmedName || "Website Link"
             : "Source");
 
+    trackToolGenerate({ toolName: "AI Tutor", action: "add_source" });
     setIsSubmitting(true);
     // Track a session we create in THIS submission, so a failed source add can
     // roll it back instead of leaving an empty orphan session behind.
