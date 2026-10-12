@@ -115,10 +115,10 @@ export default function DiscussionPostView({
   return (
     <div className="flex flex-col gap-6">
       {/* Top Bar */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <button
           onClick={onBackToStudio}
-          className="flex items-center gap-2 text-sm font-semibold text-[#4F46E5] hover:text-[#3730A3]"
+          className="flex items-center gap-2 whitespace-nowrap text-sm font-semibold text-[#4F46E5] hover:text-[#3730A3]"
         >
           <FiArrowLeft className="h-4 w-4" /> Back to Essay Studio
         </button>

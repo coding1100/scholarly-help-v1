@@ -250,20 +250,33 @@ function buildDefaultGradeResult(
 }
 
 /**
- * The step to store as the studio's resume point. The grader screen is not a
- * studio step, so saving from it keeps whatever step the studio last stored.
+ * A saved resume point, or null when there is none to resume. The Discussion
+ * Board is opened only by ?step=discussion, so it is never a resume point:
+ * restoring it without the param leaves no way back to the studio.
+ */
+function savedResumeStep(stored: unknown): EssayStudioStep | null {
+  return stored !== "discussion" &&
+    VALID_STEPS.includes(stored as EssayStudioStep)
+    ? (stored as EssayStudioStep)
+    : null;
+}
+
+/**
+ * The step to store as the studio's resume point. The grader screen and the
+ * Discussion Board are not studio steps, so saving from them keeps whatever
+ * step the studio last stored.
  */
 function studioResumeStep(current: EssayStudioStep): EssayStudioStep {
-  if (current !== "grader") return current;
+  if (current !== "grader" && current !== "discussion") return current;
   try {
-    const stored = JSON.parse(
-      localStorage.getItem("scholarly_essay_studio_session") || "null",
-    )?.stoppedAtStep;
-    if (stored && stored !== "grader" && VALID_STEPS.includes(stored)) {
-      return stored;
-    }
+    const stored = savedResumeStep(
+      JSON.parse(
+        localStorage.getItem("scholarly_essay_studio_session") || "null",
+      )?.stoppedAtStep,
+    );
+    if (stored && stored !== "grader") return stored;
   } catch {}
-  return "draft";
+  return current === "grader" ? "draft" : "start";
 }
 
 const VALID_STEPS: EssayStudioStep[] = [
@@ -585,11 +598,8 @@ export default function EssayStudio({
           setHasRecent(true);
 
           // Auto-restore on refresh so user never loses their position
-          if (
-            !queryStep &&
-            parsed.stoppedAtStep &&
-            VALID_STEPS.includes(parsed.stoppedAtStep)
-          ) {
+          const resumeStep = savedResumeStep(parsed.stoppedAtStep);
+          if (!queryStep && resumeStep) {
             if (parsed.title) setTitle(parsed.title);
             if (parsed.topic) setTopicPrompt(parsed.topic);
             if (parsed.assignmentPrompt) {
@@ -619,7 +629,7 @@ export default function EssayStudio({
               setAiSkipped(parsed.aiSkipped);
             // The Essay Grader page grades the restored draft; only the
             // studio resumes at the step the user left.
-            if (!isGraderPage) setStep(resolveStep(parsed.stoppedAtStep));
+            if (!isGraderPage) setStep(resolveStep(resumeStep));
           }
         } else {
           setHasRecent(false);
@@ -705,7 +715,7 @@ export default function EssayStudio({
       if (typeof parsed.aiScore === "number") setAiScore(parsed.aiScore);
       if (typeof parsed.aiSkipped === "boolean") setAiSkipped(parsed.aiSkipped);
 
-      const targetStep = parsed.stoppedAtStep || "setup";
+      const targetStep = savedResumeStep(parsed.stoppedAtStep) || "setup";
       setStep(resolveStep(targetStep));
       toast.success(`Resumed: ${parsed.title || "saved essay"}`);
     } catch {
@@ -1540,7 +1550,7 @@ ${conclText}`;
                       Continue: {recentSession.title || "Your saved essay"}
                     </h4>
                     <span className="text-xs text-[#5B6072] block truncate">
-                      Saved in Essay Studio {recentSession.stoppedAtStep ? `· Step: ${recentSession.stoppedAtStep}` : ""} · Resume anytime
+                      Saved in Essay Studio {savedResumeStep(recentSession.stoppedAtStep) ? `· Step: ${recentSession.stoppedAtStep}` : ""} · Resume anytime
                     </span>
                   </div>
                 </div>
@@ -2464,12 +2474,12 @@ ${conclText}`;
             <div className="flex-1 min-w-0 flex flex-col gap-4 w-full">
               <div className="flex flex-col rounded-2xl border border-[#E4E5EE] bg-white shadow-sm">
                 {/* Draft Top Action Bar */}
-                <div className="flex items-center justify-between border-b border-[#EEF0F5] px-6 py-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#EEF0F5] px-4 py-4 sm:px-6">
                   <div className="flex items-center gap-3">
                     <span className="text-base font-bold text-[#171A2B]">
                       Draft
                     </span>
-                    <span className="rounded-full bg-[#F0FDF4] px-2.5 py-0.5 text-xs font-semibold text-[#15803D]">
+                    <span className="whitespace-nowrap rounded-full bg-[#F0FDF4] px-2.5 py-0.5 text-xs font-semibold text-[#15803D]">
                       {words} words · on target
                     </span>
                   </div>
@@ -2490,7 +2500,7 @@ ${conclText}`;
                       type="button"
                       onClick={handleDownloadDocx}
                       disabled={downloadingDocx}
-                      className="flex items-center gap-1.5 rounded-lg border border-[#CBD5E1] bg-white px-3 py-1.5 text-xs font-medium text-[#3F4357] hover:bg-gray-50"
+                      className="flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-[#CBD5E1] bg-white px-3 py-1.5 text-xs font-medium text-[#3F4357] hover:bg-gray-50"
                     >
                       <FiDownload className="h-3.5 w-3.5" />
                       {downloadingDocx ? "Exporting…" : "Download .docx"}
@@ -2500,7 +2510,7 @@ ${conclText}`;
 
                 {/* Inline AI Writing Check Alert */}
                 {!aiSkipped ? (
-                  <div className="mx-6 mt-4 flex items-center justify-between gap-4 rounded-xl border border-[#FED7AA] bg-[#FFF7ED] p-4 text-xs text-[#7C2D12]">
+                  <div className="mx-4 mt-4 flex flex-col gap-3 rounded-xl border border-[#FED7AA] bg-[#FFF7ED] p-4 text-xs text-[#7C2D12] sm:mx-6 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                     <div className="flex items-center gap-3">
                       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-[#C2410C] bg-white font-bold text-[#9A3412]">
                         {isCheckingAi ? (
@@ -2530,7 +2540,7 @@ ${conclText}`;
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
                       <button
                         type="button"
                         onClick={() => checkAiScore()}
@@ -2562,7 +2572,7 @@ ${conclText}`;
                     </div>
                   </div>
                 ) : (
-                  <div className="mx-6 mt-4 flex items-center justify-between rounded-xl border border-[#E4E5EE] bg-[#F5F5FA] px-4 py-2.5 text-xs text-[#3F4357]">
+                  <div className="mx-4 mt-4 flex flex-col gap-2 rounded-xl border border-[#E4E5EE] bg-[#F5F5FA] px-4 py-2.5 text-xs text-[#3F4357] sm:mx-6 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                     <span>
                       <strong className="text-[#9A3412]">
                         AI score {aiScore}% ({aiVerdictLabel}):
@@ -2570,7 +2580,7 @@ ${conclText}`;
                       You skipped humanizing. You can still do it anytime before you
                       submit.
                     </span>
-                    <div className="flex items-center gap-2">
+                    <div className="flex shrink-0 items-center gap-2">
                       <button
                         type="button"
                         onClick={() => checkAiScore()}
@@ -2732,10 +2742,10 @@ ${conclText}`;
       ======================================================== */}
       {step === "grader" && (
         <div className="flex flex-col gap-5 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
             <button
               onClick={() => setStep("draft")}
-              className="flex items-center gap-1.5 text-xs font-semibold text-[#4F46E5] hover:underline"
+              className="flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold text-[#4F46E5] hover:underline"
             >
               <FiArrowLeft className="h-3.5 w-3.5" /> Back to Essay Studio
             </button>
