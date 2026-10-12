@@ -277,7 +277,7 @@ export const humanizeText = (payload: {
 export class HumanizerStreamError extends Error {
   constructor(
     readonly status: number,
-    readonly body: { message?: string | string[] } | null,
+    readonly body: { message?: string | string[]; code?: string } | null,
   ) {
     super(
       [body?.message].flat().filter(Boolean).join(", ") ||

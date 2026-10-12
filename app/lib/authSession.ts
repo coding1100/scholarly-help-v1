@@ -7,6 +7,7 @@ import {
   readMemoryAccessToken,
   writeMemoryAccessToken,
 } from "@/app/lib/accessTokenStore";
+import { currentAiRunId, RUN_ID_HEADER } from "@/app/lib/client/aiRun";
 
 const SESSION_EXPIRED_EVENT = "sh:session-expired";
 let refreshInFlight: Promise<string> | null = null;
@@ -162,6 +163,10 @@ export function installAxiosAuthRefresh(): () => void {
     if (!config.headers.has('x-request-id')) {
       config.headers.set('x-request-id', newIdempotencyKey());
     }
+    const runId = currentAiRunId();
+    if (runId && !config.headers.has(RUN_ID_HEADER)) {
+      config.headers.set(RUN_ID_HEADER, runId);
+    }
 
     if (isAuthRequest(config.url)) {
       return config;
@@ -219,6 +224,10 @@ export async function fetchWithAuthRetry(
   // Distributed trace correlation identifier
   if (!stableHeaders.has('x-request-id')) {
     stableHeaders.set('x-request-id', newIdempotencyKey());
+  }
+  const runId = currentAiRunId();
+  if (runId && !stableHeaders.has(RUN_ID_HEADER) && isBackendRequest(String(input))) {
+    stableHeaders.set(RUN_ID_HEADER, runId);
   }
   const request = async (token: string | null) => {
     const headers = new Headers(stableHeaders);

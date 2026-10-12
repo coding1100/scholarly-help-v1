@@ -111,6 +111,7 @@ interface ApiEnvelope<T> {
   success: boolean;
   data?: T;
   error?: string;
+  code?: string;
 }
 
 function getUserId() {
@@ -140,7 +141,7 @@ async function callStudyApi<T>(path: string, init?: RequestInit): Promise<T> {
 
   const payload = (await res.json()) as ApiEnvelope<T>;
   if (!res.ok || !payload.success || payload.data === undefined) {
-    if (isBillingGateResponseBody(res.status, payload)) dispatchBillingGateEvent();
+    if (isBillingGateResponseBody(res.status, payload)) dispatchBillingGateEvent(payload?.code);
     throw new Error(payload.error || `Study API failed for ${path}`);
   }
   return payload.data;
@@ -251,7 +252,7 @@ export async function addStudySourceFile(
 
   const payload = (await res.json()) as ApiEnvelope<StudySourceDto>;
   if (!res.ok || !payload.success || payload.data === undefined) {
-    if (isBillingGateResponseBody(res.status, payload)) dispatchBillingGateEvent();
+    if (isBillingGateResponseBody(res.status, payload)) dispatchBillingGateEvent(payload?.code);
     throw new Error(payload.error || "Study file upload failed");
   }
   return payload.data;
@@ -420,7 +421,7 @@ export async function streamStudyTutor(
   });
   if (!res.ok || !res.body) {
     const payload = (await res.json().catch(() => null)) as ApiEnvelope<unknown> | null;
-    if (isBillingGateResponseBody(res.status, payload)) dispatchBillingGateEvent();
+    if (isBillingGateResponseBody(res.status, payload)) dispatchBillingGateEvent(payload?.code);
     throw new Error(payload?.error || "Tutor streaming request failed");
   }
 
