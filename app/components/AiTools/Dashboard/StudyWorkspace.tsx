@@ -39,6 +39,7 @@ import {
   TutorMessageDto,
 } from "@/app/utils/studyApiClient";
 import { tryConsumeGuestClick } from "@/app/lib/client/guestClickLimits";
+import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import {
   getStudyRecordingSnapshot,
   onStudyRecordingChange,
@@ -1001,6 +1002,7 @@ export default function StudyWorkspace() {
       );
       return;
     }
+    trackToolGenerate({ toolName: "AI Tutor", action: type });
     const labels: Record<StudyArtifactType, string> = {
       outline: "Outline",
       syllabus: "Syllabus",
@@ -1143,6 +1145,7 @@ export default function StudyWorkspace() {
       );
       return;
     }
+    trackToolGenerate({ toolName: "AI Tutor", action: "chat" });
 
     const intent = detectStudyChatIntent(message);
     const targetTab = intentTargetTab(intent);

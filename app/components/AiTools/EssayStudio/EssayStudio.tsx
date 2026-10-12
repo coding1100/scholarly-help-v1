@@ -43,6 +43,7 @@ import {
   generateEssayOutline,
 } from "../MainTool/academicResearchApi";
 import DoneForYouCard from "../DoneForYouCard";
+import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import DiscussionPostView from "./DiscussionPostView";
 import DraftEditor from "./DraftEditor";
 import type {
@@ -304,6 +305,11 @@ export default function EssayStudio({
   // standalone Essay Grader page, so a "grader" step reaching the studio (an
   // older saved session, a ?step=grader link) lands on Draft instead.
   const isGraderPage = initialStep === "grader";
+  const trackStudioRun = (action: string) =>
+    trackToolGenerate({
+      toolName: isGraderPage ? "Essay Grader" : "Essay Studio",
+      action,
+    });
   const resolveStep = useCallback(
     (target: EssayStudioStep): EssayStudioStep =>
       target === "grader" && !isGraderPage ? "draft" : target,
@@ -905,6 +911,7 @@ export default function EssayStudio({
 
   const handleRegenerateThesis = () => {
     guardAiClick(async () => {
+      trackStudioRun("thesis");
       setLoadingAction("thesis");
       try {
         const curTopic =
@@ -1004,6 +1011,7 @@ export default function EssayStudio({
     const chosenThesis =
       customThesis || thesisOptions[selectedThesisIndex]?.text || "";
 
+    trackStudioRun("outline");
     setLoadingAction("outline");
     try {
       const levelMap: Record<
@@ -1143,6 +1151,7 @@ export default function EssayStudio({
 
   const handleGenerateDraft = () => {
     guardAiClick(async () => {
+      trackStudioRun("draft");
       setLoadingAction("draft");
       const curTopic =
         title.trim() || topicPrompt.trim() || "Evidence-based practice";
@@ -1277,6 +1286,7 @@ ${conclText}`;
         return;
       }
 
+      trackStudioRun("grade");
       setIsGrading(true);
       try {
         const levelMap: Record<string, "undergraduate" | "graduate"> = {
