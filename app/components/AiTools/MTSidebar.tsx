@@ -740,8 +740,12 @@ const MTSidebar = ({
           })}
           {/* Study Workspace: "+ New Study Session" and full "Recent Sessions"
               history. Self-contained and route-scoped — renders only on the
-              workspace and stays hidden until the first session exists. */}
-          <StudySessionsNav onNavigate={onToggle} />
+              workspace and stays hidden until the first session exists. Its
+              own Suspense boundary keeps its useSearchParams from turning
+              every tool page into a client-only render. */}
+          <Suspense fallback={null}>
+            <StudySessionsNav onNavigate={onToggle} />
+          </Suspense>
           {showHowToUse && (
             <button
               type="button"

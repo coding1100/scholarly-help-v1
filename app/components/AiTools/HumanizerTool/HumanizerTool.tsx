@@ -730,7 +730,7 @@ const HumanizerTool: React.FC<HumanizerToolProps> = ({ embedded = false }) => {
 
       <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
         {embedded && (
-          <div className="flex items-center justify-between border-b border-gray-200 px-5 py-3.5 dark:border-gray-700">
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-gray-200 px-5 py-3.5 dark:border-gray-700">
             <div className="flex items-center gap-2.5">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-100 text-[#F56200] dark:bg-orange-950/40 dark:text-orange-400">
                 <FiEdit3 className="h-4 w-4" />
@@ -739,7 +739,7 @@ const HumanizerTool: React.FC<HumanizerToolProps> = ({ embedded = false }) => {
                 Humanizer
               </span>
             </div>
-            <span className="text-xs text-gray-500 dark:text-gray-400">
+            <span className="whitespace-nowrap text-xs text-gray-500 dark:text-gray-400">
               About 30 seconds per rewrite
             </span>
           </div>

@@ -61,9 +61,29 @@ export function ToolsApiLoader({
   );
 }
 
-/** Suspense fallback for /tools/* pages */
+/**
+ * Suspense fallback for /tools/* pages: a quiet page skeleton. The animated
+ * logo is reserved for "your request is running", so opening a page never
+ * looks like a generation that started on its own.
+ */
 export function ToolsSuspenseFallback() {
-  return <ToolsApiLoader show />;
+  return (
+    <div
+      role="status"
+      aria-label="Loading page"
+      className="flex min-h-screen bg-white dark:bg-gray-900"
+    >
+      <div className="hidden w-60 shrink-0 border-r border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-800 lg:block" />
+      <div className="flex-1 animate-pulse">
+        <div className="h-tool-header border-b border-gray-200 dark:border-gray-700" />
+        <div className="mx-auto max-w-[840px] space-y-4 px-4 pt-8">
+          <div className="h-8 w-1/2 rounded-lg bg-gray-100 dark:bg-gray-800" />
+          <div className="h-64 rounded-2xl bg-gray-100 dark:bg-gray-800" />
+          <div className="h-11 w-40 rounded-xl bg-gray-100 dark:bg-gray-800" />
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default ToolsApiLoader;
