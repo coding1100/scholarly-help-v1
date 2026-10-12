@@ -955,7 +955,7 @@ const StemSolver: FC<{ setFlag: (v: boolean) => void }> = ({ setFlag }) => {
                     <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900 text-[#193cb8] dark:text-blue-200 text-sm font-semibold">
                       {si + 1}
                     </span>
-                    <div className="flex-1 text-gray-700 dark:text-gray-300">
+                    <div className="min-w-0 flex-1 text-gray-700 dark:text-gray-300">
                       {st.explanation && (
                         <MathProse text={st.explanation} className="block leading-relaxed" />
                       )}
