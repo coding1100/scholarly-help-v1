@@ -1573,7 +1573,7 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag, variant = "default" }) =
           <div className="p-6 space-y-4">
             {/* Full Citation */}
             <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md p-4">
-              <div className="flex items-center justify-between mb-3">
+              <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 transition-colors duration-300">
                   {result.citation_style === "Chicago" && result.footnote
                     ? "Bibliography Entry"
@@ -1582,7 +1582,7 @@ const CitationTool: FC<CitationToolProps> = ({ setFlag, variant = "default" }) =
                       : "Full Citation"}{" "}
                   ({result.citation_style} - {result.source_type}):
                 </h3>
-                <div className="flex items-center gap-2">
+                <div className="flex shrink-0 items-center gap-2">
                   <button
                     onClick={handleSaveToDashboard}
                     disabled={isSaving}
