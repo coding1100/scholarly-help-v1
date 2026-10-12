@@ -661,7 +661,7 @@ const HumanizerTool: React.FC<HumanizerToolProps> = ({ embedded = false }) => {
         isBillingGateResponseBody(streamError.status, streamError.body)
       ) {
         // fetch bypasses the axios interceptor, so open the upgrade popup here.
-        dispatchBillingGateEvent();
+        dispatchBillingGateEvent(streamError.body?.code);
       } else if (isBillingGateError(err)) {
         // The global interceptor (ClientScripts.tsx) already opens the
         // upgrade popup for this, so a toast here would be redundant.

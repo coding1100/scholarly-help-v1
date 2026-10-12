@@ -1,5 +1,6 @@
 "use client";
 import { hasRefreshSessionHint } from "@/app/lib/accessTokenStore";
+import { startAiRun } from "@/app/lib/client/aiRun";
 
 /**
  * Global click-based guest limit shared by ALL AI tools.
@@ -12,8 +13,9 @@ import { hasRefreshSessionHint } from "@/app/lib/accessTokenStore";
  * The allowance is GLOBAL: a single lifetime counter shared across every tool
  * (1 click total anywhere; the 2nd anywhere gates). It is stored in
  * localStorage and never resets — an intentionally simple, client-only scheme.
- * If this ever needs to be tamper-proof, swap the bodies here for a
- * server-backed counter; the rest of the app only depends on this public API.
+ * This counter only decides when to show the gate up front. The server
+ * enforces the real allowance (1 run per guest and per IP per day) and answers
+ * GUEST_RUN_LIMIT_EXCEEDED, which calls markGuestClickLimitReached below.
  */
 
 /** Free AI clicks a guest may perform across all tools before the gate. */
@@ -57,13 +59,21 @@ export function hasReachedGuestClickLimit(): boolean {
  * guest allowance is exhausted — in that case the caller must open the auth
  * gate instead of calling the AI, and the counter is left untouched.
  *
- * Signed-in users always pass and are never counted.
+ * Signed-in users always pass and are never counted. Every allowed click
+ * starts a new AI run (see aiRun.ts) so the server charges it once.
  */
 export function tryConsumeGuestClick(): boolean {
-  if (!isGuest()) return true;
-  if (getGuestClickCount() >= GUEST_CLICK_LIMIT) return false;
-  writeCount(CLICK_KEY, getGuestClickCount() + 1);
+  if (isGuest()) {
+    if (getGuestClickCount() >= GUEST_CLICK_LIMIT) return false;
+    writeCount(CLICK_KEY, getGuestClickCount() + 1);
+  }
+  startAiRun();
   return true;
+}
+
+/** The server says this guest's allowance is used up; gate the next click locally too. */
+export function markGuestClickLimitReached(): void {
+  if (getGuestClickCount() < GUEST_CLICK_LIMIT) writeCount(CLICK_KEY, GUEST_CLICK_LIMIT);
 }
 
 /** Clear the guest click counter after a successful sign-up / login. */

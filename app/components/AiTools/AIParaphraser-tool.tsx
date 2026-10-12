@@ -17,6 +17,7 @@ import { isBillingGateError } from "@/app/lib/client/billingGateCodes";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 import { getAccessToken } from "@/app/lib/authSession";
 import { useLatestAbortController } from "@/app/lib/client/toolOptimization";
+import { useWordLimitConfig, type WordLimitConfig } from "@/app/lib/client/useWordLimitConfig";
 
 interface AIParaphraserProp {
   setFlag: (value: boolean) => void;
@@ -26,6 +27,13 @@ interface AIParaphraserProp {
    */
   variant?: "default" | "landing";
 }
+
+/** Mirrors the backend's PARAPHRASE_PUBLIC_CONFIG (GET /tools/paraphrase/config). */
+const FALLBACK_PARAPHRASE_CONFIG: WordLimitConfig = {
+  guest_max_words: 200,
+  free_max_words: 300,
+  premium_max_words: 1500,
+};
 
 const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag, variant = "default" }) => {
   const isLanding = variant === "landing";
@@ -37,6 +45,7 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag, variant = "default" }) 
   const [isSubmitting, setSubmitting] = useState<boolean>(false);
   const [file, setFile] = useState<File | null>(null);
   const [wordLimitExceeded, setWordLimitExceeded] = useState(false);
+  const { maxWords } = useWordLimitConfig("/tools/paraphrase/config", FALLBACK_PARAPHRASE_CONFIG);
   type ParaphraserDraft = {
     inputText: string;
     toneMode: string;
@@ -193,7 +202,7 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag, variant = "default" }) 
   }, [file, token]);
   const handleParaphrase = async () => {
     if (wordLimitExceeded) {
-      toast.error("Text exceeds 200-word limit. Please shorten your input.");
+      toast.error(`Text exceeds the ${maxWords.toLocaleString()}-word limit. Please shorten your input.`);
       return;
     }
     if (toneMode === "custom" && !customToneInstructions.trim()) {
@@ -240,6 +249,7 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag, variant = "default" }) 
               initialText={inputText}
               onTextChange={setInputText}
               onPdfUpload={setFile}
+              maxWords={maxWords}
               onWordLimitExceeded={setWordLimitExceeded}
             />
 

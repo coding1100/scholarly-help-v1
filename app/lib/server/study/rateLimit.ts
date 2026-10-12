@@ -47,3 +47,9 @@ export function consumeStudyAiQuota(input: {
   for (const { window } of tracked) window.count += 1;
   return { allowed: true, retryAfterSeconds: 0 };
 }
+
+/** Gives back one call counted against `key`, e.g. when the AI call it paid for failed. */
+export function releaseStudyAiQuota(key: string): void {
+  const existing = windows.get(key);
+  if (existing && existing.count > 0) existing.count -= 1;
+}

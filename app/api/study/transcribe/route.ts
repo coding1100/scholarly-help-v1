@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getVerifiedUserId } from "@/app/lib/server/study/http";
 import { consumeStudyAiQuota } from "@/app/lib/server/study/rateLimit";
+import { startStudyRun, type StudyRun } from "@/app/lib/server/study/billingGate";
 import { getGeminiModelName } from "@/app/lib/server/ai/gemini";
 
 export const dynamic = "force-dynamic";
@@ -41,6 +42,7 @@ function resolveMimeType(file: File): string {
 }
 
 export async function POST(request: NextRequest) {
+  let run: StudyRun | undefined;
   try {
     const userId = await getVerifiedUserId(request);
     if (!userId) {
@@ -97,6 +99,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Transcribing adds a recording to a session, so it needs a run or
+    // credits left but spends no run; Premium usage is metered in credits.
+    // Audio is ~32 tokens/second; at typical bitrates that is ~1 token per 60 bytes.
+    const estimatedPromptTokens = Math.min(400_000, Math.max(1_000, Math.ceil(file.size / 60)));
+    const started = await startStudyRun({
+      request,
+      userId,
+      service: "study.transcribe",
+      estimatedPromptTokens,
+      estimatedCompletionTokens: 8192,
+      countRun: false,
+    });
+    if (started.blocked) return started.response;
+    run = started.run;
+
     const mimeType = resolveMimeType(file);
     const audioBuffer = await file.arrayBuffer();
     const base64Audio = Buffer.from(audioBuffer).toString("base64");
@@ -140,6 +157,7 @@ export async function POST(request: NextRequest) {
         (errBody as { error?: { message?: string } })?.error?.message ||
         `Gemini API error ${geminiRes.status}`;
       console.error("study.transcribe gemini error", errMsg);
+      run.fail();
       return NextResponse.json(
         { success: false, error: "Transcription failed. Please try again." },
         { status: 502 },
@@ -151,12 +169,14 @@ export async function POST(request: NextRequest) {
         content?: { parts?: Array<{ text?: string }> };
         finishReason?: string;
       }>;
+      usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number };
     };
 
     const transcript =
       geminiBody?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
 
     if (!transcript || transcript === "[No speech detected]") {
+      run.fail();
       return NextResponse.json(
         {
           success: false,
@@ -167,8 +187,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    run.succeed({
+      promptTokens: geminiBody.usageMetadata?.promptTokenCount ?? estimatedPromptTokens,
+      completionTokens:
+        geminiBody.usageMetadata?.candidatesTokenCount ?? Math.ceil(transcript.length / 4),
+      model,
+    });
     return NextResponse.json({ success: true, transcript }, { status: 200 });
   } catch (error) {
+    run?.fail();
     console.error("study.transcribe.POST", error);
     return NextResponse.json(
       {

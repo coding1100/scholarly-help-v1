@@ -3,6 +3,7 @@ import { fail, getAuthenticatedUserId, getClientIp, ok } from "@/app/lib/server/
 import { getSession } from "@/app/lib/server/study/repo";
 import { generateGeminiText, GeminiConfigError } from "@/app/lib/server/ai/gemini";
 import { consumeStudyAiQuota } from "@/app/lib/server/study/rateLimit";
+import { startStudyRun, type StudyRun } from "@/app/lib/server/study/billingGate";
 import { parseJson } from "@/app/lib/server/study/generate";
 
 export const dynamic = "force-dynamic";
@@ -12,9 +13,9 @@ export const dynamic = "force-dynamic";
  * string equality (used before this route existed) marks "The cytoplasm"
  * wrong against a model answer of "Cytoplasm" — any article, synonym, or
  * rephrasing fails a genuinely correct answer. This asks Gemini instead,
- * scoped to a single question so it's cheap and fast (small prompt/output,
- * same rate limiter tier as an action chip, no separate billing reservation
- * — it rides on the quiz generation the student already paid for).
+ * scoped to a single question so it's cheap and fast. It rides on the quiz
+ * generation the student already paid for: it needs a run or credits left,
+ * spends no run, and Premium usage is metered in credits.
  */
 
 function gradingSystemInstruction(): string {
@@ -45,6 +46,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  let run: StudyRun | undefined;
   try {
     const { id } = await params;
     const userId = await getAuthenticatedUserId(request);
@@ -86,6 +88,19 @@ export async function POST(
       return ok({ correct: false, feedback: "No answer given." });
     }
 
+    // Grading belongs to a quiz the user already generated (and paid a run
+    // for), so it needs an allowance left but does not spend a run.
+    const started = await startStudyRun({
+      request,
+      userId,
+      service: "study.grade-answer",
+      estimatedPromptTokens: 800,
+      estimatedCompletionTokens: 200,
+      countRun: false,
+    });
+    if (started.blocked) return started.response;
+    run = started.run;
+
     const raw = await generateGeminiText({
       systemInstruction: gradingSystemInstruction(),
       userPrompt: gradingUserPrompt({ question, modelAnswer, studentAnswer }),
@@ -94,12 +109,14 @@ export async function POST(
       responseJson: true,
     });
     const parsed = parseJson<{ correct?: boolean; feedback?: string }>(raw);
+    run.succeed({ promptTokens: 800, completionTokens: 200 });
 
     return ok({
       correct: Boolean(parsed?.correct),
       feedback: String(parsed?.feedback || "").trim(),
     });
   } catch (error) {
+    run?.fail();
     console.error("study.grade-answer.POST", error);
     if (error instanceof GeminiConfigError) {
       return fail(
