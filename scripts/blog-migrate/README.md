@@ -45,7 +45,7 @@ Reported in the migration report:
 ## Switchover checklist (production)
 
 1. Deploy the branch to production. Until nginx changes, `/blog` still serves WordPress, so the
-   new blog is only reachable through the admin. (`/blog-sitemap.xml` is also routed to
+   new blog is only reachable through the admin. (`/blog/post-sitemap.xml` is also routed to
    WordPress until step 4, so merge the `robots.txt` line at switchover time.)
 2. Freeze edits in WordPress.
 3. Run the migration against the production database with `BLOG_CLOUDINARY_FOLDER=scholarlyhelp/blog`.
@@ -59,12 +59,12 @@ Reported in the migration report:
        root /var/www/html;
        expires 30d;
    }
-   # Everything else under /blog (and /blog-sitemap.xml) goes to Next.js via `location /`
+   # Everything else under /blog goes to Next.js via `location /`
    ```
 
    Then `sudo nginx -t && sudo systemctl reload nginx`, and invalidate `/blog*` in CloudFront.
 5. Verify: every old URL returns 200 or a redirect (posts, categories, tags, `/blog/page/N/`,
-   `/blog/author/cutredblackfox/`, Yoast sitemaps). Submit `https://scholarlyhelp.com/blog-sitemap.xml`
+   `/blog/author/cutredblackfox/`, Yoast sitemaps). Submit `https://scholarlyhelp.com/blog/post-sitemap.xml`
    in Google Search Console.
 6. Rollback: restore the old `location /blog` block and reload nginx. Keep WordPress
    untouched for 30 days before removing it.

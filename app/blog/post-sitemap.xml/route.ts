@@ -1,10 +1,11 @@
-// Sitemap for the blog, served at /blog-sitemap.xml. Lists the blog index and live,
-// indexable posts. Archives are noindex (as on WordPress), so they are left out.
+// Canonical blog post sitemap. This keeps the public URL used by the former
+// WordPress/Yoast blog so search engines do not need to discover a new sitemap.
+// It lists the blog index and live, indexable posts; noindex archives are omitted.
 import { getBlogCollections } from "@/app/lib/blog/db";
 import { liveFilter, postUrl, siteBaseUrl } from "@/app/lib/blog/utils";
 
-// Rendered per request so new posts appear immediately (a cheap query; the CDN
-// still caches it briefly via the site's s-maxage header).
+// Rendered per request so newly published posts appear immediately (the CDN may
+// still cache the response briefly according to the site's shared cache policy).
 export const dynamic = "force-dynamic";
 
 export async function GET() {
@@ -25,6 +26,11 @@ export async function GET() {
     .join("\n");
   return new Response(
     `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`,
-    { headers: { "Content-Type": "application/xml; charset=utf-8" } },
+    {
+      headers: {
+        "Content-Type": "application/xml; charset=utf-8",
+        "X-Robots-Tag": "noindex, follow",
+      },
+    },
   );
 }

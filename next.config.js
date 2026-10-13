@@ -174,15 +174,17 @@ const nextConfig = {
         destination: `/tools/${slug}`,
         permanent: true,
       })),
-      // Former WordPress blog URLs. Archives now list every post on one page,
-      // and the Yoast sitemaps are replaced by /blog-sitemap.xml.
+      // Former WordPress blog URLs. Archives now list every post on one page.
+      // Keep the original Yoast post-sitemap URL canonical; consolidate the
+      // other retired sitemap URLs and our temporary custom URL into it.
       { source: '/blog/page/:n', destination: '/blog/', permanent: true },
       { source: '/blog/:kind(category|tag|author)/:slug/page/:n', destination: '/blog/:kind/:slug/', permanent: true },
       {
-        source: '/blog/:map(sitemap_index|post-sitemap|page-sitemap|category-sitemap|post_tag-sitemap|author-sitemap).xml',
-        destination: '/blog-sitemap.xml',
+        source: '/blog/:map(sitemap_index|page-sitemap|category-sitemap|post_tag-sitemap|author-sitemap).xml',
+        destination: '/blog/post-sitemap.xml',
         permanent: true,
       },
+      { source: '/blog-sitemap.xml', destination: '/blog/post-sitemap.xml', permanent: true },
       { source: '/blog/comments/feed', destination: '/blog/feed/', permanent: true },
     ];
   },
