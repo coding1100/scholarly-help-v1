@@ -13,7 +13,8 @@
  *   --settings       also (re)import the blog index header from WordPress
  *   --report=FILE    write a Markdown report (default: blog-migration-report.md)
  *
- * Reads DATABASE_URL and BLOG_CLOUDINARY_* from the local environment.
+ * Reads DATABASE_URL plus the backend URL and ADMIN_INTERNAL_API_KEY from the
+ * local environment. The backend owns the dedicated blog Cloudinary account.
  */
 import "./env";
 import { randomUUID, createHash } from "crypto";
@@ -24,7 +25,7 @@ import { getMongoDb } from "@/app/lib/mongodb";
 import { normalizePostInput, ValidationError } from "@/app/lib/blog/validate";
 import { blockText, decodeEntities, slugify } from "@/app/lib/blog/utils";
 import { toPlainText } from "@/app/lib/blog/sanitize";
-import { blogCloudinaryAssetNamespace, uploadBlogImage, blogImageFolder } from "@/app/lib/blog/cloudinary";
+import { blogMediaAssetNamespace, uploadBlogImage } from "@/app/lib/blog/media";
 import type { BlogPost } from "@/app/lib/blog/types";
 import { columnText, convertPostPage, type RawBlock } from "./convert";
 
@@ -114,7 +115,7 @@ class ImageMigrator {
     const cache = db!.collection<{ _id: string; url: string }>("blog_migration_images");
     // Include the Cloudinary account as well as the folder. Otherwise moving
     // the blog to a new product environment could reuse URLs from the old one.
-    const key = `${blogCloudinaryAssetNamespace()}|${url}`;
+    const key = `${await blogMediaAssetNamespace()}|${url}`;
     const hit = await cache.findOne({ _id: key });
     if (hit) {
       this.reused++;
@@ -228,7 +229,7 @@ async function migrateIndexSettings(c: BlogCollections, images: ImageMigrator) {
 type ReportRow = { slug: string; status: string; wpWords: number; newWords: number; blocks: number; images: string; notes: string };
 
 async function main() {
-  console.log(`WordPress: ${WP}  | mode: ${DRY ? "DRY RUN" : "WRITE"} | images: ${UPLOAD ? `upload to ${blogImageFolder()}` : "keep WordPress URLs"}`);
+  console.log(`WordPress: ${WP}  | mode: ${DRY ? "DRY RUN" : "WRITE"} | images: ${UPLOAD ? "upload through backend blog media service" : "keep WordPress URLs"}`);
   const c = DRY ? null : await getBlogCollections();
   if (!DRY && !c) throw new Error("Database unavailable (check DATABASE_URL)");
 
@@ -339,13 +340,14 @@ async function main() {
   report.sort((a, b) => a.slug.localeCompare(b.slug));
   const failed = report.filter((r) => r.status === "FAILED");
   const lowCoverage = report.filter((r) => r.wpWords && r.newWords / r.wpWords < 0.85);
+  const mediaNamespace = UPLOAD ? await blogMediaAssetNamespace() : null;
   const md = [
     `# Blog migration report`,
     ``,
     `- Run: ${new Date().toISOString()} (${DRY ? "dry run" : "write"})`,
     `- Source: ${WP}`,
     `- Posts: ${report.length} processed, ${report.filter((r) => r.status === "created").length} created, ${report.filter((r) => r.status === "updated").length} updated, ${failed.length} failed`,
-    `- Images: ${images.uploaded} uploaded, ${images.reused} reused from earlier runs, ${images.failed.length} failed${UPLOAD ? ` (folder ${blogImageFolder()})` : " (not uploaded)"}`,
+    `- Images: ${images.uploaded} uploaded, ${images.reused} reused from earlier runs, ${images.failed.length} failed${mediaNamespace ? ` (backend namespace ${mediaNamespace})` : " (not uploaded)"}`,
     `- Index header: ${settingsNote}`,
     `- Word coverage below 85%: ${lowCoverage.length ? lowCoverage.map((r) => r.slug).join(", ") : "none"}`,
     ``,

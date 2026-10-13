@@ -9,25 +9,22 @@ Content lives in MongoDB (`scholarly_help.blog_*`), images in Cloudinary.
 # Preview only: converts every post and writes a report, no uploads, no DB writes
 npx vite-node -c vitest.config.ts scripts/blog-migrate/migrate.ts -- --dry-run
 
-# Real run (DB from DATABASE_URL, images to BLOG_CLOUDINARY_FOLDER, default scholarlyhelp/blog)
+# Real run (DB from DATABASE_URL, images uploaded through the backend media endpoint)
 npx vite-node -c vitest.config.ts scripts/blog-migrate/migrate.ts -- --settings
 ```
 
 Options: `--dry-run`, `--no-images` (keep WordPress image URLs), `--only=slug-a,slug-b`,
 `--settings` (re-import the blog index header), `--report=FILE` (default `blog-migration-report.md`).
 
-Blog images use a dedicated Cloudinary product environment and never fall back to the application's
-shared `CLOUDINARY_*` credentials. Set these as local secrets (do not commit them):
+Blog images are sent to the protected backend media endpoint. The frontend and migration script need
+the existing backend URL and shared internal API key (do not commit secrets):
 
 ```env
-BLOG_CLOUDINARY_CLOUD_NAME=your_blog_cloud_name
-BLOG_CLOUDINARY_API_KEY=your_dedicated_blog_key
-BLOG_CLOUDINARY_API_SECRET=your_dedicated_blog_secret
-BLOG_CLOUDINARY_FOLDER=scholarlyhelp/blog-dev
+AUTH_API_BASE_URL=https://your-backend.example/v1
+ADMIN_INTERNAL_API_KEY=the_same_value_configured_on_the_backend
 ```
 
-Production uses the same three dedicated credentials with
-`BLOG_CLOUDINARY_FOLDER=scholarlyhelp/blog`.
+Only the backend stores `BLOG_CLOUDINARY_*`; its existing `CLOUDINARY_*` account remains unchanged.
 
 It is safe to run repeatedly. Posts are matched by WordPress id, categories and tags by slug, and
 uploaded images are cached in `blog_migration_images`, so a re-run updates content instead of
@@ -61,8 +58,8 @@ Reported in the migration report:
    new blog is only reachable through the admin. (`/blog/post-sitemap.xml` is also routed to
    WordPress until step 4, so merge the `robots.txt` line at switchover time.)
 2. Freeze edits in WordPress.
-3. Run the migration against the production database with the dedicated `BLOG_CLOUDINARY_*`
-   credentials and `BLOG_CLOUDINARY_FOLDER=scholarlyhelp/blog`.
+3. Run the migration against the production database with the production backend URL and matching
+   `ADMIN_INTERNAL_API_KEY`. The backend must have its dedicated `BLOG_CLOUDINARY_*` credentials.
    Check the report: 0 failures, word coverage above 85%.
 4. On the EC2 server, in `/etc/nginx/sites-enabled/scholarlyhelp.com`, replace the
    `location /blog { … php … }` block with:

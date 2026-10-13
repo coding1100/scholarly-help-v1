@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { uploadBlogImage } from "@/app/lib/blog/cloudinary";
+import { uploadBlogImage } from "@/app/lib/blog/media";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +20,10 @@ export async function POST(request: NextRequest) {
     if (file.size > MAX_BYTES) {
       return NextResponse.json({ error: "Image must be 8 MB or smaller" }, { status: 400 });
     }
-    const image = await uploadBlogImage(Buffer.from(await file.arrayBuffer()));
+    const image = await uploadBlogImage(Buffer.from(await file.arrayBuffer()), {
+      contentType: file.type,
+      fileName: file.name,
+    });
     return NextResponse.json(image);
   } catch (error) {
     console.error("Blog image upload failed:", error);
