@@ -24,7 +24,7 @@ import { getMongoDb } from "@/app/lib/mongodb";
 import { normalizePostInput, ValidationError } from "@/app/lib/blog/validate";
 import { blockText, decodeEntities, slugify } from "@/app/lib/blog/utils";
 import { toPlainText } from "@/app/lib/blog/sanitize";
-import { uploadBlogImage, blogImageFolder } from "@/app/lib/blog/cloudinary";
+import { blogCloudinaryAssetNamespace, uploadBlogImage, blogImageFolder } from "@/app/lib/blog/cloudinary";
 import type { BlogPost } from "@/app/lib/blog/types";
 import { columnText, convertPostPage, type RawBlock } from "./convert";
 
@@ -112,7 +112,9 @@ class ImageMigrator {
   private async upload(url: string): Promise<string> {
     const db = await getMongoDb();
     const cache = db!.collection<{ _id: string; url: string }>("blog_migration_images");
-    const key = `${blogImageFolder()}|${url}`;
+    // Include the Cloudinary account as well as the folder. Otherwise moving
+    // the blog to a new product environment could reuse URLs from the old one.
+    const key = `${blogCloudinaryAssetNamespace()}|${url}`;
     const hit = await cache.findOne({ _id: key });
     if (hit) {
       this.reused++;

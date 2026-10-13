@@ -26,6 +26,11 @@ export function blogImageFolder(env: BlogCloudinaryEnv = process.env): string {
   return env.BLOG_CLOUDINARY_FOLDER?.trim() || "scholarlyhelp/blog";
 }
 
+/** Separates migration reuse records across Cloudinary accounts and folders. */
+export function blogCloudinaryAssetNamespace(env: BlogCloudinaryEnv = process.env): string {
+  return `${blogCloudinaryCredentials(env).cloud_name}|${blogImageFolder(env)}`;
+}
+
 export async function uploadBlogImage(
   source: Buffer | string,
   options: { publicId?: string } = {},

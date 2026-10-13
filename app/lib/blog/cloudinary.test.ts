@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { blogCloudinaryCredentials, blogImageFolder } from "./cloudinary";
+import { blogCloudinaryAssetNamespace, blogCloudinaryCredentials, blogImageFolder } from "./cloudinary";
 
 describe("blog Cloudinary configuration", () => {
   it("uses the dedicated blog credentials", () => {
@@ -37,5 +37,16 @@ describe("blog Cloudinary configuration", () => {
   it("uses separate development and production folders", () => {
     expect(blogImageFolder({ BLOG_CLOUDINARY_FOLDER: "scholarlyhelp/blog-dev" })).toBe("scholarlyhelp/blog-dev");
     expect(blogImageFolder({})).toBe("scholarlyhelp/blog");
+  });
+
+  it("separates migration reuse records by account and folder", () => {
+    expect(
+      blogCloudinaryAssetNamespace({
+        BLOG_CLOUDINARY_CLOUD_NAME: "dedicated-blog-cloud",
+        BLOG_CLOUDINARY_API_KEY: "key",
+        BLOG_CLOUDINARY_API_SECRET: "secret",
+        BLOG_CLOUDINARY_FOLDER: "scholarlyhelp/blog-dev",
+      }),
+    ).toBe("dedicated-blog-cloud|scholarlyhelp/blog-dev");
   });
 });
