@@ -13,7 +13,7 @@
  *   --settings       also (re)import the blog index header from WordPress
  *   --report=FILE    write a Markdown report (default: blog-migration-report.md)
  *
- * Reads DATABASE_URL, CLOUDINARY_* and BLOG_CLOUDINARY_FOLDER from .env.
+ * Reads DATABASE_URL and BLOG_CLOUDINARY_* from the local environment.
  */
 import "./env";
 import { randomUUID, createHash } from "crypto";

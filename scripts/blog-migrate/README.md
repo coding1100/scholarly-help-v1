@@ -16,6 +16,19 @@ npx vite-node -c vitest.config.ts scripts/blog-migrate/migrate.ts -- --settings
 Options: `--dry-run`, `--no-images` (keep WordPress image URLs), `--only=slug-a,slug-b`,
 `--settings` (re-import the blog index header), `--report=FILE` (default `blog-migration-report.md`).
 
+Blog images use a dedicated Cloudinary product environment and never fall back to the application's
+shared `CLOUDINARY_*` credentials. Set these as local secrets (do not commit them):
+
+```env
+BLOG_CLOUDINARY_CLOUD_NAME=your_blog_cloud_name
+BLOG_CLOUDINARY_API_KEY=your_dedicated_blog_key
+BLOG_CLOUDINARY_API_SECRET=your_dedicated_blog_secret
+BLOG_CLOUDINARY_FOLDER=scholarlyhelp/blog-dev
+```
+
+Production uses the same three dedicated credentials with
+`BLOG_CLOUDINARY_FOLDER=scholarlyhelp/blog`.
+
 It is safe to run repeatedly. Posts are matched by WordPress id, categories and tags by slug, and
 uploaded images are cached in `blog_migration_images`, so a re-run updates content instead of
 duplicating it (view counts never go down). Run it once more right before switchover to pick up
@@ -48,7 +61,8 @@ Reported in the migration report:
    new blog is only reachable through the admin. (`/blog/post-sitemap.xml` is also routed to
    WordPress until step 4, so merge the `robots.txt` line at switchover time.)
 2. Freeze edits in WordPress.
-3. Run the migration against the production database with `BLOG_CLOUDINARY_FOLDER=scholarlyhelp/blog`.
+3. Run the migration against the production database with the dedicated `BLOG_CLOUDINARY_*`
+   credentials and `BLOG_CLOUDINARY_FOLDER=scholarlyhelp/blog`.
    Check the report: 0 failures, word coverage above 85%.
 4. On the EC2 server, in `/etc/nginx/sites-enabled/scholarlyhelp.com`, replace the
    `location /blog { … php … }` block with:
@@ -66,5 +80,5 @@ Reported in the migration report:
 5. Verify: every old URL returns 200 or a redirect (posts, categories, tags, `/blog/page/N/`,
    `/blog/author/cutredblackfox/`, Yoast sitemaps). Submit `https://scholarlyhelp.com/blog/post-sitemap.xml`
    in Google Search Console.
-6. Rollback: restore the old `location /blog` block and reload nginx. Keep WordPress
-   untouched for 30 days before removing it.
+6. Rollback: restore the old `location /blog` block and reload nginx. Keep WordPress files,
+   database, uploads and the saved nginx configuration intact until the owner explicitly decides otherwise.
