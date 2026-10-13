@@ -195,6 +195,18 @@ const nextConfig = {
         destination,
         permanent: false,
       })),
+      // Former WordPress blog URLs. Archives now list every post on one page.
+      // Keep the original Yoast post-sitemap URL canonical; consolidate the
+      // other retired sitemap URLs and our temporary custom URL into it.
+      { source: '/blog/page/:n', destination: '/blog/', permanent: true },
+      { source: '/blog/:kind(category|tag|author)/:slug/page/:n', destination: '/blog/:kind/:slug/', permanent: true },
+      {
+        source: '/blog/:map(sitemap_index|page-sitemap|category-sitemap|post_tag-sitemap|author-sitemap).xml',
+        destination: '/blog/post-sitemap.xml',
+        permanent: true,
+      },
+      { source: '/blog-sitemap.xml', destination: '/blog/post-sitemap.xml', permanent: true },
+      { source: '/blog/comments/feed', destination: '/blog/feed/', permanent: true },
     ];
   },
 
@@ -265,7 +277,9 @@ const nextConfig = {
       // Safe because public pages read no cookies, headers or searchParams on
       // the server, so every visitor gets the same HTML.
       {
-        source: '/((?!api|admin|_next/static|_next/image).*)',
+        // The blog sitemap is database-backed and must reflect a publish
+        // immediately, so its route supplies its own no-store policy.
+        source: '/((?!api|admin|_next/static|_next/image|blog/post-sitemap\\.xml).*)',
         headers: [
           {
             key: 'Cache-Control',
