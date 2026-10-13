@@ -68,6 +68,7 @@ export const STATIC_TOP_LEVEL_SEGMENTS = new Set([
   "tools",
   "us-based-phd-experts",
   "write-my-paper",
+  "blog",
   "cgpa-calculator",
   "admin",
   "api",
