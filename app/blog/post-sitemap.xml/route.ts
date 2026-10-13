@@ -4,8 +4,8 @@
 import { getBlogCollections } from "@/app/lib/blog/db";
 import { liveFilter, postUrl, siteBaseUrl } from "@/app/lib/blog/utils";
 
-// Rendered per request so newly published posts appear immediately (the CDN may
-// still cache the response briefly according to the site's shared cache policy).
+// Rendered per request and explicitly excluded from the site's shared HTML cache
+// so newly published posts appear immediately.
 export const dynamic = "force-dynamic";
 
 export async function GET() {
@@ -28,6 +28,7 @@ export async function GET() {
     `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`,
     {
       headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
         "Content-Type": "application/xml; charset=utf-8",
         "X-Robots-Tag": "noindex, follow",
       },

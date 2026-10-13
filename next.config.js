@@ -277,7 +277,9 @@ const nextConfig = {
       // Safe because public pages read no cookies, headers or searchParams on
       // the server, so every visitor gets the same HTML.
       {
-        source: '/((?!api|admin|_next/static|_next/image).*)',
+        // The blog sitemap is database-backed and must reflect a publish
+        // immediately, so its route supplies its own no-store policy.
+        source: '/((?!api|admin|_next/static|_next/image|blog/post-sitemap\\.xml).*)',
         headers: [
           {
             key: 'Cache-Control',
