@@ -171,24 +171,40 @@ async function upsertTerms(c: BlogCollections | null, kind: "categories" | "tags
   return idByWp;
 }
 
-async function upsertAuthor(c: BlogCollections | null, name: string, wpSlug: string | null, cache: Map<string, string>) {
+async function upsertAuthor(
+  c: BlogCollections | null,
+  name: string,
+  wpSlug: string | null,
+  cache: Map<string, Promise<string>>,
+) {
   const slug = slugify(name);
-  if (cache.has(slug)) return cache.get(slug)!;
-  let id = `dry-${slug}`;
-  if (c) {
-    const existing = await c.authors.findOne({ slug });
-    id = existing?._id ?? randomUUID();
-    if (!existing) await c.authors.insertOne({ _id: id, name, slug, description: "", bio: "", avatarUrl: "" });
-    if (wpSlug && wpSlug !== slug) {
-      await c.redirects.updateOne(
-        { _id: `author/${wpSlug}` },
-        { $set: { from: `author/${wpSlug}`, to: slug, createdAt: new Date().toISOString() } },
-        { upsert: true },
-      );
+  const cached = cache.get(slug);
+  if (cached) return cached;
+
+  const operation = (async () => {
+    let id = `dry-${slug}`;
+    if (c) {
+      const existing = await c.authors.findOne({ slug });
+      id = existing?._id ?? randomUUID();
+      if (!existing) await c.authors.insertOne({ _id: id, name, slug, description: "", bio: "", avatarUrl: "" });
+      if (wpSlug && wpSlug !== slug) {
+        await c.redirects.updateOne(
+          { _id: `author/${wpSlug}` },
+          { $set: { from: `author/${wpSlug}`, to: slug, createdAt: new Date().toISOString() } },
+          { upsert: true },
+        );
+      }
     }
+    return id;
+  })();
+
+  cache.set(slug, operation);
+  try {
+    return await operation;
+  } catch (error) {
+    cache.delete(slug);
+    throw error;
   }
-  cache.set(slug, id);
-  return id;
 }
 
 // ---------- Index header ----------
@@ -237,7 +253,7 @@ async function main() {
   }
 
   const images = new ImageMigrator(c);
-  const authors = new Map<string, string>();
+  const authors = new Map<string, Promise<string>>();
   const report: ReportRow[] = [];
   const allWarnings = new Map<string, number>();
 
