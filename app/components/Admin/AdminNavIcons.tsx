@@ -98,6 +98,7 @@ const MAIN_NAV_ICON_BY_HREF: Record<string, FC<IconProps>> = {
   "/admin/online-class": OnlineClassNavIcon,
   "/admin/essay-writing": EssayWritingNavIcon,
   "/admin/tool-usage": ReportsNavIcon,
+  "/admin/team-usage": ReportsNavIcon,
   "/admin/blog": BlogNavIcon,
 };
 
@@ -131,6 +132,7 @@ export function buildMainNavigation(): AdminMainNavItem[] {
     { name: "Online Class", href: "/admin/online-class", icon: OnlineClassNavIcon },
     { name: "Essay Writing", href: "/admin/essay-writing", icon: EssayWritingNavIcon },
     { name: "Tool Usage", href: "/admin/tool-usage", icon: ReportsNavIcon },
+    { name: "Team Usage", href: "/admin/team-usage", icon: ReportsNavIcon },
     { name: "Blog", href: "/admin/blog", icon: BlogNavIcon },
   ];
 }
