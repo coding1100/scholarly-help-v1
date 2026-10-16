@@ -4,11 +4,11 @@
 // require touching layout code.
 
 export const heroContent = {
-  badge: "4,220 students used this tool this week",
-  titleTop: "The best AI humanizer that makes",
-  titleAccent: "your writing sound real",
+  badge: "For working professionals earning their degree online",
+  titleTop: "AI Humanizer",
+  titleAccent: "Make your draft sound like you wrote it.",
   subtitle:
-    "Paste your AI-generated content, and our free AI humanizer delivers a natural, human voice instantly.",
+    "Paste your draft and get natural, human-sounding writing in seconds. Free to try, no sign-up.",
 };
 
 export const beforeAfterContent = {
