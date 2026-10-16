@@ -390,11 +390,7 @@ export default function DiscussionPostView({
           </div>
 
           {/* Done for you card */}
-          <DoneForYouCard
-            placement="discussion_post"
-            title="Due by Sunday and working long shifts?"
-            body="Send your weekly discussion board prompt. Our academic experts draft your initial post and two peer responses with real citations."
-          />
+          <DoneForYouCard placement="discussion_post" />
         </div>
       </div>
     </div>

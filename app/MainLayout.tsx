@@ -20,6 +20,8 @@ const MainLayout: FC<MainLayoutProps> = ({ children }) => {
         <Footer />
       </FooterGate>
       <WhatsApp />
+      {/* Room for the mobile Done-for-you bar so it never covers the footer. */}
+      <div aria-hidden className="h-[var(--done-for-you-bar-height,0px)]" />
     </AuthProvider>
   );
 };

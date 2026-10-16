@@ -292,10 +292,7 @@ export default function CollegeGpaCalculator() {
               </div>
             ) : null}
 
-            <DoneForYouCard
-              placement="cgpa_calculator_card"
-              title="Working full-time while taking classes?"
-            />
+            <DoneForYouCard placement="cgpa_calculator_card" />
           </div>
         </div>
       </div>

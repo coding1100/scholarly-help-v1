@@ -1515,21 +1515,6 @@ ${conclText}`;
     );
   };
 
-  // Sidebars
-  const renderDoneForYouCard = (
-    customHeadline?: string,
-    customBody?: string,
-  ) => (
-    <DoneForYouCard
-      placement="essay_studio"
-      title={customHeadline || "No time to write it at all?"}
-      body={
-        customBody ||
-        "A writer in your field can take the whole paper, built to your rubric and on time."
-      }
-    />
-  );
-
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 sm:px-6 py-6 pb-16 font-poppins text-[#171A2B]">
       {/* Hidden file input for uploads */}
@@ -1699,7 +1684,7 @@ ${conclText}`;
 
           {/* Right Sidebar */}
           <aside className="w-full lg:w-[300px] shrink-0 flex flex-col gap-4">
-            {renderDoneForYouCard()}
+            <DoneForYouCard placement="essay_studio" />
 
             {/* Discussion Post Banner in sidebar for perfect balance */}
             <div className="flex flex-col gap-2.5 rounded-2xl border border-[#E4E5EE] bg-[#F8F9FC] p-4 text-left shadow-sm">
@@ -1991,7 +1976,7 @@ ${conclText}`;
                   </div>
                 </div>
               </div>
-              {renderDoneForYouCard()}
+              <DoneForYouCard placement="essay_studio" />
             </aside>
           </div>
         </div>
@@ -2251,10 +2236,7 @@ ${conclText}`;
                   </div>
                 </div>
               </div>
-              {renderDoneForYouCard(
-                "Rather hand off the rest?",
-                "We already have your brief, title and thesis. A professional academic writer can finish the paper from here.",
-              )}
+              <DoneForYouCard placement="essay_studio" />
             </aside>
           </div>
         </div>
@@ -2451,11 +2433,8 @@ ${conclText}`;
               </div>
             </div>
 
-            <aside className="w-full lg:w-[300px] shrink-0 flex flex-col gap-4">
-              {renderDoneForYouCard(
-                "Rather have a writer finish it?",
-                "Send this outline and our professional academic writers produce the complete paper with real sources and proper citations.",
-              )}
+            <aside className="hidden w-[300px] shrink-0 flex-col gap-4 xl:flex">
+              <DoneForYouCard placement="essay_studio" />
             </aside>
           </div>
         </div>
@@ -2741,7 +2720,7 @@ ${conclText}`;
                 )}
               </div>
 
-              {renderDoneForYouCard()}
+              <DoneForYouCard placement="essay_studio" />
             </aside>
           </div>
         </div>
@@ -2886,11 +2865,8 @@ ${conclText}`;
             </div>
 
             {/* Right: Done for you */}
-            <aside className="w-full lg:w-[300px] shrink-0 flex flex-col gap-4">
-              {renderDoneForYouCard(
-                "No time to fix all 3 before it's due?",
-                "Send us this essay and your grade report. A writer in your field revises it to your rubric with real peer-reviewed sources and verified APA citations.",
-              )}
+            <aside className="hidden w-[300px] shrink-0 flex-col gap-4 xl:flex">
+              <DoneForYouCard placement="essay_studio" />
             </aside>
           </div>
         </div>

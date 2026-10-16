@@ -7,8 +7,8 @@ interface ToolWithExploreProps {
   children: ReactNode;
   /**
    * Optional right rail (e.g. the Done-for-you card). Sits beside the tool on
-   * wide screens and drops below it on smaller ones, so the tool's own input
-   * and button stay first on mobile.
+   * xl screens. Below that the rail takes no space: the Done-for-you card
+   * hides itself there and shows as a sticky bottom bar instead.
    */
   rail?: ReactNode;
 }
@@ -33,7 +33,7 @@ export default function ToolWithExplore({
       {rail ? (
         <div className="flex flex-col xl:flex-row xl:items-start">
           <div className="min-w-0 flex-1">{children}</div>
-          <aside className="mx-auto w-full max-w-[840px] px-4 pt-6 md:px-8 xl:mx-0 xl:w-[320px] xl:max-w-none xl:shrink-0 xl:pl-0 xl:pr-6 xl:pt-8">
+          <aside className="xl:w-[344px] xl:shrink-0 xl:pr-6 xl:pt-8">
             {rail}
           </aside>
         </div>
