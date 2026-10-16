@@ -43,7 +43,7 @@ import { TOOL_GROUPS } from "./Dashboard/toolGroups";
 import {
   EXPERT_WHATSAPP_HREF,
   trackExpertWhatsAppClick,
-} from "./Dashboard/ExpertHelpCard";
+} from "./expertWhatsApp";
 
 interface SidebarProps {
   onToggle?: () => void;

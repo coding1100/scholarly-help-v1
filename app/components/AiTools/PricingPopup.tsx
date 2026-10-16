@@ -12,7 +12,7 @@ import {
 import {
   EXPERT_WHATSAPP_HREF,
   trackExpertWhatsAppClick,
-} from "@/app/components/AiTools/Dashboard/ExpertHelpCard";
+} from "@/app/components/AiTools/expertWhatsApp";
 
 const plans: PaidPlan[] = ["starter", "starter_annual"];
 const actionLabels: Record<string, string> = {

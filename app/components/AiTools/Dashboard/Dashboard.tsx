@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import HumanizerTool from "../HumanizerTool/HumanizerTool";
 import RecentWorkPanel from "./RecentWorkPanel";
-import ExpertHelpCard from "./ExpertHelpCard";
+import DoneForYouCard from "../DoneForYouCard";
 import TopToolsStrip from "./TopToolsStrip";
 
 /**
@@ -50,9 +50,11 @@ export default function Dashboard() {
 
           {/* Right rail. Ordered after the tools in the DOM so keyboard and
               screen-reader users reach the primary task first; on mobile it
-              stacks underneath for the same reason. */}
-          <aside className="space-y-5 lg:sticky lg:top-6 lg:self-start">
-            <ExpertHelpCard />
+              stacks underneath for the same reason. Flex gap rather than
+              space-y, so the Done-for-you card (hidden below xl, where it
+              shows as a sticky bottom bar) leaves no stray margin. */}
+          <aside className="flex flex-col gap-5 lg:sticky lg:top-6 lg:self-start">
+            <DoneForYouCard placement="dashboard_done_for_you" />
             <RecentWorkPanel />
           </aside>
         </div>

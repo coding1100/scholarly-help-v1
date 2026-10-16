@@ -8,7 +8,7 @@ import { SMS_NUMBER, handleTextUsClick } from "@/app/lib/client/smsTracking";
 import {
   EXPERT_WHATSAPP_HREF,
   trackExpertWhatsAppClick,
-} from "./Dashboard/ExpertHelpCard";
+} from "./expertWhatsApp";
 
 /**
  * Height of the mobile bar, published on <html> so the layouts that host it
