@@ -44,6 +44,20 @@ select {
   display: none;
 }
 
+/*
+ * While the mobile Done-for-you bar is showing (below xl, 1200px) it already
+ * offers WhatsApp and SMS, so the floating WhatsApp/SMS bubbles would only
+ * sit on top of it.
+ */
+@media (max-width: 1199.98px) {
+  html[data-done-for-you-bar] #whatsapp-chat,
+  html[data-done-for-you-bar] #whatsapp-chat-2,
+  html[data-done-for-you-bar] #sms-chat,
+  html[data-done-for-you-bar] #sms-chat2 {
+    display: none !important;
+  }
+}
+
 /* Admin dashboard theme lives in app/(admin)/admin.css — loaded only on admin routes. */
 
 .formtwo .cus-img {

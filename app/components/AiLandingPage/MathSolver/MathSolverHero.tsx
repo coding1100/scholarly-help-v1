@@ -1,27 +1,9 @@
 "use client";
 
-import { FaRegFolderOpen, FaWhatsapp, FaArrowRight } from "react-icons/fa";
+import { FaRegFolderOpen, FaArrowRight } from "react-icons/fa";
 import { MathSolverEmbed } from "@/app/components/AiLandingPage/ToolLanding/ToolEmbeds";
+import DoneForYouCard from "@/app/components/AiTools/DoneForYouCard";
 import { LOAD_SAMPLE_PROBLEM_EVENT } from "@/app/components/AiTools/MathSolver/sampleProblem";
-
-declare global {
-  interface Window {
-    dataLayer?: Array<Record<string, any>>;
-  }
-}
-
-function pushWhatsAppClickEvent() {
-  try {
-    window.dataLayer = window.dataLayer || [];
-    window.dataLayer.push({
-      event: "whatsapp_click",
-      whatsapp_placement: "math_solver_card",
-      page_path: window.location.pathname,
-    });
-  } catch {
-    // Never block navigation if GTM isn't available.
-  }
-}
 
 function loadSampleProblem() {
   window.dispatchEvent(new Event(LOAD_SAMPLE_PROBLEM_EVENT));
@@ -74,26 +56,7 @@ export default function MathSolverHero() {
               </button>
             </div>
 
-            <div className="rounded-2xl bg-[#0f1729] p-6 text-white shadow-sm">
-              <div className="text-sm font-semibold">
-                Working full-time while taking math classes?
-              </div>
-              <p className="mt-2 text-xs leading-relaxed text-slate-300">
-                One problem is easy. 40 a week on ALEKS or MyMathLab isn&apos;t.
-                Our math experts can take the class off your plate, so you
-                keep your grade and your evenings.
-              </p>
-              <a
-                href="https://api.whatsapp.com/send?phone=14108445419"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={pushWhatsAppClickEvent}
-                className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#25D366] px-4 py-3 text-sm font-semibold text-white hover:bg-[#20bd5a]"
-              >
-                <FaWhatsapp className="text-base" aria-hidden="true" />
-                Chat on WhatsApp
-              </a>
-            </div>
+            <DoneForYouCard placement="math_solver_landing" className="flex-1" />
           </div>
         </div>
       </div>

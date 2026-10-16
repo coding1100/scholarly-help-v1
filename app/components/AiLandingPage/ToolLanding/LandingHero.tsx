@@ -1,4 +1,5 @@
 import { FC, ReactNode } from "react";
+import HeroToolWithCard from "./HeroToolWithCard";
 
 export interface LandingHeroContent {
   badge: string;
@@ -35,7 +36,7 @@ const LandingHero: FC<{
       className="pointer-events-none absolute -bottom-52 left-1/2 h-[560px] w-[900px] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse,#dbeafe_0%,transparent_70%)] opacity-70"
     />
 
-    <div className="relative mx-auto max-w-[1240px] px-4 pb-16 pt-10 text-center md:pb-20 md:pt-14">
+    <div className="relative mx-auto max-w-[1312px] px-4 pb-16 pt-10 text-center md:pb-20 md:pt-14">
       <span className="inline-block rounded-full bg-white px-7 py-3 text-sm font-medium text-gray-900 shadow-[0_18px_35px_-12px_rgba(43,28,80,0.2)] md:text-base">
         {content.badge}
       </span>
@@ -78,12 +79,7 @@ const LandingHero: FC<{
       </div>
 
       {/* the real tool, styled as the hero card */}
-      <div
-        id={toolAnchorId}
-        className="mx-auto mt-10 max-w-[1180px] scroll-mt-24 text-left"
-      >
-        {children}
-      </div>
+      <HeroToolWithCard toolId={toolAnchorId}>{children}</HeroToolWithCard>
 
       {content.introLine && (
         <p className="mx-auto mt-8 max-w-4xl text-base leading-7 text-gray-700">
