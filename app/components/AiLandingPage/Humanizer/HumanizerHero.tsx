@@ -1,4 +1,5 @@
 import { FC, Suspense } from "react";
+import { LuGraduationCap } from "react-icons/lu";
 import HeroToolWithCard from "@/app/components/AiLandingPage/ToolLanding/HeroToolWithCard";
 import HumanizerToolEmbed from "./HumanizerToolEmbed";
 import { heroContent } from "./content";
@@ -29,7 +30,7 @@ const HumanizerHero: FC = () => (
 
     <div className="relative mx-auto max-w-[1312px] px-4 pb-16 pt-10 text-center md:pb-20 md:pt-14">
       <span className="inline-flex items-center gap-2 rounded-full bg-white px-7 py-3 text-sm font-medium text-gray-900 shadow-[0_18px_35px_-12px_rgba(43,28,80,0.2)] md:text-base">
-        <span aria-hidden>🎓</span>
+        <LuGraduationCap aria-hidden className="h-4 w-4 shrink-0" />
         {heroContent.badge}
       </span>
 
