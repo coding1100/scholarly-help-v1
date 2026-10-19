@@ -1,6 +1,13 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import StudyWorkspacePageContent from "./StudyWorkspacePageContent";
 import ProductSchema from "@/app/components/ProductSchema";
+
+// The tool workspace. /tools/ai-study-workspace/ is its indexable landing page.
+export const metadata: Metadata = {
+  title: "AI Study Workspace | ScholarlyHelp",
+  robots: { index: false, follow: true },
+};
 
 export default function StudyWorkspacePage() {
   const rawBaseUrl =
