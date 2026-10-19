@@ -96,9 +96,9 @@ const ToolsLayout: React.FC<ToolsLayoutProps> = ({
         <div className="flex-1 min-w-0 min-h-0 flex flex-col bg-white dark:bg-gray-900 transition-colors duration-300">
           {/* {children} */}
           <ToolHeader setFlag={setFlag} flag={flag} />
-          {/* The bottom padding keeps the scroll area clear of the mobile
-              Done-for-you bar (0 when no bar is showing). */}
-          <div className="flex-1 min-h-0 pb-[var(--done-for-you-bar-height,0px)]">
+          {/* The bottom padding keeps the scroll area clear of the sticky
+              mobile CTA bar (0 when no bar is showing). */}
+          <div className="flex-1 min-h-0 pb-[var(--mobile-cta-bar-height,0px)]">
             {content}
           </div>
         </div>

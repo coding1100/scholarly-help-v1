@@ -1,19 +1,10 @@
 import { FC } from "react";
 import { Metadata } from "next";
 import MainLayout from "@/app/MainLayout";
-import HumanizerHero from "@/app/components/AiLandingPage/Humanizer/HumanizerHero";
-import BeforeAfter from "@/app/components/AiLandingPage/Humanizer/BeforeAfter";
-import UseCases from "@/app/components/AiLandingPage/Humanizer/UseCases";
-import HowItWorks from "@/app/components/AiLandingPage/Humanizer/HowItWorks";
-import WatchVideo from "@/app/components/AiLandingPage/Humanizer/WatchVideo";
-import WhyItWorks from "@/app/components/AiLandingPage/Humanizer/WhyItWorks";
-import TwoWays from "@/app/components/AiLandingPage/Humanizer/TwoWays";
-import ExpertBanner from "@/app/components/AiLandingPage/Humanizer/ExpertBanner";
-import StudentReviews from "@/app/components/AiLandingPage/Humanizer/StudentReviews";
-import HumanizerFaq from "@/app/components/AiLandingPage/Humanizer/HumanizerFaq";
-import FooterCta from "@/app/components/AiLandingPage/Humanizer/FooterCta";
+import LandingTemplate from "@/app/components/AiLandingPage/Template/LandingTemplate";
+import HumanizerToolEmbed from "@/app/components/AiLandingPage/Humanizer/HumanizerToolEmbed";
+import { humanizerLanding, metaContent } from "@/app/components/AiLandingPage/Humanizer/content";
 import ProductSchema from "@/app/components/ProductSchema";
-import { metaContent } from "@/app/components/AiLandingPage/Humanizer/content";
 
 const Page: FC = () => {
   const baseUrl =
@@ -28,19 +19,7 @@ const Page: FC = () => {
         metaDescription={metaContent.description}
         pageUrl={`${normalizedBaseUrl}/tools/ai-humanizer`}
       />
-      <div className="font-poppins overflow-x-hidden">
-        <HumanizerHero />
-        <BeforeAfter />
-        <UseCases />
-        <HowItWorks />
-        <WatchVideo />
-        <WhyItWorks />
-        <TwoWays />
-        <ExpertBanner />
-        <StudentReviews />
-        <HumanizerFaq />
-        <FooterCta />
-      </div>
+      <LandingTemplate content={humanizerLanding} tool={<HumanizerToolEmbed />} />
     </MainLayout>
   );
 };

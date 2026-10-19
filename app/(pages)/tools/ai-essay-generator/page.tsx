@@ -1,19 +1,10 @@
 import { FC } from "react";
 import { Metadata } from "next";
 import MainLayout from "@/app/MainLayout";
-import EssayGeneratorHero from "@/app/components/AiLandingPage/EssayGenerator/EssayGeneratorHero";
-import BeforeAfter from "@/app/components/AiLandingPage/EssayGenerator/BeforeAfter";
-import UseCases from "@/app/components/AiLandingPage/EssayGenerator/UseCases";
-import HowItWorks from "@/app/components/AiLandingPage/EssayGenerator/HowItWorks";
-import WatchVideo from "@/app/components/AiLandingPage/EssayGenerator/WatchVideo";
-import WhyItWorks from "@/app/components/AiLandingPage/EssayGenerator/WhyItWorks";
-import TwoWays from "@/app/components/AiLandingPage/EssayGenerator/TwoWays";
-import ExpertBanner from "@/app/components/AiLandingPage/EssayGenerator/ExpertBanner";
-import StudentReviews from "@/app/components/AiLandingPage/EssayGenerator/StudentReviews";
-import EssayGeneratorFaq from "@/app/components/AiLandingPage/EssayGenerator/EssayGeneratorFaq";
-import FooterCta from "@/app/components/AiLandingPage/EssayGenerator/FooterCta";
+import LandingTemplate from "@/app/components/AiLandingPage/Template/LandingTemplate";
+import EssayGeneratorToolEmbed from "@/app/components/AiLandingPage/EssayGenerator/EssayGeneratorToolEmbed";
+import { essayGeneratorLanding, metaContent } from "@/app/components/AiLandingPage/EssayGenerator/content";
 import ProductSchema from "@/app/components/ProductSchema";
-import { metaContent } from "@/app/components/AiLandingPage/EssayGenerator/content";
 
 const Page: FC = () => {
   const baseUrl =
@@ -28,19 +19,7 @@ const Page: FC = () => {
         metaDescription={metaContent.description}
         pageUrl={`${normalizedBaseUrl}/tools/ai-essay-generator`}
       />
-      <div className="font-poppins">
-        <EssayGeneratorHero />
-        <BeforeAfter />
-        <UseCases />
-        <HowItWorks />
-        <WatchVideo />
-        <WhyItWorks />
-        <TwoWays />
-        <ExpertBanner />
-        <StudentReviews />
-        <EssayGeneratorFaq />
-        <FooterCta />
-      </div>
+      <LandingTemplate content={essayGeneratorLanding} tool={<EssayGeneratorToolEmbed />} />
     </MainLayout>
   );
 };

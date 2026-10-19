@@ -1,17 +1,9 @@
 import { FC } from "react";
 import { Metadata } from "next";
 import MainLayout from "@/app/MainLayout";
-import StudyHero from "@/app/components/AiLandingPage/StudyWorkspace/StudyHero";
-import BeforeAfter from "@/app/components/AiLandingPage/StudyWorkspace/BeforeAfter";
-import UseCases from "@/app/components/AiLandingPage/StudyWorkspace/UseCases";
-import HowItWorks from "@/app/components/AiLandingPage/StudyWorkspace/HowItWorks";
-import WatchVideo from "@/app/components/AiLandingPage/StudyWorkspace/WatchVideo";
-import WhyItWorks from "@/app/components/AiLandingPage/StudyWorkspace/WhyItWorks";
-import TwoWays from "@/app/components/AiLandingPage/StudyWorkspace/TwoWays";
-import ExpertBanner from "@/app/components/AiLandingPage/StudyWorkspace/ExpertBanner";
-import StudentReviews from "@/app/components/AiLandingPage/StudyWorkspace/StudentReviews";
-import StudyFaq from "@/app/components/AiLandingPage/StudyWorkspace/StudyFaq";
-import FooterCta from "@/app/components/AiLandingPage/StudyWorkspace/FooterCta";
+import LandingTemplate from "@/app/components/AiLandingPage/Template/LandingTemplate";
+import StudyToolEmbed from "@/app/components/AiLandingPage/StudyWorkspace/StudyToolEmbed";
+import { studyWorkspaceLanding } from "@/app/components/AiLandingPage/StudyWorkspace/content";
 import ProductSchema from "@/app/components/ProductSchema";
 
 const TITLE = "Free AI Study Tools to Study Smarter | ScholarlyHelp";
@@ -31,19 +23,7 @@ const Page: FC = () => {
         metaDescription={DESCRIPTION}
         pageUrl={`${normalizedBaseUrl}/tools/ai-study-workspace`}
       />
-      <div className="font-poppins">
-        <StudyHero />
-        <BeforeAfter />
-        <UseCases />
-        <HowItWorks />
-        <WatchVideo />
-        <WhyItWorks />
-        <TwoWays />
-        <ExpertBanner />
-        <StudentReviews />
-        <StudyFaq />
-        <FooterCta />
-      </div>
+      <LandingTemplate content={studyWorkspaceLanding} tool={<StudyToolEmbed />} />
     </MainLayout>
   );
 };

@@ -1,59 +1,78 @@
-import type { ToolLandingContent } from "../ToolLanding/types";
+// Copy for the /tools/ai-detector landing page. Layout lives in the shared
+// LandingTemplate; all user-facing text for this page lives here.
+import type { LandingContent } from "../Template/types";
 
-export const aiDetectorContent: ToolLandingContent = {
+export const aiDetectorLanding: LandingContent = {
+  toolName: "AI Detector",
+  toolAnchorId: "ai-detector-tool",
+  placement: "ai_detector_landing",
+
   hero: {
-    badge: "For working professionals earning their degree online",
-    badgeIcon: "💼",
-    titleTop: "Check your paper",
+    titleLead: "Check your paper",
     titleAccent: "before your professor does.",
     subtitle:
       "Working full-time and studying online? See which sentences read as AI, mixed or human, and fix them before you submit.",
-    steps: [],
-    toolId: "ai-detector-tool",
   },
+
+  cta: {
+    expert: "Talk to an expert",
+    tool: "Check my text free",
+    toolShort: "Scan free",
+  },
+
+  whatIs: {
+    title: "What is an AI detector?",
+    paragraphs: [
+      "An AI detector estimates how likely it is that a piece of writing was produced by an AI model. It looks for patterns that AI text tends to share, such as predictable word choices and very even sentence rhythm, and scores the text from human to AI.",
+      "ScholarlyHelp's free AI detector labels every sentence as AI, Mixed or Human, highlights the ones to review, and adds short notes on why each was flagged. Scan a draft, revise the highlighted parts, then scan again to see how the result changes. Treat the score as a guide, not a verdict: every detector gives an estimate.",
+    ],
+    glance: [
+      { label: "Price", value: "Free" },
+      { label: "Sign-up", value: "Not needed to scan" },
+      { label: "Results", value: "AI, Mixed or Human per sentence" },
+      { label: "Reports", value: "Downloadable PDF" },
+      { label: "Your text", value: "Never stored" },
+    ],
+  },
+
   useCases: {
     eyebrow: "Use cases",
     title: "Every student has a reason to check",
     subtitle: "Check your work and save your grade from AI.",
     cards: [
       {
-        icon: "📚",
         title: "Sources and quotes",
         description:
           "Used quotes and research? Check that your writing flows naturally and avoids AI detection flags.",
       },
       {
-        icon: "✏️",
         title: "After making edits",
         description:
           "Updated part of your paper? Scan it again and check if your AI detection score improves.",
       },
       {
-        icon: "👥",
         title: "Group assignments",
         description:
           "Working with classmates? Scan the full paper and check that the writing stays consistent.",
       },
       {
-        icon: "🔎",
         title: "Sentence highlights",
         description:
           "See which sentences were flagged so you know exactly what to review and improve.",
       },
       {
-        icon: "🌐",
         title: "Writing in English",
         description:
           "Writing in a second language? Check that your work isn't mistaken for AI-written text.",
       },
-      {
-        icon: "📄",
-        title: "Download reports",
-        description:
-          "Save a PDF report after every scan and keep your results ready whenever you need them.",
-      },
     ],
+    ctaCard: {
+      title: "Need it written for you?",
+      description:
+        "A detector checks a draft. A ScholarlyHelp writer can take on the whole assignment.",
+    },
   },
+
   howItWorks: {
     eyebrow: "How it works",
     title: "Check your writing in 4 steps",
@@ -77,125 +96,120 @@ export const aiDetectorContent: ToolLandingContent = {
           "Rewrite the detected text, then rescan to check the updated score.",
       },
     ],
-    ctaTitle: "Want access to all ScholarlyHelp tools?",
-    ctaBody:
-      "Sign up for free to access the humaniser, paraphraser, AI tutor, citation tool, and more from one dashboard.",
-    ctaButton: "Explore all tools →",
-    ctaHref: "/tools",
   },
-  whyItWorks: {
-    eyebrow: "Why it works",
-    title: "Understand your results",
-    subtitle:
-      "Review the highlighted sections and understand your results in a clear, simple way.",
-    features: [
+
+  comparison: {
+    title: "AI detector vs AI humanizer vs grammar checker",
+    subtitle: "Each tool does a different job. Here's when to use which.",
+    columns: ["AI detector", "AI humanizer", "Grammar checker"],
+    highlight: "Expert writer",
+    rows: [
       {
-        icon: "🖍️",
-        title: "Sentence highlights",
-        description:
-          "Every sentence is marked AI, Mixed, or Human so you know what to review.",
+        label: "What it does",
+        values: ["Labels sentences AI, Mixed or Human", "Rewrites tone and flow", "Fixes grammar and spelling"],
+        highlight: "Writes the whole paper",
       },
       {
-        icon: "📊",
-        title: "Clear overview",
-        description:
-          "See your overall result alongside the highlighted parts of your writing.",
+        label: "Best for",
+        values: ["Checking a draft before you submit", "Stiff or robotic drafts", "Final proofread"],
+        highlight: "Assignments you need done",
       },
       {
-        icon: "💡",
-        title: "Helpful notes",
-        description:
-          "Simple notes explain why each sentence was highlighted in your report.",
+        label: "Changes your text",
+        values: ["No", "Yes", "Yes"],
+        highlight: "Written for you",
+      },
+      {
+        label: "Cost on ScholarlyHelp",
+        values: ["Free", "Free", "Free"],
+        highlight: "Free quote",
+        highlightLink: "get a quote",
       },
     ],
   },
-  twoWays: {
-    eyebrow: "How to get help",
-    title: "Two ways to handle your writing",
-    subtitle:
-      "Check and revise it yourself, or hand the whole task to our writers.",
-    freeColumn: {
-      heading: "Free tool, do it yourself",
-      subheading: "Easy to start.",
-      steps: [
-        {
-          title: "Add your text",
-          description:
-            "Paste your writing or upload a file to start your AI Detector scan.",
-        },
-        {
-          title: "View your results",
-          description:
-            "See your overall result and review your writing in just a few seconds.",
-        },
-        {
-          title: "Review highlights",
-          description:
-            "See which sentences are labelled AI, Mixed, or Human as you review.",
-        },
-        {
-          title: "Edit and scan",
-          description:
-            "Make changes to your writing, then scan it again whenever you're ready.",
-        },
-      ],
-    },
-    expertColumn: {
-      heading: "Expert services, done for you",
-      subheading: "A free quote in about two minutes →",
-      steps: [
-        {
-          title: "Share your brief",
-          description:
-            "Share the assignment, the subject, and the deadline you now face.",
-        },
-        {
-          title: "Get matched to a writer",
-          description:
-            "You are paired with a subject specialist for your academic level.",
-        },
-        {
-          title: "Follow the progress",
-          description:
-            "Put any questions to your writer and follow the work as it grows.",
-        },
-        {
-          title: "Receive and review",
-          description:
-            "Get the completed piece once ready, plus free edits where needed.",
-        },
-      ],
-    },
-  },
-  watchVideo: {
-    eyebrow: "Watch video",
-    title: "How to Check AI using ScholarlyHelp AI Detector",
-    youtubeEmbedUrl: "https://www.youtube.com/embed/gnAWsmO_PPs",
-  },
-  reviews: {
-    eyebrow: "Student reviews",
-    title: "What students say about this tool",
-    reviews: [
+
+  limits: {
+    title: "What an AI detector can't do",
+    subtitle: "Know the limits so you read the result the right way.",
+    items: [
       {
-        quote:
-          "I like that it does not just throw a number at me. Seeing which sentences were flagged, and why, showed me exactly what to change in my own draft. That part is genuinely useful.",
-        author: "Hannah B.",
-        detail: "Sociology, University of Leeds — 2nd year",
+        title: "Prove who wrote it",
+        description:
+          "It gives an estimate, not proof. Use it as a guide, not a verdict.",
       },
       {
-        quote:
-          "English is my second language, and I worried my own writing would look machine-made. Checking it here first, sentence by sentence, gave me a bit of reassurance before I handed it in.",
-        author: "Diego R.",
-        detail: "Engineering, Arizona State — Final year",
+        title: "Match every detector",
+        description:
+          "Other detectors use other models and may score the same text differently.",
       },
       {
-        quote:
-          "Honesty is what I trust. It shows a range and admits it is an estimate, rather than pretending to be certain. That is more useful to me than a confident wrong answer would be.",
-        author: "Mei C.",
-        detail: "Law, University of Sydney — Postgraduate",
+        title: "Fix the text for you",
+        description:
+          "It shows what to review. You still make the edits, then scan again.",
+      },
+      {
+        title: "Guarantee a grade",
+        description:
+          "A human score doesn't mean a strong paper. Content and evidence still count.",
+      },
+    ],
+    note: {
+      before: "For an assignment written from scratch, ",
+      linkLabel: "talk to an expert writer",
+      after: ".",
+    },
+  },
+
+  expertBand: {
+    tag: "Short on time?",
+    tagline: "Detectors check drafts. Experts write the paper.",
+    titleStart: "Get a real writer to",
+    titleAccent: "handle the assignment",
+    checks: [
+      "Subject-specialist writers",
+      "Matched to your academic level",
+      "Free revisions",
+    ],
+    note: "Free quote in about two minutes",
+  },
+
+  guide: {
+    title: "How to read an AI detection score (and what to do next)",
+    intro:
+      "An AI score is a starting point for revision, not a final answer. Here's how to read the result and improve a draft that gets flagged.",
+    sections: [
+      {
+        heading: "Why human writing gets flagged",
+        body: "Detectors look for predictability. Writing that uses safe, common phrasing, sentences of the same length and stock transitions like \"Furthermore\" and \"In conclusion\" can look machine-made, even when a person wrote it. Second-language writers and heavily edited drafts are flagged more often for the same reason.",
+      },
+      {
+        heading: "6 ways to revise a flagged draft",
+        steps: [
+          { lead: "Start with the highlights.", text: "Revise the sentences marked AI or Mixed first." },
+          { lead: "Vary sentence length.", text: "Mix short sentences with longer ones." },
+          { lead: "Cut stock phrases.", text: "Replace openers like \"It is important to note\" with your point." },
+          { lead: "Add specifics.", text: "Names, numbers and examples from your own reading read as human." },
+          { lead: "Use your own voice.", text: "Say it the way you'd explain it to a classmate." },
+          { lead: "Scan again.", text: "Check how the result changes after each round of edits." },
+        ],
+      },
+      {
+        heading: "When a tool isn't enough",
+        body: "A detector can tell you which sentences to look at, but it can't rewrite the paper, and it can't make a weak argument strong. If the deadline is close or the assignment is bigger than a quick revision, a ScholarlyHelp writer can take it on from the brief.",
+        callout: {
+          lead: "Running out of time?",
+          text: "Get a free quote from an expert writer.",
+        },
+      },
+      {
+        heading: "Using AI tools responsibly in school",
+        body: "Schools have very different rules about AI. Check your syllabus or ask your instructor what is allowed, and disclose AI assistance when it's required. Keep your notes and earlier drafts as a record of your own work.",
       },
     ],
   },
+
+  related: ["humanizer", "grammar", "paraphraser", "essay"],
+
   faq: {
     title: "FAQ",
     subtitle: "Common questions about this tool",
@@ -227,15 +241,11 @@ export const aiDetectorContent: ToolLandingContent = {
       },
     ],
   },
-  footer: {
+
+  finalCta: {
     titleStart: "Know how your writing",
     titlePill: "reads first.",
     body: "Scan your text free in under a minute, or talk to a writer about the assignment itself.",
-    primaryButton: "Check my text free",
-    primaryHref: "#ai-detector-tool",
-    secondaryButton: "Talk to an expert →",
-    secondaryHref: "/contact-us",
-    footnote: "No sign-up to scan · Text never stored",
   },
 };
 

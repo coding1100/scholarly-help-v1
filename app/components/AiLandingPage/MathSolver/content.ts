@@ -1,35 +1,39 @@
-import type { ToolLandingContent } from "../ToolLanding/types";
+// Copy for the /tools/ai-math-solver landing page. Layout lives in the shared
+// LandingTemplate; all user-facing text for this page lives here.
+import type { LandingContent } from "../Template/types";
 
-export const mathSolverContent: ToolLandingContent = {
+export const mathSolverLanding: LandingContent = {
+  toolName: "Math Solver",
+  toolAnchorId: "math-solver-tool",
+  placement: "math_solver_landing",
+
   hero: {
-    badge: "3,506 students solved a problem this week",
-    titleTop: "Solve Every Problem.",
-    titleAccent: "Understand Every Step.",
+    titleLead: "Stuck on a math problem?",
+    titleAccent: "See exactly how to solve it.",
     subtitle:
-      "Type in your problem or upload a photo, and get a clear answer with every step explained, not just the final number.",
-    steps: ["Add your problem", "Read the steps", "Practice and learn"],
-    toolId: "math-solver-tool",
+      "Working full-time and back in school? Algebra, statistics, dosage calc and business math, explained in plain English in seconds.",
   },
-  beforeAfter: {
-    eyebrow: "Before vs after",
-    title: "From confusing word problems to step-by-step solutions.",
-    subtitle: "Paste your math problem and get instant, detailed answers.",
-    pasteLabel: "Original (What you paste)",
-    pasteText:
-      "Find the derivative of f(x) = 3x² + 5x - 2 and evaluate the slope when x equals four.",
-    pasteHtml:
-      "Find the derivative of <i>f(x) = 3x² + 5x - 2</i> and evaluate the slope when <i>x</i> equals four.",
-    resultLabel: "Solved (What you get)",
-    resultText:
-      "1. Identify Function: f'(x) = 3x² + 5x - 2\n2. Apply Power Rule: f'(x) = 6x + 5\n3. Evaluate at x = 4: f'(4) = 6(4) + 5 = 29",
-    resultHtml:
-      '<p><b>1. Identify Function:</b> <i>f(x) = 3x² + 5x - 2</i></p><p><b>2. Apply Power Rule:</b> <i>f\'(x) = 6x + 5</i></p><p><b>3. Evaluate at x = 4:</b> <i>f\'(4) = 6(4) + 5 = <span class="font-bold text-green-700">29</span></i></p>',
-    tags: [
-      { label: "Step-by-Step", className: "bg-green-100 text-green-800" },
-      { label: "Power Rule Applied", className: "bg-purple-100 text-purple-800" },
-      { label: "Instant Answer", className: "bg-blue-100 text-blue-800" },
+
+  cta: {
+    expert: "Ask a tutor",
+    tool: "Solve a problem free",
+    toolShort: "Solve free",
+  },
+
+  whatIs: {
+    title: "What is an AI math solver?",
+    paragraphs: [
+      "An AI math solver works through a problem step by step and explains each step, not just the final number. It's built for learning the method, so you can solve the next problem on your own.",
+      "ScholarlyHelp's free math solver handles math, physics and chemistry. Type your question, use the built-in symbol keyboard, or upload a photo of handwritten or printed work. Pick a subject or let Auto-detect choose, then follow the full working, including common mistakes and the core concept behind each step.",
+    ],
+    glance: [
+      { label: "Price", value: "Free" },
+      { label: "Subjects", value: "Math, physics, chemistry" },
+      { label: "Input", value: "Typing, symbol keyboard or a photo" },
+      { label: "Output", value: "Full step-by-step working" },
     ],
   },
+
   useCases: {
     eyebrow: "Use cases",
     title: "Your Personal STEM Tutor",
@@ -37,51 +41,69 @@ export const mathSolverContent: ToolLandingContent = {
       "Get step-by-step solutions for math, physics, chemistry, and science problems.",
     cards: [
       {
-        icon: "🧩",
         title: "Stuck on a problem",
         description:
           "Break difficult questions into clear steps and learn how to reach the correct answer with confidence.",
       },
       {
-        icon: "📷",
         title: "Handwritten notes",
         description:
           "Upload handwritten notes or worksheets and get clear step-by-step explanations within seconds.",
       },
       {
-        icon: "📝",
         title: "Exam preparation",
         description:
           "Review difficult topics with simple explanations and clear concept summaries before your next exam or quiz.",
       },
       {
-        icon: "📈",
-        title: "Clear Explanations",
-        description:
-          "Understand complex data and breakdowns with detailed notes that make every solution easier to follow.",
-      },
-      {
-        icon: "💡",
         title: "Learning from mistakes",
         description:
           "Learn why mistakes happen, avoid common errors, and build stronger problem-solving skills with every answer.",
       },
       {
-        icon: "∑",
         title: "Typing equations",
         description:
           "Type formulas, fractions, and equations easily using the built-in symbol keyboard without formatting problems.",
       },
     ],
+    ctaCard: {
+      title: "A whole course on ALEKS?",
+      description:
+        "One problem is easy. 40 a week isn't. A math expert can take the class off your plate.",
+    },
   },
+
+  examples: {
+    title: "Math solver examples by subject",
+    subtitle: "See the kind of working you get back for different problems.",
+    items: [
+      {
+        title: "Calculus",
+        before:
+          "Find the derivative of f(x) = 3x² + 5x − 2 and evaluate the slope when x = 4.",
+        after:
+          "Apply the power rule: f′(x) = 6x + 5. Substitute x = 4: f′(4) = 6(4) + 5 = 29.",
+      },
+      {
+        title: "Statistics",
+        before: "Find the mean of 4, 8, 6, 10 and 7.",
+        after: "Add the values: 4 + 8 + 6 + 10 + 7 = 35. Divide by 5: the mean is 7.",
+      },
+      {
+        title: "Dosage calculation",
+        before: "Order: 250 mg. Available: 500 mg in 5 mL. How many mL do you give?",
+        after: "Dose ÷ strength × volume: 250 ÷ 500 × 5 mL = 2.5 mL.",
+      },
+    ],
+  },
+
   howItWorks: {
     eyebrow: "How it works",
     title: "Solve problems in 4 steps",
     steps: [
       {
         title: "Enter your question",
-        description:
-          "Type your problem or upload a photo to get an instant solution.",
+        description: "Type your problem or upload a photo to get an instant solution.",
       },
       {
         title: "Choose your subject",
@@ -95,122 +117,123 @@ export const mathSolverContent: ToolLandingContent = {
       },
       {
         title: "Review or copy",
-        description:
-          "Review every step, then copy your solution when you're ready.",
-      },
-    ],
-    ctaTitle: "Want access to all ScholarlyHelp tools?",
-    ctaBody:
-      "Sign up free to access the math solver, paraphraser, AI tutor, citation tool, and more from one dashboard.",
-    ctaButton: "Explore all tools →",
-    ctaHref: "/tools",
-  },
-  whyItWorks: {
-    eyebrow: "Why it works",
-    title: "Learn while you solve",
-    subtitle:
-      "Every answer includes clear step-by-step explanations, not just the final result.",
-    features: [
-      {
-        icon: "🪜",
-        title: "Step-by-step solutions",
-        description:
-          "Every answer is explained through simple, easy-to-follow steps with detailed breakdowns.",
-      },
-      {
-        icon: "🧪",
-        title: "Built for all STEM fields",
-        description:
-          "Solve questions across math, physics, chemistry, and problem sets.",
-      },
-      {
-        icon: "📤",
-        title: "Type or upload work",
-        description:
-          "Type your question, use custom keyboards, or upload handwritten notes.",
+        description: "Review every step, then copy your solution when you're ready.",
       },
     ],
   },
-  twoWays: {
-    eyebrow: "How to get help",
-    title: "Two ways to get the answer",
-    subtitle:
-      "Work it out with the free tool, or ask an expert to solve it for you.",
-    freeColumn: {
-      heading: "Free tool, do it yourself",
-      subheading: "Easy to start.",
-      steps: [
-        {
-          title: "Add your problem",
-          description: "Type your question or upload a photo to get started.",
-        },
-        {
-          title: "Choose a subject",
-          description: "Pick a subject, or let Auto-detect choose it for you.",
-        },
-        {
-          title: "View the solution",
-          description:
-            "Follow each step to understand the solution.",
-        },
-        {
-          title: "Practice and learn",
-          description: "Review the solutions and practice with confidence.",
-        },
-      ],
-    },
-    expertColumn: {
-      heading: "Expert help, done for you",
-      subheading: "A free quote in about two minutes →",
-      steps: [
-        {
-          title: "Share your brief",
-          description: "Share the full assignment plus the deadline you have.",
-        },
-        {
-          title: "Get matched to an expert",
-          description: "We will match you with your subject specialist.",
-        },
-        {
-          title: "Follow the working",
-          description: "Ask questions and follow the steps as they form here.",
-        },
-        {
-          title: "Receive and review",
-          description: "Download the full solution with free edits if needed.",
-        },
-      ],
+
+  comparison: {
+    title: "Math solver vs calculator vs searching for the answer",
+    subtitle: "Each one helps in a different way. Here's when to use which.",
+    columns: ["Math solver", "Basic calculator", "Searching online"],
+    highlight: "Math expert",
+    rows: [
+      {
+        label: "Shows each step",
+        values: ["Yes", "No", "Sometimes"],
+        highlight: "Yes",
+      },
+      {
+        label: "Explains the method",
+        values: ["Yes", "No", "Rarely"],
+        highlight: "Yes, for your course",
+      },
+      {
+        label: "Best for",
+        values: ["Learning how to solve it", "Quick arithmetic", "Checking a final answer"],
+        highlight: "Whole problem sets and courses",
+      },
+      {
+        label: "Cost on ScholarlyHelp",
+        values: ["Free", "Free", "Free"],
+        highlight: "Free quote",
+        highlightLink: "ask a tutor",
+      },
+    ],
+  },
+
+  limits: {
+    title: "What a math solver can't do",
+    subtitle: "Know the limits so you use it the right way.",
+    items: [
+      {
+        title: "Replace practice",
+        description:
+          "Reading a solution isn't the same as doing one. Try the next problem yourself.",
+      },
+      {
+        title: "Read every photo",
+        description:
+          "Blurry or cut-off images can be misread. Check the problem it solved.",
+      },
+      {
+        title: "Know your course's method",
+        description:
+          "Your instructor may expect a specific method or notation. Follow theirs.",
+      },
+      {
+        title: "Take your exam",
+        description:
+          "On test day it's you. Use it to learn the steps, not to skip them.",
+      },
+    ],
+    note: {
+      before: "For whole problem sets or a full course, ",
+      linkLabel: "ask a math expert",
+      after: ".",
     },
   },
-  watchVideo: {
-    eyebrow: "Watch video",
-    title: "How to Solve Any Math or STEM Problem Instantly (Step-by-Step)",
-    youtubeEmbedUrl: "https://www.youtube.com/embed/02XHsyMdb98",
+
+  expertBand: {
+    tag: "Whole problem sets?",
+    tagline: "Tools solve problems. Experts take the class.",
+    titleStart: "Get a math expert to",
+    titleAccent: "take it off your plate",
+    checks: [
+      "ALEKS, MyMathLab and problem sets",
+      "Math, physics and chemistry",
+      "Step-by-step working",
+    ],
+    note: "Free quote in about two minutes",
   },
-  reviews: {
-    eyebrow: "Student reviews",
-    title: "What students say about this tool",
-    reviews: [
+
+  guide: {
+    title: "How to actually learn from a worked solution",
+    intro:
+      "A step-by-step answer is only useful if you can do the next one yourself. Use these habits to turn every solution into practice.",
+    sections: [
       {
-        quote:
-          "I used to just copy answers and stay confused. Seeing every step laid out actually taught me how to do the triangles myself, so my test went far better than usual.",
-        author: "Kayla R.",
-        detail: "Engineering, Purdue — 1st year",
+        heading: "Why reading solutions isn't enough",
+        body: "Following a worked example feels like understanding, but recognising a step is easier than producing it. That's why problems that looked clear in a solution feel hard on a quiz. The fix is to use the solution as a check on your own work, not a replacement for it.",
       },
       {
-        quote:
-          "Taking a photo of the question is so much easier than typing symbols. I snapped my physics homework and it worked through the whole thing clearly, step by step.",
-        author: "Omar S.",
-        detail: "Physics, University of Manchester — 2nd year",
+        heading: "6 habits that make the steps stick",
+        steps: [
+          { lead: "Try it first.", text: "Attempt the problem before you look at the steps." },
+          { lead: "Find where you went wrong.", text: "Compare your working with the solution, line by line." },
+          { lead: "Name the method.", text: "Write down which rule or formula each step uses." },
+          { lead: "Redo it blind.", text: "Close the solution and solve the same problem again." },
+          { lead: "Change the numbers.", text: "Solve a variation to check you can apply the method." },
+          { lead: "Check the units.", text: "Especially in physics, chemistry and dosage calculations." },
+        ],
       },
       {
-        quote:
-          "English is my second language and word problems are hard for me. Having each step written out in plain words helps me follow the method, not just the answer.",
-        author: "Lin H.",
-        detail: "Chemistry, UBC — Final year",
+        heading: "When a tool isn't enough",
+        body: "One problem is easy; forty a week on ALEKS or MyMathLab on top of a full-time job isn't. If the workload is the problem, not the method, a ScholarlyHelp math expert can take the class off your plate, so you keep your grade and your evenings.",
+        callout: {
+          lead: "Behind on a math course?",
+          text: "Get a free quote from a math expert.",
+        },
+      },
+      {
+        heading: "Using AI tools responsibly in school",
+        body: "Check your syllabus or ask your instructor what is allowed before using AI tools on graded work. Use the solver to learn the method, and make sure the work you hand in is your own.",
       },
     ],
   },
+
+  related: ["study", "coursePlanner", "essay", "citation"],
+
   faq: {
     title: "FAQ",
     subtitle: "Common questions about this tool",
@@ -242,14 +265,11 @@ export const mathSolverContent: ToolLandingContent = {
       },
     ],
   },
-  footer: {
+
+  finalCta: {
     titleStart: "Understand the problem,",
     titlePill: "not just the answer.",
     body: "Solve your first problem free in under a minute, or ask a tutor for a hand.",
-    primaryButton: "Solve a problem free",
-    primaryHref: "#math-solver-tool",
-    secondaryButton: "Ask a tutor →",
-    secondaryHref: "/contact-us",
   },
 };
 

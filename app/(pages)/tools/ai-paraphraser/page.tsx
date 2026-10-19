@@ -1,17 +1,9 @@
 import { FC } from "react";
 import { Metadata } from "next";
 import MainLayout from "@/app/MainLayout";
-import ParaphraserHero from "@/app/components/AiLandingPage/Paraphraser/ParaphraserHero";
-import BeforeAfter from "@/app/components/AiLandingPage/Paraphraser/BeforeAfter";
-import UseCases from "@/app/components/AiLandingPage/Paraphraser/UseCases";
-import HowItWorks from "@/app/components/AiLandingPage/Paraphraser/HowItWorks";
-import WatchVideo from "@/app/components/AiLandingPage/Paraphraser/WatchVideo";
-import WhyItWorks from "@/app/components/AiLandingPage/Paraphraser/WhyItWorks";
-import TwoWays from "@/app/components/AiLandingPage/Paraphraser/TwoWays";
-import ExpertBanner from "@/app/components/AiLandingPage/Paraphraser/ExpertBanner";
-import StudentReviews from "@/app/components/AiLandingPage/Paraphraser/StudentReviews";
-import ParaphraserFaq from "@/app/components/AiLandingPage/Paraphraser/ParaphraserFaq";
-import FooterCta from "@/app/components/AiLandingPage/Paraphraser/FooterCta";
+import LandingTemplate from "@/app/components/AiLandingPage/Template/LandingTemplate";
+import ParaphraserToolEmbed from "@/app/components/AiLandingPage/Paraphraser/ParaphraserToolEmbed";
+import { paraphraserLanding } from "@/app/components/AiLandingPage/Paraphraser/content";
 import ProductSchema from "@/app/components/ProductSchema";
 
 const Page: FC = () => {
@@ -27,19 +19,7 @@ const Page: FC = () => {
         metaDescription="Rewrite text with ScholarlyHelp’s free paraphrasing tool. Choose a style, keep your meaning, and create clear, natural wording. Start paraphrasing today."
         pageUrl={`${normalizedBaseUrl}/tools/ai-paraphraser`}
       />
-      <div className="font-poppins">
-        <ParaphraserHero />
-        <BeforeAfter />
-        <UseCases />
-        <HowItWorks />
-        <WatchVideo />
-        <WhyItWorks />
-        <TwoWays />
-        <ExpertBanner />
-        <StudentReviews />
-        <ParaphraserFaq />
-        <FooterCta />
-      </div>
+      <LandingTemplate content={paraphraserLanding} tool={<ParaphraserToolEmbed />} />
     </MainLayout>
   );
 };

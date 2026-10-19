@@ -102,6 +102,11 @@ type StudySourceIngestionProps = {
    * mark it active, and reveal the workspace.
    */
   onSessionCreated?: (sessionId: string) => void;
+  /**
+   * Show the Done-for-you card beside the onboarding upload card. The landing
+   * page turns it off because its template renders the card itself.
+   */
+  showDoneForYouCard?: boolean;
 };
 
 export default function StudySourceIngestion({
@@ -109,6 +114,7 @@ export default function StudySourceIngestion({
   experience = "study",
   onContentReady,
   onSessionCreated,
+  showDoneForYouCard = true,
 }: StudySourceIngestionProps) {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("sessionId");
@@ -851,9 +857,17 @@ export default function StudySourceIngestion({
         </div>
 
         {/* Two-Card Section */}
-        <div className="mt-8 grid w-full max-w-[960px] grid-cols-1 items-stretch gap-6 xl:grid-cols-12 text-left">
+        <div
+          className={`mt-8 grid w-full max-w-[960px] grid-cols-1 items-stretch gap-6 text-left ${
+            showDoneForYouCard ? "xl:grid-cols-12" : ""
+          }`}
+        >
           {/* Left Card: Upload file / Paste text */}
-          <div className="flex flex-col justify-between rounded-3xl border border-gray-100 bg-white p-5 shadow-[0_4px_30px_rgba(0,0,0,0.05)] sm:p-6 xl:col-span-7">
+          <div
+            className={`flex flex-col justify-between rounded-3xl border border-gray-100 bg-white p-5 shadow-[0_4px_30px_rgba(0,0,0,0.05)] sm:p-6 ${
+              showDoneForYouCard ? "xl:col-span-7" : ""
+            }`}
+          >
             <div>
               {/* Tab Switcher */}
               <div className="mb-5 grid grid-cols-2 gap-1 rounded-2xl bg-[#F1F3F9] p-1.5">
@@ -1007,10 +1021,12 @@ export default function StudySourceIngestion({
           </div>
 
           {/* Right Card: Done-for-you Dark Card */}
-          <DoneForYouCard
-            placement="study_workspace_onboarding"
-            className="xl:col-span-5"
-          />
+          {showDoneForYouCard ? (
+            <DoneForYouCard
+              placement="study_workspace_onboarding"
+              className="xl:col-span-5"
+            />
+          ) : null}
         </div>
       </section>
     );

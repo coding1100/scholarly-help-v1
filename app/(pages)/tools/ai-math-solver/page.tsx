@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import MainLayout from "@/app/MainLayout";
 import ProductSchema from "@/app/components/ProductSchema";
 import {
-  mathSolverContent,
+  mathSolverLanding,
   mathSolverMeta,
 } from "@/app/components/AiLandingPage/MathSolver/content";
-import ToolLanding from "@/app/components/AiLandingPage/ToolLanding/ToolLanding";
+import LandingTemplate from "@/app/components/AiLandingPage/Template/LandingTemplate";
 import { MathSolverEmbed } from "@/app/components/AiLandingPage/ToolLanding/ToolEmbeds";
-import MathSolverHero from "@/app/components/AiLandingPage/MathSolver/MathSolverHero";
+import SampleProblemLink from "@/app/components/AiLandingPage/MathSolver/SampleProblemLink";
 
 const path = "/tools/ai-math-solver";
 
@@ -24,10 +24,10 @@ export default function MathSolverLandingPage() {
         metaDescription={mathSolverMeta.description}
         pageUrl={`${getBaseUrl()}${path}`}
       />
-      <ToolLanding
-        content={mathSolverContent}
+      <LandingTemplate
+        content={mathSolverLanding}
         tool={<MathSolverEmbed />}
-        hero={<MathSolverHero />}
+        heroExtra={<SampleProblemLink />}
       />
     </MainLayout>
   );

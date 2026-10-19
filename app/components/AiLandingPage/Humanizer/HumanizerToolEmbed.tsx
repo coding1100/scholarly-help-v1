@@ -18,8 +18,8 @@ import HumanizerTool from "@/app/components/AiTools/HumanizerTool/HumanizerTool"
  * The scoped `[&>*]:` selectors target the tool's outermost element and nothing
  * deeper, so the tool's internal layout is untouched.
  *
- * Split out of HumanizerHero so only this client subtree sits inside the hero's
- * Suspense boundary; the hero's marketing copy stays server-rendered for SEO.
+ * Only this client subtree sits inside the hero's Suspense boundary; the
+ * landing template's marketing copy stays server-rendered for SEO.
  */
 const HumanizerToolEmbed: FC = () => (
   <div

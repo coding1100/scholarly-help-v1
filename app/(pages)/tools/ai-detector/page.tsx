@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import MainLayout from "@/app/MainLayout";
 import ProductSchema from "@/app/components/ProductSchema";
 import {
-  aiDetectorContent,
+  aiDetectorLanding,
   aiDetectorMeta,
 } from "@/app/components/AiLandingPage/AiDetector/content";
-import ToolLanding from "@/app/components/AiLandingPage/ToolLanding/ToolLanding";
+import LandingTemplate from "@/app/components/AiLandingPage/Template/LandingTemplate";
 import { AiDetectorEmbed } from "@/app/components/AiLandingPage/ToolLanding/ToolEmbeds";
 
 const path = "/tools/ai-detector";
@@ -23,7 +23,7 @@ export default function AiDetectorLandingPage() {
         metaDescription={aiDetectorMeta.description}
         pageUrl={`${getBaseUrl()}${path}`}
       />
-      <ToolLanding content={aiDetectorContent} tool={<AiDetectorEmbed />} />
+      <LandingTemplate content={aiDetectorLanding} tool={<AiDetectorEmbed />} />
     </MainLayout>
   );
 }

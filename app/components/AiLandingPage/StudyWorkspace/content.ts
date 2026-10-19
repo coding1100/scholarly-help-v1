@@ -1,305 +1,254 @@
-// Copy for the /tools/ai-study-workspace landing page.
-// Mirrors the AI Paraphraser landing page structure so both pages share one
-// design system; all user-facing text lives here so copy edits never require
-// touching layout code.
+// Copy for the /tools/ai-study-workspace landing page. Layout lives in the
+// shared LandingTemplate; all user-facing text for this page lives here.
+import type { LandingContent } from "../Template/types";
 
-export const heroContent = {
-  badge: "1,924 students studying with this tool right now",
-  titleTop: "Everything You Need to Study Smarter",
-  titleAccent: "with AI Study Tools.",
-  subtitle:
-    "The all-in-one set of free AI study tools that transforms your lectures into notes, summaries, flashcards, quizzes, and a 24/7 AI tutor, helping you study smarter and ace every course.",
-  steps: ["Upload content", "Choose mode", "Save session"],
-  stats: [
-    "3.8M+ sessions created",
-    "4.9★ average rating",
-    "5 tools in one place",
-    "Free to begin",
-  ],
-};
+export const studyWorkspaceLanding: LandingContent = {
+  toolName: "AI Study Workspace",
+  toolAnchorId: "study-workspace-tool",
+  placement: "study_workspace_landing",
 
-export const beforeAfterContent = {
-  eyebrow: "Before vs after",
-  title: "From Raw Lectures to instant study prep",
-  subtitle:
-    "ScholarlyHelp's AI Study Workspace, packed with AI study tools for students, transforms your raw lectures into organized notes, flashcards, quizzes, and 24/7 tutor help in seconds.",
-  pasteLabel: "What you upload",
-  pasteText:
-    "A twelve-page PDF of lecture slides on cellular respiration, thick with diagrams, bullet points, and terms that never quite landed.",
-  resultLabel: "What you get back",
-  resultText:
-    "Structured notes in easy-to-understand language, a one-page summary, ten flashcards on the core ideas, practice quiz questions, and an AI tutor ready to answer any follow-up question.",
-  tags: [
-    { label: "Five tools", className: "bg-[#EEEDFF] text-primary-400" },
-    { label: "Ready in seconds", className: "bg-[#D9F3E5] text-[#1C5F45]" },
-    { label: "24/7 Tutor included", className: "bg-[#FCEBC5] text-[#8A6116]" },
-  ],
-};
+  hero: {
+    titleLead: "Everything You Need to Study Smarter",
+    titleAccent: "with AI Study Tools.",
+    subtitle:
+      "The all-in-one set of free AI study tools that transforms your lectures into notes, summaries, flashcards, quizzes, and a 24/7 AI tutor, helping you study smarter and ace every course.",
+  },
 
-export const useCasesContent = {
-  eyebrow: "Use cases",
-  title: "An AI Study workflow for every situation.",
-  subtitle: "Learn faster. Understand deeper. Stress less.",
-  cards: [
-    {
-      icon: "⏰",
-      title: "The exam is tomorrow",
-      description:
-        "With the ai study tool free, turn your lecture notes into study notes, flashcards, quizzes, and a mock test before the exam.",
-    },
-    {
-      icon: "🎧",
-      title: "A lecture you missed",
-      description:
-        "Missed an important lecture? Our AI notes generator turns slides or transcripts into clear, structured notes you can follow easily.",
-    },
-    {
-      icon: "🔁",
-      title: "Active recall drills",
-      description:
-        "Need to test what you remember? The AI flashcard generator and quiz mode create questions directly from your own study material.",
-    },
-    {
-      icon: "💬",
-      title: "Too shy to ask aloud",
-      description:
-        "Have a question you feel shy asking? The AI tutor gives you a focused answer based on the material you uploaded.",
-    },
-    {
-      icon: "🗓️",
-      title: "Setting a study plan",
-      description:
-        "Want to study smart? Keep each topic in its own session and return to any subject whenever you need another round of revision.",
-    },
-    {
-      icon: "📚",
-      title: "Dense academic text",
-      description:
-        "Struggling with difficult academic writing? Summarize PDF AI turns complex text into clear, digestible notes that are easier to understand.",
-    },
-  ],
-};
+  cta: {
+    expert: "Get expert help",
+    tool: "Start studying for free",
+    toolShort: "Study free",
+  },
 
-export const howItWorksContent = {
-  eyebrow: "How it works",
-  title: "Turn tough lectures into a smart study session",
-  steps: [
-    {
-      title: "Upload your notes",
-      description:
-        "Start with PDFs, text, or links and bring your study material into one interactive session.",
-    },
-    {
-      title: "Generate Assets",
-      description:
-        "Turn your material into summaries, AI flashcard generator sets, quizzes, and AI notes.",
-    },
-    {
-      title: "Chat with AI",
-      description:
-        "Ask your AI tutor questions about the material and get help with confusing topics as you study.",
-    },
-    {
-      title: "Save your session",
-      description:
-        "Keep each study session in your dashboard so you can return to your notes anytime.",
-    },
-  ],
-  ctaTitleStart: "Want all 16",
-  ctaTitleBrand: "ScholarlyHelp",
-  ctaTitlePill: "tools",
-  ctaTitleEnd: "in one place?",
-  ctaBody:
-    "Access all study tools, from an AI humanizer to a math solver, in your personalized dashboard- the best study tools for college students in one place.",
-  ctaButton: "Explore all tools →",
-  ctaHref: "/tools",
-};
+  whatIs: {
+    title: "What is an AI study workspace?",
+    paragraphs: [
+      "An AI study workspace turns your own course material into the things you actually revise from: structured notes, a summary, flashcards and practice quizzes, plus a tutor you can ask about anything that didn't click.",
+      "ScholarlyHelp's free study workspace starts from what you upload, so everything it makes is about your course, not a generic textbook. Add a PDF, document, text or link, and each topic gets its own saved session you can come back to before the next quiz or exam.",
+    ],
+    glance: [
+      { label: "Price", value: "Free" },
+      { label: "Add", value: "PDFs, documents, text or links" },
+      { label: "Creates", value: "Notes, summaries, flashcards, quizzes" },
+      { label: "AI tutor", value: "Answers from your material" },
+      { label: "Sessions", value: "Saved automatically" },
+    ],
+  },
 
-export const watchVideoContent = {
-  eyebrow: "Watch Video",
-  title:
-    "From spending hours organizing notes to generating instant study guides.",
-  // https://youtu.be/vl7w01ZV2_o
-  youtubeEmbedUrl: "https://www.youtube.com/embed/vl7w01ZV2_o",
-};
+  useCases: {
+    eyebrow: "Use cases",
+    title: "An AI Study workflow for every situation.",
+    subtitle: "Learn faster. Understand deeper. Stress less.",
+    cards: [
+      {
+        title: "The exam is tomorrow",
+        description:
+          "With the ai study tool free, turn your lecture notes into study notes, flashcards, quizzes, and a mock test before the exam.",
+      },
+      {
+        title: "A lecture you missed",
+        description:
+          "Missed an important lecture? Our AI notes generator turns slides or transcripts into clear, structured notes you can follow easily.",
+      },
+      {
+        title: "Active recall drills",
+        description:
+          "Need to test what you remember? The AI flashcard generator and quiz mode create questions directly from your own study material.",
+      },
+      {
+        title: "Too shy to ask aloud",
+        description:
+          "Have a question you feel shy asking? The AI tutor gives you a focused answer based on the material you uploaded.",
+      },
+      {
+        title: "Setting a study plan",
+        description:
+          "Want to study smart? Keep each topic in its own session and return to any subject whenever you need another round of revision.",
+      },
+    ],
+    ctaCard: {
+      title: "A whole course to handle?",
+      description:
+        "The workspace preps you. An expert can manage the coursework.",
+    },
+  },
 
-export const whyItWorksContent = {
-  eyebrow: "What's inside",
-  title: "Your complete study workspace, all in one upload",
-  subtitle:
-    "Our free AI study tools help you go from confused to confident without switching between apps.",
-  features: [
-    {
-      icon: "📝",
-      title: "AI Notes",
-      description:
-        "Our AI notes generator turns uploads into clear, structured notes with headings and bullet points for easy revision.",
-    },
-    {
-      icon: "📄",
-      title: "AI Summary",
-      description:
-        "Turn long, dense reading into focused summaries that highlight the key concepts and points you need to remember.",
-    },
-    {
-      icon: "🃏",
-      title: "AI Flashcards",
-      description:
-        "The AI flashcard generator creates relevant revision cards directly from your material, keeping every question focused on what matters.",
-    },
-    {
-      icon: "✅",
-      title: "AI Quizzes",
-      description:
-        "Our AI quiz generator free feature creates practice questions from your material with instant feedback and clear explanations.",
-    },
-    {
-      icon: "🎓",
-      title: "AI Tutor",
-      description:
-        "Ask your AI tutor questions about uploaded content and get precise answers based directly on the material you provided.",
-    },
-    {
-      icon: "💾",
-      title: "Saved Sessions",
-      description:
-        "Your study sessions save automatically in your sidebar, so you can return to any subject whenever you need to revise.",
-    },
-  ],
-};
-
-export const twoWaysContent = {
-  eyebrow: "How to get help",
-  title: "Two ways to get what you need",
-  subtitle: "Learn faster. Understand deeper. Stress less.",
-  freeColumn: {
-    heading: "Free workspace, do it yourself",
-    subheading: "Easy to start.",
+  howItWorks: {
+    eyebrow: "How it works",
+    title: "Turn tough lectures into a smart study session",
     steps: [
       {
-        title: "Upload your content",
+        title: "Upload your notes",
         description:
-          "Paste text, upload a file, or add a link to start with our free AI study tools in seconds.",
+          "Start with PDFs, text, or links and bring your study material into one interactive session.",
       },
       {
-        title: "Generate your study materials",
+        title: "Generate Assets",
         description:
-          "Create structured notes, summaries, quizzes, and flashcards for easy preparation.",
+          "Turn your material into summaries, AI flashcard generator sets, quizzes, and AI notes.",
       },
       {
-        title: "Ask your AI Tutor",
+        title: "Chat with AI",
         description:
-          "Use your AI tutor to ask questions and get clear answers from your study material.",
+          "Ask your AI tutor questions about the material and get help with confusing topics as you study.",
       },
       {
-        title: "Save and come back!",
+        title: "Save your session",
         description:
-          "Enter your email to save your session and study smart from your dashboard anytime.",
+          "Keep each study session in your dashboard so you can return to your notes anytime.",
       },
     ],
   },
-  expertColumn: {
-    heading: "Expert services, done for you",
-    subheading: "A few minutes over chat",
-    steps: [
+
+  comparison: {
+    title: "Study workspace vs re-reading notes vs a general AI chat",
+    subtitle: "Each way of studying works differently. Here's how they compare.",
+    columns: ["AI study workspace", "Re-reading notes", "General AI chat"],
+    highlight: "Expert help",
+    rows: [
       {
-        title: "Share the brief now",
-        description:
-          "Tell us your subject, assignment, deadline, and any instructions from your professor.",
+        label: "Builds flashcards and quizzes",
+        values: ["Yes, from your material", "No", "If you ask"],
+        highlight: "Custom study guides",
       },
       {
-        title: "Matched to a writer",
-        description:
-          "We match you with a subject specialist who works at exactly the right academic level.",
+        label: "Answers from your course",
+        values: ["Yes", "No", "Not always"],
+        highlight: "Yes",
       },
       {
-        title: "Follow the progress",
-        description:
-          "Message your writer, ask questions, and track the progress as your paper takes shape.",
+        label: "Keeps each subject saved",
+        values: ["Yes", "In your notes", "No"],
+        highlight: "Managed for you",
       },
       {
-        title: "Review and receive!",
-        description:
-          "Receive your completed paper, review it all, and request free revisions where needed.",
+        label: "Cost",
+        values: ["Free", "Free", "Varies"],
+        highlight: "Free quote",
+        highlightLink: "get a quote",
       },
     ],
   },
-};
 
-export const expertBannerContent = {
-  tag: "Need more than quick summaries?",
-  title: "Get a real expert to handle it for you",
-  body: "The free AI workspace is perfect for quick uploads and instant study prep. For full courses, complex assignments, or custom study guides, our expert tutors build tailored materials and manage your coursework on any deadline, going far beyond what any AI study tools for students can do alone.",
-  button: "Get expert help →",
-  buttonHref: "/order",
-  note: "Free quote in 2 min",
-};
+  limits: {
+    title: "What an AI study workspace can't do",
+    subtitle: "Know the limits so you use it the right way.",
+    items: [
+      {
+        title: "Do the studying",
+        description:
+          "It makes the materials. Recall practice is still on you.",
+      },
+      {
+        title: "Fill gaps in your upload",
+        description:
+          "The tutor answers from your material, so anything missing from it stays missing.",
+      },
+      {
+        title: "Replace your lectures",
+        description:
+          "Notes are a summary. Go back to the source for anything that matters.",
+      },
+      {
+        title: "Guarantee a grade",
+        description:
+          "Good prep helps, but results depend on how much you practise.",
+      },
+    ],
+    note: {
+      before: "For full courses and complex assignments, ",
+      linkLabel: "get help from an expert",
+      after: ".",
+    },
+  },
 
-export const reviewsContent = {
-  eyebrow: "Student reviews",
-  title: "Trusted by students everywhere.",
-  ratingLine: "Rated 4.6/5 Based on 1000+ Reviews",
-  reviews: [
-    {
-      quote:
-        "I put my whole cell biology lecture in and had cards and a mock test back in under a minute. These free AI study tools are easily the handiest thing I have found this semester.",
-      author: "Aisha M.",
-      detail: "Biology, University of Toronto, 2nd year",
-    },
-    {
-      quote:
-        "The AI tutor is what won me over. I asked something I would never raise in a seminar, and the answer came straight from the slides I had uploaded. Incredibly accurate every time.",
-      author: "James K.",
-      detail: "Economics, LSE, final year",
-    },
-    {
-      quote:
-        "Academic English is hard for me. Having my notes rewritten plainly by the AI notes generator, plus somewhere to ask questions, has completely changed the way I revise.",
-      author: "Yuna N.",
-      detail: "Computer Science, NYU MSc",
-    },
-  ],
-};
+  expertBand: {
+    tag: "Need more than quick summaries?",
+    tagline: "Tools prep you. Experts manage the coursework.",
+    titleStart: "Get a real expert to",
+    titleAccent: "handle it for you",
+    checks: [
+      "Full courses and complex assignments",
+      "Custom study guides",
+      "Any deadline",
+    ],
+    note: "Free quote in 2 min",
+    rating: "Rated 4.6/5 based on 1000+ reviews",
+  },
 
-export const faqContent = {
-  title: "FAQ",
-  subtitle: "FAQ: Common questions about this tool",
-  items: [
-    {
-      question: "Is this really free?",
-      answer:
-        "Yes, all the AI study tools inside the workspace are completely free for students.",
-    },
-    {
-      question: "How can we start a study session?",
-      answer:
-        "Upload your file, name your session, and click start. Our AI study tool free feature instantly creates notes, summaries, flashcards, and quizzes from your uploaded material.",
-    },
-    {
-      question: "How does the tutor work?",
-      answer:
-        "The AI tutor reads strictly from your uploaded file and answers only from what it finds there, so every response stays accurate, focused, and relevant to your actual material.",
-    },
-    {
-      question: "Can I keep my sessions?",
-      answer:
-        "Your sessions are automatically saved with all generated notes, cards, and chat history. Access and organize everything anytime right from your sidebar.",
-    },
-    {
-      question: "What can I upload?",
-      answer:
-        "You can upload PDFs, documents, and text files, or use the Summarize PDF AI feature on any article or web link you paste directly into the workspace.",
-    },
-  ],
-};
+  guide: {
+    title: "How to study smarter with your own material",
+    intro:
+      "Generating notes and flashcards is the easy part. What makes them work is how you use them. These habits get more out of every session.",
+    sections: [
+      {
+        heading: "Why re-reading doesn't stick",
+        body: "Re-reading notes feels productive because the material looks familiar, but recognising something isn't the same as recalling it. Testing yourself, spacing your reviews over days and explaining ideas in your own words all build memory far better than another read-through.",
+      },
+      {
+        heading: "6 habits for a better study session",
+        steps: [
+          { lead: "Upload early.", text: "Start a session as soon as the lecture is posted." },
+          { lead: "Quiz before you read.", text: "Trying first shows you what you don't know yet." },
+          { lead: "Space your reviews.", text: "Come back to the same session over several days." },
+          { lead: "Ask the tutor why.", text: "Go past the definition to the reason behind it." },
+          { lead: "Explain it back.", text: "Summarise each topic in your own words." },
+          { lead: "One topic per session.", text: "Keep subjects separate so you can revise them later." },
+        ],
+      },
+      {
+        heading: "When a tool isn't enough",
+        body: "The workspace helps you prepare, but it can't take a course for you. If you're juggling full-time work with a heavy course load, or an assignment is bigger than the time you have, a ScholarlyHelp expert can manage the coursework on any deadline.",
+        callout: {
+          lead: "Falling behind on a course?",
+          text: "Get a free quote from an expert.",
+        },
+      },
+      {
+        heading: "Using AI study tools responsibly",
+        body: "Study tools are for your own learning. For anything graded, check your syllabus or ask your instructor what is allowed, and make sure the work you hand in is your own.",
+      },
+    ],
+  },
 
-export const footerCtaContent = {
-  titleStart: "Your",
-  titlePill: "exam",
-  titleEnd: "won't wait",
-  body: "Use the free AI study tools to start prepping in 30 seconds, or connect with an expert tutor right now and study smarter from this moment on.",
-  primaryButton: "Start studying for free",
-  primaryHref: "#study-workspace-tool",
-  secondaryButton: "Talk to a tutor →",
-  secondaryHref: "/contact-us",
+  related: ["math", "coursePlanner", "essay", "paraphraser"],
+
+  faq: {
+    title: "FAQ",
+    subtitle: "FAQ: Common questions about this tool",
+    items: [
+      {
+        question: "Is this really free?",
+        answer:
+          "Yes, all the AI study tools inside the workspace are completely free for students.",
+      },
+      {
+        question: "How can we start a study session?",
+        answer:
+          "Upload your file, name your session, and click start. Our AI study tool free feature instantly creates notes, summaries, flashcards, and quizzes from your uploaded material.",
+      },
+      {
+        question: "How does the tutor work?",
+        answer:
+          "The AI tutor reads strictly from your uploaded file and answers only from what it finds there, so every response stays accurate, focused, and relevant to your actual material.",
+      },
+      {
+        question: "Can I keep my sessions?",
+        answer:
+          "Your sessions are automatically saved with all generated notes, cards, and chat history. Access and organize everything anytime right from your sidebar.",
+      },
+      {
+        question: "What can I upload?",
+        answer:
+          "You can upload PDFs, documents, and text files, or use the Summarize PDF AI feature on any article or web link you paste directly into the workspace.",
+      },
+    ],
+  },
+
+  finalCta: {
+    titleStart: "Your",
+    titlePill: "exam",
+    titleEnd: "won't wait",
+    body: "Use the free AI study tools to start prepping in 30 seconds, or connect with an expert tutor right now and study smarter from this moment on.",
+  },
 };

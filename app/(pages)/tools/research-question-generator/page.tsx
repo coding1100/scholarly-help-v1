@@ -1,28 +1,10 @@
 import { FC } from "react";
 import { Metadata } from "next";
 import MainLayout from "@/app/MainLayout";
-import ProductSchema from "@/app/components/ProductSchema";
-import LandingHero from "@/app/components/AiLandingPage/ToolLanding/LandingHero";
-import UseCases from "@/app/components/AiLandingPage/ToolLanding/UseCases";
-import HowItWorks from "@/app/components/AiLandingPage/ToolLanding/HowItWorks";
-import WatchVideo from "@/app/components/AiLandingPage/ToolLanding/WatchVideo";
-import WhyItWorks from "@/app/components/AiLandingPage/ToolLanding/WhyItWorks";
-import TwoWays from "@/app/components/AiLandingPage/ToolLanding/TwoWays";
-import StudentReviews from "@/app/components/AiLandingPage/ToolLanding/StudentReviews";
-import LandingFaq from "@/app/components/AiLandingPage/ToolLanding/LandingFaq";
-import FooterCta from "@/app/components/AiLandingPage/ToolLanding/FooterCta";
+import LandingTemplate from "@/app/components/AiLandingPage/Template/LandingTemplate";
 import ResearchQuestionHeroTool from "@/app/components/AiLandingPage/ResearchQuestionGenerator/ResearchQuestionHeroTool";
-import {
-  heroContent,
-  useCasesContent,
-  howItWorksContent,
-  whyItWorksContent,
-  watchVideoContent,
-  twoWaysContent,
-  reviewsContent,
-  faqContent,
-  footerCtaContent,
-} from "@/app/components/AiLandingPage/ResearchQuestionGenerator/content";
+import { researchQuestionLanding } from "@/app/components/AiLandingPage/ResearchQuestionGenerator/content";
+import ProductSchema from "@/app/components/ProductSchema";
 
 const Page: FC = () => {
   const baseUrl =
@@ -37,22 +19,7 @@ const Page: FC = () => {
         metaDescription="Create focused research questions from any topic with our free AI tool for essays, papers, theses & academic research. Generate better questions today."
         pageUrl={`${normalizedBaseUrl}/tools/research-question-generator`}
       />
-      <div className="font-poppins">
-        <LandingHero
-          content={heroContent}
-          toolAnchorId="research-question-tool"
-        >
-          <ResearchQuestionHeroTool />
-        </LandingHero>
-        <UseCases content={useCasesContent} />
-        <HowItWorks content={howItWorksContent} />
-        <WhyItWorks content={whyItWorksContent} />
-        <WatchVideo content={watchVideoContent} />
-        <TwoWays content={twoWaysContent} />
-        <StudentReviews content={reviewsContent} />
-        <LandingFaq content={faqContent} />
-        <FooterCta content={footerCtaContent} />
-      </div>
+      <LandingTemplate content={researchQuestionLanding} tool={<ResearchQuestionHeroTool />} />
     </MainLayout>
   );
 };

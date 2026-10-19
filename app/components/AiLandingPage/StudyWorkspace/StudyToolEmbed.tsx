@@ -17,9 +17,10 @@ import { setActiveStudySessionId } from "@/app/utils/studyApiClient";
  * Quizzes + AI Tutor). The dashboard chrome (ToolsLayout shell, session
  * sidebar, tool grid) is intentionally left out.
  *
- * Split out of StudyHero so that only this subtree — which needs
- * useSearchParams, and therefore a Suspense boundary — is client-rendered. The
- * hero's marketing copy stays server-rendered for SEO.
+ * Only this subtree, which needs useSearchParams and therefore a Suspense
+ * boundary, is client-rendered; the landing template around it stays
+ * server-rendered for SEO. The ingestion card's own Done-for-you card is
+ * turned off because the template renders it beside the tool.
  */
 const StudyToolEmbed: FC = () => {
   const router = useRouter();
@@ -80,6 +81,7 @@ const StudyToolEmbed: FC = () => {
     <div className="overflow-hidden rounded-2xl bg-white p-4 shadow-[0_24px_50px_-20px_rgba(43,28,80,0.35)] md:p-6">
       <StudySourceIngestion
         variant="onboarding"
+        showDoneForYouCard={false}
         onSessionCreated={adoptCreatedSession}
         onContentReady={() => setHasSessionContent(true)}
       />
