@@ -58,17 +58,11 @@ function TextMeForm({ placement }: { placement: string }) {
 
     setError("");
     setStatus("sending");
-    // Same lead flow as the take-my-class phone form: the backend saves the
-    // number to the quotes sheet, creates the GHL contact and emails support.
-    const url = window.location.href;
+    // The backend upserts a GHL contact tagged ai-tools, ai-tools-done-for-you
+    // and tool-<slug> for the tool this page hosts.
+    const tool = window.location.pathname.match(/^\/tools\/([a-z0-9-]+)/)?.[1];
     try {
-      await axiosInstance.post("/order/take-my-class/", {
-        phoneNumber,
-        email: "",
-        PageURL: url,
-        FBCLID: url.includes("fbclid=") ? url : "",
-        GCLID: url.includes("gclid=") ? url : "",
-      });
+      await axiosInstance.post("/order/tools-lead/", { phoneNumber, tool });
       pushDataLayer({
         event: "done_for_you_text_me",
         done_for_you_placement: placement,
