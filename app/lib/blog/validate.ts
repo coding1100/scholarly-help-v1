@@ -1,7 +1,17 @@
 import { randomUUID } from "crypto";
 import { safeUrl, sanitizeRichText, toPlainText } from "./sanitize";
 import { slugify } from "./utils";
-import { DEFAULT_BLOG_SETTINGS, type BlogBlock, type BlogPost, type BlogSettings, type FeatureIcon, type HeroCta, type PostSeo } from "./types";
+import {
+  DEFAULT_BLOG_SETTINGS,
+  type BlogBlock,
+  type BlogPost,
+  type BlogSettings,
+  type FeatureIcon,
+  type HeroCta,
+  type LeadFormContent,
+  type PostLeadForms,
+  type PostSeo,
+} from "./types";
 
 export class ValidationError extends Error {}
 
@@ -21,6 +31,37 @@ function normalizeCta(value: unknown): HeroCta | null {
   const buttonUrl = safeUrl(o.buttonUrl);
   if (!heading && !buttonLabel) return null;
   return { heading, text: str(o.text, 600), buttonLabel, buttonUrl };
+}
+
+const LEAD_FIELDS: { key: keyof LeadFormContent; max: number }[] = [
+  { key: "heading", max: 150 },
+  { key: "highlight", max: 80 },
+  { key: "text", max: 300 },
+  { key: "buttonLabel", max: 40 },
+  { key: "note", max: 120 },
+];
+
+function normalizeLeadContent(value: unknown): LeadFormContent {
+  const o = obj(value);
+  return Object.fromEntries(LEAD_FIELDS.map(({ key, max }) => [key, str(o[key], max)])) as LeadFormContent;
+}
+
+/** Keeps only the override fields that were filled in. */
+function normalizeLeadOverride(value: unknown): Partial<LeadFormContent> | undefined {
+  const content = normalizeLeadContent(value);
+  const filled = Object.fromEntries(Object.entries(content).filter(([, v]) => v));
+  return Object.keys(filled).length ? filled : undefined;
+}
+
+export function normalizePostLeadForms(value: unknown): PostLeadForms {
+  const o = obj(value);
+  const out: PostLeadForms = {};
+  if (o.hidden === true) out.hidden = true;
+  const inline = normalizeLeadOverride(o.inline);
+  const sidebar = normalizeLeadOverride(o.sidebar);
+  if (inline) out.inline = inline;
+  if (sidebar) out.sidebar = sidebar;
+  return out;
 }
 
 export function normalizeBlock(value: unknown): BlogBlock | null {
@@ -133,10 +174,18 @@ export function normalizePostInput(body: unknown): PostInput {
     blocks: arr(o.blocks).map(normalizeBlock).filter((b): b is BlogBlock => !!b).slice(0, 300),
     seo: normalizedSeo,
     commentsEnabled: o.commentsEnabled !== false,
+    leadForms: normalizePostLeadForms(o.leadForms),
   };
 }
 
 /** Validates the admin blog settings form, falling back to defaults for missing parts. */
+/** A cleared settings field falls back to the default text, so a form never shows empty. */
+function fillLeadDefaults(content: LeadFormContent, defaults: LeadFormContent): LeadFormContent {
+  return Object.fromEntries(
+    (Object.keys(defaults) as (keyof LeadFormContent)[]).map((k) => [k, content[k] || (k === "highlight" ? "" : defaults[k])]),
+  ) as LeadFormContent;
+}
+
 export function normalizeSettingsInput(body: unknown): BlogSettings {
   const o = obj(body);
   const stats = obj(o.statsStrip);
@@ -162,6 +211,11 @@ export function normalizeSettingsInput(body: unknown): BlogSettings {
       primaryUrl: safeUrl(help.primaryUrl),
       secondaryLabel: str(help.secondaryLabel, 60),
       secondaryUrl: safeUrl(help.secondaryUrl),
+    },
+    leadForms: {
+      enabled: obj(o.leadForms).enabled !== false,
+      inline: fillLeadDefaults(normalizeLeadContent(obj(o.leadForms).inline), d.leadForms.inline),
+      sidebar: fillLeadDefaults(normalizeLeadContent(obj(o.leadForms).sidebar), d.leadForms.sidebar),
     },
   };
 }

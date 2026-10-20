@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { safeUrl, sanitizeRichText, toPlainText } from "./sanitize";
 import { normalizeBlock, normalizePostInput, ValidationError } from "./validate";
-import { buildToc, formatViews, isPostLive, readingTimeMinutes, slugify, youtubeId } from "./utils";
+import { buildToc, formatViews, isPostLive, readingTimeMinutes, resolveLeadForms, slugify, youtubeId } from "./utils";
+import { normalizePostLeadForms, normalizeSettingsInput } from "./validate";
+import { DEFAULT_BLOG_SETTINGS } from "./types";
 import type { BlogBlock } from "./types";
 
 describe("sanitizeRichText", () => {
@@ -129,5 +131,33 @@ describe("utils", () => {
   it("slugify and reading time", () => {
     expect(slugify("  Héllo,  World! ")).toBe("hello-world");
     expect(readingTimeMinutes([{ id: "a", type: "richText", html: `<p>${"word ".repeat(440)}</p>` }])).toBe(2);
+  });
+});
+
+describe("lead forms", () => {
+  const defaults = DEFAULT_BLOG_SETTINGS.leadForms;
+
+  it("post overrides keep only filled fields and strip markup", () => {
+    expect(normalizePostLeadForms({ inline: { heading: "<b>Get a stats tutor</b>", highlight: "stats tutor", text: "" }, sidebar: { text: " " } })).toEqual({
+      inline: { heading: "Get a stats tutor", highlight: "stats tutor" },
+    });
+    expect(normalizePostLeadForms({ hidden: true })).toEqual({ hidden: true });
+    expect(normalizePostLeadForms(undefined)).toEqual({});
+  });
+
+  it("settings fall back to the default text when a field is cleared", () => {
+    const s = normalizeSettingsInput({ leadForms: { enabled: true, inline: { heading: "", buttonLabel: "Book now" }, sidebar: {} } });
+    expect(s.leadForms.inline.heading).toBe(defaults.inline.heading);
+    expect(s.leadForms.inline.buttonLabel).toBe("Book now");
+    expect(s.leadForms.inline.highlight).toBe(""); // a cleared highlight stays cleared
+    expect(s.leadForms.sidebar).toEqual({ ...defaults.sidebar, highlight: "" });
+  });
+
+  it("resolves per-post text on top of the defaults, or hides the forms", () => {
+    const resolved = resolveLeadForms(defaults, { leadForms: { inline: { heading: "Get a stats tutor", highlight: "stats tutor" } } });
+    expect(resolved?.inline).toEqual({ ...defaults.inline, heading: "Get a stats tutor", highlight: "stats tutor" });
+    expect(resolved?.sidebar).toEqual(defaults.sidebar);
+    expect(resolveLeadForms(defaults, { leadForms: { hidden: true } })).toBeNull();
+    expect(resolveLeadForms({ ...defaults, enabled: false }, {})).toBeNull();
   });
 });

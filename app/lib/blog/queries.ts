@@ -30,6 +30,7 @@ export async function getBlogSettings(): Promise<BlogSettings> {
     ...settings,
     statsStrip: settings.statsStrip ?? DEFAULT_BLOG_SETTINGS.statsStrip,
     helpBox: settings.helpBox ?? DEFAULT_BLOG_SETTINGS.helpBox,
+    leadForms: settings.leadForms ?? DEFAULT_BLOG_SETTINGS.leadForms,
   };
 }
 

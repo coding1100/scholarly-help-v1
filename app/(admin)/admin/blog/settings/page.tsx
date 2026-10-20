@@ -5,7 +5,8 @@ import AdminButton from "@/app/components/Admin/AdminButton";
 import { useAdminSuccess } from "@/app/components/Admin/AdminSuccessProvider";
 import { useAdminPageTitleOptional } from "@/app/components/Admin/AdminPageTitleContext";
 import { Field, ImageField, inputClass, Panel } from "@/app/components/Admin/Blog/fields";
-import type { BlogSettings, HelpBox } from "@/app/lib/blog/types";
+import type { BlogSettings, HelpBox, LeadFormContent } from "@/app/lib/blog/types";
+import LeadFormFields from "@/app/components/Admin/Blog/LeadFormFields";
 
 export default function BlogSettingsPage() {
   const pageTitle = useAdminPageTitleOptional();
@@ -145,6 +146,34 @@ export default function BlogSettingsPage() {
             </>
           );
         })()}
+      </Panel>
+
+      <Panel title="Lead forms (email + phone)">
+        <label className="flex items-start gap-3">
+          <input
+            type="checkbox"
+            className="mt-1 h-4 w-4"
+            checked={settings.leadForms.enabled}
+            onChange={(e) => setSettings({ ...settings, leadForms: { ...settings.leadForms, enabled: e.target.checked } })}
+          />
+          <span>
+            <span className="block text-sm font-semibold text-[#1a2456]">Show the lead forms on every post</span>
+            <span className="block text-xs text-[#6b7280]">
+              One form in the middle of the article and a compact one at the top of the sidebar. Leads go to GHL, email and
+              the Google Sheet. Each post can change this text or hide the forms.
+            </span>
+          </span>
+        </label>
+        <LeadFormFields
+          title="In-article form"
+          value={settings.leadForms.inline}
+          onChange={(v) => setSettings({ ...settings, leadForms: { ...settings.leadForms, inline: v as LeadFormContent } })}
+        />
+        <LeadFormFields
+          title="Sidebar form"
+          value={settings.leadForms.sidebar}
+          onChange={(v) => setSettings({ ...settings, leadForms: { ...settings.leadForms, sidebar: v as LeadFormContent } })}
+        />
       </Panel>
 
       <Panel title="Newsletter sign-ups">

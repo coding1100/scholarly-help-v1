@@ -1,4 +1,4 @@
-import type { BlogBlock, BlogPost } from "./types";
+import type { BlogBlock, BlogPost, BlogSettings, LeadFormContent } from "./types";
 
 export function slugify(value: string): string {
   return value
@@ -162,4 +162,17 @@ export function siteBaseUrl(): string {
 
 export function postUrl(slug: string): string {
   return `/blog/${slug}/`;
+}
+
+/** Lead form text for one post: its own overrides on top of the blog settings, or null when hidden. */
+export function resolveLeadForms(
+  settings: BlogSettings["leadForms"],
+  post: Pick<BlogPost, "leadForms">,
+): { inline: LeadFormContent; sidebar: LeadFormContent } | null {
+  if (!settings.enabled || post.leadForms?.hidden) return null;
+  const merge = (base: LeadFormContent, override?: Partial<LeadFormContent>) => ({
+    ...base,
+    ...Object.fromEntries(Object.entries(override ?? {}).filter(([, v]) => v)),
+  });
+  return { inline: merge(settings.inline, post.leadForms?.inline), sidebar: merge(settings.sidebar, post.leadForms?.sidebar) };
 }
