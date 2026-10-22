@@ -23,6 +23,25 @@ const REPORT_ADMIN_ALLOWED_PATHS = [
   "/api/admin/logout",
 ] as const;
 
+const NOINDEX_PATHS = new Set([
+  "/tools/grammar-checker",
+  "/tools/research-question",
+  "/tools/study-workspace",
+  "/tools/essay-grader",
+  "/tools/paraphraser-tool",
+  "/tools/essay-studio",
+  "/tools/dashboard",
+  "/admin/login",
+  "/admin/tools",
+  "/online-class/human-resource",
+]);
+
+function shouldNoindex(pathname: string): boolean {
+  const normalizedPathname =
+    pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
+  return NOINDEX_PATHS.has(normalizedPathname);
+}
+
 function isReportAdminAllowedPath(pathname: string): boolean {
   return REPORT_ADMIN_ALLOWED_PATHS.some(
     (path) => pathname === path || pathname.startsWith(`${path}/`),
@@ -121,6 +140,9 @@ export async function middleware(request: NextRequest) {
   const landingRewrite = maybeRewriteDynamicLanding(request, requestHeaders);
   const res = landingRewrite || NextResponse.next({ request: { headers: requestHeaders } });
   res.headers.set("x-request-id", requestId);
+  if (shouldNoindex(pathname)) {
+    res.headers.set("X-Robots-Tag", "noindex");
+  }
   return res;
 }
 
