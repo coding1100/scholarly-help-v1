@@ -64,7 +64,7 @@ const ToolsLayout: React.FC<ToolsLayoutProps> = ({
               </Link>
             </div>
           </div> */}
-          <MTSidebar setFlag={setFlag} flag={flag} />
+          <MTSidebar />
         </div>
 
         {/* Mobile Sidebar */}
@@ -84,11 +84,7 @@ const ToolsLayout: React.FC<ToolsLayoutProps> = ({
                   />
                 </Link>
               </div>
-              <MTSidebar
-                setFlag={setFlag}
-                flag={flag}
-                onToggle={() => setSidebarOpen(false)}
-              />
+              <MTSidebar onToggle={() => setSidebarOpen(false)} />
             </div>
           </>
         )}
@@ -99,8 +95,12 @@ const ToolsLayout: React.FC<ToolsLayoutProps> = ({
             add a second scrollbar. */}
         <div className="flex-1 min-w-0 min-h-0 flex flex-col bg-white dark:bg-gray-900 transition-colors duration-300">
           {/* {children} */}
-          <ToolHeader />
-          <div className="flex-1 min-h-0">{content}</div>
+          <ToolHeader setFlag={setFlag} flag={flag} />
+          {/* The bottom padding keeps the scroll area clear of the mobile
+              Done-for-you bar (0 when no bar is showing). */}
+          <div className="flex-1 min-h-0 pb-[var(--done-for-you-bar-height,0px)]">
+            {content}
+          </div>
         </div>
       </div>
     </div>

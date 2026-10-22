@@ -82,6 +82,17 @@ const Footer: FC<FooterProps> = () => {
 
   const apiCall = async () => {
     try {
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({
+        event: "whatsapp_click",
+        whatsapp_placement: "landing_footer",
+        page_path: window.location.pathname,
+      });
+    } catch {
+      // Do not block the WhatsApp action if GTM is unavailable.
+    }
+
+    try {
       await axios.post(postUrl, postData, {
         headers: { "Content-Type": "application/json" },
       });

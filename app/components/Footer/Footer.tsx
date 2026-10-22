@@ -21,7 +21,6 @@ import { hideFooterLinks, smsHide } from "../HideLinks/HideLinks";
 // import "./footer.css";
 // import ChatBubble from "@/app/assets/Icons/ChatBubble";
 import chatBubble from "@/app/assets/Images/chatBubble.png";
-import axios from "axios";
 import { FaSnapchat } from "react-icons/fa";
 import { SiYoutubemusic } from "react-icons/si";
 
@@ -30,18 +29,8 @@ const Footer: FC<FooterProps> = ({}) => {
   const currentPage = usePathname();
   const hidelinksfooter = hideFooterLinks.includes(currentPage);
   const hideSMS = smsHide.includes(currentPage);
-  const [GCLID, setGCLID] = useState("");
-  const [url, setUrl] = useState("");
   const [isFooterInView, setIsFooterInView] = useState(false);
   const footerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (window?.location?.href?.includes("gclid=")) {
-      setGCLID(window?.location?.href);
-    }
-
-    setUrl(window?.location?.href);
-  }, []);
 
   useEffect(() => {
     if (!footerRef.current) return;
@@ -65,37 +54,13 @@ const Footer: FC<FooterProps> = ({}) => {
     };
   }, []);
 
-  const postUrl = `${process.env.NEXT_PUBLIC_API_URL}/order/quote/whatsapp`;
-
-  const postData = {
-    gclid: GCLID,
-    url: url,
-  };
-
-  const apiCall = async () => {
-    try {
-      const res = await axios.post(postUrl, postData, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      console.log("Response:", res.data);
-
-      return res.data;
-    } catch (error) {
-      console.error("Error:", error);
-      throw error;
-    }
-  };
-
   if (currentPage === "/order/") {
     return;
   } else if (hidelinksfooter) {
     return (
       <div>
         <div className="bg-primary-200 md:flex justify-center py-14">
-          <div className=" w-full max-w-7xl mx-auto md:flex justify-between gap-6 max-[768px]:px-10 text-primary-600">
+          <div className=" w-full max-w-7xl mx-auto md:flex justify-between gap-6 max-[767px]:px-10 text-primary-600">
             <div className="md:max-w-[372px]">
               <Link href="/">
                 <Image
@@ -194,7 +159,7 @@ const Footer: FC<FooterProps> = ({}) => {
                     +1 646 480 6092
                   </p>
                 </div>
-                <div className="flex my-2">
+                <div className="flex flex-wrap my-2">
                   <div className="w-5 mr-1">
                     <Facebook color="#2b1c51" />
                   </div>
@@ -208,7 +173,7 @@ const Footer: FC<FooterProps> = ({}) => {
                     <Image src={Tiktok} alt="Tiktok" />
                   </div>
                 </div>
-                <div className="flex my-2">
+                <div className="flex flex-wrap my-2">
                   <div className="w-5 mr-1">
                     <Image
                       width={30}
@@ -243,7 +208,6 @@ const Footer: FC<FooterProps> = ({}) => {
             <button
               id="sms-chat"
               className="fixed flex justify-between z-[98] left-0 bg-transparent border-none hidden md:flex"
-              onClick={apiCall}
             >
               <a
                 href={`sms:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER}`}
@@ -263,7 +227,6 @@ const Footer: FC<FooterProps> = ({}) => {
             <button
               id="sms-chat2"
               className="fixed flex justify-between z-[98] left-0 bg-transparent border-none md:hidden flex z-[99999]"
-              onClick={apiCall}
             >
               <a
                 href={`sms:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER}`}
@@ -287,7 +250,7 @@ const Footer: FC<FooterProps> = ({}) => {
     return (
       <div>
         <div className="bg-primary-200 md:flex justify-center py-14">
-          <div className="w-full max-w-7xl mx-auto md:flex justify-between gap-6 max-[768px]:px-10 text-primary-600">
+          <div className="w-full max-w-7xl mx-auto md:flex justify-between gap-6 max-[767px]:px-10 text-primary-600">
             <div className="md:max-w-[372px]">
               <Link href="/">
                 <Image
@@ -461,7 +424,7 @@ const Footer: FC<FooterProps> = ({}) => {
                       +1 646 480 6092
                     </a>
                   </div>
-                  <div className="flex my-2">
+                  <div className="flex flex-wrap my-2">
                     <div className="w-5 mr-1">
                       <a
                         target="_blank"
@@ -531,7 +494,7 @@ const Footer: FC<FooterProps> = ({}) => {
                     {/* <div className="w-5 h-5 mr-1 rounded-full bg-primary-500"></div> */}
                   </div>
 
-                  <div className="flex my-2">
+                  <div className="flex flex-wrap my-2">
                     <div className="w-5 mr-1">
                       <Image
                         width={30}

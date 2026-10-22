@@ -5,6 +5,7 @@ import ToolsLayout from "@/app/components/AiTools/ToolsLayout";
 import AiDetectorTool from "@/app/components/AiTools/AiDetectorTool/AiDetectorTool";
 import { ToolsSuspenseFallback } from "@/app/components/AiTools/ToolsApiLoader";
 import ToolWithExplore from "@/app/components/AiTools/ToolWithExplore";
+import DoneForYouCard from "@/app/components/AiTools/DoneForYouCard";
 import ProductSchema from "@/app/components/ProductSchema";
 
 export default function AiDetectorPage() {
@@ -23,7 +24,7 @@ export default function AiDetectorPage() {
         pageUrl={`${baseUrl}/tools/ai-detector-tool`}
       />
       <ToolsLayout setFlag={setFlag} flag={flag}>
-        <ToolWithExplore>
+        <ToolWithExplore rail={<DoneForYouCard placement="ai_detector_done_for_you" />}>
           <AiDetectorTool />
         </ToolWithExplore>
       </ToolsLayout>

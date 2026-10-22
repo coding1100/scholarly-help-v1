@@ -5,6 +5,7 @@ import ToolsLayout from "@/app/components/AiTools/ToolsLayout";
 import CitationTool from "@/app/components/AiTools/CitationTool/CitationTool";
 import { ToolsSuspenseFallback } from "@/app/components/AiTools/ToolsApiLoader";
 import ToolWithExplore from "@/app/components/AiTools/ToolWithExplore";
+import DoneForYouCard from "@/app/components/AiTools/DoneForYouCard";
 import ProductSchema from "@/app/components/ProductSchema";
 // import ThemeToggle from "@/app/components/AiLandingPage/ThemeToggle";
 
@@ -29,7 +30,7 @@ export default function CitationPage() {
       />
       {/* <ThemeToggle top="top-12" /> */}
       <ToolsLayout setFlag={setFlag} flag={flag}>
-        <ToolWithExplore>
+        <ToolWithExplore rail={<DoneForYouCard placement="citation_done_for_you" />}>
           <CitationTool setFlag={setFlag} />
         </ToolWithExplore>
       </ToolsLayout>

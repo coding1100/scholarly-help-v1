@@ -3,7 +3,7 @@
 import { Suspense, useState } from "react";
 import ToolsLayout from "@/app/components/AiTools/ToolsLayout";
 import ToolWithExplore from "@/app/components/AiTools/ToolWithExplore";
-import EssayGeneratorTool from "@/app/components/AiTools/EssayGenerator/EssayGeneratorTool";
+import EssayStudio from "@/app/components/AiTools/EssayStudio/EssayStudio";
 import ProductSchema from "@/app/components/ProductSchema";
 import { ToolsSuspenseFallback } from "@/app/components/AiTools/ToolsApiLoader";
 
@@ -23,7 +23,7 @@ export default function Page() {
       />
       <ToolsLayout setFlag={setFlag} flag={flag}>
         <ToolWithExplore>
-          <EssayGeneratorTool />
+          <EssayStudio />
         </ToolWithExplore>
       </ToolsLayout>
     </Suspense>

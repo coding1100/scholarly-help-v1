@@ -18,12 +18,7 @@ import { content } from "../take-my-class/content222";
 import { MetaData } from "@/app/metadata/metadata";
 import ProductSchema from "@/app/components/ProductSchema";
 
-const WhyScholarly = dynamic(
-  () => import("@/app/components/WhyScholarly/WhyScholarly"),
-  {
-    ssr: false,
-  }
-);
+import WhyScholarly from "@/app/components/WhyScholarly/WhyScholarlyClient";
 interface PageProps {}
 const Page: FC<PageProps> = ({}) => {
   const rawBaseUrl =

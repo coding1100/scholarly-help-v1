@@ -5,21 +5,43 @@ import "./globals.css";
 import { Metadata } from "next";
 import OrganizationSchema from "./components/OrganizationSchema";
 
-const ClientScripts = dynamic(() => import("./components/ClientScripts"), {
-  ssr: false,
-});
+import ClientScripts from "./components/ClientScripts";
 
-// Optimize font loading - next/font self-hosts fonts (NO CDN calls)
-// display "optional": if Poppins isn't ready within the block period the
-// metric-matched fallback stays for this page view (no late swap repaint).
-// The swap repaint was registering as LCP (~3.5s) on slow connections.
+// next/font self-hosts Poppins, so the page makes no Google Fonts requests.
+// Only the weights used above the fold are preloaded; each preload competes
+// with the render-blocking stylesheet for bandwidth on mobile.
 const poppins = Poppins({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-poppins",
-  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  weight: ["400", "500", "600", "700"],
   preload: true,
   fallback: ["Poppins", "system-ui", "-apple-system", "Segoe UI", "sans-serif"],
+  adjustFontFallback: false,
+});
+
+// Rarely used weights (font-light, font-extrabold, font-black) join the same
+// "Poppins" family but are fetched only when text using them renders.
+// Applied on <html> only so the @font-face rules are emitted.
+const poppinsRareWeights = Poppins({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-poppins-rare",
+  weight: ["300", "800", "900"],
+  preload: false,
+  adjustFontFallback: false,
+});
+
+// Italic faces join the same "Poppins" family so <em>/<i>/`italic` text gets
+// real italic glyphs. Not preloaded: they only download when italic text renders.
+// Its variable is applied on <html> only so the @font-face rules are emitted.
+const poppinsItalic = Poppins({
+  subsets: ["latin"],
+  style: "italic",
+  display: "swap",
+  variable: "--font-poppins-italic",
+  weight: ["400", "600", "700"],
+  preload: false,
   adjustFontFallback: false,
 });
 
@@ -34,20 +56,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${poppins.variable} font-poppins`}>
+    <html lang="en" className={`${poppins.variable} ${poppinsRareWeights.variable} ${poppinsItalic.variable} font-poppins`}>
       <head>
-        {/* Resource Hints for better performance and sharp font loading */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap"
-          rel="stylesheet"
-        />
-
         {/* Force HTTPS for all resources in production only */}
         {process.env.NODE_ENV === "production" &&
           process.env.DISABLE_HTTPS_HEADERS !== "true" && (
@@ -57,18 +67,19 @@ export default function RootLayout({
       <body className={`${poppins.className} font-poppins`} suppressHydrationWarning>
         <OrganizationSchema />
         <main id="main-content">{children}</main>
-
-        {/* Load analytics after hydration without waiting for page load or idle. */}
+        {/* GTM-5ZHV46X served first-party through Google tag gateway: CloudFront forwards
+            /33uh/* to GTM-5ZHV46X.fps.goog. "/33uh/" (with the slash) matches that behaviour
+            directly; "/33uh" would take a redirect through the origin first. */}
         <Script
           id="gtm-script"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
           dangerouslySetInnerHTML={{
             __html: `
-              (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+              (function(w,d,s,l){w[l]=w[l]||[];w[l].push({'gtm.start':
               new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-              j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-              'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-              })(window,document,'script','dataLayer','GTM-5ZHV46X');
+              j=d.createElement(s),dl=l!='dataLayer'?'?l='+l:'';j.async=true;j.src=
+              '/33uh/'+dl;f.parentNode.insertBefore(j,f);
+              })(window,document,'script','dataLayer');
             `,
           }}
         />

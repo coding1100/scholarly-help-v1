@@ -1,12 +1,13 @@
 import { redirect } from "next/navigation";
 
 /** Legacy URLs /admin/landing/landing-dup-{slug} → /admin/{slug} */
-export default function LegacyLandingAdminRedirect({
+export default async function LegacyLandingAdminRedirect({
   params,
 }: {
-  params: { pageId: string };
+  params: Promise<{ pageId: string }>;
 }) {
-  const raw = decodeURIComponent(params.pageId || "");
+  const { pageId } = await params;
+  const raw = decodeURIComponent(pageId || "");
   const slug = raw.startsWith("landing-dup-") ? raw.replace(/^landing-dup-/, "") : raw;
   redirect(`/admin/${encodeURIComponent(slug)}`);
 }

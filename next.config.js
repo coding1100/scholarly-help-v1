@@ -46,7 +46,6 @@ const nextConfig = {
   compress: true,
 
   // Optimize production builds
-  swcMinify: true,
   productionBrowserSourceMaps: false,
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
@@ -54,7 +53,6 @@ const nextConfig = {
 
   // Optimize CSS - Next.js automatically removes unused CSS in production
   // Combined with PurgeCSS in postcss.config.js for maximum optimization
-  optimizeFonts: true,
 
   eslint: {
     ignoreDuringBuilds: true,
@@ -131,7 +129,6 @@ const nextConfig = {
       'ai-summarizer',
       'ai-thesis-generator',
       'citation-generator',
-      'essay-title-generator',
     ];
     return [
       {
@@ -156,11 +153,60 @@ const nextConfig = {
         destination: '/tools/tutor',
         permanent: true,
       },
+      // Old landing pages retired in favour of the newer tool landings.
+      {
+        source: '/essay-title-generator',
+        destination: '/tools/ai-essay-title-generator/',
+        permanent: true,
+      },
+      {
+        source: '/tools/essay-title-generator',
+        destination: '/tools/ai-essay-title-generator/',
+        permanent: true,
+      },
+      {
+        source: '/research-question',
+        destination: '/tools/research-question-generator/',
+        permanent: true,
+      },
       ...movedLandings.map((slug) => ({
         source: `/${slug}`,
         destination: `/tools/${slug}`,
         permanent: true,
       })),
+      // Hidden tools: their workspaces and landing pages send visitors to the
+      // live tool that covers the same job. Temporary (307) so a tool can be
+      // brought back without browsers having cached the redirect.
+      ...Object.entries({
+        '/tools/summarizer-tool': '/tools/study-workspace/',
+        '/tools/ai-summarizer': '/tools/study-workspace/',
+        '/tools/tutor': '/tools/study-workspace/',
+        '/tools/essay-title': '/tools/essay-studio/',
+        '/tools/ai-essay-title-generator': '/tools/essay-studio/',
+        '/tools/essay-outline-tool': '/tools/essay-studio/',
+        '/tools/thesis-generator-tool': '/tools/essay-studio/',
+        '/tools/ai-thesis-generator': '/tools/essay-studio/',
+        '/tools/ai-thesis-statement-generator': '/tools/essay-studio/',
+        '/tools/academic-research-assistant': '/tools/essay-studio/',
+        '/tools/ai-academic-research': '/tools/essay-studio/',
+        '/academic-research': '/tools/essay-studio/',
+      }).map(([source, destination]) => ({
+        source,
+        destination,
+        permanent: false,
+      })),
+      // Former WordPress blog URLs. Archives now list every post on one page.
+      // Keep the original Yoast post-sitemap URL canonical; consolidate the
+      // other retired sitemap URLs and our temporary custom URL into it.
+      { source: '/blog/page/:n', destination: '/blog/', permanent: true },
+      { source: '/blog/:kind(category|tag|author)/:slug/page/:n', destination: '/blog/:kind/:slug/', permanent: true },
+      {
+        source: '/blog/:map(sitemap_index|page-sitemap|category-sitemap|post_tag-sitemap|author-sitemap).xml',
+        destination: '/blog/post-sitemap.xml',
+        permanent: true,
+      },
+      { source: '/blog-sitemap.xml', destination: '/blog/post-sitemap.xml', permanent: true },
+      { source: '/blog/comments/feed', destination: '/blog/feed/', permanent: true },
     ];
   },
 
@@ -224,14 +270,36 @@ const nextConfig = {
       },
       // HTML pages - enable bfcache by NOT setting no-store
       // bfcache requires: no unload listeners, no Cache-Control: no-store
+      // Excludes /_next/static and /_next/image: as the last matching rule this
+      // would otherwise override their long-lived Cache-Control with max-age=0.
+      // s-maxage lets CloudFront share a public page for 60s and serve it stale
+      // for up to 5 min while refetching; browsers still revalidate (max-age=0).
+      // Safe because public pages read no cookies, headers or searchParams on
+      // the server, so every visitor gets the same HTML.
       {
-        source: '/((?!api).*)',
+        // The blog sitemap is database-backed and must reflect a publish
+        // immediately, so its route supplies its own no-store policy.
+        source: '/((?!api|admin|_next/static|_next/image|blog/post-sitemap\\.xml).*)',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=0, must-revalidate',
+            value: 'public, max-age=0, s-maxage=60, stale-while-revalidate=300',
           },
           // Permissions-Policy to help with bfcache
+          {
+            key: 'Permissions-Policy',
+            value: 'unload=()',
+          },
+        ],
+      },
+      // Admin pages depend on the admin session: never keep them in a shared cache.
+      {
+        source: '/admin/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'private, max-age=0, must-revalidate',
+          },
           {
             key: 'Permissions-Policy',
             value: 'unload=()',

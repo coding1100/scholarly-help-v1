@@ -56,5 +56,4 @@ export interface ScanSettings {
   exclude_bibliography: boolean;
   exclude_quotes: boolean;
   compare_past_scans: boolean;
-  contribute_to_database: boolean;
 }

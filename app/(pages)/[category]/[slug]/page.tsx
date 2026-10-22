@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 interface PageProps { 
-  params: { category: string; slug: string; }; 
+  params: Promise<{ category: string; slug: string; }>; 
 }
 
 async function fetchPageData(category: string, slug: string) {
@@ -35,7 +35,8 @@ async function fetchPageData(category: string, slug: string) {
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const pageData = await fetchPageData(params.category, params.slug);
+  const { category, slug } = await params;
+  const pageData = await fetchPageData(category, slug);
   
   if (!pageData) {
     return {
@@ -45,7 +46,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
   
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com/";
-  const canonicalUrl = `${baseUrl}${params.category}/${params.slug}`;
+  const canonicalUrl = `${baseUrl}${category}/${slug}`;
   
   return {
     title: pageData.meta?.title || pageData.meta_title || pageData.title || 'Page',
@@ -57,7 +58,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function DynamicPage({ params }: PageProps) {
-  const pageData = await fetchPageData(params.category, params.slug);
+  const { category, slug } = await params;
+  const pageData = await fetchPageData(category, slug);
 
   // Only return 404 if explicitly set to not published, otherwise show the page
   if (!pageData) {
@@ -75,7 +77,7 @@ export default async function DynamicPage({ params }: PageProps) {
     : rawBaseUrl;
   const pageTitle = pageData.meta?.title || pageData.meta_title || pageData.title || 'Page';
   const metaDescription = pageData.meta?.description || pageData.meta_description || '';
-  const pageUrl = pageData.meta?.canonicalUrl || `${baseUrl}/${params.category}/${params.slug}`;
+  const pageUrl = pageData.meta?.canonicalUrl || `${baseUrl}/${category}/${slug}`;
 
   return (
     <div>

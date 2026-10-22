@@ -1,6 +1,17 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { FiX, FiBell, FiCheck, FiMail } from "react-icons/fi";
 import { NotificationItem, NotificationSettings, CourseCatalogItem } from "@/app/lib/client/coursePlanner/types";
+
+/** The email the user is logged in with — same localStorage key auth.ts and
+ * toolsSheetClient.ts use elsewhere in the app. */
+const getAccountEmail = (): string => {
+  if (typeof window === "undefined") return "";
+  try {
+    return localStorage.getItem("user_email") || "";
+  } catch {
+    return "";
+  }
+};
 
 interface Props {
   isOpen: boolean;
@@ -28,6 +39,22 @@ export const NotificationDrawer: React.FC<Props> = ({
   useEffect(() => {
     setEmailDraft(settings.notificationEmail || "");
   }, [settings.notificationEmail]);
+
+  // Default the notification email to the address the user is logged in
+  // with, so it's actually usable out of the box instead of an empty field
+  // with just a hint. Fires once per session when email alerts are on but no
+  // address has been set yet; the user can still overwrite it at any time.
+  const hasAutoSetEmail = useRef(false);
+  useEffect(() => {
+    if (hasAutoSetEmail.current) return;
+    if (!settings.emailEnabled || settings.notificationEmail) return;
+    const accountEmail = getAccountEmail();
+    if (!accountEmail) return;
+    hasAutoSetEmail.current = true;
+    setEmailDraft(accountEmail);
+    onUpdateSettings({ notificationEmail: accountEmail });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings.emailEnabled, settings.notificationEmail]);
 
   if (!isOpen) return null;
 

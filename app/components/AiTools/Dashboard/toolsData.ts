@@ -2,39 +2,38 @@ import {
   FiAlignLeft,
   FiBarChart,
   FiBookmark,
-  FiCalendar,
   FiCheckCircle,
   FiFileText,
   FiList,
-  FiGlobe,
-  FiMessageSquare,
   FiRepeat,
   FiSearch,
   FiTarget,
   FiType,
-  FiZap,
 } from "react-icons/fi";
 import { LuGraduationCap, LuRadical } from "react-icons/lu";
 import { RiDoubleQuotesL } from "react-icons/ri";
-import type { ToolCardData, ToolCategory } from "./ToolCard";
+import type { ToolCardData, ToolCategory, ToolGroup } from "./ToolCard";
 
 /**
- * Single source of truth for every live tool shown in the product — the
+ * Single source of truth for every live tool in the product. The
  * dashboard grid (ToolGrid.tsx) and the AI tools sidebar (MTSidebar.tsx)
  * both render from this same list, so the two surfaces can never drift out
- * of sync with which tools actually exist.
+ * of sync with which tools actually exist. Tools marked `hidden` are left
+ * out of both, and their routes redirect (see next.config.js).
  */
 export const TOOLS: ToolCardData[] = [
   // Study tools
   {
-    name: "Study Workspace",
+    name: "AI Tutor",
     description:
       "Upload content and generate notes, summaries, flashcards, quizzes, and tutor help.",
     href: "/tools/study-workspace",
     icon: FiBookmark,
     badge: "New",
     category: "study-tools",
-    cta: "Open workspace",
+    group: "study-lab",
+    keywords: ["notes", "flashcards", "quiz", "summary", "upload"],
+    cta: "Open AI Tutor",
   },
   {
     name: "Summarizer Tool",
@@ -43,17 +42,23 @@ export const TOOLS: ToolCardData[] = [
     icon: FiAlignLeft,
     badge: "Popular",
     category: "study-tools",
+    group: "study-lab",
+    keywords: ["summary", "summarise", "condense", "tldr", "notes"],
     cta: "Summarize now",
+    hidden: true,
   },
   {
-    name: "Tutor Tool",
+    name: "Tutor (Legacy)",
     description:
       "Upload your material, then research deep-dive, solve assignments Socratically, or take a quiz — all grounded in your own document.",
     href: "/tools/tutor",
     icon: LuGraduationCap,
     badge: "New",
     category: "study-tools",
+    group: "study-lab",
+    keywords: ["tutor", "explain", "ask", "socratic", "learn"],
     cta: "Ask a question",
+    hidden: true,
   },
   {
     name: "CGPA Calculator",
@@ -62,55 +67,32 @@ export const TOOLS: ToolCardData[] = [
     icon: FiBarChart,
     badge: "Free",
     category: "study-tools",
+    group: "study-lab",
+    keywords: ["gpa", "cgpa", "grade", "calculator", "semester"],
     cta: "Calculate GPA",
-  },
-  {
-    name: "Exam Prep Tool",
-    description: "Practice smarter with guided prep and quick drills.",
-    href: "/tools/exam-prep",
-    icon: FiMessageSquare,
-    badge: "New",
-    category: "study-tools",
-    cta: "Start prep",
-  },
-  {
-    name: "Language Practice",
-    description: "Build fluency with structured practice sessions.",
-    href: "/tools/language-practice",
-    icon: FiGlobe,
-    badge: "New",
-    category: "study-tools",
-    cta: "Start practice",
-  },
-  {
-    name: "Micro Learning",
-    description: "Learn in short, guided steps you can finish.",
-    href: "/tools/micro-learning",
-    icon: FiZap,
-    badge: "New",
-    category: "study-tools",
-    cta: "Start learning",
-  },
-  {
-    name: "AI Course Planner",
-    description:
-      "Build a conflict-free semester schedule, track attendance, and manage coursework in one workspace.",
-    href: "/tools/course-planner",
-    icon: FiCalendar,
-    badge: "New",
-    category: "study-tools",
-    cta: "Plan my semester",
   },
 
   // Essay writing
   {
-    name: "AI Essay Generator",
-    description: "Build a structured academic draft from a topic and requirements.",
-    href: "/tools/essay-generator",
+    name: "Essay Studio",
+    description:
+      "All-in-one essay builder: thesis, outline, draft generator, plus a discussion board assistant.",
+    href: "/tools/essay-studio",
     icon: FiFileText,
     badge: "New",
     category: "essay-writing",
-    cta: "Generate essay",
+    group: "writer-lab",
+    keywords: [
+      "essay studio",
+      "essay builder",
+      "draft",
+      "write essay",
+      "generator",
+      "thesis",
+      "outline",
+      "discussion post",
+    ],
+    cta: "Open Essay Studio",
   },
   {
     name: "Essay Grader",
@@ -120,6 +102,8 @@ export const TOOLS: ToolCardData[] = [
     icon: FiCheckCircle,
     badge: "New",
     category: "essay-writing",
+    group: "writer-lab",
+    keywords: ["grade", "rubric", "score", "feedback", "mark"],
     cta: "Grade my essay",
   },
   {
@@ -129,6 +113,8 @@ export const TOOLS: ToolCardData[] = [
     icon: FiRepeat,
     badge: "Free",
     category: "essay-writing",
+    group: "originality",
+    keywords: ["rephrase", "reword", "rewrite", "spinner"],
     cta: "Paraphrase text",
   },
   {
@@ -138,7 +124,10 @@ export const TOOLS: ToolCardData[] = [
     icon: FiType,
     badge: "Popular",
     category: "essay-writing",
+    group: "writer-lab",
+    keywords: ["title", "headline", "name my essay"],
     cta: "Generate title",
+    hidden: true,
   },
   {
     name: "Essay Outline Tool",
@@ -147,7 +136,10 @@ export const TOOLS: ToolCardData[] = [
     icon: FiList,
     badge: "Popular",
     category: "essay-writing",
+    group: "writer-lab",
+    keywords: ["outline", "structure", "plan", "sections"],
     cta: "Build outline",
+    hidden: true,
   },
   {
     name: "Humanizer Tool",
@@ -156,6 +148,8 @@ export const TOOLS: ToolCardData[] = [
     icon: LuGraduationCap,
     badge: "New",
     category: "essay-writing",
+    group: "originality",
+    keywords: ["humanize", "rewrite", "natural", "bypass ai", "undetectable"],
     cta: "Humanize text",
   },
   {
@@ -166,6 +160,8 @@ export const TOOLS: ToolCardData[] = [
     icon: FiSearch,
     badge: "New",
     category: "essay-writing",
+    group: "originality",
+    keywords: ["ai detection", "detector", "turnitin", "gptzero", "ai score"],
     cta: "Check for AI",
   },
   {
@@ -176,6 +172,8 @@ export const TOOLS: ToolCardData[] = [
     icon: FiSearch,
     badge: "New",
     category: "essay-writing",
+    group: "originality",
+    keywords: ["plagiarism", "originality", "copied", "similarity", "turnitin"],
     cta: "Check originality",
   },
   {
@@ -186,6 +184,8 @@ export const TOOLS: ToolCardData[] = [
     icon: FiCheckCircle,
     badge: "New",
     category: "essay-writing",
+    group: "writer-lab",
+    keywords: ["grammar", "spelling", "punctuation", "proofread", "clarity"],
     cta: "Check my grammar",
   },
 
@@ -197,7 +197,10 @@ export const TOOLS: ToolCardData[] = [
     icon: FiTarget,
     badge: "Popular",
     category: "research",
+    group: "writer-lab",
+    keywords: ["thesis", "statement", "argument", "claim"],
     cta: "Build thesis",
+    hidden: true,
   },
   {
     name: "Research Question Generator",
@@ -206,6 +209,8 @@ export const TOOLS: ToolCardData[] = [
     icon: FiSearch,
     badge: "Free",
     category: "research",
+    group: "writer-lab",
+    keywords: ["research question", "rq", "inquiry", "topic"],
     cta: "Generate question",
   },
   {
@@ -215,7 +220,10 @@ export const TOOLS: ToolCardData[] = [
     icon: FiFileText,
     badge: "Popular",
     category: "research",
+    group: "writer-lab",
+    keywords: ["editor", "draft", "research", "write", "document"],
     cta: "Start research",
+    hidden: true,
   },
   {
     name: "Citation Generator",
@@ -224,6 +232,8 @@ export const TOOLS: ToolCardData[] = [
     icon: RiDoubleQuotesL,
     badge: "Popular",
     category: "research",
+    group: "writer-lab",
+    keywords: ["citation", "reference", "bibliography", "apa", "mla", "harvard"],
     cta: "Generate citation",
   },
 
@@ -235,8 +245,13 @@ export const TOOLS: ToolCardData[] = [
     icon: LuRadical,
     badge: "Popular",
     category: "math-science",
+    group: "study-lab",
+    keywords: ["math", "equation", "algebra", "solve", "steps"],
     cta: "Solve equation",
   },
 ];
 
-export type { ToolCardData, ToolCategory };
+/** The tools users can browse to: the dashboard grid and the sidebar. */
+export const VISIBLE_TOOLS = TOOLS.filter((tool) => !tool.hidden);
+
+export type { ToolCardData, ToolCategory, ToolGroup };

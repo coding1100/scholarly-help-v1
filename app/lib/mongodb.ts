@@ -103,7 +103,7 @@ export const getHomeData = unstable_cache(
             };
             
             const content = await db.collection('home').findOne(query);
-            return content as any;
+            return content ? JSON.parse(JSON.stringify(content)) : null;
         } catch (error) {
             console.error('Error fetching home data:', error);
             return null;
@@ -127,7 +127,7 @@ export async function getPageData(
         if (!db) return null;
         
         const content = await db.collection(collection).findOne(query, options);
-        return content as any;
+        return content ? JSON.parse(JSON.stringify(content)) : null;
     } catch (error) {
         console.error(`Error fetching ${collection} data:`, error);
         return null;

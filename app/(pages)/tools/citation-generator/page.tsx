@@ -35,8 +35,8 @@ const Page: FC = () => {
   return (
     <MainLayout>
       <ProductSchema
-        productTitle="Free Citation Generator | ScholarlyHelp"
-        metaDescription="Use the free ScholarlyHelp citation generator to make APA, MLA, Harvard and Chicago citations in seconds. Paste a link, get both citations."
+        productTitle="Free Citation Generator: APA & MLA | ScholarlyHelp"
+        metaDescription="Easily create accurate citations with our free citation generator. Obtain APA, MLA, Harvard & Chicago citations from a DOI, URL, PDF or other source."
         pageUrl={`${normalizedBaseUrl}/tools/citation-generator`}
       />
       <div className="font-poppins">
@@ -67,9 +67,9 @@ export function generateMetadata(): Metadata {
   const canonicalUrl = `${normalizedBaseUrl}/tools/citation-generator`;
 
   return {
-    title: "Citation Generator: Free APA, MLA & More | ScholarlyHelp",
+    title: "Free Citation Generator: APA & MLA | ScholarlyHelp",
     description:
-      "APA, MLA, Harvard, or Chicago citations made simple. Cite DOIs, URLs, or PDFs in seconds with our free citation generator. Create accurate references.",
+      "Easily create accurate citations with our free citation generator. Obtain APA, MLA, Harvard & Chicago citations from a DOI, URL, PDF or other source.",
     alternates: {
       canonical: canonicalUrl,
     },

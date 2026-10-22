@@ -1,5 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600;1,700&display=swap');
-
+/*
+ * Named explicitly: Tailwind 3's PostCSS plugin keeps the last @config path it
+ * saw (admin.css, tools.css) and applies it to later files that have none, so
+ * without this the global sheet could be built from another route's config.
+ */
+@config "../tailwind.config.ts";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -38,6 +42,20 @@ select {
 
 .no-scrollbar::-webkit-scrollbar {
   display: none;
+}
+
+/*
+ * While the mobile Done-for-you bar is showing (below xl, 1200px) it already
+ * offers WhatsApp and SMS, so the floating WhatsApp/SMS bubbles would only
+ * sit on top of it.
+ */
+@media (max-width: 1199.98px) {
+  html[data-done-for-you-bar] #whatsapp-chat,
+  html[data-done-for-you-bar] #whatsapp-chat-2,
+  html[data-done-for-you-bar] #sms-chat,
+  html[data-done-for-you-bar] #sms-chat2 {
+    display: none !important;
+  }
 }
 
 /* Admin dashboard theme lives in app/(admin)/admin.css — loaded only on admin routes. */

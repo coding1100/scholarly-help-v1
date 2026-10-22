@@ -1,8 +1,9 @@
-const TOOL_LANDING_DESTINATIONS: Readonly<Record<string, string>> = {
+export const TOOL_LANDING_DESTINATIONS: Readonly<Record<string, string>> = {
   "/tools/ai-academic-research": "/tools/academic-research-assistant",
   "/tools/ai-course-planner": "/tools/course-planner",
   "/tools/ai-detector": "/tools/ai-detector-tool",
   "/tools/ai-essay-generator": "/tools/essay-generator",
+  "/tools/ai-essay-studio": "/tools/essay-studio",
   "/tools/ai-essay-title-generator": "/tools/essay-title",
   "/tools/ai-grammar-check": "/tools/grammar-checker",
   "/tools/ai-humanizer": "/tools/humanizer-tool",
@@ -13,7 +14,6 @@ const TOOL_LANDING_DESTINATIONS: Readonly<Record<string, string>> = {
   "/tools/ai-thesis-generator": "/tools/thesis-generator-tool",
   "/tools/ai-thesis-statement-generator": "/tools/thesis-generator-tool",
   "/tools/citation-generator": "/tools/citation-tool",
-  "/tools/essay-title-generator": "/tools/essay-title",
   "/tools/research-question-generator": "/tools/research-question",
 };
 

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import ToolCard from "./ToolCard";
-import { TOOLS as tools, type ToolCategory } from "./toolsData";
+import { VISIBLE_TOOLS as tools, type ToolCategory } from "./toolsData";
 
 type TabKey = "all" | ToolCategory;
 

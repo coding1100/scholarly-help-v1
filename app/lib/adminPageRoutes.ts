@@ -68,6 +68,9 @@ const SORTED_ROUTES = [...ADMIN_PAGE_ROUTES].sort(
   (a, b) => b.adminPath.length - a.adminPath.length,
 );
 
+/** Top-level admin sections that are not duplicated landing pages. */
+const NON_PAGE_ADMIN_SECTIONS = new Set(["login", "pages", "landing", "blog", "tool-usage", "team-usage"]);
+
 export function getAdminPageRouteConfig(
   pathname: string | null | undefined,
 ): AdminPageRouteConfig | null {
@@ -76,7 +79,7 @@ export function getAdminPageRouteConfig(
   if (dupMatch) {
     const slug = decodeURIComponent(dupMatch[1]);
     const isBuiltIn = ADMIN_PAGE_ROUTES.some((r) => r.adminPath === `/admin/${slug}`);
-    if (!isBuiltIn && slug !== "login" && slug !== "pages" && slug !== "landing") {
+    if (!isBuiltIn && !NON_PAGE_ADMIN_SECTIONS.has(slug)) {
       return {
         adminPath: p,
         parentNav: "pages",

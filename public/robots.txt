@@ -1,10 +1,9 @@
 User-agent: *
 Allow: /
 
-Disallow: /sign-in/?returnUrl=/tools/essay-outline-tool
-Disallow: /sign-in/?returnUrl=/tools/paraphraser-tool
-Disallow: /sign-in/?returnUrl=/tools/summarizer-tool
-Disallow: /sign-in/?returnUrl=/tools/thesis-generator-tool
+Disallow: /blog/wp-includes/js/wp-emoji-release.min.js
+Disallow: /storage/*.pdf$
 
 sitemap: https://scholarlyhelp.com/sitemap.xml
-
+sitemap: https://scholarlyhelp.com/tools-sitemap.xml
+sitemap: https://scholarlyhelp.com/blog/post-sitemap.xml

@@ -14,52 +14,52 @@ import type { FooterCtaContent } from "@/app/components/AiLandingPage/ToolLandin
 
 export const heroContent: LandingHeroContent = {
   badge: "3,241 students used this tool this week",
-  titleTop: "Create a strong research question",
-  titleAccent: "in seconds",
+  titleTop: "Create a strong research question with our",
+  titleAccent: "research question generator",
   subtitle:
-    "Enter your topic and get focused, academically sound research questions ready for your paper",
+    "Enter your topic and get focused, academically sound research questions ready for your paper with our research question generator.",
   steps: ["Enter Topic", "See Results", "Open Dashboard"],
 };
 
 export const useCasesContent: UseCasesContent = {
-  title: "An AI research question for every situation.",
+  title: "An AI research question generator for every situation.",
   subtitle: "Start stronger. Research smarter. Write with confidence.",
   cards: [
     {
       icon: "⏰",
       title: "Deadline is tonight",
       description:
-        "Generate a focused research question in seconds and get your research started faster.",
+        "Create a focused question with a research question generator in seconds and get your research started faster.",
     },
     {
       icon: "🔍",
       title: "Starting your research",
       description:
-        "Enter your topic and generate research questions that match your subject and assignment.",
+        "Enter your topic into a research topic question generator and get questions that match your subject and assignment.",
     },
     {
       icon: "💡",
       title: "Need fresh ideas",
       description:
-        "Generate multiple research questions and choose the one that best fits your study.",
+        "Explore generative research questions and find one that fits your study, topic, and research goals.",
     },
     {
       icon: "🧪",
       title: "Choosing a method",
       description:
-        "Generate broad, focused, hypothesis-driven, or policy-oriented questions for your topic.",
+        "Generate broad, focused, hypothesis-driven, or policy-oriented questions for your topic with our research question AI generator.",
     },
     {
       icon: "🌐",
       title: "Writing in English",
       description:
-        "Generate clear academic research questions that are easy to understand and refine.",
+        "Create clear academic questions using an AI research questions generator, with results that are easy to understand, refine, and use.",
     },
     {
       icon: "📋",
       title: "Planning your paper",
       description:
-        "Start with a focused research question to build a stronger and more organised paper.",
+        "Start with a focused question using a research paper question generator and build a stronger, more organised paper.",
     },
   ],
 };
@@ -81,12 +81,12 @@ export const howItWorksContent: HowItWorksContent = {
     {
       title: "Generate questions",
       description:
-        "Generate research questions tailored to your topic and chosen preferences.",
+        "Use a free online research question generator to create questions for your topic.",
     },
     {
       title: "Unlock your dashboard",
       description:
-        "Sign up free to save your work in your ScholarlyHelp dashboard.",
+        "Sign up for free to save your work in your ScholarlyHelp dashboard.",
     },
   ],
   ctaTitleStart: "Want all",
@@ -95,7 +95,7 @@ export const howItWorksContent: HowItWorksContent = {
   ctaTitleEnd: "in one place?",
   ctaBody:
     "Keep your results, revisit past work, and reach every tool from one dashboard: essay generator, thesis builder, citation tool, and humanizer.",
-  ctaButton: "Explore all tools in dashboard →",
+  ctaButton: "Explore all tools in the dashboard →",
   ctaHref: "/tools/dashboard",
   ctaSecondaryButton: "See what is included",
   ctaSecondaryHref: "/tools",
@@ -103,7 +103,7 @@ export const howItWorksContent: HowItWorksContent = {
 
 export const whyItWorksContent: WhyItWorksContent = {
   eyebrow: "Why it works",
-  title: "Not just topics — focused research questions",
+  title: "Turn broad topics into focused research questions",
   subtitle:
     "Generate focused research questions designed to match your topic and methodology.",
   features: [
@@ -147,17 +147,17 @@ export const twoWaysContent: TwoWaysContent = {
       {
         title: "Enter your topic",
         description:
-          "Type your research topic or assignment details to generate focused research questions.",
+          "Add your topic or assignment details to generate a research question that fits your work.",
       },
       {
         title: "Set the options",
         description:
-          "Choose your research type, then set the style and the level of specificity.",
+          "Choose your research type, question style, and level of specificity for your project.",
       },
       {
         title: "Use your question",
         description:
-          "Choose a research question and use it as the foundation for your research project.",
+          "Apply your selected question as a clear starting point for your research project.",
       },
       {
         title: "Save and continue",
@@ -167,7 +167,7 @@ export const twoWaysContent: TwoWaysContent = {
     ],
   },
   expertColumn: {
-    heading: "Expert services — Done for you",
+    heading: "Expert services, done for you",
     sub: "A free quote in about two minutes →",
     steps: [
       {
@@ -201,21 +201,21 @@ export const reviewsContent: ReviewsContent = {
   reviews: [
     {
       quote:
-        "My paper was due at eight in the morning and it was already midnight. I got a question I could actually explain to my professor, and I handed it in with time left over.",
+        "My paper was due at eight in the morning, and it was already midnight. I got a question I could actually explain to my professor, and I handed it in with time left over.",
       author: "Tyler K.",
-      detail: "Psychology, Ohio State — 3rd year",
+      detail: "Psychology, Ohio State, 3rd year",
     },
     {
       quote:
         "I settle the directions here first, then write the paper myself. My marks have improved because I start from something focused instead of wandering around a broad topic.",
       author: "Nina P.",
-      detail: "Nursing, University of Michigan — Final year",
+      detail: "Nursing, University of Michigan, final year",
     },
     {
       quote:
         "Seeing how a proper academic question is built for my own subject has taught me more than any textbook did. I pick up something new from nearly every set.",
       author: "Yuki L.",
-      detail: "Business Management, Purdue — MSc",
+      detail: "Business Management, Purdue MSc",
     },
   ],
 };
@@ -227,7 +227,7 @@ export const faqContent: FaqContent = {
     {
       question: "Is this tool really free?",
       answer:
-        "Yes. Generate research questions for free with no payment required. Sign up for a free ScholarlyHelp account to save your work and access it anytime.",
+        "Yes. You can use our AI research question generator free to create focused questions, then sign up for a free ScholarlyHelp account to save your work and access it anytime.",
     },
     {
       question: "Which research types are supported?",
@@ -256,8 +256,8 @@ export const footerCtaContent: FooterCtaContent = {
   titleStart: "Your paper",
   titlePill: "deadline",
   titleEnd: "will not wait.",
-  body: "Begin with a free tool in half a minute, or speak to a writer today.",
-  primaryButton: "Generate my question free",
+  body: "Begin with a free research question generator, or speak to a writer today.",
+  primaryButton: "Generate my question for free",
   primaryHref: "#research-question-tool",
   secondaryButton: "Talk to an expert →",
   secondaryHref: "/contact-us",

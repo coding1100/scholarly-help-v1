@@ -13,7 +13,6 @@ import ProductSchema from "@/app/components/ProductSchema";
 const ClientPage = () => {
   const searchParams = useSearchParams();
   const [showEditor, setShowEditor] = useState(false);
-  const [flag, setFlag] = useState(false);
   const [outlineResponse, setOutlineResponse] = useState<string[]>([]);
   const documentId = searchParams.get("doc");
 
@@ -43,7 +42,7 @@ const ClientPage = () => {
   }, [documentId]);
 
   return (
-    <MainToolLayout flag={flag} setFlag={setFlag} tourEditorActive={showEditor}>
+    <MainToolLayout tourEditorActive={showEditor}>
       {showEditor ? (
         <EditorContainer outlineResponse={outlineResponse} documentId={documentId} />
       ) : (
