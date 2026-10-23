@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import axios from "axios";
 import axiosInstance from "@/app/axios";
 
 const inputClass =
@@ -12,7 +13,8 @@ const labelClass =
 
 /**
  * Email + mobile lead form for the free-tools take-my-class variants. Sends
- * the same quote lead as the HeroForm2 full form, then routes to /thank-you.
+ * the same quote lead as the HeroForm2 full form, requests a free account for
+ * the email, then routes to /thank-you.
  */
 export default function FreeToolsLeadForm() {
   const pathname = usePathname();
@@ -50,6 +52,14 @@ export default function FreeToolsLeadForm() {
         landingPage: pathname || "",
       }),
     }).catch(() => {});
+
+    // Free account for a new email: the backend emails its password with a
+    // sign-in link and leaves existing accounts untouched. Never blocks the lead.
+    void axios
+      .post(`${process.env.NEXT_PUBLIC_NGROX_URL}/auth/landing-account`, {
+        email: trimmedEmail,
+      })
+      .catch(() => {});
 
     try {
       await axiosInstance.post(`/order/quote`, fd);
