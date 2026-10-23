@@ -34,7 +34,6 @@ const NOINDEX_PATHS = new Set([
   "/tools/dashboard",
   "/admin/login",
   "/admin/tools",
-  "/online-class/human-resource",
 ]);
 
 function shouldNoindex(pathname: string): boolean {

@@ -1013,7 +1013,6 @@ export const defaultContent: SubjectContent = {
     mainHeading: "Subjects We Cover",
     subjectsContent: [
       { title: "Accounting", url: "/online-class/accounting" },
-      { title: "Anatomy", url: "/online-class/anatomy" },
       { title: "Architecture", url: "/online-class/architecture" },
       { title: "Biology", url: "/online-class/biology" },
       { title: "Chemistry", url: "/online-class/chemistry" },
@@ -1023,7 +1022,6 @@ export const defaultContent: SubjectContent = {
       { title: "English", url: "/online-class/english" },
       { title: "Finance", url: "/online-class/finance" },
       { title: "History", url: "/online-class/history" },
-      { title: "Human Resource", url: "/online-class/human-resource" },
       { title: "Law", url: "/online-class/law" },
       { title: "Linguistics", url: "/online-class/linguistics" },
       { title: "Marketing", url: "/online-class/marketing" },
