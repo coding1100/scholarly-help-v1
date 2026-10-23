@@ -8,6 +8,8 @@ import {
   getTerms,
 } from "./queries";
 import type { BlogAuthor, BlogPost, BlogTerm } from "./types";
+import { resolveLeadForms } from "./utils";
+
 
 /** Loads everything the post template needs besides the post itself. */
 export async function loadPostView(post: BlogPost, preview = false): Promise<PostViewData> {
@@ -31,6 +33,7 @@ export async function loadPostView(post: BlogPost, preview = false): Promise<Pos
     commentsOpen: settings.commentsEnabled && post.commentsEnabled,
     stats: settings.statsStrip,
     helpBox: settings.helpBox,
+    leadForms: resolveLeadForms(settings.leadForms, post),
     preview,
   };
 }

@@ -73,6 +73,7 @@ export type BlogPost = {
   views: number;
   /** View count carried over from WordPress; added to `views` only for the public counter. */
   importedViews?: number;
+  leadForms?: PostLeadForms;
   wpId?: number; // set by the WordPress migration, used to re-sync idempotently
   createdAt: string;
   updatedAt: string;
@@ -114,6 +115,26 @@ export type HelpBox = {
   secondaryUrl: string;
 };
 
+/** Text of one blog lead form; `highlight` is the part of the heading shown in orange. */
+export type LeadFormContent = {
+  heading: string;
+  highlight: string;
+  text: string;
+  buttonLabel: string;
+  note: string;
+};
+
+export type LeadFormPosition = "inline" | "sidebar";
+
+export type LeadForms = { enabled: boolean } & Record<LeadFormPosition, LeadFormContent>;
+
+/** Per-post lead form options; empty override fields fall back to the blog settings. */
+export type PostLeadForms = {
+  hidden?: boolean;
+  inline?: Partial<LeadFormContent>;
+  sidebar?: Partial<LeadFormContent>;
+};
+
 export type BlogSettings = {
   commentsEnabled: boolean;
   indexTitle: string;
@@ -123,6 +144,8 @@ export type BlogSettings = {
   statsStrip: StatsStrip;
   /** Shown at the end of every article. */
   helpBox: HelpBox;
+  /** Email + phone forms in the article (inline) and the sidebar; leads go to GHL, email and the sheet. */
+  leadForms: LeadForms;
 };
 
 export const DEFAULT_BLOG_SETTINGS: BlogSettings = {
@@ -152,5 +175,24 @@ export const DEFAULT_BLOG_SETTINGS: BlogSettings = {
     primaryUrl: "/order/",
     secondaryLabel: "View Our Services",
     secondaryUrl: "/academic-research/",
+  },
+  // Posts get their own heading, text and button from the "Blog Form Copy" sheet
+  // (scripts/blog-lead-copy); this text covers posts without a row.
+  leadForms: {
+    enabled: true,
+    inline: {
+      heading: "Need help with a tough subject?",
+      highlight: "tough subject?",
+      text: "Get matched with a tutor for the topics you find hardest. Connect with a tutor or academic support specialist for a one-on-one session.",
+      buttonLabel: "Find My Tutor",
+      note: "Free Inquiry · No Card Required · Reply in 15 Minutes",
+    },
+    sidebar: {
+      heading: "Need help with a tough subject?",
+      highlight: "tough subject?",
+      text: "Get matched with a tutor for the topics you find hardest.",
+      buttonLabel: "Find My Tutor",
+      note: "Free Inquiry · Reply in 15 Minutes",
+    },
   },
 };

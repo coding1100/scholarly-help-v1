@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import type { BlogAuthor, BlogPost, BlogTerm, HelpBox, StatsStrip } from "@/app/lib/blog/types";
+import type { BlogAuthor, BlogPost, BlogTerm, HelpBox, LeadFormContent, StatsStrip } from "@/app/lib/blog/types";
 import type { PostSummary } from "@/app/lib/blog/queries";
 import {
   buildToc,
@@ -17,6 +17,7 @@ import TableOfContents from "./TableOfContents";
 import ViewCounter from "./ViewCounter";
 import NewsletterForm from "./NewsletterForm";
 import CommentSection from "./CommentSection";
+import LeadForm from "./LeadForm";
 
 export type PostViewData = {
   post: BlogPost;
@@ -29,6 +30,8 @@ export type PostViewData = {
   commentsOpen: boolean;
   stats: StatsStrip;
   helpBox: HelpBox;
+  /** Resolved lead form text, or null when the forms are off for this post. */
+  leadForms: { inline: LeadFormContent; sidebar: LeadFormContent } | null;
   preview?: boolean;
 };
 
@@ -70,7 +73,7 @@ function jsonLd(data: PostViewData) {
 }
 
 export default function PostView(data: PostViewData) {
-  const { post, category, author, related, recent, categories, comments, commentsOpen, stats, helpBox, preview } = data;
+  const { post, category, author, related, recent, categories, comments, commentsOpen, stats, helpBox, leadForms, preview } = data;
   const { blocks, toc, anchors } = buildToc(post.blocks);
   const shareUrl = encodeURIComponent(`${siteBaseUrl()}${postUrl(post.slug)}`);
   const shareTitle = encodeURIComponent(post.title);
@@ -154,7 +157,12 @@ export default function PostView(data: PostViewData) {
                 </div>
               )}
               <BlogBlocks blocks={blocks.slice(1)} anchors={anchors} stats={stats} />
-              <HelpBoxView help={helpBox} />
+              {/* The in-article lead form replaces the help box; the help box shows only when the forms are off. */}
+              {leadForms ? (
+                <LeadForm position="inline" content={leadForms.inline} mobileNote={leadForms.sidebar.note} postSlug={post.slug} postTitle={post.title} disabled={preview} />
+              ) : (
+                <HelpBoxView help={helpBox} />
+              )}
             </div>
             {!preview && <CommentSection postId={post._id} comments={comments} open={commentsOpen} />}
           </div>
@@ -186,7 +194,12 @@ export default function PostView(data: PostViewData) {
                 </div>
               </div>
             )}
-            <NewsletterForm />
+            {/* The sidebar lead form replaces the newsletter box; the newsletter shows only when the forms are off. */}
+            {leadForms ? (
+              <LeadForm position="sidebar" content={leadForms.sidebar} postSlug={post.slug} postTitle={post.title} disabled={preview} />
+            ) : (
+              <NewsletterForm />
+            )}
           </aside>
         </div>
 

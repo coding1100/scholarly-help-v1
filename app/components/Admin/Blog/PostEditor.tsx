@@ -7,9 +7,10 @@ import AdminButton from "@/app/components/Admin/AdminButton";
 import { useAdminConfirm } from "@/app/components/Admin/AdminConfirmProvider";
 import { useAdminSuccess } from "@/app/components/Admin/AdminSuccessProvider";
 import { useAdminPageTitleOptional } from "@/app/components/Admin/AdminPageTitleContext";
-import type { BlogAuthor, BlogPost, BlogTerm, HeroCta } from "@/app/lib/blog/types";
+import type { BlogAuthor, BlogPost, BlogSettings, BlogTerm, HeroCta } from "@/app/lib/blog/types";
 import { slugify } from "@/app/lib/blog/utils";
 import BlockEditor from "./BlockEditor";
+import LeadFormFields from "./LeadFormFields";
 import { Field, ImageField, inputClass, Panel } from "./fields";
 
 type Draft = Omit<BlogPost, "_id" | "views" | "importedViews" | "createdAt" | "updatedAt" | "wpId">;
@@ -70,6 +71,7 @@ export default function PostEditor({ postId }: { postId?: string }) {
   const [categories, setCategories] = useState<BlogTerm[]>([]);
   const [tags, setTags] = useState<BlogTerm[]>([]);
   const [authors, setAuthors] = useState<BlogAuthor[]>([]);
+  const [leadDefaults, setLeadDefaults] = useState<BlogSettings["leadForms"] | null>(null);
   const [loading, setLoading] = useState(!!postId);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -81,6 +83,7 @@ export default function PostEditor({ postId }: { postId?: string }) {
 
   useEffect(() => {
     const load = (kind: string) => fetch(`/api/admin/blog/terms/${kind}`).then((r) => r.json()).then((d) => d.terms ?? []);
+    fetch("/api/admin/blog/settings").then((r) => r.json()).then((d) => setLeadDefaults(d.settings?.leadForms ?? null)).catch(() => {});
     Promise.all([load("categories"), load("tags"), load("authors")]).then(([c, t, a]) => {
       setCategories(c);
       setTags(t);
@@ -242,6 +245,37 @@ export default function PostEditor({ postId }: { postId?: string }) {
 
           <Panel title="Content">
             <BlockEditor blocks={draft.blocks} onChange={(blocks) => set("blocks", blocks)} />
+          </Panel>
+
+          <Panel title="Lead forms">
+            <label className="flex items-center gap-2 text-sm text-[#374151]">
+              <input
+                type="checkbox"
+                checked={!!draft.leadForms?.hidden}
+                onChange={(e) => set("leadForms", { ...draft.leadForms, hidden: e.target.checked })}
+              />
+              Hide the lead forms on this post
+            </label>
+            {!draft.leadForms?.hidden && (
+              <>
+                <p className="text-xs text-[#6b7280]">
+                  Leave a field empty to use the default from{" "}
+                  <Link className="underline" href="/admin/blog/settings" target="_blank">Blog Settings</Link> (shown in grey).
+                </p>
+                <LeadFormFields
+                  title="In-article form (this post only)"
+                  value={draft.leadForms?.inline ?? {}}
+                  placeholders={leadDefaults?.inline}
+                  onChange={(v) => set("leadForms", { ...draft.leadForms, inline: v })}
+                />
+                <LeadFormFields
+                  title="Sidebar form (this post only)"
+                  value={draft.leadForms?.sidebar ?? {}}
+                  placeholders={leadDefaults?.sidebar}
+                  onChange={(v) => set("leadForms", { ...draft.leadForms, sidebar: v })}
+                />
+              </>
+            )}
           </Panel>
 
           <Panel title="Closing call to action">
