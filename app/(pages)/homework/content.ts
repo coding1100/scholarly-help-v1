@@ -161,10 +161,6 @@ export const content = {
         title: "Statistics",
       },
       {
-        url: "/homework/human-resources",
-        title: "HRM Class",
-      },
-      {
         url: "/homework/operation-management",
         title: "Operation Management",
       },
@@ -179,10 +175,6 @@ export const content = {
       {
         url: "/homework/history",
         title: "History",
-      },
-      {
-        url: "/homework/marketing",
-        title: "Marketing",
       },
       {
         url: "/homework/psychology",
@@ -227,10 +219,6 @@ export const content = {
         title: "Organizational Behavior",
       },
       {
-        url: "/homework/architecture",
-        title: "Architecture",
-      },
-      {
         title: "Ethics",
       },
       {
@@ -238,19 +226,11 @@ export const content = {
         title: "Sociology",
       },
       {
-        url: "/homework/pharmacology",
-        title: "Pharmacology",
-      },
-      {
         url: "/homework/economics",
         title: "Economics",
       },
       {
         title: "Nutrition",
-      },
-      {
-        url: "/homework/linguistics",
-        title: "Linguistics",
       },
       {
         url: "/homework/art",
@@ -404,34 +384,8 @@ export const homeworkSubject = [
     url: "/homework/art/",
   },
   {
-    src: "/assets/Icon/architecture.png",
-    label: "Architecture",
-    url: "/homework/architecture/",
-  },
-  {
-    src: "/assets/Icon/marketing.png",
-    label: "Marketing",
-    url: "/homework/marketing/",
-  },
-  {
     src: "/assets/Icon/economics.png",
     label: "Economics",
     url: "/homework/economics/",
-  },
-
-  {
-    src: "/assets/Icon/hrmclass.png",
-    label: "HRM Class",
-    url: "/homework/human-resources/",
-  },
-  {
-    src: "/assets/Icon/pharmacology.png",
-    label: "Pharmacology",
-    url: "/homework/pharmacology/",
-  },
-  {
-    src: "/assets/Icon/linguistics.png",
-    label: "Linguistics",
-    url: "/homework/linguistics/",
   },
 ];

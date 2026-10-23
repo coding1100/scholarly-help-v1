@@ -451,16 +451,6 @@ export const examsSubjects = [
     label: "Operation Management",
     url: "/exams/operation-management/",
   },
-  {
-    src: "/assets/Icon/hrmclass.png",
-    label: "HRM Class",
-    url: "/exams/human-resource/",
-  },
-  {
-    src: "/assets/Icon/marketing.png",
-    label: "Marketing",
-    url: "/exams/marketing/",
-  },
   // Nutrition does not exist in icons, so we leave it out. If needed, add it later when asset is available.
   {
     src: "/assets/Icon/psychology.png",

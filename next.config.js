@@ -195,6 +195,32 @@ const nextConfig = {
         destination,
         permanent: false,
       })),
+      // Retired subject pages consolidated into their service hub (SEO plan).
+      // statusCode 301 because `permanent: true` would send 308.
+      ...Object.entries({
+        '/online-class/computer-scienc': '/online-class/',
+        '/online-class/psychology': '/online-class/',
+        '/online-class/anatomy': '/online-class/',
+        '/online-class/human-resource': '/online-class/',
+        '/homework/architecture': '/homework/',
+        '/homework/linguistics': '/homework/',
+        '/homework/marketing': '/homework/',
+        '/homework/pharmacology': '/homework/',
+        '/homework/human-resources': '/homework/',
+        '/homework/anatomy': '/homework/',
+        '/exams/human-resource': '/exams/',
+        '/exams/marketing': '/exams/',
+        '/assignment/biology': '/assignment/',
+        '/assignment/psychology': '/assignment/',
+        '/assignment/architecture': '/assignment/',
+        '/assignment/pharmacology': '/assignment/',
+        '/essay-writing/math': '/essay-writing/',
+        '/essay-writing/english': '/essay-writing/',
+      }).map(([source, destination]) => ({
+        source,
+        destination,
+        statusCode: 301,
+      })),
       // Former WordPress blog URLs. Archives now list every post on one page.
       // Keep the original Yoast post-sitemap URL canonical; consolidate the
       // other retired sitemap URLs and our temporary custom URL into it.

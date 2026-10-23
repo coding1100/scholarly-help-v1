@@ -14,7 +14,7 @@ export type SubjectAssignment = {
 export const SubjectAssignmentContent: SubjectAssignment[] = [
   {
     mainTitle: "Biology Assignments",
-    description: `Our <a href="/assignment/biology/" class="text-[#323dd6] hover:underline">biology assignment</a> samples demonstrate clear scientific understanding, accurate terminology, and well-structured explanations. These examples highlight how complex biological concepts are presented logically, supported by research, and formatted according to academic standards expected at college and university levels.`,
+    description: `Our <a href="/assignment/" class="text-[#323dd6] hover:underline">biology assignment</a> samples demonstrate clear scientific understanding, accurate terminology, and well-structured explanations. These examples highlight how complex biological concepts are presented logically, supported by research, and formatted according to academic standards expected at college and university levels.`,
     assignments: [
       {
         title: "Research Project",

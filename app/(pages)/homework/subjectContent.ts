@@ -229,7 +229,6 @@ export const defaultHomeworkContent: HomeworkContent = {
     mainHeading: "Subjects We Cover",
     subjectsContent: [
       { title: "Accounting", url: "/homework/accounting" },
-      { title: "Anatomy", url: "/homework/anatomy" },
       { title: "Art", url: "/homework/art" },
       { title: "Biology", url: "/homework/biology" },
       { title: "Chemistry", url: "/homework/chemistry" },
@@ -237,7 +236,6 @@ export const defaultHomeworkContent: HomeworkContent = {
       { title: "Geography", url: "/homework/geography" },
       { title: "Law", url: "/homework/law" },
       { title: "Math", url: "/homework/math" },
-      { title: "Pharmacology", url: "/homework/pharmacology" },
       { title: "Physics", url: "/homework/physics" },
       { title: "Psychology", url: "/homework/psychology" },
       { title: "Sociology", url: "/homework/sociology" },

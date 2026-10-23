@@ -186,10 +186,6 @@ export const content = {
         title: "Marketing",
       },
       {
-        url: "/assignment/psychology",
-        title: "Psychology",
-      },
-      {
         url: "/assignment/philosophy",
         title: "Philosophy",
       },
@@ -200,10 +196,6 @@ export const content = {
       {
         url: "/assignment/physics",
         title: "Physics",
-      },
-      {
-        url: "/assignment/biology",
-        title: "Biology",
       },
       {
         url: "/assignment/engineering",
@@ -229,19 +221,11 @@ export const content = {
         title: "Organizational Behavior",
       },
       {
-        url: "/assignment/architecture",
-        title: "Architecture",
-      },
-      {
         title: "Ethics",
       },
       {
         url: "/assignment/sociology",
         title: "Sociology",
-      },
-      {
-        url: "/assignment/pharmacology",
-        title: "Pharmacology",
       },
       {
         url: "/assignment/economics",
