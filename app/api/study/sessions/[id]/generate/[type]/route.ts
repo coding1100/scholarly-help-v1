@@ -14,7 +14,7 @@ import {
   StudyLearningMode,
 } from "@/app/lib/server/study/types";
 import { consumeStudyAiQuota } from "@/app/lib/server/study/rateLimit";
-import { checkAndReserveBillingUsage, reportBillingUsage } from "@/app/lib/server/study/billingGate";
+import { startStudyRun, type StudyRun } from "@/app/lib/server/study/billingGate";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +38,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string; type: string }> },
 ) {
   let resolvedType: string | undefined;
+  let run: StudyRun | undefined;
   try {
     const { id, type: rawType } = await params;
     resolvedType = rawType;
@@ -78,23 +79,6 @@ export async function POST(
       return fail("No source text found for this session");
     }
 
-    // Same free-run-count / credit-balance gate every other tool enforces.
-    // Guests are exempt (their own tighter rate-limit cap above governs them).
-    // Estimate scales with source size (~4 chars/token) since generation
-    // prompts include the full merged source text, capped to a sane ceiling.
-    let billingReservationId: string | null = null;
-    if (!isGuest) {
-      const estimatedPromptTokens = Math.min(200_000, Math.max(500, Math.ceil(mergedText.length / 4)));
-      const gate = await checkAndReserveBillingUsage({
-        request,
-        service: `study.generate.${type}`,
-        estimatedPromptTokens,
-        estimatedCompletionTokens: GENERATE_ESTIMATED_COMPLETION_TOKENS,
-      });
-      if (gate.blocked) return gate.response;
-      billingReservationId = gate.reservationId;
-    }
-
     let body: {
       mode?: StudyLearningMode;
       examTopics?: string[];
@@ -113,6 +97,20 @@ export async function POST(
         return fail("Invalid JSON body");
       }
     }
+
+    // Same guest / Free-run / credit allowance every other tool enforces.
+    // Estimate scales with source size (~4 chars/token) since generation
+    // prompts include the full merged source text, capped to a sane ceiling.
+    const estimatedPromptTokens = Math.min(200_000, Math.max(500, Math.ceil(mergedText.length / 4)));
+    const started = await startStudyRun({
+      request,
+      userId,
+      service: `study.generate.${type}`,
+      estimatedPromptTokens,
+      estimatedCompletionTokens: GENERATE_ESTIMATED_COMPLETION_TOKENS,
+    });
+    if (started.blocked) return started.response;
+    run = started.run;
 
     const mode =
       body.mode === "exam" || body.mode === "quiz" || body.mode === "research"
@@ -158,17 +156,14 @@ export async function POST(
     // version with the fresh output.
     await upsertArtifact(id, type, content);
 
-    if (!isGuest) {
-      reportBillingUsage({
-        request,
-        reservationId: billingReservationId,
-        promptTokens: Math.min(200_000, Math.max(500, Math.ceil(mergedText.length / 4))),
-        completionTokens: GENERATE_ESTIMATED_COMPLETION_TOKENS,
-      });
-    }
+    run.succeed({
+      promptTokens: estimatedPromptTokens,
+      completionTokens: GENERATE_ESTIMATED_COMPLETION_TOKENS,
+    });
 
     return ok({ type, content });
   } catch (error) {
+    run?.fail();
     console.error("study.generate.POST", error);
     // A missing/rejected Gemini key is a server misconfiguration; report it
     // distinctly (503) so it isn't confused with a transient generation error

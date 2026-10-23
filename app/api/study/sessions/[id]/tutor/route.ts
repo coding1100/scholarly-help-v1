@@ -20,7 +20,7 @@ import {
 } from "@/app/lib/server/study/prompts";
 import { StudyLearningMode } from "@/app/lib/server/study/types";
 import { consumeStudyAiQuota } from "@/app/lib/server/study/rateLimit";
-import { checkAndReserveBillingUsage, reportBillingUsage } from "@/app/lib/server/study/billingGate";
+import { startStudyRun, type StudyRun } from "@/app/lib/server/study/billingGate";
 
 export const dynamic = "force-dynamic";
 
@@ -106,6 +106,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  let run: StudyRun | undefined;
   try {
     const { id } = await params;
     const userId = await getAuthenticatedUserId(request);
@@ -153,23 +154,6 @@ export async function POST(
     const groundedText = String(body.groundedText || "").trim().slice(0, 12000);
     const outputBudget = outputBudgetFor(learningMode, Boolean(groundedText));
 
-    // Same free-run-count / credit-balance gate every other tool enforces —
-    // Study Workspace only ever had its own generous rate limiter above, so a
-    // signed-in user with zero free runs left could still use the tutor
-    // indefinitely. Guests are exempt here (their own separate, tighter
-    // rate-limit cap above already governs them), matching every NestJS tool
-    // route's OptionalAuthGuard pattern.
-    let billingReservationId: string | null = null;
-    if (!isGuest) {
-      const gate = await checkAndReserveBillingUsage({
-        request,
-        service: "study.tutor",
-        estimatedPromptTokens: 2000,
-        estimatedCompletionTokens: outputBudget,
-      });
-      if (gate.blocked) return gate.response;
-      billingReservationId = gate.reservationId;
-    }
     const message = (body?.message || "").trim();
     const useStream = Boolean(body?.stream);
     const imageAttachments = Array.isArray(body?.attachments)
@@ -188,6 +172,18 @@ export async function POST(
     if (!message) {
       return fail("message is required");
     }
+
+    // Same guest / Free-run / credit allowance every other tool enforces.
+    const started = await startStudyRun({
+      request,
+      userId,
+      service: "study.tutor",
+      estimatedPromptTokens: 2000,
+      estimatedCompletionTokens: outputBudget,
+    });
+    if (started.blocked) return started.response;
+    run = started.run;
+    const tutorRun = run;
 
     let hasRelevantContext: boolean;
     let context: string;
@@ -278,6 +274,7 @@ export async function POST(
 
     if (useStream) {
       if (!process.env.GEMINI_API_KEY) {
+        tutorRun.fail();
         return fail("GEMINI_API_KEY is missing on the server", 500);
       }
 
@@ -447,15 +444,9 @@ export async function POST(
               ),
             );
             controller.close();
-            if (!isGuest) {
-              reportBillingUsage({
-                request,
-                reservationId: billingReservationId,
-                promptTokens: 2000,
-                completionTokens: outputBudget,
-              });
-            }
+            tutorRun.succeed({ promptTokens: 2000, completionTokens: outputBudget });
           } catch (error) {
+            tutorRun.fail();
             console.error("study.tutor.POST.stream", error);
             const message =
               error instanceof Error
@@ -572,14 +563,7 @@ export async function POST(
       }),
     ]);
 
-    if (!isGuest) {
-      reportBillingUsage({
-        request,
-        reservationId: billingReservationId,
-        promptTokens: 2000,
-        completionTokens: outputBudget,
-      });
-    }
+    tutorRun.succeed({ promptTokens: 2000, completionTokens: outputBudget });
 
     return ok({
       answer,
@@ -587,6 +571,7 @@ export async function POST(
       provenance,
     });
   } catch (error) {
+    run?.fail();
     console.error("study.tutor.POST", error);
     return fail("Failed to answer tutor query", 500);
   }

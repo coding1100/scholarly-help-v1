@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { addSource, getSession } from "@/app/lib/server/study/repo";
-import { fail, getAuthenticatedUserId, ok } from "@/app/lib/server/study/http";
+import { fail, getAuthenticatedUserId, getClientIp, ok } from "@/app/lib/server/study/http";
+import { consumeStudyAiQuota } from "@/app/lib/server/study/rateLimit";
 import {
   parsePdfBuffer,
   parseUploadedStudyFile,
@@ -139,6 +140,19 @@ export async function POST(
     }
     if (session.userId !== userId) {
       return fail("Forbidden", 403);
+    }
+
+    // Each source is embedded with a paid AI model; cap how fast they are added.
+    const isGuest = userId.startsWith("guest_") || userId.startsWith("guest:");
+    const clientIp = isGuest ? getClientIp(request) : null;
+    const quota = consumeStudyAiQuota({
+      key: `sources:${userId}`,
+      limit: isGuest ? 5 : 60,
+      windowMs: 60 * 60 * 1000,
+      ip: clientIp ? { key: `sources:ip:${clientIp}`, limit: 10 } : null,
+    });
+    if (!quota.allowed) {
+      return fail(`Upload limit reached. Try again in ${quota.retryAfterSeconds} seconds.`, 429);
     }
 
     const contentType = request.headers.get("content-type") || "";
