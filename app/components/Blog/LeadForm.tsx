@@ -35,6 +35,7 @@ export default function LeadForm({
   postSlug,
   postTitle,
   disabled = false,
+  mobileNote,
 }: {
   position: LeadFormPosition;
   content: LeadFormContent;
@@ -42,6 +43,8 @@ export default function LeadForm({
   postTitle: string;
   /** Admin preview: shown but not submittable. */
   disabled?: boolean;
+  /** Shorter small print shown instead of `content.note` on phones. */
+  mobileNote?: string;
 }) {
   const [startedAt] = useState(() => Date.now());
   const [email, setEmail] = useState("");
@@ -126,7 +129,18 @@ export default function LeadForm({
           </form>
           {error && <p className="blog-lead-error" role="alert">{error}</p>}
           {disabled && <p className="blog-lead-note">Preview: the form is disabled here.</p>}
-          {content.note && <p className="blog-lead-note">{content.note}</p>}
+          {content.note && (
+            <p className="blog-lead-note">
+              {mobileNote ? (
+                <>
+                  <span className="blog-lead-note-desktop">{content.note}</span>
+                  <span className="blog-lead-note-mobile">{mobileNote}</span>
+                </>
+              ) : (
+                content.note
+              )}
+            </p>
+          )}
         </>
       )}
     </section>

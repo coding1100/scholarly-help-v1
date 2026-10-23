@@ -176,22 +176,23 @@ export const DEFAULT_BLOG_SETTINGS: BlogSettings = {
     secondaryLabel: "View Our Services",
     secondaryUrl: "/academic-research/",
   },
-  // Placeholder text until the final copy is provided.
+  // Posts get their own heading, text and button from the "Blog Form Copy" sheet
+  // (scripts/blog-lead-copy); this text covers posts without a row.
   leadForms: {
     enabled: true,
     inline: {
-      heading: "Get an expert tutor to check your work",
-      highlight: "expert tutor",
-      text: "Leave your details and we'll match you with a tutor for a Zoom session.",
-      buttonLabel: "Get Matched Now",
-      note: "Free · No card needed · Reply in 15 min",
+      heading: "Need help with a tough subject?",
+      highlight: "tough subject?",
+      text: "Get matched with a tutor for the topics you find hardest. Connect with a tutor or academic support specialist for a one-on-one session.",
+      buttonLabel: "Find My Tutor",
+      note: "Free Inquiry · No Card Required · Reply in 15 Minutes",
     },
     sidebar: {
-      heading: "Stuck on your assignment?",
-      highlight: "assignment?",
-      text: "Get matched with a tutor on Zoom.",
-      buttonLabel: "Get Matched",
-      note: "Free · Reply in 15 min",
+      heading: "Need help with a tough subject?",
+      highlight: "tough subject?",
+      text: "Get matched with a tutor for the topics you find hardest.",
+      buttonLabel: "Find My Tutor",
+      note: "Free Inquiry · Reply in 15 Minutes",
     },
   },
 };

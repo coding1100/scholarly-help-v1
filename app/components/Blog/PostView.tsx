@@ -75,8 +75,6 @@ function jsonLd(data: PostViewData) {
 export default function PostView(data: PostViewData) {
   const { post, category, author, related, recent, categories, comments, commentsOpen, stats, helpBox, leadForms, preview } = data;
   const { blocks, toc, anchors } = buildToc(post.blocks);
-  // Index where the in-article lead form goes: halfway through the blocks after the intro.
-  const leadSplit = 1 + Math.ceil((blocks.length - 1) / 2);
   const shareUrl = encodeURIComponent(`${siteBaseUrl()}${postUrl(post.slug)}`);
   const shareTitle = encodeURIComponent(post.title);
   const byId = new Map(categories.map((c) => [c._id, c]));
@@ -158,21 +156,18 @@ export default function PostView(data: PostViewData) {
                   <Image src={post.coverImage.url} alt={post.coverImage.alt || post.title} width={1200} height={675} sizes="(max-width: 1100px) 100vw, 760px" style={{ width: "100%", height: "auto" }} />
                 </div>
               )}
-              {/* In-article lead form sits in the middle of the article body. */}
-              <BlogBlocks blocks={blocks.slice(1, leadSplit)} anchors={anchors} stats={stats} />
-              {leadForms && (
-                <LeadForm position="inline" content={leadForms.inline} postSlug={post.slug} postTitle={post.title} disabled={preview} />
+              <BlogBlocks blocks={blocks.slice(1)} anchors={anchors} stats={stats} />
+              {/* The in-article lead form replaces the help box; the help box shows only when the forms are off. */}
+              {leadForms ? (
+                <LeadForm position="inline" content={leadForms.inline} mobileNote={leadForms.sidebar.note} postSlug={post.slug} postTitle={post.title} disabled={preview} />
+              ) : (
+                <HelpBoxView help={helpBox} />
               )}
-              <BlogBlocks blocks={blocks.slice(leadSplit)} anchors={anchors} stats={stats} />
-              <HelpBoxView help={helpBox} />
             </div>
             {!preview && <CommentSection postId={post._id} comments={comments} open={commentsOpen} />}
           </div>
 
           <aside className="blog-sidebar">
-            {leadForms && (
-              <LeadForm position="sidebar" content={leadForms.sidebar} postSlug={post.slug} postTitle={post.title} disabled={preview} />
-            )}
             <TableOfContents items={toc} />
             {preview ? null : <ViewCounter postId={post._id} initialViews={post.views} offset={post.importedViews ?? 0} />}
             <div className="blog-card-panel blog-side-center">
@@ -199,7 +194,12 @@ export default function PostView(data: PostViewData) {
                 </div>
               </div>
             )}
-            <NewsletterForm />
+            {/* The sidebar lead form replaces the newsletter box; the newsletter shows only when the forms are off. */}
+            {leadForms ? (
+              <LeadForm position="sidebar" content={leadForms.sidebar} postSlug={post.slug} postTitle={post.title} disabled={preview} />
+            ) : (
+              <NewsletterForm />
+            )}
           </aside>
         </div>
 

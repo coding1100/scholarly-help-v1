@@ -8,7 +8,7 @@ const FIELDS: { key: keyof LeadFormContent; label: string; hint?: string; long?:
   { key: "highlight", label: "Highlighted words", hint: "Part of the heading shown in orange, e.g. “stats tutor”." },
   { key: "text", label: "Text", long: true },
   { key: "buttonLabel", label: "Button label" },
-  { key: "note", label: "Small print", hint: "e.g. Free · No card needed · Reply in 15 min" },
+  { key: "note", label: "Small print", hint: "e.g. Free Inquiry · Reply in 15 Minutes. On phones the in-article form shows the sidebar’s small print." },
 ];
 
 /**

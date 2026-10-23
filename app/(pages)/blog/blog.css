@@ -268,10 +268,13 @@
 .blog-lead-sidebar .blog-lead-input { height: 48px; }
 .blog-lead-sidebar .blog-lead-button { justify-self: stretch; width: 100%; }
 .blog-lead-sidebar .blog-lead-note { text-align: center; }
+.blog-lead-note-mobile { display: none; }
 
 @media (max-width: 640px) {
   .blog-lead { padding: 22px 18px 18px; }
   .blog-lead-title { font-size: 22px; }
   .blog-lead-form { grid-template-columns: 1fr; }
   .blog-lead-button { justify-self: stretch; width: 100%; }
+  .blog-lead-note-desktop { display: none; }
+  .blog-lead-note-mobile { display: inline; }
 }
