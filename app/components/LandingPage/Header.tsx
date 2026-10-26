@@ -429,7 +429,9 @@ export default function Header() {
       {/* Header Top Bar */}
       <div
         className={`max-w-7xl mx-auto max-[1320px]:px-3 flex items-center pt-2 min-h-[64px] ${
-          isTakeMyClassLayout
+          isTextCta
+            ? "justify-between"
+            : isTakeMyClassLayout
             ? "justify-center sm:justify-between"
             : isTakeMyClass3
               ? "md:justify-between justify-center"
@@ -512,20 +514,34 @@ export default function Header() {
         {/* Phone Number - Shown for special routes (take-my-class, take-my-exam, take-my-class-3): always show number on mobile */}
 
         {isTextCta ? (
-          // Text-CTA pages show their texting number, as plain text: there
-          // is nothing to open on desktop.
-          <p className="hidden md:flex items-center text-[#565add]">
-            <span className="w-6 mr-1">
-              <Image
-                src={Phone}
-                alt="Phone"
-                width={22}
-                height={22}
-                fetchPriority="high"
-              />
-            </span>
-            {TEXT_CTA_NUMBER_DISPLAY}
-          </p>
+          // Text-CTA pages show their texting number: a link that opens the
+          // SMS app on mobile, plain text on desktop where there is nothing
+          // to open.
+          <div>
+            <TextUsCta
+              placement="header"
+              mobileOnly
+              label={
+                <>
+                  <Image src={Phone} alt="" width={18} height={18} />
+                  {TEXT_CTA_NUMBER_DISPLAY}
+                </>
+              }
+              buttonClassName="flex items-center gap-1 text-sm font-semibold text-[#565add]"
+            />
+            <p className="hidden md:flex items-center text-[#565add]">
+              <span className="w-6 mr-1">
+                <Image
+                  src={Phone}
+                  alt="Phone"
+                  width={22}
+                  height={22}
+                  fetchPriority="high"
+                />
+              </span>
+              {TEXT_CTA_NUMBER_DISPLAY}
+            </p>
+          </div>
         ) : isSpecialRoute3 && (
           <div>
             {/* Desktop: phone number that opens the dialer (call). */}
@@ -694,22 +710,9 @@ export default function Header() {
         )}
       </div>
       {isTextCta ? (
-        <div className="md:hidden flex flex-col items-center gap-1 px-3 py-2 text-center">
-          <p className="text-sm font-semibold text-gray-700">
-            {TOOLS_SENT_MESSAGE}
-          </p>
-          <TextUsCta
-            placement="header"
-            mobileOnly
-            label={
-              <>
-                <Image src={Phone} alt="" width={18} height={18} />
-                {TEXT_CTA_NUMBER_DISPLAY}
-              </>
-            }
-            buttonClassName="flex items-center gap-1.5 text-[15px] font-semibold text-[#565add]"
-          />
-        </div>
+        <p className="md:hidden px-3 py-2 text-center text-sm font-semibold text-gray-700">
+          {TOOLS_SENT_MESSAGE}
+        </p>
       ) : (isTakeMyClass || isTakeMyClass3) && (
         <div className=" md:hidden flex-col items-center flex py-2">
           <div className="flex">
