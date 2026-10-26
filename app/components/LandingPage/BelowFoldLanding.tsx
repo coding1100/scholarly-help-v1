@@ -7,7 +7,11 @@ import DeliveredOn from "@/app/(pages)/take-my-class/DeliveredOn";
 import { onlineClassSubjects } from "@/app/(pages)/online-class/content";
 import SubSubjectsSection from "./SubSubjects";
 import FinalCTA from "../FinalCTA/FinalCTA";
-import { pathnameIncludesTakeMyClass } from "@/app/lib/takeMyClassLandingRoutes";
+import {
+  normalizePathname,
+  pathnameIncludesTakeMyClass,
+  TAKE_MY_CLASS_PATH,
+} from "@/app/lib/takeMyClassLandingRoutes";
 import ServiceVideoSection from "./ServiceVideoSection";
 
 // Lightweight skeleton for below-the-fold sections
@@ -110,6 +114,10 @@ export default function BelowFoldLanding({ children }: BelowFoldLandingProps) {
   const isAssignmentPage = currentPath.includes("assignment");
   const isHomeworkPage = currentPath.includes("homework");
   const isEssayWritingPage = currentPath.includes("essay-writing");
+  // /take-my-class runs its own order: support before pain points, process
+  // before reviews, and no Success block.
+  const isTakeMyClassPage =
+    normalizePathname(currentPath) === TAKE_MY_CLASS_PATH;
 
   const isExamPage =
     currentPath.includes("exam") || currentPath.includes("exams");
@@ -174,8 +182,17 @@ export default function BelowFoldLanding({ children }: BelowFoldLandingProps) {
         <Ratings />
       )}{" "}
       {showSuccessTop && <Success />}
-      <CardCarousel />
-      <Description />
+      {isTakeMyClassPage ? (
+        <>
+          <Description />
+          <CardCarousel />
+        </>
+      ) : (
+        <>
+          <CardCarousel />
+          <Description />
+        </>
+      )}
       {/* <Description2 /> */}
       {!isOnlineClassPage ||
         !isExamPage ||
@@ -187,9 +204,18 @@ export default function BelowFoldLanding({ children }: BelowFoldLandingProps) {
             <WhySlider />
           </>
         ))}
-      <CustomerReviews />
-      <ProcessSection />
-      {!showSuccessTop && <Success />}
+      {isTakeMyClassPage ? (
+        <>
+          <ProcessSection />
+          <CustomerReviews />
+        </>
+      ) : (
+        <>
+          <CustomerReviews />
+          <ProcessSection />
+        </>
+      )}
+      {!showSuccessTop && !isTakeMyClassPage && <Success />}
       {/* {(currentPath === "/" ||
         (currentPath.startsWith("/online-class/") &&
           currentPath !== "/online-class/")) && (
@@ -212,7 +238,7 @@ export default function BelowFoldLanding({ children }: BelowFoldLandingProps) {
         currentPath === "/") && <PriceSection />}
       {!isOnlineClassPage || (currentPath === "/" && <GetQouteDynamic />)}
       {currentPath !== "/" && <Faq />}
-      {showSuccessTop && <FinalCTA />}
+      {(showSuccessTop || isTakeMyClassPage) && <FinalCTA />}
     </>
   );
 }
