@@ -1,7 +1,9 @@
 "use client";
 
 import React, { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { usePageData } from "./usePageData";
+import { getProcessFormCopy } from "./processFormCopy";
 import { useQuoteLead } from "./useQuoteLead";
 import {
   CLASS_DETAILS_PLACEHOLDER,
@@ -20,6 +22,7 @@ function StepOneForm() {
   const [phone, setPhone] = useState("");
   const emailRef = useRef<HTMLInputElement>(null);
   const { submit, sending, error } = useQuoteLead();
+  const { heading, description } = getProcessFormCopy(usePathname());
 
   useEffect(() => {
     if (step === 2) emailRef.current?.focus();
@@ -37,11 +40,9 @@ function StepOneForm() {
   return (
     <div className="mx-auto mt-14 max-w-3xl border-t border-white/15 pt-10 text-center">
       <h3 className="text-[26px] font-semibold leading-tight max-[768px]:text-[22px]">
-        Start with step 1 right here
+        {heading}
       </h3>
-      <p className="mt-2 text-sm text-white/80 sm:text-base">
-        Get your tutor match and price by text. Takes 30 seconds.
-      </p>
+      <p className="mt-2 text-sm text-white/80 sm:text-base">{description}</p>
       <form method="post" onSubmit={onSubmit} className="mt-6 flex flex-col gap-3">
         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/70">
           Step {step} of 2
