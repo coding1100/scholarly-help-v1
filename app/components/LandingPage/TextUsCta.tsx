@@ -1,11 +1,10 @@
 "use client";
 
-import type { ReactNode } from "react";
 import { handleTextUsClick } from "@/app/lib/client/smsTracking";
 
 const TEXT_CTA_LABEL = "Secure My 'A' or 'B' Grades";
 const TEXT_CTA_NUMBER = "17345303988";
-export const TEXT_CTA_NUMBER_DISPLAY = "+1 734 530 3988";
+const TEXT_CTA_NUMBER_DISPLAY = "+1 734 530 3988";
 const TEXT_CTA_MESSAGE = "Hi, I need A or B Grades Guaranteed";
 
 interface TextUsCtaProps {
@@ -15,8 +14,6 @@ interface TextUsCtaProps {
   textClassName?: string;
   /** Render nothing on desktop (e.g. the sticky bar). */
   mobileOnly?: boolean;
-  /** Mobile link content; defaults to the CTA label. */
-  label?: ReactNode;
   /** Where the CTA sits, reported to GTM (e.g. "hero", "final_cta"). */
   placement: string;
 }
@@ -30,7 +27,6 @@ export default function TextUsCta({
   buttonClassName,
   textClassName = "",
   mobileOnly = false,
-  label = TEXT_CTA_LABEL,
   placement,
 }: TextUsCtaProps) {
   return (
@@ -52,7 +48,7 @@ export default function TextUsCta({
         }}
         className={`${buttonClassName} md:hidden`}
       >
-        {label}
+        {TEXT_CTA_LABEL}
       </a>
       {!mobileOnly && (
         <p className={`${textClassName} hidden md:block`}>

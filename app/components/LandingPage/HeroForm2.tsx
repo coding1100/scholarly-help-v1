@@ -265,26 +265,29 @@ const HeroForm2: FC<ZohoForm2Props> = ({
         />
       )}
       <div className="w-full mx-auto cus-div">
-        <div className="w-full bg-[#263238] rounded-t-lg px-2 sm:py-3 py-2">
-          {isEmailOnlyFormPage ? (<p className="text-white text-center lg:text-[28px] md:text-2xl sm:text-xl text-lg font-semibold">
-            Before You{" "}
-            <span className="bg-[#F56200] rounded-full px-4 -rotate-3 inline-block">
-              Lose
-            </span>{" "}
-            Another Grade
-          </p>) : (<p className="text-white text-center lg:text-[28px] md:text-2xl sm:text-xl text-lg font-semibold">
-            Check Your{" "}
-            <span className="bg-[#F56200] rounded-full px-4 -rotate-3 inline-block">
-              Class
-            </span>{" "}
-            Price
-          </p>)}
+        {/* Form heading; text-CTA pages show only the CTA. */}
+        {!isTextCta && (
+          <div className="w-full bg-[#263238] rounded-t-lg px-2 sm:py-3 py-2">
+            {isEmailOnlyFormPage ? (<p className="text-white text-center lg:text-[28px] md:text-2xl sm:text-xl text-lg font-semibold">
+              Before You{" "}
+              <span className="bg-[#F56200] rounded-full px-4 -rotate-3 inline-block">
+                Lose
+              </span>{" "}
+              Another Grade
+            </p>) : (<p className="text-white text-center lg:text-[28px] md:text-2xl sm:text-xl text-lg font-semibold">
+              Check Your{" "}
+              <span className="bg-[#F56200] rounded-full px-4 -rotate-3 inline-block">
+                Class
+              </span>{" "}
+              Price
+            </p>)}
 
-        </div>
+          </div>
+        )}
         {isTextCta ? (
           <div
             ref={textCtaRef}
-            className="bg-white max-[768px]:bg-transparent max-[768px]:shadow-none max-[768px]:p-0 max-[768px]:pt-2 rounded-lg shadow-sm p-6"
+            className="bg-white max-[768px]:bg-transparent max-[768px]:shadow-none max-[768px]:p-0 rounded-lg shadow-sm p-6"
           >
             <TextUsCta
               placement="hero"

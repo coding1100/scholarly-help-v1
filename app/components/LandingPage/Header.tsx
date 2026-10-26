@@ -19,7 +19,6 @@ import {
 import { rememberFbclidFromUrl } from "@/app/lib/client/smsTracking";
 import { hasRefreshSessionHint } from "@/app/lib/accessTokenStore";
 import { getToolDashboardHref } from "@/app/lib/toolLandingRoutes";
-import TextUsCta, { TEXT_CTA_NUMBER_DISPLAY } from "./TextUsCta";
 
 declare global {
   interface Window {
@@ -429,9 +428,7 @@ export default function Header() {
       {/* Header Top Bar */}
       <div
         className={`max-w-7xl mx-auto max-[1320px]:px-3 flex items-center pt-2 min-h-[64px] ${
-          isTextCta
-            ? "justify-between"
-            : isTakeMyClassLayout
+          isTakeMyClassLayout
             ? "justify-center sm:justify-between"
             : isTakeMyClass3
               ? "md:justify-between justify-center"
@@ -491,7 +488,9 @@ export default function Header() {
 
         {/* Rating Stars - Only for /take-my-class/ */}
         {isTextCta ? (
-          <p className="max-[768px]:hidden text-sm font-semibold text-gray-700">
+          // No phone number on the right here, so pad by the logo's width to
+          // keep the message centred like the rating it replaces.
+          <p className="max-[768px]:hidden flex-1 pr-[138px] text-center text-sm font-semibold text-gray-700">
             {TOOLS_SENT_MESSAGE}
           </p>
         ) : (isTakeMyClass || isTakeMyClass3) && (
@@ -513,36 +512,8 @@ export default function Header() {
 
         {/* Phone Number - Shown for special routes (take-my-class, take-my-exam, take-my-class-3): always show number on mobile */}
 
-        {isTextCta ? (
-          // Text-CTA pages show their texting number: a link that opens the
-          // SMS app on mobile, plain text on desktop where there is nothing
-          // to open.
-          <div>
-            <TextUsCta
-              placement="header"
-              mobileOnly
-              label={
-                <>
-                  <Image src={Phone} alt="" width={18} height={18} />
-                  {TEXT_CTA_NUMBER_DISPLAY}
-                </>
-              }
-              buttonClassName="flex items-center gap-1 text-sm font-semibold text-[#565add]"
-            />
-            <p className="hidden md:flex items-center text-[#565add]">
-              <span className="w-6 mr-1">
-                <Image
-                  src={Phone}
-                  alt="Phone"
-                  width={22}
-                  height={22}
-                  fetchPriority="high"
-                />
-              </span>
-              {TEXT_CTA_NUMBER_DISPLAY}
-            </p>
-          </div>
-        ) : isSpecialRoute3 && (
+        {/* Text-CTA pages show no phone number: their CTAs carry it. */}
+        {!isTextCta && isSpecialRoute3 && (
           <div>
             {/* Desktop: phone number that opens the dialer (call). */}
             <a
