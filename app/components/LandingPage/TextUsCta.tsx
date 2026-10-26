@@ -2,9 +2,9 @@
 
 import { handleTextUsClick } from "@/app/lib/client/smsTracking";
 
-export const TEXT_CTA_LABEL = "Secure My 'A' or 'B' Grades";
+const TEXT_CTA_LABEL = "Secure My 'A' or 'B' Grades";
 const TEXT_CTA_NUMBER = "17345303988";
-const TEXT_CTA_NUMBER_DISPLAY = "+1 734 530 3988";
+export const TEXT_CTA_NUMBER_DISPLAY = "+1 734 530 3988";
 const TEXT_CTA_MESSAGE = "Hi, I need A or B Grades Guaranteed";
 
 interface TextUsCtaProps {
@@ -12,6 +12,8 @@ interface TextUsCtaProps {
   buttonClassName: string;
   /** Desktop text classes. */
   textClassName?: string;
+  /** Render nothing on desktop (e.g. the sticky bar). */
+  mobileOnly?: boolean;
   /** Where the CTA sits, reported to GTM (e.g. "hero", "final_cta"). */
   placement: string;
 }
@@ -24,6 +26,7 @@ interface TextUsCtaProps {
 export default function TextUsCta({
   buttonClassName,
   textClassName = "",
+  mobileOnly = false,
   placement,
 }: TextUsCtaProps) {
   return (
@@ -47,9 +50,11 @@ export default function TextUsCta({
       >
         {TEXT_CTA_LABEL}
       </a>
-      <p className={`${textClassName} hidden md:block`}>
-        Text us at {TEXT_CTA_NUMBER_DISPLAY}
-      </p>
+      {!mobileOnly && (
+        <p className={`${textClassName} hidden md:block`}>
+          Text us at {TEXT_CTA_NUMBER_DISPLAY}
+        </p>
+      )}
     </>
   );
 }

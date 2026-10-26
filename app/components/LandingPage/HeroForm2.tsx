@@ -373,7 +373,7 @@ const HeroForm2: FC<ZohoForm2Props> = ({
         <TextUsCta
           placement="sticky"
           buttonClassName="fixed bottom-2 left-1/2 -translate-x-1/2 px-4 w-[75%] h-12 rounded-md font-medium text-sm text-white uppercase tracking-wider bg-[#ff641a] border border-transparent shadow-lg z-50 flex items-center justify-center"
-          textClassName="fixed bottom-2 left-1/2 -translate-x-1/2 px-6 py-3 rounded-md font-medium text-sm text-white tracking-wider bg-[#ff641a] shadow-lg z-50"
+          mobileOnly
         />
       ) : showStickyOnMobile && !isFormVisible ? (
         <button

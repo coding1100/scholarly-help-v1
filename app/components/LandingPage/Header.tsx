@@ -19,6 +19,7 @@ import {
 import { rememberFbclidFromUrl } from "@/app/lib/client/smsTracking";
 import { hasRefreshSessionHint } from "@/app/lib/accessTokenStore";
 import { getToolDashboardHref } from "@/app/lib/toolLandingRoutes";
+import { TEXT_CTA_NUMBER_DISPLAY } from "./TextUsCta";
 
 declare global {
   interface Window {
@@ -510,7 +511,22 @@ export default function Header() {
 
         {/* Phone Number - Shown for special routes (take-my-class, take-my-exam, take-my-class-3): always show number on mobile */}
 
-        {isSpecialRoute3 && (
+        {isTextCta ? (
+          // Text-CTA pages show their texting number, as plain text: there
+          // is nothing to open on desktop.
+          <p className="hidden sm:flex items-center text-[#565add]">
+            <span className="w-6 mr-1">
+              <Image
+                src={Phone}
+                alt="Phone"
+                width={22}
+                height={22}
+                fetchPriority="high"
+              />
+            </span>
+            {TEXT_CTA_NUMBER_DISPLAY}
+          </p>
+        ) : isSpecialRoute3 && (
           <div>
             {/* Desktop: phone number that opens the dialer (call). */}
             <a
