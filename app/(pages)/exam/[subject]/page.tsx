@@ -22,6 +22,7 @@ import DeliveredOn from "../../take-my-class/DeliveredOn";
 import SubSubjectsSection from "@/app/components/LandingPage/SubSubjects";
 import OnlinePlatform from "@/app/components/OnlinePlatform/OnlinePlatform";
 import ProductSchema from "@/app/components/ProductSchema";
+import FinalCTA from "@/app/components/FinalCTA/FinalCTA";
 
 // Force dynamic rendering to prevent caching
 export const dynamic = "force-dynamic";
@@ -193,6 +194,7 @@ const Page = async ({ params }: PageProps) => {
         <OnlinePlatform />
         <AcademicPartners />
         <Faq />
+        <FinalCTA />
       </MainLayout>
     </ExamDataProvider>
   );

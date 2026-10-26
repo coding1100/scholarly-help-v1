@@ -1,8 +1,17 @@
 "use client";
 
-import { FC } from "react";
+import { FC, FormEvent, useState } from "react";
 import SemiCircle from "@/app/assets/Images/finalCtaBg.png";
 import { usePageData } from "../LandingPage/usePageData";
+import { useQuoteLead } from "../LandingPage/useQuoteLead";
+import {
+  CLASS_DETAILS_PLACEHOLDER,
+  PHONE_PLACEHOLDER,
+  QuoteLeadError,
+  QuoteLeadNote,
+  quoteButtonClass,
+  quoteInputClass,
+} from "../LandingPage/QuoteLeadFields";
 interface FinalCTAProps {}
 
 const FinalCTA: FC<FinalCTAProps> = ({}) => {
@@ -23,11 +32,14 @@ const FinalCTA: FC<FinalCTAProps> = ({}) => {
     (finalCta?.buttonText && String(finalCta.buttonText).trim()) ||
     "Secure My Grades Now";
 
-  const scrollToQuote = () => {
-    const quoteForm = document.getElementById("quote-form");
-    if (quoteForm) {
-      quoteForm.scrollIntoView({ behavior: "smooth" });
-    }
+  const [classDetails, setClassDetails] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const { submit, sending, error } = useQuoteLead();
+
+  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    void submit({ classDetails, email, phone });
   };
   return (
     <div className="bg-[#3C3D5D]">
@@ -54,23 +66,62 @@ const FinalCTA: FC<FinalCTAProps> = ({}) => {
           </p>
         </div>
         <div
-          className="lg:col-span-6 bg-cover min-h-[180px] sm:min-h-[220px] lg:min-h-full flex justify-center items-center py-6 lg:py-0"
+          className="lg:col-span-6 bg-cover min-h-[180px] sm:min-h-[220px] lg:min-h-full flex justify-center items-center pb-8 lg:py-10"
           style={{
             backgroundImage: `url(${SemiCircle.src})`,
             backgroundRepeat: "no-repeat",
           }}
         >
-          <button
-            onClick={scrollToQuote}
-            type="button"
-            className="w-full sm:w-[80%] lg:w-[75%] py-4 sm:py-6 rounded-md px-6 cursor-pointer bg-[#ff641a] text-white border border-transparent transition duration-300 text-base sm:text-lg font-bold flex items-center justify-center hover:bg-white hover:text-[#ff641a] hover:border-[#ff641a]"
-            style={{
-              boxShadow:
-                "rgba(0, 0, 0, 0.3) 0px 19px 38px, rgba(0, 0, 0, 0.22) 0px 15px 12px",
-            }}
+          <form
+            method="post"
+            onSubmit={onSubmit}
+            className="flex w-full max-w-[440px] flex-col gap-3"
           >
-            {buttonText}
-          </button>
+            <input
+              type="text"
+              name="classDetails"
+              aria-label="Class details"
+              placeholder={CLASS_DETAILS_PLACEHOLDER}
+              required
+              maxLength={200}
+              value={classDetails}
+              onChange={(e) => setClassDetails(e.target.value)}
+              className={quoteInputClass}
+            />
+            <input
+              type="email"
+              name="email"
+              aria-label="Email"
+              placeholder="Email *"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className={quoteInputClass}
+            />
+            <input
+              type="tel"
+              name="phone"
+              aria-label="Mobile number"
+              placeholder={PHONE_PLACEHOLDER}
+              autoComplete="tel"
+              inputMode="tel"
+              required
+              maxLength={30}
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className={quoteInputClass}
+            />
+            <button
+              type="submit"
+              disabled={sending}
+              className={`${quoteButtonClass} w-full`}
+            >
+              {sending ? "Sending..." : buttonText}
+            </button>
+            <QuoteLeadError message={error} />
+            <QuoteLeadNote text="No spam · No card needed" />
+          </form>
         </div>
       </div>
     </div>
