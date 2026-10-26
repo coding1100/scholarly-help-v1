@@ -65,6 +65,7 @@ export const STATIC_TOP_LEVEL_SEGMENTS = new Set([
   "thank-you",
   "thank-you-2",
   "thank-you-3",
+  "tools-thank-you",
   "tools",
   "us-based-phd-experts",
   "write-my-paper",

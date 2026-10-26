@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { usePageData } from "./usePageData";
 import { getProcessFormCopy } from "./processFormCopy";
 import { useQuoteLead } from "./useQuoteLead";
+import { isTextCtaLandingPage } from "@/app/lib/takeMyClassLandingRoutes";
+import TextUsCta from "./TextUsCta";
 import {
   PHONE_PLACEHOLDER,
   QuoteLeadError,
@@ -14,7 +16,10 @@ import {
   quoteInputClass,
 } from "./QuoteLeadFields";
 
-/** Two-step quote form under the process steps: class details, then contact. */
+/**
+ * Two-step quote form under the process steps: class details, then contact.
+ * Text-CTA pages show the text-message CTA instead.
+ */
 function StepOneForm() {
   const [step, setStep] = useState<1 | 2>(1);
   const [classDetails, setClassDetails] = useState("");
@@ -25,6 +30,7 @@ function StepOneForm() {
   const pathname = usePathname();
   const { heading, description } = getProcessFormCopy(pathname);
   const detailsField = getDetailsField(pathname);
+  const isTextCta = isTextCtaLandingPage(pathname);
 
   useEffect(() => {
     if (step === 2) emailRef.current?.focus();
@@ -45,73 +51,83 @@ function StepOneForm() {
         {heading}
       </h3>
       <p className="mt-2 text-sm text-white/80 sm:text-base">{description}</p>
-      <form method="post" onSubmit={onSubmit} className="mt-6 flex flex-col gap-3">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/70">
-          Step {step} of 2
-        </p>
-        {step === 1 ? (
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <input
-              type="text"
-              name="classDetails"
-              aria-label={detailsField.label}
-              placeholder={detailsField.placeholder}
-              required
-              maxLength={200}
-              value={classDetails}
-              onChange={(e) => setClassDetails(e.target.value)}
-              className={`${quoteInputClass} sm:flex-1`}
-            />
-            <button type="submit" className={quoteButtonClass}>
-              Next &rarr;
-            </button>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <input
-              ref={emailRef}
-              type="email"
-              name="email"
-              aria-label="Email"
-              placeholder="Email *"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className={`${quoteInputClass} sm:flex-1`}
-            />
-            <input
-              type="tel"
-              name="phone"
-              aria-label="Mobile number"
-              placeholder={PHONE_PLACEHOLDER}
-              autoComplete="tel"
-              inputMode="tel"
-              required
-              maxLength={30}
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className={`${quoteInputClass} sm:flex-1`}
-            />
-            <button type="submit" disabled={sending} className={quoteButtonClass}>
-              {sending ? "Sending..." : "Get My Match"}
-            </button>
-          </div>
-        )}
-        <QuoteLeadError message={error} />
-        <div className="flex items-center justify-center gap-4">
-          {step === 2 && (
-            <button
-              type="button"
-              onClick={() => setStep(1)}
-              className="text-xs font-semibold text-white/75 underline-offset-2 hover:underline"
-            >
-              &larr; Back
-            </button>
-          )}
-          <QuoteLeadNote text="No spam" />
+      {isTextCta ? (
+        <div className="mt-6 flex justify-center">
+          <TextUsCta
+            placement="process"
+            buttonClassName={`${quoteButtonClass} w-full`}
+            textClassName="text-xl font-semibold text-white"
+          />
         </div>
-      </form>
+      ) : (
+        <form method="post" onSubmit={onSubmit} className="mt-6 flex flex-col gap-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/70">
+            Step {step} of 2
+          </p>
+          {step === 1 ? (
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <input
+                type="text"
+                name="classDetails"
+                aria-label={detailsField.label}
+                placeholder={detailsField.placeholder}
+                required
+                maxLength={200}
+                value={classDetails}
+                onChange={(e) => setClassDetails(e.target.value)}
+                className={`${quoteInputClass} sm:flex-1`}
+              />
+              <button type="submit" className={quoteButtonClass}>
+                Next &rarr;
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <input
+                ref={emailRef}
+                type="email"
+                name="email"
+                aria-label="Email"
+                placeholder="Email *"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className={`${quoteInputClass} sm:flex-1`}
+              />
+              <input
+                type="tel"
+                name="phone"
+                aria-label="Mobile number"
+                placeholder={PHONE_PLACEHOLDER}
+                autoComplete="tel"
+                inputMode="tel"
+                required
+                maxLength={30}
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className={`${quoteInputClass} sm:flex-1`}
+              />
+              <button type="submit" disabled={sending} className={quoteButtonClass}>
+                {sending ? "Sending..." : "Get My Match"}
+              </button>
+            </div>
+          )}
+          <QuoteLeadError message={error} />
+          <div className="flex items-center justify-center gap-4">
+            {step === 2 && (
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                className="text-xs font-semibold text-white/75 underline-offset-2 hover:underline"
+              >
+                &larr; Back
+              </button>
+            )}
+            <QuoteLeadNote text="No spam" />
+          </div>
+        </form>
+      )}
     </div>
   );
 }

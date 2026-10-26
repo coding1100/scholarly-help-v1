@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import Image from "next/image";
 import axios from "axios";
 import { hideWhatsappModule } from "../HideLinks/HideLinks";
+import { isTakeMyClassLayoutPage } from "@/app/lib/takeMyClassLandingRoutes";
 import whatsappIconFooter from "@/app/assets/Images/whatsapplogo.png";
 import whatsappIcon2 from "@/app/assets/Images/whatsappIcon2.png";
 
@@ -39,14 +40,13 @@ function pushWhatsAppClickEvent(placement: "desktop_pill" | "mobile_icon") {
 const WhatsApp = () => {
   const currentPage = usePathname();
   const hideWhatsapp = hideWhatsappModule.includes(currentPage);
-  // The thank-you and take-my-class pages want the round icon-only bubble at
-  // every screen size (no text-label pill), unlike the rest of the site
-  // where the pill shows on desktop and the icon-only bubble is mobile-only.
+  // The thank-you and take-my-class layout pages want the round icon-only
+  // bubble at every screen size (no text-label pill), unlike the rest of the
+  // site where the pill shows on desktop and the icon-only bubble is mobile-only.
   const iconOnly =
     currentPage === "/thank-you" ||
     currentPage === "/thank-you/" ||
-    currentPage === "/take-my-class" ||
-    currentPage === "/take-my-class/";
+    isTakeMyClassLayoutPage(currentPage);
   const [GCLID, setGCLID] = useState("");
   const [url, setUrl] = useState("");
 

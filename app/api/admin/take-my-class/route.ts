@@ -123,8 +123,10 @@ export async function POST(request: NextRequest) {
     await client.close();
     console.log('Connection closed, save operation completed');
 
-    // Rebuild the ISR-cached page so the edit is live on the next request
+    // Rebuild the ISR-cached pages so the edit is live on the next request.
+    // /tools-thank-you renders the same take-my-class content.
     revalidatePath("/take-my-class");
+    revalidatePath("/tools-thank-you");
 
     return NextResponse.json({
       success: true,

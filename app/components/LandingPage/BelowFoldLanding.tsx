@@ -8,9 +8,8 @@ import { onlineClassSubjects } from "@/app/(pages)/online-class/content";
 import SubSubjectsSection from "./SubSubjects";
 import FinalCTA from "../FinalCTA/FinalCTA";
 import {
-  normalizePathname,
+  isTakeMyClassLayoutPage,
   pathnameIncludesTakeMyClass,
-  TAKE_MY_CLASS_PATH,
 } from "@/app/lib/takeMyClassLandingRoutes";
 import ServiceVideoSection from "./ServiceVideoSection";
 
@@ -116,8 +115,7 @@ export default function BelowFoldLanding({ children }: BelowFoldLandingProps) {
   const isEssayWritingPage = currentPath.includes("essay-writing");
   // /take-my-class runs its own order: grade screenshots (Success) under the
   // university logos, support before pain points, process before reviews.
-  const isTakeMyClassPage =
-    normalizePathname(currentPath) === TAKE_MY_CLASS_PATH;
+  const isTakeMyClassPage = isTakeMyClassLayoutPage(currentPath);
 
   const isExamPage =
     currentPath.includes("exam") || currentPath.includes("exams");
