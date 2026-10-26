@@ -6,10 +6,10 @@ import { usePageData } from "./usePageData";
 import { getProcessFormCopy } from "./processFormCopy";
 import { useQuoteLead } from "./useQuoteLead";
 import {
-  CLASS_DETAILS_PLACEHOLDER,
   PHONE_PLACEHOLDER,
   QuoteLeadError,
   QuoteLeadNote,
+  getDetailsField,
   quoteButtonClass,
   quoteInputClass,
 } from "./QuoteLeadFields";
@@ -22,7 +22,9 @@ function StepOneForm() {
   const [phone, setPhone] = useState("");
   const emailRef = useRef<HTMLInputElement>(null);
   const { submit, sending, error } = useQuoteLead();
-  const { heading, description } = getProcessFormCopy(usePathname());
+  const pathname = usePathname();
+  const { heading, description } = getProcessFormCopy(pathname);
+  const detailsField = getDetailsField(pathname);
 
   useEffect(() => {
     if (step === 2) emailRef.current?.focus();
@@ -52,8 +54,8 @@ function StepOneForm() {
             <input
               type="text"
               name="classDetails"
-              aria-label="Class details"
-              placeholder={CLASS_DETAILS_PLACEHOLDER}
+              aria-label={detailsField.label}
+              placeholder={detailsField.placeholder}
               required
               maxLength={200}
               value={classDetails}

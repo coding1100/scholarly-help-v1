@@ -1,14 +1,15 @@
 "use client";
 
 import { FC, FormEvent, useState } from "react";
+import { usePathname } from "next/navigation";
 import SemiCircle from "@/app/assets/Images/finalCtaBg.png";
 import { usePageData } from "../LandingPage/usePageData";
 import { useQuoteLead } from "../LandingPage/useQuoteLead";
 import {
-  CLASS_DETAILS_PLACEHOLDER,
   PHONE_PLACEHOLDER,
   QuoteLeadError,
   QuoteLeadNote,
+  getDetailsField,
   quoteButtonClass,
   quoteInputClass,
 } from "../LandingPage/QuoteLeadFields";
@@ -36,6 +37,7 @@ const FinalCTA: FC<FinalCTAProps> = ({}) => {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const { submit, sending, error } = useQuoteLead();
+  const detailsField = getDetailsField(usePathname());
 
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -80,8 +82,8 @@ const FinalCTA: FC<FinalCTAProps> = ({}) => {
             <input
               type="text"
               name="classDetails"
-              aria-label="Class details"
-              placeholder={CLASS_DETAILS_PLACEHOLDER}
+              aria-label={detailsField.label}
+              placeholder={detailsField.placeholder}
               required
               maxLength={200}
               value={classDetails}
