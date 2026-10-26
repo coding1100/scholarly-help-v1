@@ -169,6 +169,10 @@ export default function PostView(data: PostViewData) {
 
           <aside className="blog-sidebar">
             <TableOfContents items={toc} />
+            {/* The sidebar lead form sits right after the table of contents. */}
+            {leadForms && (
+              <LeadForm position="sidebar" content={leadForms.sidebar} postSlug={post.slug} postTitle={post.title} disabled={preview} />
+            )}
             {preview ? null : <ViewCounter postId={post._id} initialViews={post.views} offset={post.importedViews ?? 0} />}
             <div className="blog-card-panel blog-side-center">
               <div className="blog-side-title">Share This Article</div>
@@ -194,12 +198,8 @@ export default function PostView(data: PostViewData) {
                 </div>
               </div>
             )}
-            {/* The sidebar lead form replaces the newsletter box; the newsletter shows only when the forms are off. */}
-            {leadForms ? (
-              <LeadForm position="sidebar" content={leadForms.sidebar} postSlug={post.slug} postTitle={post.title} disabled={preview} />
-            ) : (
-              <NewsletterForm />
-            )}
+            {/* The newsletter box shows only when the lead forms are off. */}
+            {!leadForms && <NewsletterForm />}
           </aside>
         </div>
 

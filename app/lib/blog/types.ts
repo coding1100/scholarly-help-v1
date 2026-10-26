@@ -176,22 +176,23 @@ export const DEFAULT_BLOG_SETTINGS: BlogSettings = {
     secondaryLabel: "View Our Services",
     secondaryUrl: "/academic-research/",
   },
-  // Posts get their own heading, text and button from the "Blog Form Copy" sheet
-  // (scripts/blog-lead-copy); this text covers posts without a row.
+  // Posts get their own heading and text from the "Blog Form Copy" sheet
+  // (scripts/blog-lead-copy); this text covers posts without a row. The button text
+  // is the same on every post and comes from here (or Blog Settings once saved).
   leadForms: {
     enabled: true,
     inline: {
       heading: "Need help with a tough subject?",
       highlight: "tough subject?",
       text: "Get matched with a tutor for the topics you find hardest. Connect with a tutor or academic support specialist for a one-on-one session.",
-      buttonLabel: "Find My Tutor",
+      buttonLabel: "SECURE MY \"A\" OR \"B\" GRADES",
       note: "Free Inquiry · No Card Required · Reply in 15 Minutes",
     },
     sidebar: {
       heading: "Need help with a tough subject?",
       highlight: "tough subject?",
       text: "Get matched with a tutor for the topics you find hardest.",
-      buttonLabel: "Find My Tutor",
+      buttonLabel: "SECURE MY \"A\" OR \"B\" GRADES",
       note: "Free Inquiry · Reply in 15 Minutes",
     },
   },
