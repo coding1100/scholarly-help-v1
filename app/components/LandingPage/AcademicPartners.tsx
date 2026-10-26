@@ -5,6 +5,11 @@ import Image from "next/image";
 import { usePageData } from "./usePageData";
 import { useMemo, useState, useEffect, FC } from "react";
 import { usePathname } from "next/navigation";
+import {
+  isTakeMyClassLayoutPage,
+  isTextCtaLandingPage,
+} from "@/app/lib/takeMyClassLandingRoutes";
+import TextUsCta from "./TextUsCta";
 
 type PerformanceItem = {
   number?: string;
@@ -68,9 +73,7 @@ const AcademicPartners: FC<AcademicPartnersProps> = ({
 
   // Pages that must keep their exact previous look (e.g. live ad campaigns).
   // These never showed the stats block before, so keep them hidden here.
-  const isFrozenPath =
-    currentPathname === "/take-my-class" ||
-    currentPathname === "/take-my-class/";
+  const isFrozenPath = isTakeMyClassLayoutPage(currentPathname);
 
   // Admin controls visibility of the stats block. Defaults to shown; only an
   // explicit `false` from the admin panel hides it. Also require at least one
@@ -158,13 +161,21 @@ const AcademicPartners: FC<AcademicPartnersProps> = ({
               "From exams and essays to full-class management, we handle it all so you don't have to."}
           </p>
           <div className="flex sm:justify-start justify-center mt-[30px]">
-            <button
-              type="button"
-              onClick={scrollToQuote}
-              className="rounded-md px-6 cursor-pointer bg-[#ff641a] text-white border border-transparent transition duration-300 text-[15px] max-[768px]:w-full font-medium flex items-center justify-center hover:bg-white hover:text-[#ff641a] hover:border-[#ff641a] h-[54px]"
-            >
-              {content?.ctaButton?.text || "Secure My 'A' or 'B' Grades"}
-            </button>
+            {isTextCtaLandingPage(currentPathname) ? (
+              <TextUsCta
+                placement="academic_partners"
+                buttonClassName="rounded-md px-6 cursor-pointer bg-[#ff641a] text-white border border-transparent transition duration-300 text-[15px] max-[768px]:w-full font-medium flex items-center justify-center hover:bg-white hover:text-[#ff641a] hover:border-[#ff641a] h-[54px]"
+                textClassName="text-xl font-semibold text-gray-900"
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={scrollToQuote}
+                className="rounded-md px-6 cursor-pointer bg-[#ff641a] text-white border border-transparent transition duration-300 text-[15px] max-[768px]:w-full font-medium flex items-center justify-center hover:bg-white hover:text-[#ff641a] hover:border-[#ff641a] h-[54px]"
+              >
+                {content?.ctaButton?.text || "Secure My 'A' or 'B' Grades"}
+              </button>
+            )}
           </div>
           {shouldShowPerformances && (
             <div className="mt-10 space-y-5 max-w-xs">

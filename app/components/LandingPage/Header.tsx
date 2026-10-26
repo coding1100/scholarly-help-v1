@@ -13,6 +13,8 @@ import {
   isTakeMyClass3LandingPage,
   isTakeMyClassHeaderRoute,
   isTakeMyClassHeroCopyVariant,
+  isTakeMyClassLayoutPage,
+  isTextCtaLandingPage,
 } from "@/app/lib/takeMyClassLandingRoutes";
 import { rememberFbclidFromUrl } from "@/app/lib/client/smsTracking";
 import { hasRefreshSessionHint } from "@/app/lib/accessTokenStore";
@@ -23,6 +25,9 @@ declare global {
     dataLayer?: Array<Record<string, any>>;
   }
 }
+
+const TOOLS_SENT_MESSAGE =
+  "✅ Success! Your free tools guide has been sent to your inbox.";
 
 const Star: React.FC<{ className?: string }> = ({ className }) => (
   <svg
@@ -54,9 +59,11 @@ export default function Header() {
   const isSpecialRoute = isTakeMyClass || isTakeMyExam;
   const isSpecialRoute3 = isSpecialRoute || isTakeMyClass3;
 
-  // SMS offline-conversion tracking is scoped to exactly /take-my-class.
-  const isTakeMyClassExact =
-    pathname === "/take-my-class" || pathname === "/take-my-class/";
+  // The /take-my-class layout (also /tools-thank-you): its header layout and
+  // SMS offline-conversion tracking.
+  const isTakeMyClassLayout = isTakeMyClassLayoutPage(pathname);
+  // /tools-thank-you confirms the free-tools email in place of the rating.
+  const isTextCta = isTextCtaLandingPage(pathname);
 
   // /thank-you/ has its own "Free Quote On Whatsapp" CTA in-page, so the
   // header's phone number is redundant there and hidden.
@@ -74,8 +81,8 @@ export default function Header() {
   // Persist fbclid (cookie + sessionStorage) as early as the header mounts, so a
   // later "Text Us" tap can recover it even if the URL query is gone.
   useEffect(() => {
-    if (isTakeMyClassExact) rememberFbclidFromUrl();
-  }, [isTakeMyClassExact]);
+    if (isTakeMyClassLayout) rememberFbclidFromUrl();
+  }, [isTakeMyClassLayout]);
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeMenu, setActiveMenu] = useState<number | null>(null);
@@ -415,13 +422,13 @@ export default function Header() {
   return (
     <header
       className={`bg-white z-[9999] shadow-sm ${
-        isTakeMyClassExact ? "static sm:sticky sm:top-0" : "sticky top-0"
+        isTakeMyClassLayout ? "static sm:sticky sm:top-0" : "sticky top-0"
       }`}
     >
       {/* Header Top Bar */}
       <div
         className={`max-w-7xl mx-auto max-[1320px]:px-3 flex items-center pt-2 min-h-[64px] ${
-          isTakeMyClassExact
+          isTakeMyClassLayout
             ? "justify-center sm:justify-between"
             : isTakeMyClass3
               ? "md:justify-between justify-center"
@@ -480,7 +487,13 @@ export default function Header() {
         </Link>
 
         {/* Rating Stars - Only for /take-my-class/ */}
-        {(isTakeMyClass || isTakeMyClass3) && (
+        {isTextCta ? (
+          // No phone number on the right here, so pad by the logo's width to
+          // keep the message centred like the rating it replaces.
+          <p className="max-[768px]:hidden flex-1 pr-[138px] text-center text-sm font-semibold text-gray-700">
+            {TOOLS_SENT_MESSAGE}
+          </p>
+        ) : (isTakeMyClass || isTakeMyClass3) && (
           <div className="max-[768px]:hidden md:flex flex-col items-center">
             <div className="flex items-center">
               {[...Array(5)].map((_, i) => (
@@ -499,7 +512,8 @@ export default function Header() {
 
         {/* Phone Number - Shown for special routes (take-my-class, take-my-exam, take-my-class-3): always show number on mobile */}
 
-        {isSpecialRoute3 && (
+        {/* Text-CTA pages show no phone number: their CTAs carry it. */}
+        {!isTextCta && isSpecialRoute3 && (
           <div>
             {/* Desktop: phone number that opens the dialer (call). */}
             <a
@@ -666,7 +680,11 @@ export default function Header() {
           </>
         )}
       </div>
-      {(isTakeMyClass || isTakeMyClass3) && (
+      {isTextCta ? (
+        <p className="md:hidden px-3 py-2 text-center text-sm font-semibold text-gray-700">
+          {TOOLS_SENT_MESSAGE}
+        </p>
+      ) : (isTakeMyClass || isTakeMyClass3) && (
         <div className=" md:hidden flex-col items-center flex py-2">
           <div className="flex">
             {[...Array(5)].map((_, i) => (

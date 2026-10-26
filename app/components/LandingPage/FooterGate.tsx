@@ -1,6 +1,7 @@
 "use client";
 import { FC, ReactNode } from "react";
 import { usePathname } from "next/navigation";
+import { isTakeMyClassLayoutPage } from "@/app/lib/takeMyClassLandingRoutes";
 
 const hideHeaderFooterRoutes = [
   "/take-my-class",
@@ -35,7 +36,7 @@ const FooterGate: FC<FooterGateProps> = ({ children }) => {
   const normalizedPath = (pathname || "").replace(/\/+$/, "") || "/";
   const isLandingStylePath =
     normalizedPath.startsWith("/landing") ||
-    normalizedPath === "/take-my-class" ||
+    isTakeMyClassLayoutPage(normalizedPath) ||
     normalizedPath.startsWith("/take-my-class-");
 
   const shouldHideHeaderFooter =

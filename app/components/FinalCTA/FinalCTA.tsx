@@ -13,6 +13,8 @@ import {
   quoteButtonClass,
   quoteInputClass,
 } from "../LandingPage/QuoteLeadFields";
+import TextUsCta from "../LandingPage/TextUsCta";
+import { isTextCtaLandingPage } from "@/app/lib/takeMyClassLandingRoutes";
 interface FinalCTAProps {}
 
 const FinalCTA: FC<FinalCTAProps> = ({}) => {
@@ -37,7 +39,9 @@ const FinalCTA: FC<FinalCTAProps> = ({}) => {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const { submit, sending, error } = useQuoteLead();
-  const detailsField = getDetailsField(usePathname());
+  const pathname = usePathname();
+  const detailsField = getDetailsField(pathname);
+  const isTextCta = isTextCtaLandingPage(pathname);
 
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -74,56 +78,66 @@ const FinalCTA: FC<FinalCTAProps> = ({}) => {
             backgroundRepeat: "no-repeat",
           }}
         >
-          <form
-            method="post"
-            onSubmit={onSubmit}
-            className="flex w-full max-w-[440px] flex-col gap-3"
-          >
-            <input
-              type="text"
-              name="classDetails"
-              aria-label={detailsField.label}
-              placeholder={detailsField.placeholder}
-              required
-              maxLength={200}
-              value={classDetails}
-              onChange={(e) => setClassDetails(e.target.value)}
-              className={quoteInputClass}
-            />
-            <input
-              type="email"
-              name="email"
-              aria-label="Email"
-              placeholder="Email *"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className={quoteInputClass}
-            />
-            <input
-              type="tel"
-              name="phone"
-              aria-label="Mobile number"
-              placeholder={PHONE_PLACEHOLDER}
-              autoComplete="tel"
-              inputMode="tel"
-              required
-              maxLength={30}
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className={quoteInputClass}
-            />
-            <button
-              type="submit"
-              disabled={sending}
-              className={`${quoteButtonClass} w-full`}
+          {isTextCta ? (
+            <div className="flex w-full max-w-[440px] justify-center">
+              <TextUsCta
+                placement="final_cta"
+                buttonClassName={`${quoteButtonClass} w-full`}
+                textClassName="text-center text-2xl font-semibold text-white"
+              />
+            </div>
+          ) : (
+            <form
+              method="post"
+              onSubmit={onSubmit}
+              className="flex w-full max-w-[440px] flex-col gap-3"
             >
-              {sending ? "Sending..." : buttonText}
-            </button>
-            <QuoteLeadError message={error} />
-            <QuoteLeadNote text="No spam · No card needed" />
-          </form>
+              <input
+                type="text"
+                name="classDetails"
+                aria-label={detailsField.label}
+                placeholder={detailsField.placeholder}
+                required
+                maxLength={200}
+                value={classDetails}
+                onChange={(e) => setClassDetails(e.target.value)}
+                className={quoteInputClass}
+              />
+              <input
+                type="email"
+                name="email"
+                aria-label="Email"
+                placeholder="Email *"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className={quoteInputClass}
+              />
+              <input
+                type="tel"
+                name="phone"
+                aria-label="Mobile number"
+                placeholder={PHONE_PLACEHOLDER}
+                autoComplete="tel"
+                inputMode="tel"
+                required
+                maxLength={30}
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className={quoteInputClass}
+              />
+              <button
+                type="submit"
+                disabled={sending}
+                className={`${quoteButtonClass} w-full`}
+              >
+                {sending ? "Sending..." : buttonText}
+              </button>
+              <QuoteLeadError message={error} />
+              <QuoteLeadNote text="No spam · No card needed" />
+            </form>
+          )}
         </div>
       </div>
     </div>
