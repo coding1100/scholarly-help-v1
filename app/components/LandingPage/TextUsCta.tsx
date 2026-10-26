@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { handleTextUsClick } from "@/app/lib/client/smsTracking";
 
 const TEXT_CTA_LABEL = "Secure My 'A' or 'B' Grades";
@@ -14,6 +15,8 @@ interface TextUsCtaProps {
   textClassName?: string;
   /** Render nothing on desktop (e.g. the sticky bar). */
   mobileOnly?: boolean;
+  /** Mobile link content; defaults to the CTA label. */
+  label?: ReactNode;
   /** Where the CTA sits, reported to GTM (e.g. "hero", "final_cta"). */
   placement: string;
 }
@@ -27,6 +30,7 @@ export default function TextUsCta({
   buttonClassName,
   textClassName = "",
   mobileOnly = false,
+  label = TEXT_CTA_LABEL,
   placement,
 }: TextUsCtaProps) {
   return (
@@ -48,7 +52,7 @@ export default function TextUsCta({
         }}
         className={`${buttonClassName} md:hidden`}
       >
-        {TEXT_CTA_LABEL}
+        {label}
       </a>
       {!mobileOnly && (
         <p className={`${textClassName} hidden md:block`}>

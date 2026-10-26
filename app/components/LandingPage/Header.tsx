@@ -19,7 +19,7 @@ import {
 import { rememberFbclidFromUrl } from "@/app/lib/client/smsTracking";
 import { hasRefreshSessionHint } from "@/app/lib/accessTokenStore";
 import { getToolDashboardHref } from "@/app/lib/toolLandingRoutes";
-import { TEXT_CTA_NUMBER_DISPLAY } from "./TextUsCta";
+import TextUsCta, { TEXT_CTA_NUMBER_DISPLAY } from "./TextUsCta";
 
 declare global {
   interface Window {
@@ -514,7 +514,7 @@ export default function Header() {
         {isTextCta ? (
           // Text-CTA pages show their texting number, as plain text: there
           // is nothing to open on desktop.
-          <p className="hidden sm:flex items-center text-[#565add]">
+          <p className="hidden md:flex items-center text-[#565add]">
             <span className="w-6 mr-1">
               <Image
                 src={Phone}
@@ -694,9 +694,22 @@ export default function Header() {
         )}
       </div>
       {isTextCta ? (
-        <p className="md:hidden px-3 py-2 text-center text-sm font-semibold text-gray-700">
-          {TOOLS_SENT_MESSAGE}
-        </p>
+        <div className="md:hidden flex flex-col items-center gap-1 px-3 py-2 text-center">
+          <p className="text-sm font-semibold text-gray-700">
+            {TOOLS_SENT_MESSAGE}
+          </p>
+          <TextUsCta
+            placement="header"
+            mobileOnly
+            label={
+              <>
+                <Image src={Phone} alt="" width={18} height={18} />
+                {TEXT_CTA_NUMBER_DISPLAY}
+              </>
+            }
+            buttonClassName="flex items-center gap-1.5 text-[15px] font-semibold text-[#565add]"
+          />
+        </div>
       ) : (isTakeMyClass || isTakeMyClass3) && (
         <div className=" md:hidden flex-col items-center flex py-2">
           <div className="flex">
