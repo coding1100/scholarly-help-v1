@@ -14,7 +14,7 @@ const labelClass =
 /**
  * Email + mobile lead form for the free-tools take-my-class variants. Sends
  * the same quote lead as the HeroForm2 full form, requests a free account for
- * the email, then routes to /tools-thank-you.
+ * the email, then routes to /tools-signup.
  */
 export default function FreeToolsLeadForm() {
   const pathname = usePathname();
@@ -63,7 +63,7 @@ export default function FreeToolsLeadForm() {
 
     try {
       await axiosInstance.post(`/order/quote`, fd);
-      router.push("/tools-thank-you");
+      router.push("/tools-signup");
     } catch {
       alert("Failed to send request, try again later");
       setLoading(false);

@@ -59,10 +59,10 @@ export default function Header() {
   const isSpecialRoute = isTakeMyClass || isTakeMyExam;
   const isSpecialRoute3 = isSpecialRoute || isTakeMyClass3;
 
-  // The /take-my-class layout (also /tools-thank-you): its header layout and
+  // The /take-my-class layout (also /tools-signup): its header layout and
   // SMS offline-conversion tracking.
   const isTakeMyClassLayout = isTakeMyClassLayoutPage(pathname);
-  // /tools-thank-you confirms the free-tools email in place of the rating.
+  // /tools-signup confirms the free-tools email in place of the rating.
   const isTextCta = isTextCtaLandingPage(pathname);
 
   // /thank-you/ has its own "Free Quote On Whatsapp" CTA in-page, so the

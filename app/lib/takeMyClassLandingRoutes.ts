@@ -13,7 +13,7 @@ export const TAKE_MY_CLASS_4_PATH = "/take-my-class-4";
 export const TAKE_MY_CLASS_5_PATH = "/take-my-class-5";
 export const TAKE_MY_CLASS_6_PATH = "/take-my-class-6";
 /** /take-my-class rendered after the free-tools lead form, with text-message CTAs. */
-export const TOOLS_THANK_YOU_PATH = "/tools-thank-you";
+export const TOOLS_SIGNUP_PATH = "/tools-signup";
 
 const LANDING_PAGE_PATHS = [
   TAKE_MY_CLASS_PATH,
@@ -26,7 +26,7 @@ const LANDING_PAGE_PATHS = [
   TAKE_MY_CLASS_PROTECT_GPA_PATH,
   TAKE_MY_CLASS_ALWAYS_WORKING_HARDER_PATH,
   TAKE_MY_CLASS_SAVING_YOUR_FUTURE_PATH,
-  TOOLS_THANK_YOU_PATH,
+  TOOLS_SIGNUP_PATH,
 ] as const;
 
 const EMAIL_ONLY_HERO_FORM_PATHS = [
@@ -45,7 +45,7 @@ const HEADER_ROUTE_PATHS = [
   TAKE_MY_CLASS_PROTECT_GPA_PATH,
   TAKE_MY_CLASS_ALWAYS_WORKING_HARDER_PATH,
   TAKE_MY_CLASS_SAVING_YOUR_FUTURE_PATH,
-  TOOLS_THANK_YOU_PATH,
+  TOOLS_SIGNUP_PATH,
 ] as const;
 
 export function normalizePathname(pathname: string | null | undefined): string {
@@ -82,20 +82,20 @@ export function isTakeMyClassLandingPathname(pathname: string | null | undefined
 
 /**
  * Pages that render the /take-my-class layout itself: /take-my-class and
- * /tools-thank-you. Use for checks that mean "this layout", not "this URL".
+ * /tools-signup. Use for checks that mean "this layout", not "this URL".
  */
 export function isTakeMyClassLayoutPage(
   pathname: string | null | undefined,
 ): boolean {
   const path = normalizePathname(pathname);
-  return path === TAKE_MY_CLASS_PATH || path === TOOLS_THANK_YOU_PATH;
+  return path === TAKE_MY_CLASS_PATH || path === TOOLS_SIGNUP_PATH;
 }
 
 /** Pages whose CTAs open a pre-filled text message instead of a quote form. */
 export function isTextCtaLandingPage(
   pathname: string | null | undefined,
 ): boolean {
-  return normalizePathname(pathname) === TOOLS_THANK_YOU_PATH;
+  return normalizePathname(pathname) === TOOLS_SIGNUP_PATH;
 }
 
 /** take-my-class-3 only (distinct centered header layout). */
@@ -159,7 +159,7 @@ export function isTakeMyClassEmailOnlyHeroFormPage(
 }
 
 /**
- * Header "special route" take-my-class group: original, variant 2, professor, still-doing, protect-gpa, always-working-harder, saving-your-future, tools-thank-you.
+ * Header "special route" take-my-class group: original, variant 2, professor, still-doing, protect-gpa, always-working-harder, saving-your-future, tools-signup.
  * Excludes take-my-class-3 (handled separately).
  */
 export function isTakeMyClassHeaderRoute(pathname: string | null | undefined): boolean {

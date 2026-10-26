@@ -124,9 +124,9 @@ export async function POST(request: NextRequest) {
     console.log('Connection closed, save operation completed');
 
     // Rebuild the ISR-cached pages so the edit is live on the next request.
-    // /tools-thank-you renders the same take-my-class content.
+    // /tools-signup renders the same take-my-class content.
     revalidatePath("/take-my-class");
-    revalidatePath("/tools-thank-you");
+    revalidatePath("/tools-signup");
 
     return NextResponse.json({
       success: true,
