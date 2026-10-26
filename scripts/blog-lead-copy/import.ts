@@ -1,8 +1,8 @@
 /*
  * Imports per-post lead form text from the "Blog Form Copy" spreadsheet into each post's
  * leadForms overrides. Posts are matched by the slug in the "Blog URL" column. Only the
- * heading, highlight, text and button label are stored per post; the small print under the
- * button comes from Blog Settings. Re-runnable: it overwrites the same fields each time and
+ * heading, highlight and text are stored per post; the button text and the small print
+ * come from Blog Settings (the sheet's CTA columns are not used). Re-runnable: it overwrites the same fields each time and
  * keeps a post's "hide the forms" switch.
  *
  *   npx vite-node -c vitest.config.ts scripts/blog-lead-copy/import.ts -- --file=PATH.xlsm [--dry-run]
@@ -28,10 +28,8 @@ const COLUMNS = {
   url: "Blog URL",
   wideHeading: "Wide Form Headline",
   wideText: "Wide Form Description",
-  wideButton: "Wide Form CTA",
   sideHeading: "Sidebar Headline",
   sideText: "Sidebar Description",
-  sideButton: "Sidebar CTA",
 } as const;
 
 /** The last two words of the heading are shown in orange. */
@@ -39,8 +37,8 @@ function defaultHighlight(heading: string): string {
   return heading.trim().split(/\s+/).slice(-2).join(" ");
 }
 
-function content(heading: string, text: string, buttonLabel: string): Partial<LeadFormContent> {
-  return { heading, highlight: defaultHighlight(heading), text, buttonLabel };
+function content(heading: string, text: string): Partial<LeadFormContent> {
+  return { heading, highlight: defaultHighlight(heading), text };
 }
 
 function cellText(value: ExcelJS.CellValue): string {
@@ -80,11 +78,25 @@ async function readRows(file: string) {
     rows.push({
       line,
       slug,
-      inline: content(get("wideHeading"), get("wideText"), get("wideButton")),
-      sidebar: content(get("sideHeading"), get("sideText"), get("sideButton")),
+      inline: content(get("wideHeading"), get("wideText")),
+      sidebar: content(get("sideHeading"), get("sideText")),
     });
   });
   return { rows, problems };
+}
+
+/** Lists what differs, e.g. "inline.heading", "sidebar.buttonLabel removed". */
+function changedFields(current: PostLeadForms, next: PostLeadForms): string[] {
+  const out: string[] = [];
+  for (const form of ["inline", "sidebar"] as const) {
+    const a: Partial<LeadFormContent> = current[form] ?? {};
+    const b: Partial<LeadFormContent> = next[form] ?? {};
+    for (const key of new Set([...Object.keys(a), ...Object.keys(b)]) as Set<keyof LeadFormContent>) {
+      if (a[key] === b[key]) continue;
+      out.push(`${form}.${key}${b[key] ? "" : " removed"}`);
+    }
+  }
+  return out;
 }
 
 async function main() {
@@ -112,12 +124,13 @@ async function main() {
     }
     // Validate and trim exactly like the post editor does.
     const next: PostLeadForms = normalizePostLeadForms({ hidden: post.leadForms?.hidden, inline: row.inline, sidebar: row.sidebar });
-    if (JSON.stringify(next) === JSON.stringify(normalizePostLeadForms(post.leadForms))) {
+    const fields = changedFields(normalizePostLeadForms(post.leadForms), next);
+    if (!fields.length) {
       unchanged++;
       continue;
     }
     changed++;
-    console.log(`${DRY ? "would update" : "update"}  ${row.slug}`);
+    console.log(`${DRY ? "would update" : "update"}  ${row.slug}  (${fields.join(", ")})`);
     // updatedAt is left alone: form text is not article content, so the post's "modified" date stays.
     if (!DRY) await c.posts.updateOne({ _id: post._id }, { $set: { leadForms: next } });
   }
@@ -126,6 +139,14 @@ async function main() {
   console.log(`\n${DRY ? "DRY RUN — nothing written.\n" : ""}Rows: ${rows.length}, ${DRY ? "would change" : "changed"}: ${changed}, already up to date: ${unchanged}`);
   if (withoutRow.length) console.log(`Posts with no row (they use the Blog Settings text):\n  ${withoutRow.join("\n  ")}`);
   if (problems.length) console.log(`Problems:\n  ${problems.join("\n  ")}`);
+
+  // Once Blog Settings are saved in the admin, the saved button text is used instead of the code default.
+  const saved = (await c.settings.findOne({ _id: "settings" }))?.leadForms;
+  if (saved) {
+    console.log(
+      `Blog Settings button text: in-article "${saved.inline?.buttonLabel ?? ""}", sidebar "${saved.sidebar?.buttonLabel ?? ""}" (change it in Admin → Blog → Settings if needed)`,
+    );
+  }
   process.exit(0);
 }
 

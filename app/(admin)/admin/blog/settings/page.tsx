@@ -159,7 +159,7 @@ export default function BlogSettingsPage() {
           <span>
             <span className="block text-sm font-semibold text-[#1a2456]">Show the lead forms on every post</span>
             <span className="block text-xs text-[#6b7280]">
-              One form at the end of the article (in place of the help box) and a compact one at the bottom of the sidebar (in place of the newsletter box). Leads go to GHL, email and
+              One form at the end of the article (in place of the help box) and a compact one in the sidebar, right after the table of contents (in place of the newsletter box). Leads go to GHL, email and
               the Google Sheet. Each post can change this text or hide the forms.
             </span>
           </span>
