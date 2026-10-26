@@ -39,6 +39,8 @@ export default function FreeToolsLeadForm() {
     fd.append("url", window.location.href);
     fd.append("email", trimmedEmail);
     fd.append("phone_number", trimmedPhone);
+    // Logged to the "tools leads" tab instead of the general quotes tab.
+    fd.append("lead_source", "free-tools");
 
     void fetch("/api/tmc-lp-landing-sheet", {
       method: "POST",
