@@ -6,11 +6,14 @@ export const revalidate = 0;
 
 const SHEET_RANGE = "'TMC Landing Pages'!A:Z";
 
+const FORM_TYPES = ["email-only", "full-form", "free-tools"] as const;
+type FormType = (typeof FORM_TYPES)[number];
+
 type TmcLpLandingSheetPayload = {
   email?: string;
   phone?: string;
   instructions?: string;
-  formType?: "email-only" | "full-form";
+  formType?: FormType;
   fbclid?: string;
   gclid?: string;
   landingPage?: string;
@@ -60,7 +63,9 @@ export async function POST(request: NextRequest) {
     }
 
     const instructions = (body.instructions || "").trim();
-    const formType = body.formType === "full-form" ? "full-form" : "email-only";
+    const formType: FormType = FORM_TYPES.includes(body.formType as FormType)
+      ? (body.formType as FormType)
+      : "email-only";
     const fbclid = (body.fbclid || "").trim();
     const gclid = (body.gclid || "").trim();
     const landingPage = normalizeLandingPage(body.landingPage || "");
