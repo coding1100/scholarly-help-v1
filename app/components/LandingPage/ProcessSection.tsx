@@ -163,9 +163,14 @@ export default function ProcessSection() {
             <h2 className="text-[42px] max-[768px]:text-[28px] text-[#000]font-bold  sm:font-bold font-semibold leading-tight">
               {processSection?.mainHeading || "State-of-the-Art Process We Follow"}
             </h2>
-            <p className="mt-3 sm:text-[18px] text-sm font-medium text-white/80">
-              {processSection?.description || "Beyond the subjects listed below, we excel at handling diverse topics effectively. Our expertise knows no bounds, ensuring we're ready for any challenge that comes our way."}
-            </p>
+            <p
+              className="mt-3 sm:text-[18px] text-sm font-medium text-white/80"
+              dangerouslySetInnerHTML={{
+                __html:
+                  processSection?.description ||
+                  "Beyond the subjects listed below, we excel at handling diverse topics effectively. Our expertise knows no bounds, ensuring we're ready for any challenge that comes our way.",
+              }}
+            />
           </div>
 
           <div className="mt-[80px] grid grid-cols-1 gap-10 sm:gap-12 md:grid-cols-2 lg:grid-cols-4">
