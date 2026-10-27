@@ -55,16 +55,17 @@ export default function FreeToolsLeadForm() {
       }),
     }).catch(() => {});
 
-    // Free account for a new email: the backend emails its password with a
-    // sign-in link and leaves existing accounts untouched. Never blocks the lead.
-    void axios
-      .post(`${process.env.NEXT_PUBLIC_NGROX_URL}/auth/landing-account`, {
-        email: trimmedEmail,
-      })
-      .catch(() => {});
-
     try {
       await axiosInstance.post(`/order/quote`, fd);
+      // Free account for a new email: the backend emails its password with a
+      // sign-in link and leaves existing accounts untouched. Sent after the
+      // quote so its GHL contact (tagged free-tools-landing) is created first.
+      // Never blocks the lead.
+      void axios
+        .post(`${process.env.NEXT_PUBLIC_NGROX_URL}/auth/landing-account`, {
+          email: trimmedEmail,
+        })
+        .catch(() => {});
       router.push("/tools-thank-you");
     } catch {
       alert("Failed to send request, try again later");
