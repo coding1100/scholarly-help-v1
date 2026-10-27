@@ -7,6 +7,7 @@ import ProcessSection from "@/app/components/LandingPage/ProcessSection";
 import Success from "@/app/components/LandingPage/Success";
 import AcademicPartners from "@/app/components/LandingPage/AcademicPartners";
 import Faq from "@/app/components/LandingPage/Faq";
+import StudyGuides from "@/app/components/LandingPage/StudyGuides";
 import CustomerReviews from "@/app/components/LandingPage/CustomerReviews";
 import Subjects from "@/app/components/LandingPage/Subjects";
 import { SubjectType, subjects } from "../subjectContent";
@@ -171,6 +172,7 @@ const Page = async ({ params }: PageProps) => {
           <AcademicPartners />
           <PriceSection />
           {/* <GetQouteDynamic /> */}
+          <StudyGuides path={`/online-class/${subject}`} />
           <Faq />
           <FinalCTA />
         </MainLayout>
@@ -229,6 +231,7 @@ const Page = async ({ params }: PageProps) => {
         <AcademicPartners />
         <PriceSection />
         {/* <GetQouteDynamic /> */}
+        <StudyGuides path={`/online-class/${subject}`} />
         <Faq />
         <FinalCTA />
       </MainLayout>

@@ -91,6 +91,10 @@ const GetQouteDynamic = dynamic(() => import("./GetQoute"), {
   loading: () => <LoadingSkeleton height="400px" />,
 });
 
+const StudyGuides = dynamic(() => import("./StudyGuides"), {
+  ssr: false,
+});
+
 const Faq = dynamic(() => import("./Faq"), {
   ssr: false,
   loading: () => <LoadingSkeleton height="400px" />,
@@ -235,6 +239,7 @@ export default function BelowFoldLanding({ children }: BelowFoldLandingProps) {
         isEssayWritingPage ||
         currentPath === "/") && <PriceSection />}
       {!isOnlineClassPage || (currentPath === "/" && <GetQouteDynamic />)}
+      <StudyGuides path={currentPath} />
       {currentPath !== "/" && <Faq />}
       {(showSuccessTop || isTakeMyClassPage) && <FinalCTA />}
     </>

@@ -57,7 +57,7 @@ const FinalCTA: FC<FinalCTAProps> = ({}) => {
           >
             {textBefore}{" "}
             <span
-              className="bg-[#5A5BE0] rounded-full px-3 sm:px-4 py-1 md:-rotate-3 inline-block font-semibold whitespace-nowrap"
+              className="bg-[#5A5BE0] rounded-full px-3 sm:px-4 py-1 md:-rotate-3 inline-block font-semibold sm:whitespace-nowrap"
               style={{
                 boxShadow:
                   "rgba(0, 0, 0, 0.25) 0px 14px 28px, rgba(0, 0, 0, 0.22) 0px 10px 10px",
