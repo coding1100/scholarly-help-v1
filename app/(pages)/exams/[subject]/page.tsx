@@ -7,6 +7,7 @@ import Success from "@/app/components/LandingPage/Success";
 import AcademicPartners from "@/app/components/LandingPage/AcademicPartners";
 import GetQoute from "@/app/components/LandingPage/GetQoute";
 import Faq from "@/app/components/LandingPage/Faq";
+import StudyGuides from "@/app/components/LandingPage/StudyGuides";
 import CustomerReviews from "@/app/components/LandingPage/CustomerReviews";
 import Subjects from "@/app/components/LandingPage/Subjects";
 import { examSubjects, isValidExamSubject } from "../examSubjectContent";
@@ -146,6 +147,7 @@ const Page = async ({ params }: PageProps) => {
           <SubSubjectsSection defaultSubSubjects={examsSubjects} />
           <OnlinePlatform />
           <AcademicPartners />
+          <StudyGuides path={`/exams/${subject}`} />
           <Faq />
         </MainLayout>
       </ExamDataProvider>
@@ -203,6 +205,7 @@ const Page = async ({ params }: PageProps) => {
         <AcademicPartners />
         <PriceSection />
 
+        <StudyGuides path={`/exams/${subject}`} />
         <Faq />
         <FinalCTA />
       </MainLayout>

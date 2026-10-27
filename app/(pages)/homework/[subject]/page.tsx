@@ -10,6 +10,7 @@ import Success from "@/app/components/LandingPage/Success";
 import AcademicPartners from "@/app/components/LandingPage/AcademicPartners";
 import GetQoute from "@/app/components/LandingPage/GetQoute";
 import Faq from "@/app/components/LandingPage/Faq";
+import StudyGuides from "@/app/components/LandingPage/StudyGuides";
 import CustomerReviews from "@/app/components/LandingPage/CustomerReviews";
 import Subjects from "@/app/components/LandingPage/Subjects";
 import { homeworkSubjects, isValidHomeworkSubject } from "../subjectContent";
@@ -149,6 +150,7 @@ const Page = async ({ params }: PageProps) => {
           <OnlinePlatform />
           <AcademicPartners />
           <PriceSection />
+          <StudyGuides path={`/homework/${subject}`} />
           <Faq />
           <FinalCTA />
         </MainLayout>
@@ -199,6 +201,7 @@ const Page = async ({ params }: PageProps) => {
         <OnlinePlatform />
         <AcademicPartners />
         <PriceSection />
+        <StudyGuides path={`/homework/${subject}`} />
         <Faq />
         <FinalCTA />
       </MainLayout>
