@@ -29,19 +29,33 @@ export function getDetailsField(pathname: string | null | undefined): DetailsFie
 export const PHONE_PLACEHOLDER = "Mobile No to Text Your Quote *";
 
 /** Small print under the quote lead forms. */
-export function QuoteLeadNote({ text }: { text: string }) {
+export function QuoteLeadNote({
+  text,
+  className = "justify-center text-white/75",
+}: {
+  text: string;
+  /** Alignment and text colour; the default suits the dark sections. */
+  className?: string;
+}) {
   return (
-    <p className="flex items-center justify-center gap-1 text-xs text-white/75">
+    <p className={`flex items-center gap-1 text-xs ${className}`}>
       <MdLock aria-hidden className="text-[#F5B544]" />
       {text}
     </p>
   );
 }
 
-export function QuoteLeadError({ message }: { message: string }) {
+export function QuoteLeadError({
+  message,
+  className = "text-[#FFB59A]",
+}: {
+  message: string;
+  /** Text colour; the default suits the dark sections. */
+  className?: string;
+}) {
   if (!message) return null;
   return (
-    <p role="alert" className="text-center text-sm font-medium text-[#FFB59A]">
+    <p role="alert" className={`text-center text-sm font-medium ${className}`}>
       {message}
     </p>
   );

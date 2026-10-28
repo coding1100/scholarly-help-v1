@@ -10,7 +10,6 @@ import LogoSmall from "@/app/assets/Images/logoSmall.png";
 import LogoNormal from "@/app/assets/Images/logo.svg";
 import Phone from "@/app/assets/Icons/phone.webp";
 import {
-  isTakeMyClass3LandingPage,
   isTakeMyClassHeaderRoute,
   isTakeMyClassHeroCopyVariant,
   isTakeMyClassLayoutPage,
@@ -48,11 +47,8 @@ export default function Header() {
   const dashboardHref = getToolDashboardHref(pathname);
   const router = useRouter();
   const prefetchedRoutesRef = useRef<Set<string>>(new Set());
-  // take-my-class-3's centered landing header is shared by the -4/-5/-6
-  // hero-copy variants too (same layout, just a different headline).
-  const isTakeMyClass3 =
-    isTakeMyClass3LandingPage(pathname) ||
-    isTakeMyClassHeroCopyVariant(pathname);
+  // The -4/-5/-6 hero-copy variants share a centered landing header.
+  const isTakeMyClass3 = isTakeMyClassHeroCopyVariant(pathname);
   const isTakeMyClass = isTakeMyClassHeaderRoute(pathname);
   const isTakeMyExam =
     pathname === "/take-my-exam/" || pathname === "/take-my-exam";
