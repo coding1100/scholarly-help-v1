@@ -12,8 +12,6 @@ const HELP_OPTIONS = [
   "Writing assignments",
 ];
 
-const CTA_LABEL = "Get My Tutor Match";
-
 const buttonClass =
   "flex h-12 shrink-0 items-center justify-center rounded-md border border-transparent bg-[#ff641a] px-6 text-[15px] font-bold text-white transition duration-300 hover:border-[#ff641a] hover:bg-white hover:text-[#ff641a] disabled:cursor-wait disabled:opacity-80";
 
@@ -97,9 +95,9 @@ export default function StepQuoteForm({ variant, stickyCta = false }: StepQuoteF
     logToLandingSheet: variant === "hero",
   });
   const styles = STYLES[variant];
-  // The sticky button keeps /take-my-class's CTA (HeroForm2's label).
-  const stickyLabel =
-    usePageData()?.getQuote?.ctaButton?.text || "SECURE MY 'A' OR 'B' GRADES";
+  // Same CTA as /take-my-class (HeroForm2's label).
+  const ctaLabel =
+    usePageData()?.getQuote?.ctaButton?.text || "Secure My 'A' or 'B' Grades";
 
   useEffect(() => {
     if (step === 2) emailRef.current?.focus();
@@ -200,7 +198,7 @@ export default function StepQuoteForm({ variant, stickyCta = false }: StepQuoteF
               />
               {variant === "process" && (
                 <button type="submit" disabled={sending} className={buttonClass}>
-                  {sending ? "Sending..." : CTA_LABEL}
+                  {sending ? "Sending..." : ctaLabel}
                 </button>
               )}
             </div>
@@ -209,7 +207,7 @@ export default function StepQuoteForm({ variant, stickyCta = false }: StepQuoteF
             </p>
             {variant !== "process" && (
               <button type="submit" disabled={sending} className={`${buttonClass} w-full`}>
-                {sending ? "Sending..." : CTA_LABEL}
+                {sending ? "Sending..." : ctaLabel}
               </button>
             )}
             <QuoteLeadError message={error} className={styles.error} />
@@ -223,7 +221,7 @@ export default function StepQuoteForm({ variant, stickyCta = false }: StepQuoteF
           onClick={scrollToForm}
           className="fixed bottom-2 left-1/2 z-50 h-12 w-[75%] -translate-x-1/2 cursor-pointer rounded-md border border-transparent bg-[#ff641a] px-4 text-sm font-medium uppercase tracking-wider text-white shadow-lg transition-all duration-300 hover:border-[#ff641a] hover:bg-white hover:text-[#ff641a] sm:w-fit"
         >
-          {stickyLabel}
+          {ctaLabel}
         </button>
       )}
     </>
