@@ -21,7 +21,7 @@ interface StepFormHeroProps {
 }
 
 /**
- * Centred hero: heading and description over the "Check Your Tutoring Price"
+ * Centred hero: heading and description over the "Check Your Class Price"
  * card with the two-step quote form, then a row of trust points.
  */
 export default function StepFormHero({ headingSlot, description }: StepFormHeroProps) {
@@ -40,7 +40,7 @@ export default function StepFormHero({ headingSlot, description }: StepFormHeroP
           <p className="bg-[#263238] px-2 py-2 text-center text-lg font-semibold text-white sm:py-3 sm:text-xl md:text-2xl lg:text-[28px]">
             Check Your{" "}
             <span className="inline-block -rotate-3 rounded-full bg-[#F56200] px-4">
-              Tutoring
+              Class
             </span>{" "}
             Price
           </p>
