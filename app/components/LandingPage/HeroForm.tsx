@@ -1,7 +1,7 @@
 "use client";
 
 import axiosInstance from "@/app/axios";
-import { appendMetaLeadFields, pushQuoteLeadEvent } from "@/app/utils/metaLeadEvent";
+import { appendMetaLeadFields, pushMetaEventId } from "@/app/utils/metaEvent";
 import { usePathname, useRouter } from "next/navigation";
 import React, { FC, useEffect, useMemo, useRef, useState } from "react";
 import { IoIosMail } from "react-icons/io";
@@ -536,7 +536,7 @@ const HeroForm: FC<HeroFormProps> = ({
 
     try {
       await axiosInstance.post(`/order/quote`, fd);
-      pushQuoteLeadEvent(metaEventId);
+      pushMetaEventId(metaEventId);
       // Clear form fields on successful submission
       setFormData({
         Email: "",

@@ -14,6 +14,7 @@ import SocialAuthButtons from "./SocialAuthButtons";
 import { validateEmail, validateSignInPassword } from "@/app/lib/authValidation";
 import { completeAuthSession } from "@/app/lib/authSession";
 import { buildHrefWithSameQuery } from "@/app/utils/url";
+import { metaEventFields, pushMetaEventId, signupMetaEventId } from "@/app/utils/metaEvent";
 
 interface SignUpCardProps {
   switchAuthForm?: string;
@@ -62,6 +63,9 @@ const SignUpCard: FC<SignUpCardProps> = ({
 
   const [step, setStep] = useState<"request" | "check">("request");
   useEffect(() => onStepChange?.(step), [step, onStepChange]);
+  // GTM's "Tools Sign Up" click triggers on this card's buttons read event_id
+  // from the dataLayer, so it must be there before the click.
+  useEffect(() => pushMetaEventId(signupMetaEventId()), [step]);
 
   // Step 1: request
   const [email, setEmail] = useState("");
@@ -210,7 +214,11 @@ const SignUpCard: FC<SignUpCardProps> = ({
     try {
       const res = await axios.post(
         `${process.env.NEXT_PUBLIC_NGROX_URL}/auth/signin`,
-        { email: email.trim().toLowerCase(), password },
+        {
+          email: email.trim().toLowerCase(),
+          password,
+          ...metaEventFields(signupMetaEventId()),
+        },
         { withCredentials: true },
       );
       completeAuthSession(res.data?.data ?? res.data, email);

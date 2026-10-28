@@ -1,7 +1,7 @@
 "use client";
 
 import axiosInstance from "@/app/axios";
-import { appendMetaLeadFields, pushQuoteLeadEvent } from "@/app/utils/metaLeadEvent";
+import { appendMetaLeadFields, pushMetaEventId } from "@/app/utils/metaEvent";
 import {
   isTakeMyClassEmailOnlyHeroFormPage,
   isTextCtaLandingPage,
@@ -217,7 +217,7 @@ const HeroForm2: FC<ZohoForm2Props> = ({
       }).catch(() => {});
 
       await axiosInstance.post(`/order/quote`, fd);
-      pushQuoteLeadEvent(metaEventId);
+      pushMetaEventId(metaEventId);
       setFormData({
         Email: "",
         Last_Name: "DefaultLastName",

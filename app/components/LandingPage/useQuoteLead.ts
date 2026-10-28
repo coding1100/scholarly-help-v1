@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import axiosInstance from "@/app/axios";
-import { appendMetaLeadFields, pushQuoteLeadEvent } from "@/app/utils/metaLeadEvent";
+import { appendMetaLeadFields, pushMetaEventId } from "@/app/utils/metaEvent";
 
 export type QuoteLead = {
   classDetails: string;
@@ -61,7 +61,7 @@ export function useQuoteLead({ logToLandingSheet = false } = {}) {
 
     try {
       await axiosInstance.post(`/order/quote`, fd);
-      pushQuoteLeadEvent(metaEventId);
+      pushMetaEventId(metaEventId);
       router.push("/thank-you");
     } catch {
       setError("Failed to send request, try again later.");
