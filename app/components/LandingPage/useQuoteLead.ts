@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import axiosInstance from "@/app/axios";
+import { appendMetaLeadFields, pushQuoteLeadEvent } from "@/app/utils/metaLeadEvent";
 
 export type QuoteLead = {
   classDetails: string;
@@ -40,6 +41,7 @@ export function useQuoteLead({ logToLandingSheet = false } = {}) {
     fd.append("email", email.trim());
     fd.append("phone_number", phone.trim());
     fd.append("instructions", classDetails.trim());
+    const metaEventId = appendMetaLeadFields(fd);
 
     if (logToLandingSheet) {
       void fetch("/api/tmc-lp-landing-sheet", {
@@ -59,6 +61,7 @@ export function useQuoteLead({ logToLandingSheet = false } = {}) {
 
     try {
       await axiosInstance.post(`/order/quote`, fd);
+      pushQuoteLeadEvent(metaEventId);
       router.push("/thank-you");
     } catch {
       setError("Failed to send request, try again later.");
