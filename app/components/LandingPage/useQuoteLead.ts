@@ -14,9 +14,10 @@ const digitCount = (value: string) => value.replace(/\D/g, "").length;
 
 /**
  * Sends a quote lead the same way the hero form does (/order/quote with the ad
- * click ids and page URL), then routes to /thank-you.
+ * click ids and page URL), then routes to /thank-you. With `logToLandingSheet`
+ * the lead is also logged to the TMC landing sheet, as HeroForm2 does.
  */
-export function useQuoteLead() {
+export function useQuoteLead({ logToLandingSheet = false } = {}) {
   const router = useRouter();
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
@@ -39,6 +40,22 @@ export function useQuoteLead() {
     fd.append("email", email.trim());
     fd.append("phone_number", phone.trim());
     fd.append("instructions", classDetails.trim());
+
+    if (logToLandingSheet) {
+      void fetch("/api/tmc-lp-landing-sheet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.trim(),
+          phone: phone.trim(),
+          instructions: classDetails.trim(),
+          formType: "full-form",
+          fbclid: fbclid ?? "",
+          gclid: gclid ?? "",
+          landingPage: window.location.pathname,
+        }),
+      }).catch(() => {});
+    }
 
     try {
       await axiosInstance.post(`/order/quote`, fd);

@@ -14,7 +14,11 @@ import {
   quoteInputClass,
 } from "../LandingPage/QuoteLeadFields";
 import TextUsCta from "../LandingPage/TextUsCta";
-import { isTextCtaLandingPage } from "@/app/lib/takeMyClassLandingRoutes";
+import StepQuoteForm from "../LandingPage/StepQuoteForm";
+import {
+  isTextCtaLandingPage,
+  usesStepQuoteForm,
+} from "@/app/lib/takeMyClassLandingRoutes";
 interface FinalCTAProps {}
 
 const FinalCTA: FC<FinalCTAProps> = ({}) => {
@@ -85,6 +89,10 @@ const FinalCTA: FC<FinalCTAProps> = ({}) => {
                 buttonClassName={`${quoteButtonClass} w-full`}
                 textClassName="text-center text-2xl font-semibold text-white"
               />
+            </div>
+          ) : usesStepQuoteForm(pathname) ? (
+            <div className="w-full max-w-[440px] rounded-xl bg-white p-5 shadow-lg lg:translate-x-12">
+              <StepQuoteForm variant="final" />
             </div>
           ) : (
             <form

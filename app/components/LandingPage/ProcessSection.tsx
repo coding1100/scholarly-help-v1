@@ -5,8 +5,12 @@ import { usePathname } from "next/navigation";
 import { usePageData } from "./usePageData";
 import { getProcessFormCopy } from "./processFormCopy";
 import { useQuoteLead } from "./useQuoteLead";
-import { isTextCtaLandingPage } from "@/app/lib/takeMyClassLandingRoutes";
+import {
+  isTextCtaLandingPage,
+  usesStepQuoteForm,
+} from "@/app/lib/takeMyClassLandingRoutes";
 import TextUsCta from "./TextUsCta";
+import StepQuoteForm from "./StepQuoteForm";
 import {
   PHONE_PLACEHOLDER,
   QuoteLeadError,
@@ -18,7 +22,8 @@ import {
 
 /**
  * Two-step quote form under the process steps: class details, then contact.
- * Text-CTA pages show the text-message CTA instead.
+ * Text-CTA pages show the text-message CTA instead, and step-form pages the
+ * "what do you need help with" options.
  */
 function StepOneForm() {
   const [step, setStep] = useState<1 | 2>(1);
@@ -58,6 +63,10 @@ function StepOneForm() {
             buttonClassName={`${quoteButtonClass} w-full`}
             textClassName="text-xl font-semibold text-white"
           />
+        </div>
+      ) : usesStepQuoteForm(pathname) ? (
+        <div className="mt-6">
+          <StepQuoteForm variant="process" />
         </div>
       ) : (
         <form method="post" onSubmit={onSubmit} className="mt-6 flex flex-col gap-3">
