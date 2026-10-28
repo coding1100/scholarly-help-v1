@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import { FaFacebookF } from "react-icons/fa";
 import { buildHrefWithSameQuery } from "@/app/utils/url";
 import { persistAccessToken } from "@/app/lib/authSession";
+import { metaEventFields, signupMetaEventId } from "@/app/utils/metaEvent";
 
 declare global {
   interface Window {
@@ -43,7 +44,7 @@ const SocialAuthButtons = ({
           event: eventName,
           ...(eventName === "signup_success"
             ? { signup_method: "google" }
-            : {}),
+            : { event_id: signupMetaEventId() }),
           auth_action: authAction,
           auth_provider: "google",
         });
@@ -96,7 +97,10 @@ const SocialAuthButtons = ({
         setGoogleLoading(true);
         const res = await axios.post(
           `${process.env.NEXT_PUBLIC_NGROX_URL}/auth/google/signin`,
-          { idToken: response.credential },
+          {
+            idToken: response.credential,
+            ...metaEventFields(signupMetaEventId()),
+          },
           { withCredentials: true },
         );
 

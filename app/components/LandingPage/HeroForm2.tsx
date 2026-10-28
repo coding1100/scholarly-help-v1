@@ -1,6 +1,7 @@
 "use client";
 
 import axiosInstance from "@/app/axios";
+import { appendMetaLeadFields, pushMetaEventId } from "@/app/utils/metaEvent";
 import {
   isTakeMyClassEmailOnlyHeroFormPage,
   isTextCtaLandingPage,
@@ -199,6 +200,7 @@ const HeroForm2: FC<ZohoForm2Props> = ({
       if (formData.Email) fd.append("email", formData.Email);
       if (formData.Phone) fd.append("phone_number", formData.Phone);
       if (formData.Description) fd.append("instructions", formData.Description);
+      const metaEventId = appendMetaLeadFields(fd);
 
       void fetch("/api/tmc-lp-landing-sheet", {
         method: "POST",
@@ -215,6 +217,7 @@ const HeroForm2: FC<ZohoForm2Props> = ({
       }).catch(() => {});
 
       await axiosInstance.post(`/order/quote`, fd);
+      pushMetaEventId(metaEventId);
       setFormData({
         Email: "",
         Last_Name: "DefaultLastName",
