@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import { FaArrowRight } from "react-icons/fa";
+import { FiChevronDown } from "react-icons/fi";
 import DoneForYouCard from "../DoneForYouCard";
 import { CalculatorState, Course } from "./types";
 import { createEmptyCourse, createInitialState } from "./utils/state";
@@ -35,7 +36,17 @@ function withTrailingEmptyRow(courses: Course[]) {
   return !last || isFilled(last) ? [...courses, createEmptyCourse()] : courses;
 }
 
-export default function CollegeGpaCalculator() {
+export default function CollegeGpaCalculator({
+  embedded = false,
+}: {
+  /**
+   * Inside a landing page hero, beside the Done-for-you panel: the results
+   * stack under the inputs to fit the narrower space, the page background is
+   * dropped, and the tool's own Done-for-you card is hidden because the
+   * landing template renders it.
+   */
+  embedded?: boolean;
+}) {
   const initial = useMemo(() => createInitialState(), []);
   const [state, setState] = useState<CalculatorState>(initial);
 
@@ -108,9 +119,17 @@ export default function CollegeGpaCalculator() {
   }
 
   return (
-    <div className="bg-[#f4f5fa] px-4 py-6 dark:bg-slate-950 sm:px-6 md:py-8 lg:px-8">
+    <div
+      className={
+        embedded
+          ? "p-4 sm:p-6"
+          : "bg-[#f4f5fa] px-4 py-6 dark:bg-slate-950 sm:px-6 md:py-8 lg:px-8"
+      }
+    >
       <div className="mx-auto max-w-6xl">
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_340px]">
+        <div
+          className={`grid grid-cols-1 gap-6 ${embedded ? "" : "lg:grid-cols-[1fr_340px]"}`}
+        >
           {/* Left: input card */}
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
             <div className="hidden grid-cols-[1fr_130px_96px_28px] gap-4 px-1 pb-3 text-xs font-medium text-slate-500 dark:text-slate-400 sm:grid">
@@ -135,21 +154,30 @@ export default function CollegeGpaCalculator() {
                     placeholder="e.g. Statistics"
                     className="h-12 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#565add] focus:outline-none focus:ring-1 focus:ring-[#565add] dark:border-slate-700 dark:bg-slate-950 dark:text-white"
                   />
-                  <select
-                    value={course.gradeLetter}
-                    onChange={(e) =>
-                      updateCourse(course.id, { gradeLetter: e.target.value })
-                    }
-                    aria-label="Grade"
-                    className="h-12 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-sm text-slate-900 focus:border-[#565add] focus:outline-none focus:ring-1 focus:ring-[#565add] dark:border-slate-700 dark:bg-slate-950 dark:text-white"
-                  >
-                    <option value="">Select</option>
-                    {gradeScale.letters.map((l) => (
-                      <option key={l} value={l}>
-                        {l}
-                      </option>
-                    ))}
-                  </select>
+                  {/* Native select arrows ignore padding and sit on the border,
+                      so the chevron is drawn here with the same inset as the
+                      text. */}
+                  <div className="relative">
+                    <select
+                      value={course.gradeLetter}
+                      onChange={(e) =>
+                        updateCourse(course.id, { gradeLetter: e.target.value })
+                      }
+                      aria-label="Grade"
+                      className="h-12 w-full appearance-none rounded-lg border border-slate-200 bg-white pl-3.5 pr-10 text-sm text-slate-900 focus:border-[#565add] focus:outline-none focus:ring-1 focus:ring-[#565add] dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+                    >
+                      <option value="">Select</option>
+                      {gradeScale.letters.map((l) => (
+                        <option key={l} value={l}>
+                          {l}
+                        </option>
+                      ))}
+                    </select>
+                    <FiChevronDown
+                      aria-hidden="true"
+                      className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500 dark:text-slate-400"
+                    />
+                  </div>
                   <input
                     type="text"
                     inputMode="decimal"
@@ -292,7 +320,9 @@ export default function CollegeGpaCalculator() {
               </div>
             ) : null}
 
-            <DoneForYouCard placement="cgpa_calculator_card" />
+            {!embedded ? (
+              <DoneForYouCard placement="cgpa_calculator_card" />
+            ) : null}
           </div>
         </div>
       </div>
