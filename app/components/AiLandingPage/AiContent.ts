@@ -1240,3 +1240,141 @@ export const MathSolverContent = {
   },
 };
 
+export const CgpaCalculatorContent = {
+  heroContent: {
+    mainHeading: "CGPA CALCULATOR",
+    description: "Fast - Accurate - Free",
+    // "<style>.cgpa-hero-desc-list{list-style:disc inside;margin-bottom:0;padding-left:0}@media (max-width:767px){.cgpa-hero-desc-list{text-align:left;width:100%}}@media (min-width:768px){.cgpa-hero-desc-list{display:flex;flex-wrap:wrap;gap:24px}}</style><ul class='cgpa-hero-desc-list'><li>Calculate Your Semester GPA</li><li>Add Your Academic Details</li><li>100% Free Tool</li></ul>",
+
+    buttonText: "Calculate Your CGPA",
+    buttonUrl: "/sign-in?returnUrl=/tools/cgpa-calculator",
+  },
+  imgSection: {
+    img: CgpaFull,
+  },
+  trustSection: {
+    heading: "Track Your Academic Progress with Confidence",
+    description:
+      "Students use our CGPA calculator to plan semesters, review course performance, and check grade outcomes before making academic decisions. It keeps GPA calculations simple, transparent, and easy to update whenever your grades change.",
+    sliderImgs: [slide1, slide2, slide3, slide4, slide5],
+  },
+  featuresSection: {
+    subTitle: "CALCULATOR FEATURES",
+    heading: "Everything You Need to Calculate GPA and CGPA",
+    description:
+      "Our calculator is built for real student workflows, from quick semester checks to multi-semester academic planning. Enter your grades once and let the tool handle the credit-weighted math.",
+    features: [
+      {
+        heading: "Semester GPA Calculation",
+        description:
+          "Add courses, credit hours, and letter grades for each semester. The calculator converts grades into quality points and calculates your semester GPA using the standard credit-weighted formula.",
+        linkText: "Start Calculating",
+        url: "/sign-in?returnUrl=/tools/cgpa-calculator",
+        img: NewSemester,
+      },
+      {
+        heading: "Multi-Semester CGPA Tracking",
+        description:
+          "Create multiple semesters to see how your overall academic performance changes over time. This makes it easier to monitor progress, plan improvements, and understand the impact of each course on your cumulative GPA.",
+        linkText: "Track Your CGPA",
+        url: "/sign-in?returnUrl=/tools/cgpa-calculator",
+        img: PreSemester,
+      },
+      {
+        heading: "Flexible Grade and Credit Inputs",
+        description:
+          "Use common letter grades, credit values, and course rows that match your class schedule. Incomplete rows are ignored, so you can test different grade scenarios without breaking the calculation.",
+        linkText: "Try It Free",
+        url: "/sign-in?returnUrl=/tools/cgpa-calculator",
+        img: learning,
+      },
+    ],
+  },
+  missionSection: {
+    subTitle: "OUR PURPOSE",
+    heading: "Making Grade Planning Clear for Every Student",
+    description:
+      "At Scholarly Help, we believe students should be able to understand their academic standing without confusing spreadsheets or manual calculations. Our CGPA calculator turns grades, credits, and semesters into clear results so you can plan your next academic step with confidence.",
+    buttonText: "Open Full Calculator",
+    buttonUrl: "/sign-in?returnUrl=/tools/cgpa-calculator",
+  },
+  guideSection: {
+    subTitle: "HOW IT WORKS",
+    heading: "How to Use the CGPA Calculator",
+    description: "Calculate your GPA and CGPA in a few simple steps.",
+    steps: [
+      {
+        icon: "IoCheckmarkCircle",
+        title: "Add Your Semester",
+        description:
+          "Start with the default semester or add more semesters if you want to calculate cumulative performance across multiple terms.",
+      },
+      {
+        icon: "PiNotePencilDuotone",
+        title: "Enter Courses and Credits",
+        description:
+          "Type each course name, select the grade you earned, and add the credit hours for that class. Only courses with valid grades and positive credits are counted.",
+      },
+      {
+        icon: "GrMagic",
+        title: "Calculate GPA",
+        description:
+          "The calculator multiplies grade points by credit hours, totals the quality points, and divides by total credits to show your GPA result.",
+      },
+      {
+        icon: "PiLightbulbDuotone",
+        title: "Review and Plan Ahead",
+        description:
+          "Use your results to understand your current academic standing, compare semester performance, and plan the grades needed for your target CGPA.",
+      },
+    ],
+  },
+  FaqSestion: {
+    subTitle: "HELP CENTER",
+    heading: "Frequently Asked Questions",
+    faqs: [
+      {
+        question: "What is a CGPA calculator?",
+        answer:
+          "A CGPA calculator is a tool that uses your course grades and credit hours to calculate your cumulative grade point average across one or more semesters.",
+      },
+      {
+        question: "How does the calculator work?",
+        answer:
+          "It converts each letter grade into grade points, multiplies those points by the course credits, adds the quality points together, and divides by the total credits.",
+      },
+      {
+        question: "Can I calculate GPA for one semester?",
+        answer:
+          "Yes. You can enter courses for a single semester to calculate semester GPA, or add more semesters to review cumulative performance.",
+      },
+      {
+        question: "Can I add multiple semesters?",
+        answer:
+          "Yes. The full CGPA calculator lets you add semesters and courses so you can track academic performance over time.",
+      },
+      {
+        question: "What grade scale does it use?",
+        answer:
+          "The calculator uses a common 4.0 letter-grade scale by default, with grades such as A, A-, B+, B, C, D, and F.",
+      },
+      {
+        question: "Are incomplete rows included in the result?",
+        answer:
+          "No. Rows without a valid grade or positive credit value are ignored, which helps you test scenarios and leave unused course rows blank.",
+      },
+      {
+        question: "Is this CGPA calculator free to use?",
+        answer:
+          "Yes. You can use Scholarly Help's CGPA calculator to quickly estimate GPA and CGPA for academic planning.",
+      },
+    ],
+  },
+  elevateSection: {
+    heading: "Know Your CGPA Before Your Next Academic Move",
+    description:
+      "Use the Scholarly Help CGPA calculator to check semester results, estimate cumulative performance, and make smarter grade goals. Add your courses, calculate your GPA, and plan your progress with clarity.",
+    buttonText: "Calculate CGPA Now",
+    buttonUrl: "/sign-in?returnUrl=/tools/cgpa-calculator",
+  },
+};
