@@ -9,6 +9,7 @@ import {
   FiSearch,
   FiTarget,
   FiType,
+  FiVolume2,
 } from "react-icons/fi";
 import { LuGraduationCap, LuRadical } from "react-icons/lu";
 import { RiDoubleQuotesL } from "react-icons/ri";
@@ -105,6 +106,17 @@ export const TOOLS: ToolCardData[] = [
     group: "writer-lab",
     keywords: ["grade", "rubric", "score", "feedback", "mark"],
     cta: "Grade my essay",
+  },
+  {
+    name: "Read My Essay",
+    description: "Listen to your essay read aloud to hear how your writing flows.",
+    href: "/tools/read-my-essay-tool",
+    icon: FiVolume2,
+    badge: "Free",
+    category: "essay-writing",
+    group: "writer-lab",
+    keywords: ["read aloud", "text to speech", "tts", "listen", "audio", "voice"],
+    cta: "Read aloud",
   },
   {
     name: "AI Paraphraser",

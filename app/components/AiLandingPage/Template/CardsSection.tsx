@@ -5,6 +5,10 @@ import type { CardsSectionContent } from "./types";
 const cardDescription =
   "text-xs leading-normal text-[#3B3486] md:text-[11px] md:leading-[1.55]";
 
+// Four cards fill one desktop row instead of leaving the fourth on its own.
+const desktopColumns = (c: CardsSectionContent) =>
+  c.cards.length + (c.ctaCard ? 1 : 0) === 4 ? "md:grid-cols-4" : "md:grid-cols-3";
+
 /** Grid of short cards on a tinted band, with an optional CTA card or button. */
 const CardsSection: FC<{ content: CardsSectionContent }> = ({ content: c }) => (
   <section className="bg-[#F3F3FA]">
@@ -15,7 +19,7 @@ const CardsSection: FC<{ content: CardsSectionContent }> = ({ content: c }) => (
         </span>
       ) : null}
       <SectionHeading title={c.title} subtitle={c.subtitle} />
-      <div className="grid grid-cols-2 gap-2.5 text-left md:grid-cols-3 md:gap-[18px] md:pt-[18px]">
+      <div className={`grid grid-cols-2 gap-2.5 text-left ${desktopColumns(c)} md:gap-[18px] md:pt-[18px]`}>
         {c.cards.map((card) => (
           <div key={card.title} className="rounded-lg bg-white p-3 md:p-[18px]">
             <h3 className="mb-1 text-sm font-semibold md:mb-1.5">{card.title}</h3>

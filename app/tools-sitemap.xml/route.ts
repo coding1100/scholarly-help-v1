@@ -18,6 +18,7 @@ const TOOL_PATHS = [
   "/tools/ai-study-workspace/",
   "/tools/citation-generator/",
   "/tools/cumulative-gpa-calculator/",
+  "/tools/read-my-essay/",
   "/tools/research-question-generator/",
 ] as const;
 

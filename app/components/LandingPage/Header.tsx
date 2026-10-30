@@ -385,6 +385,7 @@ export default function Header() {
             { name: "AI Paraphraser", href: "/tools/ai-paraphraser/" },
             { name: "AI Humanizer", href: "/tools/ai-humanizer/" },
             { name: "Citation Generator", href: "/tools/citation-generator/" },
+            { name: "Read My Essay", href: "/tools/read-my-essay/" },
           ],
           button: [{ name: "See All Tools", href: "/tools/" }],
         },
