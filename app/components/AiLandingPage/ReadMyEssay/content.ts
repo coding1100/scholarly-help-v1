@@ -4,7 +4,7 @@ import { DONE_FOR_YOU_ID } from "../Template/ui";
 import type { LandingContent, LinkButton } from "../Template/types";
 
 export const metaContent = {
-  title: "Read My Essay to Me Online for Free",
+  title: "Read My Essay Aloud Online for Free Using Text Speech",
   description:
     "Read My Essay to Me is a text-to-speech online tool that aims to help you listen to your essays. It’s free and easy to use.",
 };
