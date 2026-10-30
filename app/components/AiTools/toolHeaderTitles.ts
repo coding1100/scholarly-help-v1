@@ -27,6 +27,7 @@ const CURATED_TITLES: Record<string, string> = {
   "/tools/language-practice": "AI Language Practice",
   "/tools/study-workspace": "AI Tutor",
   "/tools/cgpa-calculator": "CGPA Calculator",
+  "/tools/read-my-essay-tool": "Read My Essay",
   "/tools/plagiarism-checker": "Plagiarism Checker",
 };
 
