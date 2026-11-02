@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import axiosInstance from "@/app/axios";
 import type { LeadFormContent, LeadFormPosition } from "@/app/lib/blog/types";
+import { metaEventFields, newMetaEventId, pushMetaEvent } from "@/app/utils/metaEvent";
 
 declare global {
   interface Window {
@@ -63,6 +64,7 @@ export default function LeadForm({
     setStatus("sending");
     setError("");
     try {
+      const metaEventId = newMetaEventId();
       await axiosInstance.post("/order/blog-lead/", {
         email: email.trim(),
         phone: phone.trim(),
@@ -72,7 +74,9 @@ export default function LeadForm({
         pageUrl: window.location.href.split("#")[0],
         website,
         startedAt,
+        ...metaEventFields(metaEventId),
       });
+      pushMetaEvent("contact", metaEventId);
       window.dataLayer = window.dataLayer || [];
       window.dataLayer.push({ event: "blog_lead_submit", form_position: position, post_slug: postSlug, page_path: window.location.pathname });
       setStatus("done");

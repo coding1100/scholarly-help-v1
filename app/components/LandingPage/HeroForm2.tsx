@@ -1,7 +1,12 @@
 "use client";
 
 import axiosInstance from "@/app/axios";
-import { appendMetaLeadFields, pushMetaEventId } from "@/app/utils/metaEvent";
+import {
+  appendMetaLeadFields,
+  metaEventFields,
+  newMetaEventId,
+  pushMetaEvent,
+} from "@/app/utils/metaEvent";
 import {
   isTakeMyClassEmailOnlyHeroFormPage,
   isTextCtaLandingPage,
@@ -175,13 +180,16 @@ const HeroForm2: FC<ZohoForm2Props> = ({
           }),
         }).catch(() => {});
 
+        const metaEventId = newMetaEventId();
         await axiosInstance.post(`/order/take-my-class/`, {
           phoneNumber: "",
           PageURL: wholeUrl,
           email,
           FBCLID,
           GCLID,
+          ...metaEventFields(metaEventId),
         });
+        pushMetaEvent("contact", metaEventId);
         setFormData({
           Email: "",
           Last_Name: "DefaultLastName",
@@ -217,7 +225,7 @@ const HeroForm2: FC<ZohoForm2Props> = ({
       }).catch(() => {});
 
       await axiosInstance.post(`/order/quote`, fd);
-      pushMetaEventId(metaEventId);
+      pushMetaEvent("contact", metaEventId);
       setFormData({
         Email: "",
         Last_Name: "DefaultLastName",

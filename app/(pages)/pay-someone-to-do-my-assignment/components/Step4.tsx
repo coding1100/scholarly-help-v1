@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { ColorRing } from "react-loader-spinner";
 import { twMerge } from "tailwind-merge";
 import { ApiPayload } from "./GetFreeQuote";
+import { appendMetaLeadFields, pushMetaEvent } from "@/app/utils/metaEvent";
 
 type Step4Props = {
   apiPayload: ApiPayload;
@@ -88,11 +89,13 @@ const Step4: FC<Step4Props> = ({ apiPayload }) => {
 
     setWithPhoneLoading(true);
     try {
+      const metaEventId = appendMetaLeadFields(fd);
       await axiosInstance.post(`/order/quote`, fd, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
+      pushMetaEvent("contact", metaEventId);
       setWithPhoneLoading(false);
       router.push("/thank-you-2");
     } catch (error) {
@@ -157,7 +160,9 @@ const Step4: FC<Step4Props> = ({ apiPayload }) => {
     }
 
     try {
+      const metaEventId = appendMetaLeadFields(fd);
       await axiosInstance.post(`/order/quote`, fd);
+      pushMetaEvent("contact", metaEventId);
       setWithEmailLoading(false);
       router.push("/thank-you-2");
     } catch (error) {
