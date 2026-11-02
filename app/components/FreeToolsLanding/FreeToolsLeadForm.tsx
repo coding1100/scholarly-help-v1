@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import axios from "axios";
 import axiosInstance from "@/app/axios";
+import { metaEventFields, pushMetaEvent, signupMetaEventId } from "@/app/utils/metaEvent";
 
 const inputClass =
   "block h-[54px] w-full rounded-xl border border-[#D4D4DF] bg-white px-4 text-[17px] text-[#111111] outline-none transition placeholder:text-[#757575] focus:border-[#D45410] focus:ring-2 focus:ring-[#D45410]/20 md:h-[60px]";
@@ -60,12 +61,16 @@ export default function FreeToolsLeadForm() {
       // Free account for a new email: the backend emails its password with a
       // sign-in link and leaves existing accounts untouched. Sent after the
       // quote so its GHL contact (tagged free-tools-landing) is created first.
-      // Never blocks the lead.
+      // Never blocks the lead. This form counts as a sign-up for Meta, so the
+      // quote above carries no Contact id.
+      const signupEventId = signupMetaEventId();
       void axios
         .post(`${process.env.NEXT_PUBLIC_NGROX_URL}/auth/landing-account`, {
           email: trimmedEmail,
+          ...metaEventFields(signupEventId),
         })
         .catch(() => {});
+      pushMetaEvent("tools_signup", signupEventId);
       router.push("/tools-thank-you");
     } catch {
       alert("Failed to send request, try again later");

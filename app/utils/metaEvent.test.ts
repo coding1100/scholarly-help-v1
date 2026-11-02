@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { appendMetaLeadFields, metaEventFields, pushMetaEventId, signupMetaEventId } from "./metaEvent";
+import {
+  appendMetaLeadFields,
+  metaCookieFields,
+  metaEventFields,
+  pushMetaEvent,
+  signupMetaEventId,
+} from "./metaEvent";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -50,14 +56,29 @@ describe("event ids without crypto.randomUUID (older Safari, plain http)", () =>
   });
 });
 
-describe("pushMetaEventId", () => {
-  it("puts the id in the dataLayer as event_id", () => {
-    const win: { dataLayer?: Array<Record<string, unknown>> } = {};
+describe("metaCookieFields", () => {
+  it("sends only Meta's browser cookies, with no event id", () => {
+    vi.stubGlobal("document", { cookie: "_fbp=fb.1.111.222" });
+
+    expect(metaCookieFields()).toEqual({ fbp: "fb.1.111.222" });
+  });
+});
+
+describe("pushMetaEvent", () => {
+  it("pushes the GTM event and its id together, so the tag reads this id", () => {
+    const win: { dataLayer?: Array<Record<string, unknown>> } = {
+      dataLayer: [{ event: "gtm.js" }],
+    };
     vi.stubGlobal("window", win);
 
-    pushMetaEventId("lead-1");
+    pushMetaEvent("contact", "lead-1");
+    pushMetaEvent("tools_signup", "signup-1");
 
-    expect(win.dataLayer).toEqual([{ event_id: "lead-1" }]);
+    expect(win.dataLayer).toEqual([
+      { event: "gtm.js" },
+      { event: "contact", event_id: "lead-1" },
+      { event: "tools_signup", event_id: "signup-1" },
+    ]);
   });
 });
 

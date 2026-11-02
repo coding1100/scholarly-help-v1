@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { FiCheck, FiMessageCircle, FiMessageSquare } from "react-icons/fi";
 import axiosInstance from "@/app/axios";
 import { SMS_NUMBER, handleTextUsClick } from "@/app/lib/client/smsTracking";
+import { metaEventFields, newMetaEventId, pushMetaEvent } from "@/app/utils/metaEvent";
 import {
   EXPERT_WHATSAPP_HREF,
   trackExpertWhatsAppClick,
@@ -121,7 +122,13 @@ function TextMeForm({
     // and tool-<slug> for the tool this page hosts.
     const tool = window.location.pathname.match(/^\/tools\/([a-z0-9-]+)/)?.[1];
     try {
-      await axiosInstance.post("/order/tools-lead/", { phoneNumber, tool });
+      const metaEventId = newMetaEventId();
+      await axiosInstance.post("/order/tools-lead/", {
+        phoneNumber,
+        tool,
+        ...metaEventFields(metaEventId),
+      });
+      pushMetaEvent("contact", metaEventId);
       pushDataLayer({
         event: "done_for_you_text_me",
         done_for_you_placement: placement,
