@@ -5,6 +5,7 @@ import {
   isReservedTopLevelSegment,
 } from "@/app/lib/staticPublicRoutes";
 import { isGoneBlogPath } from "@/app/lib/blog/gone";
+import { isGonePagePath } from "@/app/lib/gonePages";
 
 function decodeBase64Url(value: string): ArrayBuffer {
   const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
@@ -106,7 +107,7 @@ function maybeRewriteDynamicLanding(
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-  if (isGoneBlogPath(pathname)) {
+  if (isGoneBlogPath(pathname) || isGonePagePath(pathname)) {
     return new NextResponse("410 Gone", {
       status: 410,
       headers: { "Content-Type": "text/plain; charset=utf-8" },

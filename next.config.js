@@ -137,16 +137,6 @@ const nextConfig = {
         permanent: true,
       },
       {
-        source: '/math-solver',
-        destination: '/tools/ai-math-helper/',
-        permanent: true,
-      },
-      {
-        source: '/pythagoras-solver',
-        destination: '/tools/ai-math-helper/',
-        permanent: true,
-      },
-      {
         source: '/tools/pythagoras-solver',
         destination: '/tools/math-solver',
         permanent: true,
