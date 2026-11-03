@@ -17,7 +17,6 @@ import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import { sanitizeHtml } from "@/app/utils/sanitizeHtml";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import { isGuest, hasReachedGuestClickLimit } from "@/app/lib/client/guestClickLimits";
-import { LOAD_SAMPLE_PROBLEM_EVENT, SAMPLE_STATS_PROBLEM } from "./sampleProblem";
 import { useToolDraftPersistence } from "@/app/lib/client/useToolDraftPersistence";
 import { useBillingDraftStash } from "@/app/lib/client/useBillingDraftStash";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
@@ -464,26 +463,6 @@ const StemSolver: FC<{ setFlag: (v: boolean) => void }> = ({ setFlag }) => {
       if (imagePreview) URL.revokeObjectURL(imagePreview);
     };
   }, [imagePreview]);
-
-  // Fired by the "Try a sample stats question" link in MathSolverHero, which
-  // sits outside this component tree behind a dynamic import — fills the
-  // question in for the user to look at/edit, but does not auto-submit, so
-  // it never spends their guest solve allowance on their behalf.
-  useEffect(() => {
-    const loadSample = () => {
-      setProblem(SAMPLE_STATS_PROBLEM);
-      setCategory("statistics");
-      setSubject("math");
-      setResult(null);
-      setError("");
-      requestAnimationFrame(() => {
-        problemRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-        problemRef.current?.focus();
-      });
-    };
-    window.addEventListener(LOAD_SAMPLE_PROBLEM_EVENT, loadSample);
-    return () => window.removeEventListener(LOAD_SAMPLE_PROBLEM_EVENT, loadSample);
-  }, []);
 
   const apiBase = process.env.NEXT_PUBLIC_NGROX_URL;
 

@@ -114,7 +114,7 @@ const defaultPickTabTools: Record<string, PickToolItem[]> = {
       description:
         "Instant triangle problem solutions with step-by-step working shown. Understand the method, not just the answer.",
       buttonText: "Solve equation",
-      link: "https://scholarlyhelp.com/tools/ai-math-solver/",
+      link: "https://scholarlyhelp.com/tools/ai-math-helper/",
     },
   ],
   "study-tools": [

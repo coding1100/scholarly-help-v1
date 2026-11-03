@@ -13,7 +13,7 @@ const TOOL_PATHS = [
   "/tools/ai-essay-generator/",
   "/tools/ai-grammar-check/",
   "/tools/ai-humanizer/",
-  "/tools/ai-math-solver/",
+  "/tools/ai-math-helper/",
   "/tools/ai-paraphraser/",
   "/tools/ai-study-workspace/",
   "/tools/citation-generator/",
