@@ -137,8 +137,13 @@ const nextConfig = {
         permanent: true,
       },
       {
+        source: '/math-solver',
+        destination: '/tools/ai-math-helper/',
+        permanent: true,
+      },
+      {
         source: '/pythagoras-solver',
-        destination: '/math-solver',
+        destination: '/tools/ai-math-helper/',
         permanent: true,
       },
       {
@@ -148,7 +153,7 @@ const nextConfig = {
       },
       {
         source: '/tools/ai-math-solver',
-        destination: '/tools/ai-math-helper',
+        destination: '/tools/ai-math-helper/',
         permanent: true,
       },
       // Homework Helper retired — its Socratic step-by-step functionality

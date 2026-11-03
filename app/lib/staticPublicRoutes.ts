@@ -36,7 +36,6 @@ export const STATIC_TOP_LEVEL_SEGMENTS = new Set([
   "plagiarism-free-process",
   "pricing",
   "privacy",
-  "math-solver",
   "research-question",
   "reset-password",
   "samples",
