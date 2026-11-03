@@ -8,7 +8,7 @@ import {
   mathSolverMeta,
 } from "@/app/components/AiLandingPage/MathSolver/content";
 
-const path = "/tools/ai-math-solver";
+const path = "/tools/ai-math-helper";
 
 const getBaseUrl = () => {
   const value = process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";

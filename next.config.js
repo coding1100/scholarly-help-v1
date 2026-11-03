@@ -146,6 +146,11 @@ const nextConfig = {
         destination: '/tools/math-solver',
         permanent: true,
       },
+      {
+        source: '/tools/ai-math-solver',
+        destination: '/tools/ai-math-helper',
+        permanent: true,
+      },
       // Homework Helper retired — its Socratic step-by-step functionality
       // was absorbed into the Tutor Tool's Assignment tab.
       {

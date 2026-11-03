@@ -1,4 +1,4 @@
-// Copy for the /tools/ai-math-solver landing page. Layout lives in the shared
+// Copy for the /tools/ai-math-helper landing page. Layout lives in the shared
 // LandingTemplate; all user-facing text for this page lives here.
 import { DONE_FOR_YOU_ID } from "../Template/ui";
 import type { LandingContent, LinkButton } from "../Template/types";
