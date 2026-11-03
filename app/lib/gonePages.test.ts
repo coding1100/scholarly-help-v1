@@ -6,6 +6,7 @@ describe("isGonePagePath", () => {
     expect(isGonePagePath("/math-solver/")).toBe(true);
     expect(isGonePagePath("/math-solver")).toBe(true);
     expect(isGonePagePath("/pythagoras-solver/")).toBe(true);
+    expect(isGonePagePath("/tools/pythagoras-solver/")).toBe(true);
   });
 
   it("leaves the math tool, its landing page and look-alike paths alone", () => {
