@@ -5,7 +5,7 @@ const baseUrl = (
 ).replace(/\/$/, "");
 
 // The workspace shares the landing page's tool, so search engines are pointed
-// at the landing page instead of indexing both.
+// at the landing page and the workspace itself is kept out of the index.
 export const metadata: Metadata = {
   title: "Read My Essay Tool: Free Text-to-Speech | ScholarlyHelp",
   description:
@@ -13,6 +13,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: `${baseUrl}/tools/read-my-essay`,
   },
+  robots: { index: false, follow: true },
 };
 
 export default function ReadMyEssayToolLayout({
