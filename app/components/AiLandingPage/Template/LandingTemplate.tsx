@@ -14,7 +14,10 @@ import StepsSection from "./StepsSection";
 import WhatIsSection from "./WhatIsSection";
 import type { LandingContent, LandingSection } from "./types";
 
-const Section: FC<{ section: LandingSection }> = ({ section: s }) => {
+const Section: FC<{ section: LandingSection; previous?: LandingSection }> = ({
+  section: s,
+  previous,
+}) => {
   switch (s.type) {
     case "whatIs":
       return <WhatIsSection content={s} />;
@@ -31,7 +34,7 @@ const Section: FC<{ section: LandingSection }> = ({ section: s }) => {
     case "ctaBand":
       return <CtaBandSection content={s} />;
     case "guide":
-      return <GuideSection content={s} />;
+      return <GuideSection content={s} followsGuide={previous?.type === "guide"} />;
     case "moreTools":
       return <MoreToolsSection content={s} />;
     case "faq":
@@ -52,7 +55,11 @@ const LandingTemplate: FC<{ content: LandingContent; tool: ReactNode }> = ({
   <div className="font-poppins text-[#111111]">
     <HeroSection content={c} tool={tool} />
     {c.sections.map((section, index) => (
-      <Section key={`${section.type}-${index}`} section={section} />
+      <Section
+        key={`${section.type}-${index}`}
+        section={section}
+        previous={c.sections[index - 1]}
+      />
     ))}
     <MobileCtaBar content={c.mobileBar} />
   </div>
