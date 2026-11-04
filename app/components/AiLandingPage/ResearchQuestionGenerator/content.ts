@@ -34,7 +34,7 @@ export const researchQuestionLanding: LandingContent = {
       type: "whatIs",
       title: "What is a Research Question Generator?",
       paragraphs: [
-        "A Research Question Generator is an AI tool that helps you come up with research questions based on your topic, description, or keywords. You simply enter what you want to study, and the tool suggests questions related to your topic. It can help you create questions for different academic projects, with options for research type, question style, level of specificity, and number of questions.",
+        "A Research Question Generator is an AI tool that helps you come up with research questions based on your topic, description, or keywords. You simply enter what you want to study, and the tool suggests questions related to your topic. It can help you create questions for different academic projects.",
         "Sometimes, choosing the right research question is not easy. You may have a topic in mind but still feel unsure about what to ask or where to begin. A Research Question Generator makes this process easier by giving you ideas to work with. You can read through the suggested questions, choose the ones that fit your research, and make changes whenever needed. This gives you a clearer starting point and helps you spend more time working on your research instead of getting stuck on the first step.",
       ],
       glance: [
@@ -67,7 +67,7 @@ export const researchQuestionLanding: LandingContent = {
         {
           title: "Select Your Preferences",
           description:
-            "Choose your research type, question style, level of specificity, and number of questions.",
+            "Choose your preferred language and word length, if these options are available.",
           note: {
             title: "Choose What You Need",
             description:
@@ -91,37 +91,37 @@ export const researchQuestionLanding: LandingContent = {
       type: "cards",
       title: "Benefits of Using the Research Question Generator",
       subtitle:
-        "The Research Question Generator makes it easier to create clear and relevant questions for your academic work. It helps students save time, explore new ideas, and find a good starting point for their research.",
+        "Choosing a research question is not always easy. You may have a topic in mind but still struggle to decide what to ask. Our Research Question Generator gives you ideas and helps you get started.",
       cards: [
         {
-          title: "Save Time and Effort",
+          title: "Save Time",
           description:
-            "Create research questions in minutes instead of spending hours thinking about what to ask. The tool makes the process faster and easier.",
+            "Get question ideas in minutes instead of spending hours trying to think of them yourself.",
         },
         {
-          title: "Get Relevant Questions",
+          title: "Get Related Questions",
           description:
-            "Generate questions based on your topic, description, and keywords. This helps you find ideas that match your research needs.",
+            "Enter your topic or keywords and get questions that match what you want to study.",
         },
         {
-          title: "Explore Different Ideas",
+          title: "Explore More Ideas",
           description:
-            "Get different question suggestions for the same topic. Compare them and choose the ones that best fit your research.",
+            "Get different question ideas for the same topic. This gives you more options when planning your research.",
         },
         {
-          title: "Match Your Research Type",
+          title: "Find Where to Start",
           description:
-            "Generate questions for qualitative, quantitative, mixed, and other research types. This makes it easier to get questions that fit how you plan to study your topic.",
+            "Not sure how to begin? Use the suggested questions to decide what part of your topic you want to study.",
         },
         {
-          title: "Choose How Specific Your Questions Are",
+          title: "Pick the Questions You Like",
           description:
-            "Pick a general, moderately specific, or highly specific level to match your research requirements and preferences.",
+            "Read through the suggestions and choose the ones that fit your topic. You can also change them to suit your research.",
         },
         {
-          title: "Make Research Easier",
+          title: "Start Your Research Easily",
           description:
-            "Use AI-generated questions as a starting point for essays, assignments, research papers, and other academic projects.",
+            "Use the questions to get started with your essays, assignments, research papers, or thesis. They can help you plan what to work on next.",
         },
       ],
       button: toTool("Try Research Question Generator for Free!"),
@@ -184,9 +184,9 @@ export const researchQuestionLanding: LandingContent = {
             "Generate research questions in seconds without spending hours brainstorming.",
         },
         {
-          title: "Flexible Question Settings",
+          title: "Multiple Language Support",
           description:
-            "Choose your research type, question style, and number of questions to match your preferences.",
+            "Create research questions in different languages to match your preferences.",
         },
         {
           title: "Free Access",
@@ -532,12 +532,10 @@ export const researchQuestionLanding: LandingContent = {
 
     {
       type: "finalCta",
-      titleStart: "Your paper",
-      titlePill: "deadline",
-      titleEnd: "will not wait.",
-      body: "Begin with a free research question generator, or speak to a writer today.",
-      primary: toTool("Generate my question for free"),
-      secondary: { label: "Talk to an expert →", href: "/contact-us" },
+      titleStart: "Make Your Research Easier With AI",
+      body: "Turn your research topic into a clear outline in just a few clicks. Get ideas, organize your points, and improve your outline as you go.",
+      primary: toTool("Create My Outline"),
+      secondary: toTool("Try It for Free"),
     },
   ],
 };

@@ -66,7 +66,7 @@ export const grammarCheckerLanding: LandingContent = {
         },
         {
           title: "Check for Mistakes",
-          description: "Click the Check Grammar button to find mistakes in your writing.",
+          description: "Click the Check My Grammar button to find mistakes in your writing.",
           note: {
             title: "See What Needs Fixing",
             description: "The tool will show you where your grammar needs improvement.",
@@ -121,11 +121,6 @@ export const grammarCheckerLanding: LandingContent = {
           description:
             "Check your work and fix common mistakes before submitting an assignment or sharing your content. This helps you feel more confident about your writing.",
         },
-        {
-          title: "Choose the Right Words",
-          description:
-            "Find better word choices when a sentence does not sound right. The right words help you express your ideas while keeping your original meaning.",
-        },
       ],
       button: toTool("Try Grammar Checker for Free"),
     },
@@ -178,24 +173,24 @@ export const grammarCheckerLanding: LandingContent = {
       title: "Why Use Our AI Grammar Checker?",
       items: [
         {
-          title: "Understand Sentence Context",
+          title: "Catch Small Mistakes",
           description:
-            "Check how words fit together to find mistakes and make your sentences clearer.",
+            "It's easy to miss a spelling or grammar mistake when you're busy writing. Check your text and fix those little errors before sharing it.",
         },
         {
-          title: "Keep Your Original Meaning",
+          title: "Keep Your Words and Ideas",
           description:
-            "Fix grammar mistakes while keeping your original meaning and making your writing clearer.",
+            "You don't have to rewrite everything to fix a few mistakes. Correct your grammar while keeping your original message.",
         },
         {
-          title: "Improve Sentence Structure",
+          title: "Make Your Writing Easier to Read",
           description:
-            "Get suggestions to fix awkward sentences and make your writing sound more natural.",
+            "Some sentences don't come out the way you want. Find those parts and make them sound clearer and more natural.",
         },
         {
-          title: "Spelling Errors",
+          title: "Check Your Spelling",
           description:
-            "Find misspelled words and correct them before submitting your work.",
+            "We all make spelling mistakes, especially when writing in a hurry. Find the misspelled words and correct them in a few clicks.",
         },
       ],
     },
@@ -499,11 +494,10 @@ export const grammarCheckerLanding: LandingContent = {
 
     {
       type: "finalCta",
-      titleStart: "Hand in writing you can",
-      titlePill: "trust.",
-      body: "Check your text free in under a minute, or ask an editor for a full proofread.",
-      primary: toTool("Check my writing"),
-      secondary: { label: "Talk to an editor →", href: "/contact-us" },
+      titleStart: "Fix Your Writing With Our Free Grammar Checker",
+      body: "Check your text for grammar, spelling, and punctuation mistakes. Find errors, improve your sentences, and make your writing clear and easy to read.",
+      primary: toTool("Check My Grammar"),
+      secondary: toTool("Try It for Free"),
     },
   ],
 };
