@@ -20,13 +20,8 @@ import {
   OrangeUnderlineFlourish,
   WhatsAppIcon,
 } from "./ThankYouIcons";
-import {
-  WHATSAPP_HREF,
-  WHATSAPP_NUMBER_DISPLAY,
-  SMS_HREF,
-  SMS_NUMBER_DISPLAY,
-  pushTextCtaClick,
-} from "./contact";
+import { WHATSAPP_HREF, WHATSAPP_NUMBER_DISPLAY, SMS_NUMBER_DISPLAY } from "./contact";
+import { WhatsAppMobileButton, TextMobileButton } from "./MobileContactButtons";
 import { useMobileCtaBar } from "../AiTools/useMobileCtaBar";
 
 type ThankYouProps = {
@@ -63,14 +58,13 @@ const WhatsAppButton: FC<WhatsAppButtonProps> = ({
 
 const ContactLines: FC<{ label: string; number: string }> = ({ label, number }) => (
   <span className="flex flex-col items-start leading-tight text-left">
-    <span className="text-[10px] sm:text-xs font-semibold">{label}</span>
-    <span className="text-[13px] sm:text-base md:text-lg font-bold whitespace-nowrap">{number}</span>
+    <span className="text-xs font-semibold">{label}</span>
+    <span className="text-lg font-bold whitespace-nowrap">{number}</span>
   </span>
 );
 
 const contactButtonBase =
-  "flex w-full min-w-0 items-center justify-center gap-2 sm:gap-3 h-[52px] sm:h-[56px] md:h-[62px] px-2.5 sm:px-5 rounded-xl text-white no-underline select-none";
-const textButtonColors = "bg-[#5B4FE0] shadow-[0_6px_20px_rgba(91,79,224,0.30)]";
+  "hidden md:flex w-full min-w-0 items-center justify-center gap-3 h-[62px] px-5 rounded-xl text-white no-underline select-none";
 
 interface ContactButtonsProps {
   onWhatsAppClick: () => void;
@@ -79,11 +73,14 @@ interface ContactButtonsProps {
 }
 
 /**
- * WhatsApp + Text CTA pair. Text is a tappable sms: button on mobile; on
- * desktop, where there is no SMS app, it only shows the number.
+ * WhatsApp + Text CTA pair. Mobile shows the compact WhatsApp / Text Us
+ * buttons; desktop shows both numbers, with Text as plain text because
+ * desktops have no SMS app.
  */
 const ContactButtons: FC<ContactButtonsProps> = ({ onWhatsAppClick, placement }) => (
-  <div className="flex w-full max-w-[600px] gap-2.5 sm:gap-4">
+  <div className="flex w-full max-w-[600px] gap-2 md:gap-4">
+    <WhatsAppMobileButton onClick={onWhatsAppClick} className="flex-1 md:hidden" />
+    <TextMobileButton placement={placement} className="flex-1 md:hidden" />
     <a
       href={WHATSAPP_HREF}
       target="_blank"
@@ -91,18 +88,10 @@ const ContactButtons: FC<ContactButtonsProps> = ({ onWhatsAppClick, placement })
       onClick={onWhatsAppClick}
       className={`${contactButtonBase} bg-[#41A800] hover:bg-[#368F00] active:scale-[0.98] shadow-[0_6px_20px_rgba(65,168,0,0.30)] transition-all duration-200`}
     >
-      <WhatsAppIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+      <WhatsAppIcon className="w-5 h-5" />
       <ContactLines label="WhatsApp us" number={WHATSAPP_NUMBER_DISPLAY} />
     </a>
-    <a
-      href={SMS_HREF}
-      onClick={() => pushTextCtaClick(placement)}
-      className={`${contactButtonBase} ${textButtonColors} active:scale-[0.98] transition-all duration-200 md:hidden`}
-    >
-      <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-      <ContactLines label="Text us" number={SMS_NUMBER_DISPLAY} />
-    </a>
-    <div className={`${contactButtonBase} ${textButtonColors} hidden md:flex`}>
+    <div className={`${contactButtonBase} bg-[#5B4FE0] shadow-[0_6px_20px_rgba(91,79,224,0.30)]`}>
       <MessageSquare className="w-5 h-5 flex-shrink-0" />
       <ContactLines label="Text us" number={SMS_NUMBER_DISPLAY} />
     </div>
@@ -123,24 +112,8 @@ const MobileContactBar: FC<{ onWhatsAppClick: () => void }> = ({ onWhatsAppClick
         Message now, 10% off your first week
       </p>
       <div className="flex gap-2">
-        <a
-          href={WHATSAPP_HREF}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={onWhatsAppClick}
-          className="flex flex-1 min-h-[44px] items-center justify-center gap-2 rounded-lg bg-[#41A800] text-sm font-bold text-white no-underline"
-        >
-          <WhatsAppIcon className="w-4 h-4" />
-          WhatsApp
-        </a>
-        <a
-          href={SMS_HREF}
-          onClick={() => pushTextCtaClick("thank_you_sticky_bar")}
-          className="flex flex-1 min-h-[44px] items-center justify-center gap-2 rounded-lg bg-[#5B4FE0] text-sm font-bold text-white no-underline"
-        >
-          <MessageSquare className="w-4 h-4 flex-shrink-0" />
-          Text Us
-        </a>
+        <WhatsAppMobileButton onClick={onWhatsAppClick} className="flex-1" />
+        <TextMobileButton placement="thank_you_sticky_bar" className="flex-1" />
       </div>
     </div>
   );
