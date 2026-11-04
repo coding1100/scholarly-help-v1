@@ -1,285 +1,509 @@
-// Copy for the /tools/ai-grammar-check landing page.
-// All user-facing text for the page lives here.
+// Copy for the /tools/ai-grammar-check landing page. Layout lives in the shared
+// LandingTemplate; all user-facing text for this page lives here.
+import { DONE_FOR_YOU_ID } from "../Template/ui";
+import type { LandingContent, LinkButton } from "../Template/types";
 
-export const metaContent = {
-  title: "Free Grammar Checker | ScholarlyHelp",
+export const grammarCheckerMeta = {
+  title: "Free AI Grammar Checker – Check and Fix Grammar Mistakes",
   description:
-    "The Free ScholarlyHelp Grammar Checker fixes grammar, spelling, and punctuation with clear explanations for every suggestion.",
-  urlSlug: "https://scholarlyhelp.com/tools/ai-grammar-check/",
-  canonicalUrl: "https://scholarlyhelp.com/tools/ai-grammar-check",
+    "Make your writing better with our free AI Grammar Checker. Find common mistakes and correct your sentences before sharing your work.",
 };
 
-export const heroContent = {
-  badge: "4,102 students checked their writing this week",
-  titleTop: "Fix mistakes and learn from every correction with our",
-  titleAccent: "grammar checker.",
-  subtitle:
-    "Paste your text or upload a file, and see each grammar, spelling, and punctuation fix with a reason for it.",
-  steps: ["Add your text", "Set your goals", "Read the fixes"],
-};
+const TOOL_ANCHOR_ID = "grammar-checker-tool";
+const toTool = (label: string): LinkButton => ({ label, href: `#${TOOL_ANCHOR_ID}` });
 
-export const beforeAfterContent = {
-  eyebrow: "BEFORE VS AFTER",
-  title: "See your writing transform in seconds",
-  subtitle:
-    "See how our grammar checker catches errors and explains every single correction.",
-  pasteLabel: "ORIGINAL DRAFT",
-  pasteText:
-    "Frequent gaming can play a major role in how the brAIn processes info. Each Student might experience fatigue, which may weaken recall over time.",
-  pasteHtml:
-    'Frequent gaming can <span class="underline decoration-red-500 decoration-wavy decoration-2 underline-offset-4 font-medium text-red-600">play</span> a major role in how the <span class="underline decoration-red-500 decoration-wavy decoration-2 underline-offset-4 font-medium text-red-600">brAIn</span> processes info. Each <span class="underline decoration-red-500 decoration-wavy decoration-2 underline-offset-4 font-medium text-red-600">Student</span> might experience fatigue, which may <span class="underline decoration-red-500 decoration-wavy decoration-2 underline-offset-4 font-medium text-red-600">weaken recall</span> over time.',
-  resultLabel: "GRAMMAR CHECKED VERSION",
-  resultText:
-    "Frequent gaming can play a major role in how the brain processes information. Every student might experience fatigue, which may weaken recall over time.",
-  resultHtml:
-    'Frequent gaming can <span class="font-semibold text-green-700">play</span> a major role in how the <span class="font-semibold text-green-700">brain</span> processes information. Every <span class="font-semibold text-green-700">student</span> might experience fatigue, which may <span class="font-semibold text-green-700">weaken recall</span> over time.',
-  tags: [
-    { label: "100% Corrected", className: "bg-green-100 text-green-800" },
-    { label: "Clear Reasons", className: "bg-purple-100 text-purple-800" },
-    { label: "Dialect Matched", className: "bg-blue-100 text-blue-800" },
-  ],
-};
+export const grammarCheckerLanding: LandingContent = {
+  toolName: "AI Grammar Checker",
+  toolAnchorId: TOOL_ANCHOR_ID,
+  placement: "grammar_checker_tool_landing",
 
-export const useCasesContent = {
-  eyebrow: "Use cases",
-  title: "Every student has writing to improve",
-  subtitle:
-    "Check grammar, tense, clarity, and tone before submitting your work.",
-  cards: [
-    {
-      icon: "⚡",
-      title: "Last Minute Editing",
-      description:
-        "Submitting an essay today? Run a quick check, copy your final version, and submit.",
-    },
-    {
-      icon: "🎓",
-      title: "University writing",
-      description:
-        "Working on a major paper? Select your academic writing mode before checking your draft.",
-    },
-    {
-      icon: "💡",
-      title: "Need more clarity",
-      description:
-        "Not sure what changed? Read detailed explanations for every single correction you make.",
-    },
-    {
-      icon: "🎨",
-      title: "Tone Adjustments",
-      description:
-        "Need a different tone? Adjust your writing style before checking your work for mistakes.",
-    },
-    {
-      icon: "🌐",
-      title: "International English",
-      description:
-        "Writing for another country? Match your spelling and grammar to the exact English you need.",
-    },
-    {
-      icon: "📚",
-      title: "Custom words",
-      description:
-        "Use technical or familiar words often? Save them so they won't be flagged again.",
-    },
-  ],
-};
-
-export const howItWorksContent = {
-  eyebrow: "How it works",
-  title: "Check your writing in 4 steps",
-  steps: [
-    {
-      title: "Add your writing",
-      description: "Paste your text or upload a Word or PDF document.",
-    },
-    {
-      title: "Set your goals",
-      description:
-        "Choose your English dialect, section, and formality level.",
-    },
-    {
-      title: "Review suggestions",
-      description:
-        "See Grammar, Tense, Clarity, and Tone with clear explanations.",
-    },
-    {
-      title: "Make changes and report",
-      description:
-        "Accept fixes right here, copy the polished version, and review your final report.",
-    },
-  ],
-  ctaTitleStart: "Want access to all",
-  ctaTitleBrand: "ScholarlyHelp",
-  ctaTitlePill: "tools?",
-  ctaTitleEnd: "",
-  ctaBody:
-    "Sign up for free to access the grammar checker, humanizer, paraphraser, AI tutor, citation tool, and more from one dashboard.",
-  ctaButton: "Explore all tools →",
-  ctaHref: "/tools",
-};
-
-export const watchVideoContent = {
-  eyebrow: "WATCH VIDEO",
-  title: "See how the ScholarlyHelp Grammar Checker works",
-  youtubeEmbedUrl: "https://www.youtube.com/embed/jfGRzQdKMT0",
-};
-
-export const whyItWorksContent = {
-  eyebrow: "Why it works",
-  title: "Understand every correction",
-  subtitle:
-    "Review each correction and its explanation before accepting it.",
-  features: [
-    {
-      icon: "🗺️",
-      title: "English dialects",
-      description:
-        "Switch between US, UK, Canadian, and Australian English before every grammar check.",
-    },
-    {
-      icon: "📝",
-      title: "Writing modes",
-      description:
-        "Choose General, Literature Review, Methodology, or Discussion to match your writing task.",
-    },
-    {
-      icon: "🎯",
-      title: "Smart corrections",
-      description:
-        "Review grammar, tense, clarity, and tone with clear explanations for every correction.",
-    },
-  ],
-};
-
-export const twoWaysContent = {
-  eyebrow: "How to get help",
-  title: "Do it yourself, or let us handle it.",
-  subtitle:
-    "Check it yourself with the free tool, or let an expert refine your writing.",
-  freeColumn: {
-    heading: "Free tool, do it yourself",
-    subheading: "Easy to Start",
-    steps: [
-      {
-        title: "Add your text",
-        description: "Paste your text or upload a file to get started.",
-      },
-      {
-        title: "Set your goals",
-        description: "Choose your dialect, section, and writing tone.",
-      },
-      {
-        title: "Review changes",
-        description: "See every correction with a clear explanation.",
-      },
-      {
-        title: "Apply & export",
-        description:
-          "Accept fixes right here, view your report, and copy your final text.",
-      },
-    ],
+  hero: {
+    titleLead: "Free AI Grammar Checker:",
+    titleAccent: "Simplify Your Writing Workflow",
+    subtitle:
+      "ScholarlyHelp's free grammar checker reviews your writing to fix grammar mistakes, improve sentence structure, and make your words clear and easy to understand.",
   },
-  expertColumn: {
-    heading: "Expert help, done for you",
-    subheading: "A free quote in about two minutes →",
-    steps: [
-      {
-        title: "Share your brief",
-        description: "Share the assignment brief and your deadline for it.",
-      },
-      {
-        title: "Get matched to an editor",
-        description: "We pair you with an academic editor in your subject.",
-      },
-      {
-        title: "Follow the edits",
-        description: "Ask questions and watch the piece as it takes shape.",
-      },
-      {
-        title: "Receive and review",
-        description:
-          "Get the polished piece, plus free edits when needed.",
-      },
-    ],
+
+  mobileBar: {
+    tool: toTool("Check grammar"),
+    expert: { label: "Get expert help", href: `#${DONE_FOR_YOU_ID}` },
   },
-};
 
-export const expertBannerContent = {
-  tag: "EXPERT PROOFREADING",
-  title: "Get a real academic editor to refine your writing",
-  body: "Need more than an automated check? Our subject-matter editors review your paper for academic tone, structure, and citations with free revisions.",
-  button: "Talk to an editor →",
-  buttonHref: "/contact-us",
-  note: "Free quote in ~2 minutes · 24/7 Availability",
-};
+  sections: [
+    {
+      type: "whatIs",
+      title: "What is an AI Grammar Checker?",
+      paragraphs: [
+        "A grammar checker is an online tool that helps you find and fix mistakes in your writing. It checks your text for grammar errors and suggests corrections to make your sentences sound right. Whether you are writing an essay, an email, or an assignment, it helps you improve your writing without spending too much time checking every sentence yourself.",
+        "With ScholarlyHelp's AI Grammar Checker, you can paste your text or type directly into the editor to check your writing. The tool helps you spot common grammar mistakes so you can correct them and make your work easier to read. It's a simple way to review your writing before submitting an assignment or sharing your work.",
+      ],
+      glance: [
+        { label: "Price", value: "Free to use" },
+        { label: "Sign-up", value: "No sign-up required" },
+        {
+          label: "Works for",
+          value: "Essays, assignments, emails, articles, and everyday writing",
+        },
+        { label: "Language", value: "English" },
+      ],
+    },
 
-export const reviewsContent = {
-  eyebrow: "Student reviews",
-  title: "What students say about this tool",
-  ratingLine: "Rated 4.8/5 based on 1,200+ student reviews",
-  reviews: [
     {
-      quote:
-        "Other checkers just underline things in red. This one gives a short reason for each fix, so I actually understand what I did wrong and stop repeating it in the next essay.",
-      author: "Priya S.",
-      detail: "Law, University of Birmingham — 2nd year",
+      type: "steps",
+      title: "3 Simple Steps to Check Your Grammar",
+      subtitle:
+        "Check your text in just three easy steps and fix mistakes before using your writing.",
+      steps: [
+        {
+          title: "Add Your Text",
+          description:
+            "Paste your text into the AI Grammar Checker or type directly in the box.",
+          note: {
+            title: "Enter Your Writing",
+            description:
+              "You can add an essay, school assignment, email, or any other text.",
+          },
+        },
+        {
+          title: "Check for Mistakes",
+          description: "Click the Check Grammar button to find mistakes in your writing.",
+          note: {
+            title: "See What Needs Fixing",
+            description: "The tool will show you where your grammar needs improvement.",
+          },
+        },
+        {
+          title: "Fix Your Errors",
+          description:
+            "Go through the suggested changes and correct the mistakes in your text.",
+          note: {
+            title: "Make Your Writing Better",
+            description:
+              "Read your text again to make sure everything looks right before you submit it.",
+          },
+        },
+      ],
     },
+
     {
-      quote:
-        "Setting the dialect to UK English was the thing for me. My spelling kept getting marked wrong on other tools, and here it finally matches what my course expects.",
-      author: "Tom W.",
-      detail: "History, University of Edinburgh — Final year",
+      type: "cards",
+      title: "Benefits of Using an AI Grammar Checker",
+      subtitle:
+        "An AI grammar checker helps you improve your writing by finding common mistakes and showing you what needs to be fixed. Here are some ways that can make your writing better.",
+      cards: [
+        {
+          title: "Correct Punctuation Mistakes",
+          description:
+            "Find missing commas, periods, and apostrophes in your text. Correct punctuation helps your sentences make sense and keeps your message clear.",
+        },
+        {
+          title: "Detect Grammar Errors",
+          description:
+            "Find grammar mistakes in your writing and see which sentences need correction. This makes it easier to fix errors before finishing your work.",
+        },
+        {
+          title: "Improve Sentence Structure",
+          description:
+            "Fix sentences that sound awkward or are hard to understand. Better sentence structure helps your ideas flow naturally.",
+        },
+        {
+          title: "Fix Spelling Mistakes",
+          description:
+            "Catch misspelled words and correct them before sharing your writing. This helps you avoid small spelling errors in your essays and assignments.",
+        },
+        {
+          title: "Improve Readability",
+          description:
+            "Make your sentences easier to read and understand. Clear writing helps readers follow your ideas without getting confused.",
+        },
+        {
+          title: "Build Writing Confidence",
+          description:
+            "Check your work and fix common mistakes before submitting an assignment or sharing your content. This helps you feel more confident about your writing.",
+        },
+        {
+          title: "Choose the Right Words",
+          description:
+            "Find better word choices when a sentence does not sound right. The right words help you express your ideas while keeping your original meaning.",
+        },
+      ],
+      button: toTool("Try Grammar Checker for Free"),
     },
+
     {
-      quote:
-        "English is not my first language, so the reasons help me learn as I go. Being able to add my own subject words to the dictionary means my terms stop getting flagged.",
-      author: "Aya K.",
-      detail: "Nursing, University of Alberta — MSc",
+      type: "detailCards",
+      title: "Who Can Use an AI Grammar Checker?",
+      subtitle:
+        "An AI grammar checker is useful for anyone who wants to find writing mistakes and make their text easier to read.",
+      items: [
+        {
+          name: "Students",
+          description:
+            "Students can use the grammar checker to review essays, assignments, research papers, and other schoolwork before turning them in.",
+          details: [
+            {
+              label: "Better Assignments",
+              text: "Find grammar mistakes and make your academic writing easier to read.",
+            },
+          ],
+        },
+        {
+          name: "Teachers",
+          description:
+            "Teachers can review lesson plans, class notes, and study materials to make sure everything is written correctly.",
+          details: [
+            {
+              label: "Clear Study Materials",
+              text: "Prepare easy-to-read learning materials for your students.",
+            },
+          ],
+        },
+        {
+          name: "Bloggers",
+          description:
+            "Bloggers can check their articles and blog posts before publishing them online.",
+          details: [
+            {
+              label: "Error-Free Blog Posts",
+              text: "Find writing mistakes and make your content easier for readers to follow.",
+            },
+          ],
+        },
+      ],
+    },
+
+    {
+      type: "pointCards",
+      tone: "check",
+      title: "Why Use Our AI Grammar Checker?",
+      items: [
+        {
+          title: "Understand Sentence Context",
+          description:
+            "Check how words fit together to find mistakes and make your sentences clearer.",
+        },
+        {
+          title: "Keep Your Original Meaning",
+          description:
+            "Fix grammar mistakes while keeping your original meaning and making your writing clearer.",
+        },
+        {
+          title: "Improve Sentence Structure",
+          description:
+            "Get suggestions to fix awkward sentences and make your writing sound more natural.",
+        },
+        {
+          title: "Spelling Errors",
+          description:
+            "Find misspelled words and correct them before submitting your work.",
+        },
+      ],
+    },
+
+    {
+      type: "comparison",
+      title: "Grammar Checker vs Read My Essay vs AI Math Helper vs CGPA Calculator",
+      subtitle:
+        "Each tool helps students with a different part of their academic work. Here's a simple comparison to help you understand what each tool does and when to use it.",
+      columns: ["Read My Essay", "AI Math Helper", "CGPA Calculator"],
+      highlight: "Grammar Checker",
+      rows: [
+        {
+          label: "What it does",
+          values: [
+            "Turns written text into spoken audio",
+            "Helps solve math problems",
+            "Calculates your cumulative grade point average",
+          ],
+          highlight: "Finds grammar and spelling mistakes",
+        },
+        {
+          label: "Best for",
+          values: [
+            "Listening to essays and other text",
+            "Solving math questions and understanding problems",
+            "Checking your overall academic results",
+          ],
+          highlight: "Checking and improving written work",
+        },
+        {
+          label: "Uses",
+          values: [
+            "Essays, notes, and study materials",
+            "Math questions, equations, and calculations",
+            "Grades, GPA, and credit hours",
+          ],
+          highlight: "Essays, assignments, emails, and articles",
+        },
+        {
+          label: "Main benefit",
+          values: [
+            "Helps you review your work by listening",
+            "Makes math problems easier to work through",
+            "Helps you keep track of your academic progress",
+          ],
+          highlight: "Makes your writing clearer and easier to read",
+        },
+        {
+          label: "Cost on ScholarlyHelp",
+          values: ["Free", "Free", "Free"],
+          highlight: "Free",
+        },
+      ],
+    },
+
+    {
+      type: "pointCards",
+      tone: "cross",
+      title: "Mistakes to Avoid When Using a Grammar Checker",
+      subtitle:
+        "Our free Grammar Checker can help you find writing mistakes and improve your text. However, how you use the tool also matters. Avoid these common mistakes to get better results.",
+      items: [
+        {
+          title: "Not Checking the Full Text",
+          description:
+            "Add your complete text so the tool can check your sentences and find mistakes throughout your writing.",
+        },
+        {
+          title: "Accepting Every Suggestion",
+          description:
+            "Read each suggested correction before making changes. Some suggestions may not fit the meaning of your sentence.",
+        },
+        {
+          title: "Ignoring Sentence Context",
+          description:
+            "Check how each correction fits into your sentence. Make sure it keeps your original meaning.",
+        },
+        {
+          title: "Not Reviewing Your Final Text",
+          description:
+            "Read your writing again after making corrections. This helps you catch any mistakes that may still be there.",
+        },
+      ],
+      note: {
+        before: "Want to track your academic progress? Try the free ",
+        link: { label: "CGPA Calculator", href: "/tools/cumulative-gpa-calculator" },
+        after: " to calculate your cumulative GPA.",
+      },
+    },
+
+    {
+      type: "ctaBand",
+      tag: "Check grammar mistakes in simple steps",
+      titleStart:
+        "Find writing errors and make your sentences clear and easy to understand.",
+      checks: [
+        "Find grammar and spelling mistakes in your text",
+        "Fix punctuation and sentence structure errors",
+        "Improve your writing while keeping your original meaning",
+      ],
+      submitLabel: "Try Grammar Checker",
+      note: "Free to use · No sign-up required · Easy grammar checking",
+    },
+
+    {
+      type: "cards",
+      title: "Key Features of Our AI Grammar Checker",
+      subtitle:
+        "Our AI Grammar Checker gives you a simple way to review your writing and spot areas that may need improvement. It helps you check your text before sharing it or submitting your work.",
+      cards: [
+        {
+          title: "All-in-One Text Check",
+          description:
+            "Review your writing for common grammar and spelling errors in one place. You do not need to switch between different tools to check basic writing mistakes.",
+        },
+        {
+          title: "Sentence-Level Review",
+          description:
+            "Check individual sentences to see if they are written correctly and make sense. This is useful when you are unsure about a sentence or want to double-check your wording.",
+        },
+        {
+          title: "Context-Based Suggestions",
+          description:
+            "Get corrections based on how words are used in a sentence. This helps the tool understand the meaning of your writing instead of looking at each word on its own.",
+        },
+        {
+          title: "Better Word Choices",
+          description:
+            "Find words or phrases that may not express your ideas clearly. Review alternative suggestions to make your sentences easier to understand while keeping your original message.",
+        },
+        {
+          title: "Support for Different Texts",
+          description:
+            "Use the tool for different types of writing, from short messages and emails to essays and school assignments. You can check your text whenever you want to review your work.",
+        },
+        {
+          title: "Easy-to-Review Corrections",
+          description:
+            "Go through the suggested changes and decide which ones work best for your writing. Review each correction before applying it so your final text still sounds like you.",
+        },
+      ],
+    },
+
+    {
+      type: "guide",
+      blocks: [
+        { type: "heading", text: "Popular Use Cases of Our AI Grammar Checker" },
+        {
+          type: "paragraph",
+          text: "Our AI Grammar Checker is useful for more than academic writing. You can use it for everyday communication and different writing tasks where correct language matters.",
+        },
+        {
+          type: "list",
+          items: [
+            {
+              lead: "School Essays:",
+              text: "Review your essays before submission to make sure your ideas are presented clearly.",
+            },
+            {
+              lead: "Professional Emails:",
+              text: "Check work emails to make sure your message sounds clear and professional.",
+            },
+            {
+              lead: "Online Content:",
+              text: "Review website pages and blog posts before publishing them.",
+            },
+            {
+              lead: "Business Documents:",
+              text: "Check proposals and business letters for writing errors.",
+            },
+            {
+              lead: "English Practice:",
+              text: "Use grammar suggestions to learn from your mistakes and improve your English skills.",
+            },
+            {
+              lead: "Personal Writing:",
+              text: "Check letters and other personal messages before sharing them.",
+            },
+          ],
+        },
+      ],
+    },
+
+    {
+      type: "guide",
+      blocks: [
+        { type: "heading", text: "Common Grammar Rules Every Writer Should Know" },
+        {
+          type: "paragraph",
+          text: "Understanding basic grammar rules can help you write correctly and express your ideas with confidence. Here are some important rules to keep in mind when writing.",
+        },
+        {
+          type: "list",
+          ordered: true,
+          items: [
+            {
+              lead: "Subject-Verb Agreement:",
+              text: "A subject and its verb must agree in number. Singular subjects require singular verbs, while plural subjects require plural verbs.",
+            },
+            {
+              lead: "Correct Verb Tense:",
+              text: "Choose verb tenses according to when an action takes place. Keep the tense consistent throughout your writing unless the timeline changes.",
+            },
+            {
+              lead: "Proper Use of Articles:",
+              text: "Use articles such as a, an, and the correctly before nouns. The right choice depends on the noun and how it is being used.",
+            },
+            {
+              lead: "Pronoun Agreement:",
+              text: "Pronouns should match the nouns they replace in number and person. This helps readers understand who or what a sentence refers to.",
+            },
+            {
+              lead: "Correct Preposition Usage:",
+              text: "Use prepositions to show relationships between words, including time, place, and direction. Choosing the right preposition helps make your sentences sound natural.",
+            },
+          ],
+        },
+      ],
+    },
+
+    {
+      type: "moreTools",
+      title: "Discover More Free Academic Tools",
+      subtitle:
+        "Explore free online tools to improve your writing, solve math problems, and make everyday study tasks easier.",
+      items: [
+        {
+          name: "AI Math Helper",
+          description: "Solve math problems and get help understanding each step.",
+          href: "/tools/ai-math-helper",
+        },
+        {
+          name: "AI Humanizer",
+          description:
+            "Make AI-generated text sound more natural and human while keeping your original message.",
+          href: "/tools/ai-humanizer",
+        },
+        {
+          name: "Read My Essay",
+          description:
+            "Convert your essays and other written content into speech and listen to your text.",
+          href: "/tools/read-my-essay",
+        },
+        {
+          name: "Plagiarism Checker",
+          description:
+            "Check your text for matching content and find sections that may need proper citations.",
+          href: "/tools/plagiarism-checker",
+        },
+      ],
+      button: { label: "Explore All Free Tools", href: "/tools" },
+    },
+
+    {
+      type: "faq",
+      title: "Frequently Asked Questions",
+      items: [
+        {
+          question: "Is the AI Grammar Checker free to use?",
+          answer:
+            "Yes, our AI Grammar Checker is free to use. You can add your text and check it for mistakes without spending money. It gives you a simple way to review your writing whenever you need it.",
+        },
+        {
+          question: "How do I know if my sentence is grammatically correct?",
+          answer:
+            "Add your sentence to the Grammar Checker and click the check button. The tool will go through your sentence and point out anything that may be wrong. You can then look at the suggested changes and decide what needs to be fixed.",
+        },
+        {
+          question: "Can the Grammar Checker find spelling mistakes?",
+          answer:
+            "Yes, it can find spelling mistakes as well as grammar errors. You don't have to check every word yourself. Add your text to the tool to see which words may need correction.",
+        },
+        {
+          question: "Can I check punctuation with this tool?",
+          answer:
+            "Yes, you can use it to check punctuation in your writing. It can help you spot missing commas, full stops, apostrophes, and other punctuation marks. This is useful when you want to make sure your sentences are written correctly.",
+        },
+        {
+          question: "Can I use the AI Grammar Checker for long essays?",
+          answer:
+            "Yes, you can use the tool to check essays, school assignments, college papers, and articles. It helps you find mistakes in your writing before you submit or publish it. Just remember to read through the suggested changes to make sure they suit your sentences.",
+        },
+        {
+          question: "Does an AI Grammar Checker change the meaning of my sentences?",
+          answer:
+            "The tool suggests changes to fix mistakes while keeping your original message. However, not every suggestion will always fit what you want to say. Take a moment to read the corrected sentence before accepting any changes.",
+        },
+        {
+          question: "What is the difference between a grammar checker and a punctuation checker?",
+          answer:
+            "A grammar checker looks for mistakes in the way sentences are written, including verb use and sentence structure. A punctuation checker focuses on marks such as commas, full stops, and apostrophes. Both help you write sentences that are easier to read and understand.",
+        },
+        {
+          question: "Do I need to download anything to check my grammar?",
+          answer:
+            "No, you don't need to download or install anything. You can open our Grammar Checker in your browser and use it online. Simply add your text and start checking your writing.",
+        },
+      ],
+    },
+
+    {
+      type: "finalCta",
+      titleStart: "Hand in writing you can",
+      titlePill: "trust.",
+      body: "Check your text free in under a minute, or ask an editor for a full proofread.",
+      primary: toTool("Check my writing"),
+      secondary: { label: "Talk to an editor →", href: "/contact-us" },
     },
   ],
-};
-
-export const faqContent = {
-  eyebrow: "FAQ — Common questions about this tool",
-  title: "Common questions about this tool",
-  subtitle: "Everything you need to know about our free AI Grammar Checker.",
-  items: [
-    {
-      question: "Is this tool really free?",
-      answer:
-        "Yes. You can check your writing for free and see every correction with a clear explanation. Sign up for free to access more ScholarlyHelp tools from one dashboard.",
-    },
-    {
-      question: "What does it check?",
-      answer:
-        "It checks grammar, spelling, punctuation, tense, clarity, and tone. Every suggestion includes a clear explanation so you understand each correction.",
-    },
-    {
-      question: "Which English dialects can I use?",
-      answer:
-        "Choose from UK, US, Canadian, or Australian English. The checker adjusts spelling and word choices to match the dialect you select.",
-    },
-    {
-      question: "Can I stop my own words being flagged?",
-      answer:
-        "Yes. Select General, Literature Review, Methodology, or Discussion, then choose your preferred writing tone before checking your work.",
-    },
-    {
-      question: "What if I want a full proofread?",
-      answer:
-        "If you need more than a grammar check, our academic editors can proofread your paper, improve the writing, and explain the changes they make.",
-    },
-  ],
-};
-
-export const footerCtaContent = {
-  titleStart: "Hand in writing you can",
-  titlePill: "trust.",
-  titleEnd: "",
-  body: "Check your text free in under a minute, or ask an editor for a full proofread.",
-  primaryButton: "Check my writing",
-  primaryHref: "#grammar-checker-tool",
-  secondaryButton: "Talk to an editor →",
-  secondaryHref: "/contact-us",
 };
