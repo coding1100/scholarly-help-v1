@@ -1,265 +1,543 @@
-// Copy for the /tools/research-question-generator landing page. Mirrors the
-// structure of the other tool landing pages; all user-facing text lives here
-// so copy edits never require touching layout code.
+// Copy for the /tools/research-question-generator landing page. Layout lives in
+// the shared LandingTemplate; all user-facing text for this page lives here.
+import { DONE_FOR_YOU_ID } from "../Template/ui";
+import type { LandingContent, LinkButton } from "../Template/types";
 
-import type { LandingHeroContent } from "@/app/components/AiLandingPage/ToolLanding/LandingHero";
-import type { UseCasesContent } from "@/app/components/AiLandingPage/ToolLanding/UseCases";
-import type { HowItWorksContent } from "@/app/components/AiLandingPage/ToolLanding/HowItWorks";
-import type { WatchVideoContent } from "@/app/components/AiLandingPage/ToolLanding/WatchVideo";
-import type { WhyItWorksContent } from "@/app/components/AiLandingPage/ToolLanding/WhyItWorks";
-import type { TwoWaysContent } from "@/app/components/AiLandingPage/ToolLanding/TwoWays";
-import type { ReviewsContent } from "@/app/components/AiLandingPage/ToolLanding/StudentReviews";
-import type { FaqContent } from "@/app/components/AiLandingPage/ToolLanding/LandingFaq";
-import type { FooterCtaContent } from "@/app/components/AiLandingPage/ToolLanding/FooterCta";
-
-export const heroContent: LandingHeroContent = {
-  badge: "3,241 students used this tool this week",
-  titleTop: "Create a strong research question with our",
-  titleAccent: "research question generator",
-  subtitle:
-    "Enter your topic and get focused, academically sound research questions ready for your paper with our research question generator.",
-  steps: ["Enter Topic", "See Results", "Open Dashboard"],
+export const researchQuestionMeta = {
+  title: "Research Question Generator – Create Free Questions",
+  description:
+    "Create clear research questions from your topic or keywords with our free AI Research Question Generator. Get ideas for your academic work in seconds.",
 };
 
-export const useCasesContent: UseCasesContent = {
-  title: "An AI research question generator for every situation.",
-  subtitle: "Start stronger. Research smarter. Write with confidence.",
-  cards: [
-    {
-      icon: "⏰",
-      title: "Deadline is tonight",
-      description:
-        "Create a focused question with a research question generator in seconds and get your research started faster.",
-    },
-    {
-      icon: "🔍",
-      title: "Starting your research",
-      description:
-        "Enter your topic into a research topic question generator and get questions that match your subject and assignment.",
-    },
-    {
-      icon: "💡",
-      title: "Need fresh ideas",
-      description:
-        "Explore generative research questions and find one that fits your study, topic, and research goals.",
-    },
-    {
-      icon: "🧪",
-      title: "Choosing a method",
-      description:
-        "Generate broad, focused, hypothesis-driven, or policy-oriented questions for your topic with our research question AI generator.",
-    },
-    {
-      icon: "🌐",
-      title: "Writing in English",
-      description:
-        "Create clear academic questions using an AI research questions generator, with results that are easy to understand, refine, and use.",
-    },
-    {
-      icon: "📋",
-      title: "Planning your paper",
-      description:
-        "Start with a focused question using a research paper question generator and build a stronger, more organised paper.",
-    },
-  ],
-};
+const TOOL_ANCHOR_ID = "research-question-tool";
+const toTool = (label: string): LinkButton => ({ label, href: `#${TOOL_ANCHOR_ID}` });
 
-export const howItWorksContent: HowItWorksContent = {
-  eyebrow: "How it works",
-  title: "From a blank page to a research question in 4 steps",
-  steps: [
-    {
-      title: "Enter your topic",
-      description:
-        "Type your topic in a sentence or two. It does not have to be narrow yet.",
-    },
-    {
-      title: "Set your preferences",
-      description:
-        "Choose your research type, question style, and level of specificity.",
-    },
-    {
-      title: "Generate questions",
-      description:
-        "Use a free online research question generator to create questions for your topic.",
-    },
-    {
-      title: "Unlock your dashboard",
-      description:
-        "Sign up for free to save your work in your ScholarlyHelp dashboard.",
-    },
-  ],
-  ctaTitleStart: "Want all",
-  ctaTitleBrand: "ScholarlyHelp",
-  ctaTitlePill: "Tools",
-  ctaTitleEnd: "in one place?",
-  ctaBody:
-    "Keep your results, revisit past work, and reach every tool from one dashboard: essay generator, thesis builder, citation tool, and humanizer.",
-  ctaButton: "Explore all tools in the dashboard →",
-  ctaHref: "/tools/dashboard",
-  ctaSecondaryButton: "See what is included",
-  ctaSecondaryHref: "/tools",
-};
+export const researchQuestionLanding: LandingContent = {
+  toolName: "Research Question Generator",
+  toolAnchorId: TOOL_ANCHOR_ID,
+  placement: "research_question_tool_landing",
 
-export const whyItWorksContent: WhyItWorksContent = {
-  eyebrow: "Why it works",
-  title: "Turn broad topics into focused research questions",
-  subtitle:
-    "Generate focused research questions designed to match your topic and methodology.",
-  features: [
-    {
-      icon: "🧭",
-      title: "Matched to your method",
-      description:
-        "Built for qualitative, experimental, case study, policy analysis, and many other research approaches.",
-    },
-    {
-      icon: "🎯",
-      title: "Fits your topic",
-      description:
-        "Adjust the level of detail to match your topic, assignment, or research project.",
-    },
-    {
-      icon: "📄",
-      title: "Ready to copy",
-      description:
-        "Every question comes out clean, so you can paste it into your draft without editing it first.",
-    },
-  ],
-};
-
-export const watchVideoContent: WatchVideoContent = {
-  eyebrow: "See it in action",
-  title: "Craft precise research questions instantly",
-  // https://youtu.be/BvD-NEG6NMo
-  youtubeEmbedUrl: "https://www.youtube.com/embed/BvD-NEG6NMo",
-};
-
-export const twoWaysContent: TwoWaysContent = {
-  eyebrow: "How to get help",
-  title: "Two ways to get help",
-  subtitle:
-    "Work through the free tools yourself, or hand the whole task to our writers.",
-  freeColumn: {
-    heading: "Free tools, do it yourself",
-    sub: "Easy to start.",
-    steps: [
-      {
-        title: "Enter your topic",
-        description:
-          "Add your topic or assignment details to generate a research question that fits your work.",
-      },
-      {
-        title: "Set the options",
-        description:
-          "Choose your research type, question style, and level of specificity for your project.",
-      },
-      {
-        title: "Use your question",
-        description:
-          "Apply your selected question as a clear starting point for your research project.",
-      },
-      {
-        title: "Save and continue",
-        description:
-          "Sign up for free to save your results and continue working from your personalised dashboard.",
-      },
-    ],
+  hero: {
+    titleLead: "Research Question Generator:",
+    titleAccent: "Free Online Tool for Students",
+    subtitle:
+      "Create clear and useful research questions from your topic or keywords in seconds. Get ideas, save time, and make your research easier with AI.",
   },
-  expertColumn: {
-    heading: "Expert services, done for you",
-    sub: "A free quote in about two minutes →",
-    steps: [
-      {
-        title: "Share the brief now",
-        description:
-          "Tell us your subject, assignment, deadline, and any instructions from your professor.",
-      },
-      {
-        title: "Matched to an expert",
-        description:
-          "We match you with a subject specialist who works at exactly the right academic level.",
-      },
-      {
-        title: "Follow the progress",
-        description:
-          "Message your writer, ask questions, and track the progress as your paper takes shape.",
-      },
-      {
-        title: "Review and receive!",
-        description:
-          "Receive your completed paper, review it all, and request free revisions where needed.",
-      },
-    ],
+
+  mobileBar: {
+    tool: toTool("Generate questions"),
+    expert: { label: "Get expert help", href: `#${DONE_FOR_YOU_ID}` },
   },
-};
 
-export const reviewsContent: ReviewsContent = {
-  eyebrow: "Student reviews",
-  title: "What students say about this tool",
-  ratingLine: "Rated 4.6/5 Based on 1000+ Reviews",
-  reviews: [
+  sections: [
     {
-      quote:
-        "My paper was due at eight in the morning, and it was already midnight. I got a question I could actually explain to my professor, and I handed it in with time left over.",
-      author: "Tyler K.",
-      detail: "Psychology, Ohio State, 3rd year",
+      type: "whatIs",
+      title: "What is a Research Question Generator?",
+      paragraphs: [
+        "A Research Question Generator is an AI tool that helps you come up with research questions based on your topic, description, or keywords. You simply enter what you want to study, and the tool suggests questions related to your topic. It can help you create questions for different academic projects, with options for research type, question style, level of specificity, and number of questions.",
+        "Sometimes, choosing the right research question is not easy. You may have a topic in mind but still feel unsure about what to ask or where to begin. A Research Question Generator makes this process easier by giving you ideas to work with. You can read through the suggested questions, choose the ones that fit your research, and make changes whenever needed. This gives you a clearer starting point and helps you spend more time working on your research instead of getting stuck on the first step.",
+      ],
+      glance: [
+        { label: "Price", value: "Free to use" },
+        { label: "Sign-up", value: "No sign-up required" },
+        {
+          label: "Works for",
+          value: "Students, researchers, teachers, and academic writers",
+        },
+        { label: "Language", value: "English" },
+      ],
     },
+
     {
-      quote:
-        "I settle the directions here first, then write the paper myself. My marks have improved because I start from something focused instead of wandering around a broad topic.",
-      author: "Nina P.",
-      detail: "Nursing, University of Michigan, final year",
+      type: "steps",
+      title: "How to Use the Research Question Generator in 3 Easy Steps",
+      subtitle:
+        "Creating research questions does not have to be difficult. Follow these three simple steps to get question ideas for your academic work.",
+      steps: [
+        {
+          title: "Enter Your Topic",
+          description:
+            "Start by typing your research topic, a short description, or some related keywords in the input box.",
+          note: {
+            title: "Share Your Research Idea",
+            description:
+              "Add a few details about what you want to study. This helps the AI understand your topic and create questions that match it.",
+          },
+        },
+        {
+          title: "Select Your Preferences",
+          description:
+            "Choose your research type, question style, level of specificity, and number of questions.",
+          note: {
+            title: "Choose What You Need",
+            description:
+              "Set your preferences according to your research needs. This helps you get questions that are more suitable for your topic.",
+          },
+        },
+        {
+          title: "Generate Research Questions",
+          description:
+            "Click the Generate button to get questions based on the information you provided.",
+          note: {
+            title: "Check Your Results",
+            description:
+              "Read the questions carefully and pick the ones that match your research. You can also edit them to make them clearer and more suitable for your work.",
+          },
+        },
+      ],
     },
+
     {
-      quote:
-        "Seeing how a proper academic question is built for my own subject has taught me more than any textbook did. I pick up something new from nearly every set.",
-      author: "Yuki L.",
-      detail: "Business Management, Purdue MSc",
+      type: "cards",
+      title: "Benefits of Using the Research Question Generator",
+      subtitle:
+        "The Research Question Generator makes it easier to create clear and relevant questions for your academic work. It helps students save time, explore new ideas, and find a good starting point for their research.",
+      cards: [
+        {
+          title: "Save Time and Effort",
+          description:
+            "Create research questions in minutes instead of spending hours thinking about what to ask. The tool makes the process faster and easier.",
+        },
+        {
+          title: "Get Relevant Questions",
+          description:
+            "Generate questions based on your topic, description, and keywords. This helps you find ideas that match your research needs.",
+        },
+        {
+          title: "Explore Different Ideas",
+          description:
+            "Get different question suggestions for the same topic. Compare them and choose the ones that best fit your research.",
+        },
+        {
+          title: "Match Your Research Type",
+          description:
+            "Generate questions for qualitative, quantitative, mixed, and other research types. This makes it easier to get questions that fit how you plan to study your topic.",
+        },
+        {
+          title: "Choose How Specific Your Questions Are",
+          description:
+            "Pick a general, moderately specific, or highly specific level to match your research requirements and preferences.",
+        },
+        {
+          title: "Make Research Easier",
+          description:
+            "Use AI-generated questions as a starting point for essays, assignments, research papers, and other academic projects.",
+        },
+      ],
+      button: toTool("Try Research Question Generator for Free!"),
+    },
+
+    {
+      type: "detailCards",
+      title: "Who Can Use the Research Question Generator?",
+      subtitle:
+        "The Research Topic Question Generator is useful for students who need help developing research questions and finding a clear direction for their academic work.",
+      items: [
+        {
+          name: "Thesis Students",
+          description:
+            "Bachelor's, master's, and PhD students can use the tool to develop research questions and narrow down their thesis topics.",
+          details: [
+            {
+              label: "Thesis Planning",
+              text: "Find a clear starting point for your thesis and keep your research focused.",
+            },
+          ],
+        },
+        {
+          name: "Research Proposal Writers",
+          description:
+            "Students preparing a research proposal or synopsis can generate question ideas based on their chosen topic.",
+          details: [
+            {
+              label: "Proposal Development",
+              text: "Get ideas to help organize your research goals and prepare your proposal.",
+            },
+          ],
+        },
+        {
+          name: "First-Time Researchers",
+          description:
+            "Students new to academic research can use the tool to turn broad topics into focused questions and plan what they want to investigate.",
+          details: [
+            {
+              label: "Research Guidance",
+              text: "Move from topic selection to a clear research direction and a more organized research plan.",
+            },
+          ],
+        },
+      ],
+    },
+
+    {
+      type: "cards",
+      title: "Key Features of Our Research Question Generator",
+      cards: [
+        {
+          title: "AI-Powered Generation",
+          description:
+            "Get research question ideas based on your topic, description, or keywords.",
+        },
+        {
+          title: "Quick Results",
+          description:
+            "Generate research questions in seconds without spending hours brainstorming.",
+        },
+        {
+          title: "Flexible Question Settings",
+          description:
+            "Choose your research type, question style, and number of questions to match your preferences.",
+        },
+        {
+          title: "Free Access",
+          description:
+            "Use the research paper question generator to generate question ideas without paying any fees.",
+        },
+      ],
+    },
+
+    {
+      type: "comparison",
+      title:
+        "Research Question Generator vs Paraphrasing Tool vs Grammar Checker vs AI Math Helper",
+      subtitle:
+        "Each tool is designed to help with a different academic task. Whether you need to develop research questions, rewrite content, check grammar, or solve math problems, ScholarlyHelp offers free tools to make your academic work easier.",
+      columns: ["Paraphrasing Tool", "Grammar Checker", "AI Math Helper"],
+      highlight: "Research Question Generator",
+      rows: [
+        {
+          label: "What it does",
+          values: [
+            "Rewrites text in different words",
+            "Checks spelling, grammar, and punctuation",
+            "Helps solve math problems with AI",
+          ],
+          highlight: "Generates research questions based on a topic or keywords",
+        },
+        {
+          label: "Best for",
+          values: [
+            "Rewording sentences and paragraphs",
+            "Proofreading assignments",
+            "Understanding and solving math problems",
+          ],
+          highlight: "Developing research questions",
+        },
+        {
+          label: "Uses",
+          values: [
+            "Essays, articles, and assignments",
+            "Written academic content",
+            "Math questions and equations",
+          ],
+          highlight: "Research papers, proposals, and academic projects",
+        },
+        {
+          label: "Main benefit",
+          values: [
+            "Helps express ideas in different words",
+            "Helps improve writing quality",
+            "Makes math problems easier to understand",
+          ],
+          highlight: "Helps students find a clear direction for research",
+        },
+        {
+          label: "Cost on ScholarlyHelp",
+          values: ["Free", "Free", "Free"],
+          highlight: "Free",
+        },
+      ],
+    },
+
+    {
+      type: "pointCards",
+      tone: "cross",
+      title: "Common Mistakes to Avoid When Using a Research Question Generator",
+      subtitle:
+        "A Research Question Generator makes it easier to develop research ideas. However, a few common mistakes can affect the quality of your results. Keep these points in mind when using the tool.",
+      items: [
+        {
+          title: "Entering a Broad Topic",
+          description:
+            "Use a specific research topic instead of a general subject to get more focused question ideas.",
+        },
+        {
+          title: "Providing Incomplete Information",
+          description:
+            "Add relevant details and keywords so the tool can better understand your research topic.",
+        },
+        {
+          title: "Choosing Questions That Are Too Broad",
+          description:
+            "Select clear and specific questions that you can explore within your research scope.",
+        },
+        {
+          title: "Relying Only on AI Suggestions",
+          description:
+            "Use generative research questions as a starting point. Review and improve them before using them.",
+        },
+      ],
+      note: {
+        before: "Want to make studying easier? Try our free ",
+        link: { label: "AI Study Workspace", href: "/tools/ai-study-workspace" },
+        after:
+          " to organize your study materials, create notes, and get help with your learning.",
+      },
+    },
+
+    {
+      type: "ctaBand",
+      tag: "Create research questions in seconds",
+      titleStart:
+        "Turn your research topic or keywords into clear and relevant research questions with ease.",
+      checks: [
+        "Generate research questions from your topic or description",
+        "Get ideas to guide your academic research",
+        "Choose questions that match your research goals",
+      ],
+      submitLabel: "Generate Research Questions",
+      note: "Free to use · No sign-up required · AI-powered suggestions",
+    },
+
+    {
+      type: "guide",
+      blocks: [
+        { type: "heading", text: "What Makes a Research Question Strong?" },
+        {
+          type: "paragraph",
+          text: "A good research question is clear, specific, and easy to understand. It should focus on one main idea and help you decide what to study. Here are some important features of a good research question:",
+        },
+        {
+          type: "list",
+          items: [
+            {
+              lead: "Clarity:",
+              text: "Use simple and clear words so readers can easily understand what you want to research.",
+            },
+            {
+              lead: "Specificity:",
+              text: "Focus on one particular part of your topic instead of asking a very broad question.",
+            },
+            {
+              lead: "Relevance:",
+              text: "Make sure your question is related to your research topic and has a clear purpose.",
+            },
+            {
+              lead: "Feasibility:",
+              text: "Choose a question you can answer with the time, information, and resources you have.",
+            },
+            {
+              lead: "Originality:",
+              text: "Explore an idea from a fresh angle or offer a new point of view.",
+            },
+            {
+              lead: "Focus:",
+              text: "Keep your question centered on one main research goal to make your study easier to manage.",
+            },
+            {
+              lead: "Researchability:",
+              text: "Make sure you can find enough information to answer your question.",
+            },
+          ],
+        },
+      ],
+    },
+
+    {
+      type: "guide",
+      blocks: [
+        { type: "heading", text: "How AI Can Support Your Research Planning" },
+        {
+          type: "paragraph",
+          text: "Starting your research can be challenging, especially when you are unsure what questions to ask. AI can help you turn your topic into clear research questions and give you ideas to move forward. By sharing a few details about your study, you can get suggestions that match your academic needs.",
+        },
+        { type: "subheading", text: "Share Your Research Details" },
+        {
+          type: "paragraph",
+          text: "Start by providing some basic information about your study. This helps AI understand your topic and suggest relevant research questions. You can include:",
+        },
+        {
+          type: "list",
+          items: [
+            { lead: "Your Research Topic:", text: "Enter the subject you want to study." },
+            {
+              lead: "Your Field of Study:",
+              text: "Mention your academic subject or area.",
+            },
+            {
+              lead: "Your Study Level:",
+              text: "Select your level, such as bachelor's, master's, or PhD.",
+            },
+            {
+              lead: "Your Research Method:",
+              text: "Choose how you plan to conduct your research.",
+            },
+            {
+              lead: "Your Requirements:",
+              text: "Add any instructions or limits for your research questions.",
+            },
+          ],
+        },
+        { type: "subheading", text: "Get Research Ideas" },
+        {
+          type: "paragraph",
+          text: "After reviewing your details, the research question AI generator can suggest different ideas to help you plan your study. These may include:",
+        },
+        {
+          type: "list",
+          items: [
+            {
+              lead: "Main Research Questions:",
+              text: "Clear questions based on your topic.",
+            },
+            {
+              lead: "Related Questions:",
+              text: "Smaller questions that help you explore your subject.",
+            },
+            {
+              lead: "New Research Ideas:",
+              text: "Different ways to approach your topic.",
+            },
+            {
+              lead: "Key Research Areas:",
+              text: "Important points you may want to study.",
+            },
+            {
+              lead: "Question Suggestions:",
+              text: "Different options you can review and improve.",
+            },
+          ],
+        },
+        {
+          type: "paragraph",
+          text: "Review the suggestions carefully and choose the questions that best match your research goals. You can also edit them to make sure they fit your study requirements.",
+        },
+      ],
+    },
+
+    {
+      type: "guide",
+      blocks: [
+        { type: "heading", text: "Tips for Strong Research Questions" },
+        {
+          type: "paragraph",
+          text: "Good research questions help you stay focused and understand what you want to study. Follow these simple tips to make your questions clear and useful.",
+        },
+        {
+          type: "list",
+          items: [
+            {
+              lead: "Focus on One Main Idea:",
+              text: "Keep each main question about one topic or idea. This makes your research easier to understand and manage.",
+            },
+            {
+              lead: "Keep Your Research Possible:",
+              text: "Choose questions that you can answer within your available time and with the people or information you can access.",
+            },
+            {
+              lead: "Match Questions With Your Research Method:",
+              text: "Make sure your research questions match the methods you plan to use. This helps you collect the right information for your study.",
+            },
+            {
+              lead: "Avoid Simple Yes or No Questions:",
+              text: "Try to write questions that need more than a yes or no answer. This gives you more room to explore your topic in detail.",
+            },
+            {
+              lead: "Review Your Questions With Your Supervisor:",
+              text: "Share your research questions with your academic supervisor before submitting your work. Their feedback can help you improve and make your questions clearer.",
+            },
+          ],
+        },
+      ],
+    },
+
+    {
+      type: "moreTools",
+      title: "Explore Our Free Academic Tools",
+      subtitle:
+        "Take some stress out of your academic work with free tools that support your everyday study needs. Find simple ways to write better, understand math, and manage your studies.",
+      items: [
+        {
+          name: "CGPA Calculator",
+          description:
+            "Calculate your CGPA and keep track of your overall academic performance.",
+          href: "/tools/cumulative-gpa-calculator",
+        },
+        {
+          name: "Grammar Checker",
+          description:
+            "Find and fix grammar, spelling, and punctuation mistakes in your writing.",
+          href: "/tools/ai-grammar-check",
+        },
+        {
+          name: "Read My Essay",
+          description: "Listen to your essays and study materials with text-to-speech.",
+          href: "/tools/read-my-essay",
+        },
+        {
+          name: "AI Math Helper",
+          description: "Get help solving math problems and understanding difficult concepts.",
+          href: "/tools/ai-math-helper",
+        },
+      ],
+      button: { label: "Explore All Free Tools", href: "/tools" },
+    },
+
+    {
+      type: "faq",
+      title: "Frequently Asked Questions",
+      items: [
+        {
+          question: "How does AI for research questions help with thesis writing?",
+          answer:
+            "AI helps you turn your thesis topic into clear and focused research questions. It gives you ideas to help plan your study and decide what you want to explore.",
+        },
+        {
+          question: "Does the tool generate both qualitative and quantitative research questions?",
+          answer:
+            "Our free online research question generator helps you create research question ideas based on your topic. You can use these suggestions to develop questions for different types of research.",
+        },
+        {
+          question: "Can I export the research questions for my proposal?",
+          answer:
+            "You can copy the generated questions and add them to your research proposal or outline. Review them before using them in your academic work.",
+        },
+        {
+          question: "Are the generated research questions ready for submission?",
+          answer:
+            "AI-generated questions are a starting point, not a final answer. Review and improve them to make sure they meet your research requirements.",
+        },
+        {
+          question: "Can I specify my academic level and field of study?",
+          answer:
+            "You can include your academic level and field of study in your input to help generate a research question that matches your topic and research needs.",
+        },
+        {
+          question: "Is AI Research Question Generator free to use?",
+          answer:
+            "Yes, our AI Research Question Generator is free to use. You can create research question ideas without paying any fees.",
+        },
+        {
+          question: "How does this AI generate research questions?",
+          answer:
+            "The AI reviews your topic and keywords to understand what you want to study. It then creates research question suggestions based on the information you provide.",
+        },
+        {
+          question: "How do I get the best results?",
+          answer:
+            "Enter a clear and specific research topic. Add relevant details and keywords so the AI can better understand your needs and generate useful questions.",
+        },
+      ],
+    },
+
+    {
+      type: "finalCta",
+      titleStart: "Your paper",
+      titlePill: "deadline",
+      titleEnd: "will not wait.",
+      body: "Begin with a free research question generator, or speak to a writer today.",
+      primary: toTool("Generate my question for free"),
+      secondary: { label: "Talk to an expert →", href: "/contact-us" },
     },
   ],
-};
-
-export const faqContent: FaqContent = {
-  title: "Frequently Asked Questions",
-  subtitle: "FAQ — Common questions about this tool",
-  items: [
-    {
-      question: "Is this tool really free?",
-      answer:
-        "Yes. You can use our AI research question generator free to create focused questions, then sign up for a free ScholarlyHelp account to save your work and access it anytime.",
-    },
-    {
-      question: "Which research types are supported?",
-      answer:
-        "Supports 15 research types, including qualitative, quantitative, mixed methods, case studies, surveys, experiments, policy analysis, and more.",
-    },
-    {
-      question: "What question types can it generate?",
-      answer:
-        "Generate broad, focused, hypothesis-driven, or policy-oriented research questions to match your topic and assignment requirements.",
-    },
-    {
-      question: "Can I use it for a thesis?",
-      answer:
-        "Yes. The generated questions can be used as a starting point for research papers, dissertations, theses, proposals, and other academic projects.",
-    },
-    {
-      question: "What if I need the full paper?",
-      answer:
-        "ScholarlyHelp also offers professional academic writing services, including research, writing, editing, citations, and formatting for assignments of all sizes.",
-    },
-  ],
-};
-
-export const footerCtaContent: FooterCtaContent = {
-  titleStart: "Your paper",
-  titlePill: "deadline",
-  titleEnd: "will not wait.",
-  body: "Begin with a free research question generator, or speak to a writer today.",
-  primaryButton: "Generate my question for free",
-  primaryHref: "#research-question-tool",
-  secondaryButton: "Talk to an expert →",
-  secondaryHref: "/contact-us",
-  footnote: "Easy to use · Money-back guarantee on services",
 };
