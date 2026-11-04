@@ -87,16 +87,21 @@ const Block: FC<{ block: GuideBlock }> = ({ block: b }) => {
  * "Read the full guide" is tapped; the rest stays in the markup (hidden with
  * CSS) so the full text is still in the page.
  */
-const GuideSection: FC<{ content: GuideSectionContent }> = ({ content: c }) => {
+const GuideSection: FC<{
+  content: GuideSectionContent;
+  /** Directly after another guide: drop the top padding so the two read as one band. */
+  followsGuide?: boolean;
+}> = ({ content: c, followsGuide = false }) => {
   const [open, setOpen] = useState(false);
   const bodyId = useId();
   const previewEnd = c.blocks.findIndex((block) => block.type === "paragraph") + 1;
   const preview = c.blocks.slice(0, previewEnd);
   const rest = c.blocks.slice(previewEnd);
+  const padding = followsGuide ? "pb-7 md:pb-14" : "py-7 md:py-14";
 
   return (
     <section className="bg-[#F7F7FC]">
-      <div className="mx-auto flex max-w-[760px] flex-col gap-3 px-4 py-7 md:gap-3.5 md:px-6 md:py-14">
+      <div className={`mx-auto flex max-w-[760px] flex-col gap-3 px-4 md:gap-3.5 md:px-6 ${padding}`}>
         {preview.map((block, index) => (
           <Block key={index} block={block} />
         ))}
