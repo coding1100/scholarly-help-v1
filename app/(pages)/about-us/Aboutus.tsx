@@ -25,7 +25,7 @@ const AboutUs: FC<AboutUsProps> = ({}) => {
           </h1>
         </div>
       </div>
-      <div className="px-20 pt-16 pb-20">
+      <div className="px-8 md:px-20 pt-16 pb-20">
         <p className="text-lg leading-7 pt-4">
           ScholarlyHelp is an academic writing service provider that holds a
           vast team of professional writers, certified with advanced degrees in
