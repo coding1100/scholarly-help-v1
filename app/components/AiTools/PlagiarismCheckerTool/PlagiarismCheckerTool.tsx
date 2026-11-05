@@ -7,6 +7,7 @@ import { FiDownload, FiExternalLink, FiFileText, FiRefreshCw, FiSettings, FiUplo
 import { getAccessToken } from "@/app/lib/authSession";
 import { countWords } from "@/app/utils/text";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
+import { recordToolRun } from "@/app/utils/toolHistoryClient";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import GuestAuthGateModal from "@/app/components/AiTools/GuestGate/GuestAuthGateModal";
 import styles from "./PlagiarismCheckerTool.module.css";
@@ -22,7 +23,6 @@ const DEFAULT_SETTINGS: ScanSettings = {
   exclude_bibliography: true,
   exclude_quotes: true,
   compare_past_scans: true,
-  contribute_to_database: false,
 };
 
 function unwrap<T>(response: any): T {
@@ -130,6 +130,17 @@ export default function PlagiarismCheckerTool() {
             setProgress(100);
             setPollNotice("");
             setRevisionVisible(true);
+            // Recorded once the report actually lands, so "Recent work" never
+            // shows a scan that was still running or ultimately failed.
+            void recordToolRun({
+              toolKey: "plagiarism-checker",
+              toolName: "Plagiarism Checker",
+              href: "/tools/plagiarism-checker",
+              title: next.title || text,
+              metricLabel: "Similarity",
+              metricAfter: next.result.score,
+              resourceId: next.scan_id,
+            });
             return;
           }
           if (next.status === "failed") throw new Error(next.error || "The scan failed.");
@@ -299,7 +310,7 @@ export default function PlagiarismCheckerTool() {
   };
 
   const progressStep = progress < 28 ? 0 : progress < 55 ? 1 : progress < 82 ? 2 : 3;
-  const settingSummary = `${settings.exclude_bibliography ? "Bibliography excluded" : "Bibliography included"}, ${settings.exclude_quotes ? "quotes excluded" : "quotes included"}, ${settings.compare_past_scans ? "past scans compared" : "past scans skipped"}, ${settings.contribute_to_database ? "saved to shared database" : "not saved to database"}`;
+  const settingSummary = `${settings.exclude_bibliography ? "Bibliography excluded" : "Bibliography included"}, ${settings.exclude_quotes ? "quotes excluded" : "quotes included"}, ${settings.compare_past_scans ? "past scans compared" : "past scans skipped"}`;
 
   return (
     <section className={styles.shell}>
@@ -324,8 +335,7 @@ export default function PlagiarismCheckerTool() {
             ["exclude_bibliography", "Exclude references and bibliography", "Don&apos;t check the citation list at the end of your paper."],
             ["exclude_quotes", "Exclude direct quotes", "Skip text inside quotation marks."],
             ["compare_past_scans", "Compare against my past scans", "Detect overlap with drafts you checked before."],
-            ["contribute_to_database", "Contribute this paper to ScholarlyHelp&apos;s database", "Opt in to future shared-database matching."],
-          ] as const).map(([key, label, description]) => <div className={styles.toggleRow} key={key}><div><div className={styles.label}>{label}</div><div className={styles.desc} dangerouslySetInnerHTML={{ __html: description }}/>{key === "contribute_to_database" && <div className={styles.note}>Off by default. Raw paper text is not stored by ScholarlyHelp.</div>}</div><label className={styles.switch}><input type="checkbox" checked={settings[key]} onChange={() => updateSetting(key)}/><span className={styles.slider}/></label></div>)}
+          ] as const).map(([key, label, description]) => <div className={styles.toggleRow} key={key}><div><div className={styles.label}>{label}</div><div className={styles.desc} dangerouslySetInnerHTML={{ __html: description }}/></div><label className={styles.switch}><input type="checkbox" checked={settings[key]} onChange={() => updateSetting(key)}/><span className={styles.slider}/></label></div>)}
         </div>}
         <div className={`${styles.meta} ${text.length > MAX_CHARS ? styles.metaError : ""}`}>{words.toLocaleString()} / {MAX_WORDS.toLocaleString()} words · {text.length.toLocaleString()} / {MAX_CHARS.toLocaleString()} characters · {title}</div>
         <button className={styles.scanButton} disabled={uploading || words < 20 || words > MAX_WORDS || text.length > MAX_CHARS} onClick={() => guardAiClick(async () => { await runScan(text); })}>Check for plagiarism</button>

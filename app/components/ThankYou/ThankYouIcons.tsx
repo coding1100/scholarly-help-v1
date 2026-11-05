@@ -129,28 +129,6 @@ export const CheckmarkIcon = ({ className = "w-4 h-4" }: { className?: string })
       strokeLinejoin="round"
     />
   </svg>
-);export const AiChipIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    {/* Outer chip body */}
-    <rect x="3.5" y="3.5" width="17" height="17" rx="3.5" fill="#EEF2FF" stroke="#4F46E5" strokeWidth="1.5" />
-    {/* Pins */}
-    <path d="M7 1V3.5M12 1V3.5M17 1V3.5" stroke="#4F46E5" strokeWidth="1.5" strokeLinecap="round" />
-    <path d="M7 20.5V23M12 20.5V23M17 20.5V23" stroke="#4F46E5" strokeWidth="1.5" strokeLinecap="round" />
-    <path d="M1 7H3.5M1 12H3.5M1 17H3.5" stroke="#4F46E5" strokeWidth="1.5" strokeLinecap="round" />
-    <path d="M20.5 7H23M20.5 12H23M20.5 17H23" stroke="#4F46E5" strokeWidth="1.5" strokeLinecap="round" />
-    {/* Inner AI text */}
-    <text
-      x="12"
-      y="15"
-      fontSize="8.5"
-      fontWeight="800"
-      fontFamily="system-ui, sans-serif"
-      fill="#4F46E5"
-      textAnchor="middle"
-    >
-      AI
-    </text>
-  </svg>
 );
 
 export const OrangeUnderlineFlourish = ({ className = "w-full" }: { className?: string }) => (
@@ -174,3 +152,12 @@ export const OrangeUnderlineFlourish = ({ className = "w-full" }: { className?: 
   </svg>
 );
 
+export const WhatsAppIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    xmlns="http://www.w3.org/2000/svg"
+    className={`fill-current flex-shrink-0 ${className}`}
+  >
+    <path d="M17.472 14.382c-.301-.15-1.782-.879-2.058-.98-.277-.101-.478-.15-.679.15-.201.301-.778.98-.954 1.181-.176.201-.351.226-.653.075-.301-.15-1.272-.469-2.423-1.496-.895-.798-1.5-1.785-1.676-2.086-.176-.301-.019-.464.132-.614.136-.135.301-.351.452-.527.15-.176.201-.301.301-.502.101-.201.05-.377-.025-.527-.075-.15-.679-1.637-.93-2.242-.244-.589-.493-.509-.679-.519l-.578-.01c-.201 0-.527.075-.803.377s-1.055 1.03-1.055 2.512c0 1.482 1.08 2.913 1.231 3.114.15.201 2.125 3.245 5.15 4.551.72.311 1.282.497 1.721.636.724.23 1.382.197 1.902.12.58-.087 1.782-.728 2.033-1.431.251-.703.251-1.306.176-1.431-.075-.126-.276-.201-.577-.352zm-5.467 7.618h-.008a10.015 10.015 0 01-5.109-1.398l-.366-.217-3.799.996 1.014-3.702-.238-.379a9.998 9.998 0 01-1.534-5.289c0-5.522 4.493-10.015 10.021-10.015 2.675 0 5.19 1.042 7.081 2.934a9.957 9.957 0 012.934 7.08c0 5.523-4.493 10.016-10.019 10.016h.034zm0-18.016c-4.417 0-8.012 3.595-8.012 8.013 0 1.41.368 2.787 1.066 3.996l.255.442-.707 2.581 2.646-.694.428.254a7.986 7.986 0 004.324 1.248c4.417 0 8.013-3.596 8.013-8.013 0-2.14-.833-4.153-2.347-5.667a7.96 7.96 0 00-5.667-2.347z" />
+  </svg>
+);

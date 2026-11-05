@@ -4,12 +4,11 @@
 // require touching layout code.
 
 export const heroContent = {
-  badge: "4,220 students used this tool this week",
-  titleTop: "The best AI humanizer that makes",
-  titleAccent: "your writing sound real",
+  badge: "For working professionals earning their degree online",
+  titleTop: "AI Humanizer",
+  titleAccent: "Make your draft sound like you wrote it.",
   subtitle:
-    "Paste your AI-generated content, and our free AI humanizer delivers a natural, human voice instantly.",
-  steps: ["Paste text", "Set intensity", "Humanize Text."],
+    "Paste your draft and get natural, human-sounding writing in seconds. Free to try, no sign-up.",
 };
 
 export const beforeAfterContent = {
@@ -101,7 +100,7 @@ export const howItWorksContent = {
   ctaTitlePill: "tools",
   ctaTitleEnd: "in one place?",
   ctaBody:
-    "Your free ScholarlyHelp dashboard keeps the AI humanizer, paraphraser, summarizer, essay title generator, and citation tool ready in one place.",
+    "Your free ScholarlyHelp dashboard keeps the AI humanizer, paraphraser, AI tutor, essay studio, and citation tool ready in one place.",
   ctaButton: "Explore all tools →",
   ctaHref: "/tools",
 };
@@ -165,9 +164,9 @@ export const twoWaysContent = {
           "Once you are satisfied, copy the final output and paste it straight into your document.",
       },
       {
-        title: "Add emAIl",
+        title: "Add email",
         description:
-          "Enter your emAIl to save your progress and unlock the full ScholarlyHelp dashboard.",
+          "Enter your email to save your progress and unlock the full ScholarlyHelp dashboard.",
       },
     ],
   },
@@ -282,7 +281,7 @@ export const footerCtaContent = {
 
 /** Page-level SEO. */
 export const metaContent = {
-  title: "AI Humanizer: Free Online Tool | ScholarlyHelp",
+  title: "Free AI Humanizer: Humanize AI Text | ScholarlyHelp",
   description:
-    "Turn AI-generated wording into natural-sounding text while keeping your message clear. Use a free AI humanizer to refine your writing. Humanize it today.",
+    "Humanize AI text with ScholarlyHelp’s free AI humanizer. Turn robotic wording into natural, human-like writing while keeping your message clear. Try it.",
 };

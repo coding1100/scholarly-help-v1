@@ -18,7 +18,7 @@ import type { Metadata } from "next";
 import { getPageData } from "@/app/lib/mongodb";
 import ProductSchema from "@/app/components/ProductSchema";
 
-const GetQouteDynamic = dynamicImport(() => import("@/app/components/LandingPage/GetQoute"), { ssr: false });
+import GetQouteDynamic from "@/app/components/LandingPage/GetQouteClient";
 
 // Force dynamic rendering to prevent caching
 export const dynamic = 'force-dynamic';

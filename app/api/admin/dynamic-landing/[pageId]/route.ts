@@ -45,10 +45,11 @@ function removeImageFields(obj: unknown): unknown {
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { pageId: string } },
+  { params }: { params: Promise<{ pageId: string }> },
 ) {
   try {
-    const pageId = decodeURIComponent(params.pageId || "");
+    const { pageId: rawPageId } = await params;
+    const pageId = decodeURIComponent(rawPageId || "");
     const slug = slugFromLegacyPageId(pageId);
     if (!slug) {
       return NextResponse.json({ error: "Invalid page" }, { status: 400, headers: corsHeaders });
@@ -72,10 +73,11 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { pageId: string } },
+  { params }: { params: Promise<{ pageId: string }> },
 ) {
   try {
-    const pageId = decodeURIComponent(params.pageId || "");
+    const { pageId: rawPageId } = await params;
+    const pageId = decodeURIComponent(rawPageId || "");
     const slug = slugFromLegacyPageId(pageId);
     if (!slug) {
       return NextResponse.json({ error: "Invalid page" }, { status: 400, headers: corsHeaders });
@@ -139,10 +141,11 @@ export async function POST(
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: { pageId: string } },
+  { params }: { params: Promise<{ pageId: string }> },
 ) {
   try {
-    const pageId = decodeURIComponent(params.pageId || "");
+    const { pageId: rawPageId } = await params;
+    const pageId = decodeURIComponent(rawPageId || "");
     const slug = slugFromLegacyPageId(pageId);
     if (!slug) {
       return NextResponse.json({ error: "Invalid page" }, { status: 400, headers: corsHeaders });

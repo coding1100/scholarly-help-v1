@@ -14,6 +14,7 @@ import { useBillingDraftStash } from "@/app/lib/client/useBillingDraftStash";
 import { isBillingGateError } from "@/app/lib/client/billingGateCodes";
 import { countWords, looksLikeGibberish } from "@/app/utils/text";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
+import { recordToolRun } from "@/app/utils/toolHistoryClient";
 import { getAccessToken } from "@/app/lib/authSession";
 import EditorPane, { type ResolveAction } from "./EditorPane";
 import GoalsModal from "./GoalsModal";
@@ -66,7 +67,10 @@ function toClientIssues(docText: string, issues: ServerIssue[]): ClientIssue[] {
     .map((i) => ({ ...i, status: "open" as const }));
 }
 
-const GrammarCheckerTool: React.FC = () => {
+const GrammarCheckerTool: React.FC<{
+  /** Inside a landing page hero, where the page already has its own H1. */
+  embedded?: boolean;
+}> = ({ embedded = false }) => {
   const [token, setToken] = useState<string | null>(null);
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
@@ -249,6 +253,12 @@ const GrammarCheckerTool: React.FC = () => {
     if (!validate(text)) return;
     guardAiClick(async () => {
       trackToolGenerate({ toolName: "Grammar Checker" });
+      void recordToolRun({
+        toolKey: "grammar-checker",
+        toolName: "Grammar Check",
+        href: "/tools/grammar-checker",
+        title: text,
+      });
       setLoading(true);
       setShowRecheckNote(false);
       try {
@@ -515,14 +525,16 @@ const GrammarCheckerTool: React.FC = () => {
     setShowRecheckNote(false);
   };
 
+  const Heading = embedded ? "h2" : "h1";
+
   return (
     <div className="container relative mx-auto max-w-[840px] px-3 py-4 sm:px-4 md:px-8 md:pt-8 2xl:max-w-6xl">
       <ToolsApiLoader show={loading} />
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
+        <Heading className="text-xl font-semibold text-gray-800 dark:text-gray-100">
           Grammar Checker
-        </h1>
+        </Heading>
         <div className="flex gap-2">
           {doc && (
             <button
@@ -556,7 +568,7 @@ const GrammarCheckerTool: React.FC = () => {
           <ActionButtons
             onClear={handleClear}
             onSubmit={handleCheck}
-            submitButtonText="Check my grammar"
+            submitButtonText="Check My Grammar"
             submitColorClassName="bg-[#F56200] hover:bg-[#ff7a24] active:bg-[#e05800]"
             isSubmitting={loading}
             isDisabled={!text.trim() || wordCount > MAX_GRAMMAR_WORDS}

@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import { FaFacebookF } from "react-icons/fa";
 import { buildHrefWithSameQuery } from "@/app/utils/url";
 import { persistAccessToken } from "@/app/lib/authSession";
+import { metaEventFields, pushMetaEvent, signupMetaEventId } from "@/app/utils/metaEvent";
 
 declare global {
   interface Window {
@@ -41,9 +42,7 @@ const SocialAuthButtons = ({
         window.dataLayer = window.dataLayer || [];
         window.dataLayer.push({
           event: eventName,
-          ...(eventName === "signup_success"
-            ? { signup_method: "google" }
-            : {}),
+          ...(eventName === "signup_success" ? { signup_method: "google" } : {}),
           auth_action: authAction,
           auth_provider: "google",
         });
@@ -96,14 +95,20 @@ const SocialAuthButtons = ({
         setGoogleLoading(true);
         const res = await axios.post(
           `${process.env.NEXT_PUBLIC_NGROX_URL}/auth/google/signin`,
-          { idToken: response.credential },
+          {
+            idToken: response.credential,
+            ...metaEventFields(signupMetaEventId()),
+          },
           { withCredentials: true },
         );
 
         // Backend wraps responses as { success, message, data }. Unwrap to the
         // session payload (fallback to raw body) BEFORE signalling success, so a
         // shape mismatch surfaces as an error rather than a false success toast.
-        persistSessionAndRedirect(res.data?.data ?? res.data);
+        const session = res.data?.data ?? res.data;
+        // Before the redirect starts, so the Pixel tag gets to fire.
+        if (session?.is_new_user) pushMetaEvent("tools_signup", signupMetaEventId());
+        persistSessionAndRedirect(session);
         pushGoogleAuthEvent("signup_success");
         toast.success("Signed in with Google successfully!");
       } catch (err: any) {

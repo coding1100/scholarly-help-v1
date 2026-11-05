@@ -7,14 +7,15 @@ export const dynamic = "force-dynamic";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const { id } = await params;
     const userId = await getAuthenticatedUserId(request);
     if (!userId) {
       return fail("Unauthorized", 401);
     }
-    const session = await getSession(params.id);
+    const session = await getSession(id);
     if (!session) {
       return fail("Session not found", 404);
     }
@@ -22,7 +23,7 @@ export async function GET(
       return fail("Forbidden", 403);
     }
 
-    const { mergedText } = await getSessionSourceText(params.id);
+    const { mergedText } = await getSessionSourceText(id);
     const topics = extractTopicCandidates(mergedText);
 
     return ok({ topics });

@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { Menu, X, ChevronDown } from "lucide-react";
+import { Menu, X, ChevronDown, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import megaMenuImage from "@/public/images/scholarly-help-mega-menu-image.webp";
@@ -10,13 +10,30 @@ import LogoSmall from "@/app/assets/Images/logoSmall.png";
 import LogoNormal from "@/app/assets/Images/logo.svg";
 import Phone from "@/app/assets/Icons/phone.webp";
 import {
-  isTakeMyClass3LandingPage,
   isTakeMyClassHeaderRoute,
   isTakeMyClassHeroCopyVariant,
+  isTakeMyClassLayoutPage,
+  isTextCtaLandingPage,
 } from "@/app/lib/takeMyClassLandingRoutes";
 import { rememberFbclidFromUrl } from "@/app/lib/client/smsTracking";
 import { hasRefreshSessionHint } from "@/app/lib/accessTokenStore";
 import { getToolDashboardHref } from "@/app/lib/toolLandingRoutes";
+import { WhatsAppIcon } from "@/app/components/ThankYou/ThankYouIcons";
+import RequestReceivedPill from "@/app/components/ThankYou/RequestReceivedPill";
+import {
+  WHATSAPP_HREF,
+  SMS_HREF,
+  pushTextCtaClick,
+} from "@/app/components/ThankYou/contact";
+
+declare global {
+  interface Window {
+    dataLayer?: Array<Record<string, any>>;
+  }
+}
+
+const TOOLS_SENT_MESSAGE =
+  "✅ Success! Your free tools guide has been sent to your inbox.";
 
 const Star: React.FC<{ className?: string }> = ({ className }) => (
   <svg
@@ -37,30 +54,40 @@ export default function Header() {
   const dashboardHref = getToolDashboardHref(pathname);
   const router = useRouter();
   const prefetchedRoutesRef = useRef<Set<string>>(new Set());
-  // take-my-class-3's centered landing header is shared by the -4/-5/-6
-  // hero-copy variants too (same layout, just a different headline).
-  const isTakeMyClass3 =
-    isTakeMyClass3LandingPage(pathname) ||
-    isTakeMyClassHeroCopyVariant(pathname);
+  // The -4/-5/-6 hero-copy variants share a centered landing header.
+  const isTakeMyClass3 = isTakeMyClassHeroCopyVariant(pathname);
   const isTakeMyClass = isTakeMyClassHeaderRoute(pathname);
   const isTakeMyExam =
     pathname === "/take-my-exam/" || pathname === "/take-my-exam";
   const isSpecialRoute = isTakeMyClass || isTakeMyExam;
   const isSpecialRoute3 = isSpecialRoute || isTakeMyClass3;
 
-  // SMS offline-conversion tracking is scoped to exactly /take-my-class.
-  const isTakeMyClassExact =
-    pathname === "/take-my-class" || pathname === "/take-my-class/";
+  // The /take-my-class layout (also /tools-thank-you): its header layout and
+  // SMS offline-conversion tracking.
+  const isTakeMyClassLayout = isTakeMyClassLayoutPage(pathname);
+  // /tools-thank-you confirms the free-tools email in place of the rating.
+  const isTextCta = isTextCtaLandingPage(pathname);
 
   // /thank-you/ has its own "Free Quote On Whatsapp" CTA in-page, so the
-  // header's phone number is redundant there and hidden.
+  // header's phone number is redundant there and hidden. It is also a
+  // dead-end page: no navigation, no logo link, and the "Request received"
+  // pill sits in the header.
   const isThankYou = pathname === "/thank-you" || pathname === "/thank-you/";
+
+  const trackHeaderWhatsAppClick = () => {
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: "whatsapp_click",
+      whatsapp_placement: "header_live_quote",
+      page_path: window.location.pathname,
+    });
+  };
 
   // Persist fbclid (cookie + sessionStorage) as early as the header mounts, so a
   // later "Text Us" tap can recover it even if the URL query is gone.
   useEffect(() => {
-    if (isTakeMyClassExact) rememberFbclidFromUrl();
-  }, [isTakeMyClassExact]);
+    if (isTakeMyClassLayout) rememberFbclidFromUrl();
+  }, [isTakeMyClassLayout]);
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeMenu, setActiveMenu] = useState<number | null>(null);
@@ -365,9 +392,9 @@ export default function Header() {
               href: "/tools/ai-study-workspace/",
             },
             { name: "AI Paraphraser", href: "/tools/ai-paraphraser/" },
-            { name: "AI Summarizer", href: "/tools/ai-summarizer/" },
             { name: "AI Humanizer", href: "/tools/ai-humanizer/" },
             { name: "Citation Generator", href: "/tools/citation-generator/" },
+            { name: "Read My Essay", href: "/tools/read-my-essay/" },
           ],
           button: [{ name: "See All Tools", href: "/tools/" }],
         },
@@ -398,16 +425,29 @@ export default function Header() {
   // RSC payloads — 25% of this page's transfer weight — plus seven full
   // server renders, all inside the window that decides LCP.
 
+  const logo = (
+    <Image
+      src={LogoNormal}
+      alt="Scholarly Help"
+      width={138}
+      height={36}
+      priority
+      fetchPriority="high"
+    />
+  );
+
   return (
     <header
       className={`bg-white z-[9999] shadow-sm ${
-        isTakeMyClassExact ? "static sm:sticky sm:top-0" : "sticky top-0"
+        isTakeMyClassLayout ? "static sm:sticky sm:top-0" : "sticky top-0"
       }`}
     >
       {/* Header Top Bar */}
       <div
         className={`max-w-7xl mx-auto max-[1320px]:px-3 flex items-center pt-2 min-h-[64px] ${
-          isTakeMyClassExact
+          isThankYou ? "relative" : ""
+        } ${
+          isTakeMyClassLayout
             ? "justify-center sm:justify-between"
             : isTakeMyClass3
               ? "md:justify-between justify-center"
@@ -415,7 +455,7 @@ export default function Header() {
         }`}
       >
         {/* Menu Button - Hidden for special routes */}
-        {!isSpecialRoute3 && (
+        {!isSpecialRoute3 && !isThankYou && (
           <button
             onClick={() => {
               setMobileOpen((prev) => {
@@ -445,28 +485,33 @@ export default function Header() {
             request finishing late tracked paint slipping from ~960ms to
             ~2540ms. Clicking the logo mid-session is rare enough to pay for
             with a normal navigation. */}
-        <Link href="/" prefetch={false}>
-          {/* <Image
-            src={LogoSmall}
-            alt="Scholarly Help Logo"
-            className="max-[480px]:block hidden max-w-[32px] min-w-[29px]"
-            width={32}
-            height={29}
-            priority
-          /> */}
-          <Image
-            src={LogoNormal}
-            alt="Scholarly Help"
-            className=""
-            width={138}
-            height={36}
-            priority
-            fetchPriority="high"
-          />
-        </Link>
+        {isThankYou ? (
+          logo
+        ) : (
+          <Link href="/" prefetch={false}>
+            {/* <Image
+              src={LogoSmall}
+              alt="Scholarly Help Logo"
+              className="max-[480px]:block hidden max-w-[32px] min-w-[29px]"
+              width={32}
+              height={29}
+              priority
+            /> */}
+            {logo}
+          </Link>
+        )}
+        {isThankYou && (
+          <RequestReceivedPill className="hidden md:inline-flex absolute left-1/2 -translate-x-1/2" />
+        )}
 
         {/* Rating Stars - Only for /take-my-class/ */}
-        {(isTakeMyClass || isTakeMyClass3) && (
+        {isTextCta ? (
+          // No phone number on the right here, so pad by the logo's width to
+          // keep the message centred like the rating it replaces.
+          <p className="max-[768px]:hidden flex-1 pr-[138px] text-center text-sm font-semibold text-gray-700">
+            {TOOLS_SENT_MESSAGE}
+          </p>
+        ) : (isTakeMyClass || isTakeMyClass3) && (
           <div className="max-[768px]:hidden md:flex flex-col items-center">
             <div className="flex items-center">
               {[...Array(5)].map((_, i) => (
@@ -485,7 +530,8 @@ export default function Header() {
 
         {/* Phone Number - Shown for special routes (take-my-class, take-my-exam, take-my-class-3): always show number on mobile */}
 
-        {isSpecialRoute3 && (
+        {/* Text-CTA pages show no phone number: their CTAs carry it. */}
+        {!isTextCta && isSpecialRoute3 && (
           <div>
             {/* Desktop: phone number that opens the dialer (call). */}
             <a
@@ -516,7 +562,7 @@ export default function Header() {
         {/* Desktop Navigation - Hidden for special routes */}
         {!isSpecialRoute && (
           <>
-            {!isTakeMyClass3 && (
+            {!isTakeMyClass3 && !isThankYou && (
               <nav className="hidden min-[1200px]:flex items-center font-medium text-gray-700 ">
                 {navItems.map((item, index) => (
                   <div
@@ -615,18 +661,13 @@ export default function Header() {
                 )}
                 {isSignedIn ? null : isThankYou ? (
                   <a
-                    href="https://api.whatsapp.com/send?phone=14108445419"
+                    href={WHATSAPP_HREF}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={trackHeaderWhatsAppClick}
                     className="inline-flex items-center gap-2 rounded-lg px-4 py-2 cursor-pointer bg-[#41A800] text-white transition duration-200 text-sm font-semibold whitespace-nowrap hover:bg-[#368F00] shadow-[0_4px_12px_rgba(65,168,0,0.28)]"
                   >
-                    <svg
-                      className="w-4 h-4 fill-current flex-shrink-0"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path d="M17.472 14.382c-.301-.15-1.782-.879-2.058-.98-.277-.101-.478-.15-.679.15-.201.301-.778.98-.954 1.181-.176.201-.351.226-.653.075-.301-.15-1.272-.469-2.423-1.496-.895-.798-1.5-1.785-1.676-2.086-.176-.301-.019-.464.132-.614.136-.135.301-.351.452-.527.15-.176.201-.301.301-.502.101-.201.05-.377-.025-.527-.075-.15-.679-1.637-.93-2.242-.244-.589-.493-.509-.679-.519l-.578-.01c-.201 0-.527.075-.803.377s-1.055 1.03-1.055 2.512c0 1.482 1.08 2.913 1.231 3.114.15.201 2.125 3.245 5.15 4.551.72.311 1.282.497 1.721.636.724.23 1.382.197 1.902.12.58-.087 1.782-.728 2.033-1.431.251-.703.251-1.306.176-1.431-.075-.126-.276-.201-.577-.352zm-5.467 7.618h-.008a10.015 10.015 0 01-5.109-1.398l-.366-.217-3.799.996 1.014-3.702-.238-.379a9.998 9.998 0 01-1.534-5.289c0-5.522 4.493-10.015 10.021-10.015 2.675 0 5.19 1.042 7.081 2.934a9.957 9.957 0 012.934 7.08c0 5.523-4.493 10.016-10.019 10.016h.034zm0-18.016c-4.417 0-8.012 3.595-8.012 8.013 0 1.41.368 2.787 1.066 3.996l.255.442-.707 2.581 2.646-.694.428.254a7.986 7.986 0 004.324 1.248c4.417 0 8.013-3.596 8.013-8.013 0-2.14-.833-4.153-2.347-5.667a7.96 7.96 0 00-5.667-2.347z" />
-                    </svg>
+                    <WhatsAppIcon className="w-4 h-4" />
                     <span>Live Quote on Whatsapp</span>
                   </a>
                 ) : (
@@ -648,10 +689,41 @@ export default function Header() {
                 )}
               </div>
             )}
+            {isThankYou && !isSignedIn && (
+              <div className="flex sm:hidden items-center gap-1.5">
+                <a
+                  href={WHATSAPP_HREF}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={trackHeaderWhatsAppClick}
+                  className="inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 bg-[#41A800] text-white text-xs font-semibold whitespace-nowrap"
+                >
+                  <WhatsAppIcon className="w-3.5 h-3.5" />
+                  WhatsApp
+                </a>
+                <a
+                  href={SMS_HREF}
+                  onClick={() => pushTextCtaClick("header")}
+                  className="inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 bg-[#5B4FE0] text-white text-xs font-semibold whitespace-nowrap"
+                >
+                  <MessageSquare className="w-3.5 h-3.5 flex-shrink-0" />
+                  Text
+                </a>
+              </div>
+            )}
           </>
         )}
       </div>
-      {(isTakeMyClass || isTakeMyClass3) && (
+      {isThankYou && (
+        <div className="md:hidden flex justify-center pb-2">
+          <RequestReceivedPill />
+        </div>
+      )}
+      {isTextCta ? (
+        <p className="md:hidden px-3 py-2 text-center text-sm font-semibold text-gray-700">
+          {TOOLS_SENT_MESSAGE}
+        </p>
+      ) : (isTakeMyClass || isTakeMyClass3) && (
         <div className=" md:hidden flex-col items-center flex py-2">
           <div className="flex">
             {[...Array(5)].map((_, i) => (

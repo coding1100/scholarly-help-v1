@@ -7,6 +7,7 @@ import { IoIosMail } from "react-icons/io";
 import { IoChatbubbles } from "react-icons/io5";
 import { MdPhoneInTalk } from "react-icons/md";
 import { ClipLoader } from "react-spinners";
+import { appendMetaLeadFields, pushMetaEvent } from "@/app/utils/metaEvent";
 
 interface ZohoForm2Props {
   nameValue?: string;
@@ -120,7 +121,9 @@ const ZohoForm2: FC<ZohoForm2Props> = ({ nameValue, textAreaRows = 4 }) => {
       }
 
       try {
+        const metaEventId = appendMetaLeadFields(fd);
         const res = await axiosInstance.post(`/order/quote`, fd);
+        pushMetaEvent("contact", metaEventId);
         form.submit();
       } catch (error) {
         alert("Failed to send request try again later");

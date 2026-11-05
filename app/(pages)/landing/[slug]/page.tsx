@@ -10,10 +10,11 @@ import type { Metadata } from "next";
 
 export const revalidate = 0;
 
-type Props = { params: { slug: string } };
+type Props = { params: Promise<{ slug: string }> };
 
 export default async function DynamicLandingPage({ params }: Props) {
-  const slug = normalizePublicSlug(params.slug);
+  const { slug: rawSlug } = await params;
+  const slug = normalizePublicSlug(rawSlug);
   const pageData = await fetchPublishedDynamicLanding(slug);
 
   if (!pageData) {
@@ -42,7 +43,8 @@ export default async function DynamicLandingPage({ params }: Props) {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const slug = normalizePublicSlug(params.slug);
+  const { slug: rawSlug } = await params;
+  const slug = normalizePublicSlug(rawSlug);
   const pageData = await fetchPublishedDynamicLanding(slug);
   if (!pageData) {
     return { title: "Not found" };

@@ -1,5 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600;1,700&display=swap');
-
+/*
+ * Named explicitly: Tailwind 3's PostCSS plugin keeps the last @config path it
+ * saw (admin.css, tools.css) and applies it to later files that have none, so
+ * without this the global sheet could be built from another route's config.
+ */
+@config "../tailwind.config.ts";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -38,6 +42,18 @@ select {
 
 .no-scrollbar::-webkit-scrollbar {
   display: none;
+}
+
+/*
+ * While a sticky mobile CTA bar is showing it already offers the main
+ * actions, so the floating WhatsApp/SMS bubbles would only sit on top of it.
+ * The attribute is set only while the bar is visible (useMobileCtaBar).
+ */
+html[data-mobile-cta-bar] #whatsapp-chat,
+html[data-mobile-cta-bar] #whatsapp-chat-2,
+html[data-mobile-cta-bar] #sms-chat,
+html[data-mobile-cta-bar] #sms-chat2 {
+  display: none !important;
 }
 
 /* Admin dashboard theme lives in app/(admin)/admin.css — loaded only on admin routes. */

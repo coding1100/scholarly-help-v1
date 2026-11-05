@@ -1,7 +1,8 @@
 "use client";
 
 import axios, { type AxiosError, type AxiosRequestConfig } from "axios";
-import { getAccessToken } from "@/app/lib/authSession";
+import { fetchWithAuthRetry, getAccessToken } from "@/app/lib/authSession";
+import { readSse } from "@/app/lib/client/sse";
 
 export const ACADEMIC_PAYWALL_MESSAGE =
   "Your token balance is exhausted. Please upgrade to continue using AI tools.";
@@ -271,6 +272,56 @@ export const humanizeText = (payload: {
     },
     headers: { "Content-Type": "application/json" },
   });
+
+/** A non-2xx response from the streaming route, with its parsed JSON body. */
+export class HumanizerStreamError extends Error {
+  constructor(
+    readonly status: number,
+    readonly body: { message?: string | string[] } | null,
+  ) {
+    super(
+      [body?.message].flat().filter(Boolean).join(", ") ||
+        `Streaming failed with status ${status}`,
+    );
+    this.name = "HumanizerStreamError";
+  }
+}
+
+/**
+ * Runs a fast single-pass humanize over SSE. `onText` receives each streamed
+ * chunk; the promise resolves with the server-computed result. A stream that
+ * ends without a result event is a failure, never a partial success.
+ */
+export async function streamHumanizeText<TResult>(
+  body: object,
+  { signal, onText }: { signal?: AbortSignal; onText: (chunk: string) => void },
+): Promise<TResult> {
+  const response = await fetchWithAuthRetry(
+    `${getApiBaseUrl()}/tools/humanizer/stream`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal,
+    },
+  );
+  if (!response.ok) {
+    throw new HumanizerStreamError(
+      response.status,
+      await response.json().catch(() => null),
+    );
+  }
+
+  let result: TResult | undefined;
+  await readSse(response, (data) => {
+    const event = data as { text?: string; result?: TResult; error?: string };
+    if (event.error) throw new Error(event.error);
+    if (typeof event.text === "string") onText(event.text);
+    if (event.result) result = event.result;
+  });
+  if (!result) throw new Error("The humanizer stream ended without a result.");
+  return result;
+}
 
 export type ParaphraseToneMode =
   | "standard"

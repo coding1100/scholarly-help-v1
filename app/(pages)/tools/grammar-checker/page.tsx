@@ -5,6 +5,7 @@ import ToolsLayout from "@/app/components/AiTools/ToolsLayout";
 import GrammarCheckerTool from "@/app/components/AiTools/GrammarCheckerTool/GrammarCheckerTool";
 import { ToolsSuspenseFallback } from "@/app/components/AiTools/ToolsApiLoader";
 import ToolWithExplore from "@/app/components/AiTools/ToolWithExplore";
+import DoneForYouCard from "@/app/components/AiTools/DoneForYouCard";
 import ProductSchema from "@/app/components/ProductSchema";
 
 export default function GrammarCheckerPage() {
@@ -23,7 +24,7 @@ export default function GrammarCheckerPage() {
         pageUrl={`${baseUrl}/tools/grammar-checker`}
       />
       <ToolsLayout setFlag={setFlag} flag={flag}>
-        <ToolWithExplore>
+        <ToolWithExplore rail={<DoneForYouCard placement="grammar_checker_done_for_you" />}>
           <GrammarCheckerTool />
         </ToolWithExplore>
       </ToolsLayout>

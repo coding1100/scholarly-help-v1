@@ -5,9 +5,10 @@ import { getAuthenticatedUserId } from "@/app/lib/server/study/http";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const userId = await getAuthenticatedUserId(request);
-  const session = userId ? await getSession(params.id) : null;
+  const session = userId ? await getSession(id) : null;
   if (!session || session.userId !== userId) return new Response("Unauthorized", { status: 401 });
   const encoder = new TextEncoder();
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       const emit = async () => {
         if (request.signal.aborted) { controller.close(); return; }
         try {
-          const sources = await listSources(params.id);
+          const sources = await listSources(id);
           const statuses = sources.map((source) => ({ id: String(source._id), name: source.name, indexStatus: source.indexStatus }));
           controller.enqueue(encoder.encode(`event: source-status\ndata: ${JSON.stringify(statuses)}\n\n`));
           if (!statuses.some((source) => source.indexStatus === "pending") || Date.now() - startedAt > 180_000) { controller.close(); return; }

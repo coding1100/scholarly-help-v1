@@ -14,14 +14,15 @@ export const dynamic = "force-dynamic";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const { id } = await params;
     const userId = await getAuthenticatedUserId(request);
     if (!userId) {
       return fail("Unauthorized", 401);
     }
-    const session = await getSession(params.id);
+    const session = await getSession(id);
     if (!session) {
       return fail("Session not found", 404);
     }
@@ -29,9 +30,9 @@ export async function GET(
       return fail("Forbidden", 403);
     }
     const [artifacts, tutorMessages, sources] = await Promise.all([
-      listArtifacts(params.id),
-      listTutorMessages(params.id),
-      listSources(params.id),
+      listArtifacts(id),
+      listTutorMessages(id),
+      listSources(id),
     ]);
 
     return ok({
@@ -48,14 +49,15 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const { id } = await params;
     const userId = await getAuthenticatedUserId(request);
     if (!userId) {
       return fail("Unauthorized", 401);
     }
-    const existingSession = await getSession(params.id);
+    const existingSession = await getSession(id);
     if (!existingSession) {
       return fail("Session not found", 404);
     }
@@ -70,7 +72,7 @@ export async function PATCH(
     if (body.tutorState && typeof body.tutorState === "object") {
       const encoded = JSON.stringify(body.tutorState);
       if (encoded.length > 200_000) return fail("Tutor state is too large");
-      const session = await updateSessionTutorState(params.id, body.tutorState);
+      const session = await updateSessionTutorState(id, body.tutorState);
       if (!session) return fail("Session not found", 404);
       return ok({ session });
     }
@@ -79,7 +81,7 @@ export async function PATCH(
       return fail("title is required");
     }
 
-    const session = await updateSessionTitle(params.id, title);
+    const session = await updateSessionTitle(id, title);
     if (!session) return fail("Session not found", 404);
 
     return ok({ session });
@@ -91,14 +93,15 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const { id } = await params;
     const userId = await getAuthenticatedUserId(request);
     if (!userId) {
       return fail("Unauthorized", 401);
     }
-    const existingSession = await getSession(params.id);
+    const existingSession = await getSession(id);
     if (!existingSession) {
       return fail("Session not found", 404);
     }
@@ -106,7 +109,7 @@ export async function DELETE(
       return fail("Forbidden", 403);
     }
 
-    const deleted = await deleteSession(params.id);
+    const deleted = await deleteSession(id);
     if (!deleted) {
       return fail("Session not found", 404);
     }

@@ -1,14 +1,7 @@
 "use client";
 
-import {
-  Document as DocxDocument,
-  HeadingLevel,
-  Packer,
-  Paragraph,
-  TextRun,
-} from "docx";
-import { jsPDF } from "jspdf";
-import html2canvas from "html2canvas";
+// Dynamic document export handlers
+import type { Paragraph } from "docx";
 
 export function sanitizeFilename(name: string): string {
   const base = (name || "document").trim() || "document";
@@ -175,7 +168,8 @@ ${body}
 `;
 }
 
-function htmlToDocxParagraphs(html: string): Paragraph[] {
+function htmlToDocxParagraphs(html: string, docx: typeof import("docx")): Paragraph[] {
+  const { HeadingLevel, Paragraph: DocxParagraph, TextRun } = docx;
   const div = document.createElement("div");
   div.innerHTML = html;
   const out: Paragraph[] = [];
@@ -191,7 +185,7 @@ function htmlToDocxParagraphs(html: string): Paragraph[] {
     const children = [new TextRun({ text: t })];
     if (heading !== undefined) {
       out.push(
-        new Paragraph({
+        new DocxParagraph({
           heading,
           spacing: { after: 200 },
           children,
@@ -199,7 +193,7 @@ function htmlToDocxParagraphs(html: string): Paragraph[] {
       );
     } else {
       out.push(
-        new Paragraph({
+        new DocxParagraph({
           spacing: { after: 200 },
           children,
         }),
@@ -273,11 +267,13 @@ export async function buildDocxBlob(
   html: string,
   documentTitle: string,
 ): Promise<Blob> {
+  const docx = await import("docx");
+  const { Document: DocxDocument, HeadingLevel, Packer, Paragraph: DocxParagraph, TextRun } = docx;
   const displayTitle = (documentTitle || "").trim() || "Document";
 
-  const bodyParagraphs = htmlToDocxParagraphs(html);
+  const bodyParagraphs = htmlToDocxParagraphs(html, docx);
   const children: Paragraph[] = [
-    new Paragraph({
+    new DocxParagraph({
       heading: HeadingLevel.TITLE,
       spacing: { after: 360 },
       children: [new TextRun({ text: displayTitle })],
@@ -285,7 +281,7 @@ export async function buildDocxBlob(
     ...(bodyParagraphs.length > 0
       ? bodyParagraphs
       : [
-          new Paragraph({
+          new DocxParagraph({
             children: [
               new TextRun({
                 text: "(No body content yet — type in the editor first.)",
@@ -310,7 +306,11 @@ export async function buildDocxBlob(
 
 export async function savePdfFromHtml(html: string, baseName: string) {
   // Render HTML to canvas first (reliable layout), then paginate into A4.
-  // jsPDF.html() tends to produce odd scaling/line breaks for rich editor HTML.
+  const [{ jsPDF }, html2canvasModule] = await Promise.all([
+    import("jspdf"),
+    import("html2canvas"),
+  ]);
+  const html2canvas = html2canvasModule.default || html2canvasModule;
   const wrapper = document.createElement("div");
   wrapper.style.position = "fixed";
   wrapper.style.left = "-10000px";

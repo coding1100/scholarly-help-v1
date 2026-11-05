@@ -9,6 +9,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { FC, useEffect, useState } from "react";
 // import { ColorRing } from "react-loader-spinner";
 import ZohoForm2 from "./ZohoForm2";
+import { appendMetaLeadFields, pushMetaEvent } from "@/app/utils/metaEvent";
 
 interface Hero3Props {}
 
@@ -69,7 +70,9 @@ const Hero3: FC<Hero3Props> = () => {
     fd.append("url", wholeUrl);
 
     try {
+      const metaEventId = appendMetaLeadFields(fd);
       await axiosInstance.post(`/order/quote`, fd);
+      pushMetaEvent("contact", metaEventId);
       setEmailLoading(false);
       router.push("/thank-you-2/");
     } catch (error) {

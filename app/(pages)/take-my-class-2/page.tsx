@@ -1,14 +1,7 @@
 import { cache } from "react";
-import MainLayout from "@/app/MainLayout";
-import HeroSection from "@/app/components/LandingPage/HeroSection";
-import HeroHeading from "@/app/components/LandingPage/HeroHeading";
-import CustomerReviews from "@/app/components/LandingPage/CustomerReviews";
-import Success from "@/app/components/LandingPage/Success";
-import { TakeMyClassDataProvider } from "../TakeMyClassDataProvider";
 import { getPageData } from "@/app/lib/mongodb";
 import ProductSchema from "@/app/components/ProductSchema";
-import DeliveredOn from "../take-my-class/DeliveredOn";
-import DelayedBelowFold from "@/app/components/LandingPage/DelayedBelowFold";
+import FreeToolsLanding from "@/app/components/FreeToolsLanding/FreeToolsLanding";
 import type { Metadata } from "next";
 
 // Force dynamic rendering to ensure fresh content
@@ -41,47 +34,16 @@ const TakeMyClass2 = async () => {
     pageData?.meta?.description ||
     "Struggling with online classes, exams, assignments or essays? Scholarly Help provides professional academic writing services tailored to your needs. Get timely, plagiarism-free solutions crafted by experts. Your success starts here!";
   const pageUrl = pageData?.meta?.canonicalUrl || `${baseUrl}/take-my-class-2`;
-  const mainHeading = pageData?.heroSection?.mainHeading ?? "";
 
   return (
-    <TakeMyClassDataProvider data={pageData}>
+    <>
       <ProductSchema
         productTitle={productTitle}
         metaDescription={metaDescription}
         pageUrl={pageUrl}
       />
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-            #hero-section{background:#F5F6FA}
-            .tmc-hero-heading{font-weight:600;font-size:30px;line-height:1.1;color:#000}
-            @media (min-width:768px){.tmc-hero-heading{font-size:48px}}
-          `,
-        }}
-      />
-      <MainLayout>
-        <HeroSection
-          useHeroForm2
-          headingSlot={
-            mainHeading ? (
-              <div className="max-w-2xl">
-                <HeroHeading
-                  mainHeading={mainHeading}
-                  spanClassName="md:pt-5 block"
-                />
-              </div>
-            ) : undefined
-          }
-        />
-        {/* 10,000+ A-Grades Delivered On banner & platform logos */}
-        <DeliveredOn noNegativeMargin headingOutside />
-        <DelayedBelowFold>
-          <Success />
-          {/* "How Students Rate Us!" (CustomerReviews) placed at the bottom */}
-          <CustomerReviews />
-        </DelayedBelowFold>
-      </MainLayout>
-    </TakeMyClassDataProvider>
+      <FreeToolsLanding />
+    </>
   );
 };
 

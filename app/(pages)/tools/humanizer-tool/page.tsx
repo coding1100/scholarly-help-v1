@@ -5,6 +5,7 @@ import ToolsLayout from "@/app/components/AiTools/ToolsLayout";
 import HumanizerTool from "@/app/components/AiTools/HumanizerTool/HumanizerTool";
 import { ToolsSuspenseFallback } from "@/app/components/AiTools/ToolsApiLoader";
 import ToolWithExplore from "@/app/components/AiTools/ToolWithExplore";
+import DoneForYouCard from "@/app/components/AiTools/DoneForYouCard";
 import ProductSchema from "@/app/components/ProductSchema";
 
 export default function HumanizerPage() {
@@ -25,7 +26,7 @@ export default function HumanizerPage() {
         pageUrl={`${baseUrl}/tools/humanizer-tool`}
       />
       <ToolsLayout setFlag={setFlag} flag={flag}>
-        <ToolWithExplore>
+        <ToolWithExplore rail={<DoneForYouCard placement="humanizer_done_for_you" />}>
           <HumanizerTool />
         </ToolWithExplore>
       </ToolsLayout>

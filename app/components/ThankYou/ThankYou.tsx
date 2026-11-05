@@ -4,6 +4,7 @@ import React, { FC, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import axios from "axios";
 import Slider from "react-slick";
+import { MessageSquare } from "lucide-react";
 import "slick-carousel/slick/slick.css";
 import styles from "./ThankYou.module.css";
 import { content } from "./content";
@@ -11,16 +12,25 @@ import Trustpilot from "@/app/assets/Images/Trustpilot.webp";
 import StarGroup from "@/app/assets/Images/starGroup.png";
 import { desktopReviews, mobileReviews } from "../CustomerReviews/content";
 import {
-  AiChipIcon,
   GraduationCapIcon,
   RatingBadgeIcon,
   HandshakeIcon,
   BooksIcon,
   CheckmarkIcon,
   OrangeUnderlineFlourish,
+  WhatsAppIcon,
 } from "./ThankYouIcons";
+import { WHATSAPP_HREF, WHATSAPP_NUMBER_DISPLAY, SMS_NUMBER_DISPLAY } from "./contact";
+import { WhatsAppMobileButton, TextMobileButton } from "./MobileContactButtons";
+import RequestReceivedPill from "./RequestReceivedPill";
+import { useMobileCtaBar } from "../AiTools/useMobileCtaBar";
 
-type ThankYouProps = {};
+type ThankYouProps = {
+  /** Pair every WhatsApp CTA with a Text CTA (only /thank-you/ opts in). */
+  showTextCta?: boolean;
+  /** The header carries the "Request received" pill, so the hero leaves it out. */
+  pillInHeader?: boolean;
+};
 
 interface WhatsAppButtonProps {
   onClick?: () => void;
@@ -36,23 +46,79 @@ const WhatsAppButton: FC<WhatsAppButtonProps> = ({
 }) => {
   return (
     <a
-      href="https://api.whatsapp.com/send?phone=14108445419"
+      href={WHATSAPP_HREF}
       target="_blank"
       rel="noopener noreferrer"
       onClick={onClick}
       className={`inline-flex items-center justify-center gap-2 sm:gap-3 bg-[#41A800] hover:bg-[#368F00] active:scale-[0.98] text-white font-bold text-[13px] sm:text-base md:text-[18px] whitespace-nowrap w-full max-w-[480px] h-[48px] sm:h-[56px] md:h-[62px] px-3 sm:px-6 rounded-xl shadow-[0_6px_20px_rgba(65,168,0,0.30)] transition-all duration-200 no-underline cursor-pointer select-none ${className}`}
     >
-      {/* WhatsApp SVG Icon */}
-      <svg
-        className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 fill-current flex-shrink-0"
-        viewBox="0 0 24 24"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path d="M17.472 14.382c-.301-.15-1.782-.879-2.058-.98-.277-.101-.478-.15-.679.15-.201.301-.778.98-.954 1.181-.176.201-.351.226-.653.075-.301-.15-1.272-.469-2.423-1.496-.895-.798-1.5-1.785-1.676-2.086-.176-.301-.019-.464.132-.614.136-.135.301-.351.452-.527.15-.176.201-.301.301-.502.101-.201.05-.377-.025-.527-.075-.15-.679-1.637-.93-2.242-.244-.589-.493-.509-.679-.519l-.578-.01c-.201 0-.527.075-.803.377s-1.055 1.03-1.055 2.512c0 1.482 1.08 2.913 1.231 3.114.15.201 2.125 3.245 5.15 4.551.72.311 1.282.497 1.721.636.724.23 1.382.197 1.902.12.58-.087 1.782-.728 2.033-1.431.251-.703.251-1.306.176-1.431-.075-.126-.276-.201-.577-.352zm-5.467 7.618h-.008a10.015 10.015 0 01-5.109-1.398l-.366-.217-3.799.996 1.014-3.702-.238-.379a9.998 9.998 0 01-1.534-5.289c0-5.522 4.493-10.015 10.021-10.015 2.675 0 5.19 1.042 7.081 2.934a9.957 9.957 0 012.934 7.08c0 5.523-4.493 10.016-10.019 10.016h.034zm0-18.016c-4.417 0-8.012 3.595-8.012 8.013 0 1.41.368 2.787 1.066 3.996l.255.442-.707 2.581 2.646-.694.428.254a7.986 7.986 0 004.324 1.248c4.417 0 8.013-3.596 8.013-8.013 0-2.14-.833-4.153-2.347-5.667a7.96 7.96 0 00-5.667-2.347z" />
-      </svg>
+      <WhatsAppIcon className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
       <span>{text}</span>
       <span className="text-sm sm:text-lg md:text-xl leading-none font-normal ml-0.5">→</span>
     </a>
+  );
+};
+
+const ContactLines: FC<{ label: string; number: string }> = ({ label, number }) => (
+  <span className="flex flex-col items-start leading-tight text-left">
+    <span className="text-xs font-semibold">{label}</span>
+    <span className="text-lg font-bold whitespace-nowrap">{number}</span>
+  </span>
+);
+
+const contactButtonBase =
+  "hidden md:flex w-full min-w-0 items-center justify-center gap-3 h-[62px] px-5 rounded-xl text-white no-underline select-none";
+
+interface ContactButtonsProps {
+  onWhatsAppClick: () => void;
+  /** Where the buttons sit, reported to GTM with Text taps. */
+  placement: string;
+}
+
+/**
+ * WhatsApp + Text CTA pair. Mobile shows the compact WhatsApp / Text Us
+ * buttons; desktop shows both numbers, with Text as plain text because
+ * desktops have no SMS app.
+ */
+const ContactButtons: FC<ContactButtonsProps> = ({ onWhatsAppClick, placement }) => (
+  <div className="flex w-full max-w-[600px] gap-2 md:gap-4">
+    <WhatsAppMobileButton onClick={onWhatsAppClick} className="flex-1 md:hidden" />
+    <TextMobileButton placement={placement} className="flex-1 md:hidden" />
+    <a
+      href={WHATSAPP_HREF}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={onWhatsAppClick}
+      className={`${contactButtonBase} bg-[#41A800] hover:bg-[#368F00] active:scale-[0.98] shadow-[0_6px_20px_rgba(65,168,0,0.30)] transition-all duration-200`}
+    >
+      <WhatsAppIcon className="w-5 h-5" />
+      <ContactLines label="WhatsApp us" number={WHATSAPP_NUMBER_DISPLAY} />
+    </a>
+    <div className={`${contactButtonBase} bg-[#5B4FE0] shadow-[0_6px_20px_rgba(91,79,224,0.30)]`}>
+      <MessageSquare className="w-5 h-5 flex-shrink-0" />
+      <ContactLines label="Text us" number={SMS_NUMBER_DISPLAY} />
+    </div>
+  </div>
+);
+
+/** Sticky bottom bar on phones with the WhatsApp and Text buttons. */
+const MobileContactBar: FC<{ onWhatsAppClick: () => void }> = ({ onWhatsAppClick }) => {
+  const barRef = useRef<HTMLDivElement>(null);
+  useMobileCtaBar(barRef);
+
+  return (
+    <div
+      ref={barRef}
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-[#E2E2EA] bg-white px-3 pb-[max(10px,env(safe-area-inset-bottom))] pt-2 shadow-[0_-6px_18px_rgba(20,20,60,0.10)] md:hidden"
+    >
+      <p className="text-center text-xs font-semibold text-[#FF5A00] mb-1.5">
+        Message now, 10% off your first week
+      </p>
+      <div className="flex gap-2">
+        <WhatsAppMobileButton onClick={onWhatsAppClick} className="flex-1" />
+        <TextMobileButton placement="thank_you_sticky_bar" className="flex-1" />
+      </div>
+    </div>
   );
 };
 
@@ -111,7 +177,7 @@ const NextArrow = (props: any) => {
   );
 };
 
-const ThankYou: FC<ThankYouProps> = () => {
+const ThankYou: FC<ThankYouProps> = ({ showTextCta = false, pillInHeader = false }) => {
   const [GCLID, setGCLID] = useState("");
   const [url, setUrl] = useState("");
   // Browsers only allow unmuted playback to start from a real user gesture, so
@@ -149,7 +215,21 @@ const ThankYou: FC<ThankYouProps> = () => {
     url: url,
   };
 
+  const pushWhatsAppClickEvent = (placement: "thank_you_cta") => {
+    try {
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({
+        event: "whatsapp_click",
+        whatsapp_placement: placement,
+        page_path: window.location.pathname,
+      });
+    } catch {
+      // Do not block the WhatsApp action if GTM is unavailable.
+    }
+  };
+
   const apiCall = async () => {
+    pushWhatsAppClickEvent("thank_you_cta");
     try {
       const res = await axios.post(postUrl, postData, {
         headers: {
@@ -194,12 +274,11 @@ const ThankYou: FC<ThankYouProps> = () => {
       <section className="bg-gradient-to-b from-[#F5F2FD] via-[#FAF8FF] to-white pt-5 sm:pt-12 md:pt-16 pb-6 sm:pb-12 md:pb-16">
         <div className="container mx-auto max-w-[1240px] px-3 sm:px-4">
           {/* Top Pill Badge */}
-          <div className="flex justify-center mb-3 sm:mb-6">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 sm:px-5 sm:py-2 rounded-full bg-white border border-[#ECEAF4] shadow-[0_2px_8px_rgba(0,0,0,0.04)] text-xs sm:text-sm font-medium text-[#111827]">
-              <AiChipIcon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-              <span className="font-medium text-xs sm:text-sm text-[#111827]">Request Received Successfully</span>
+          {!pillInHeader && (
+            <div className="flex justify-center mb-3 sm:mb-6">
+              <RequestReceivedPill />
             </div>
-          </div>
+          )}
 
           {/* Headline */}
           <h1 className="text-2xl sm:text-4xl md:text-[46px] lg:text-[52px] font-bold text-[#111827] text-center leading-[1.25] md:leading-[1.24] max-w-4xl mx-auto tracking-[-0.02em]">
@@ -209,9 +288,11 @@ const ThankYou: FC<ThankYouProps> = () => {
                 <OrangeUnderlineFlourish className="w-full h-full" />
               </span>
             </span>
-            <span className="inline">Your personalized</span>
+            <span className="inline">Message us now and</span>
             <br className="hidden md:inline" />{" "}
-            <span className="inline">quote is being prepared.</span>
+            <span className="inline">
+              get <span className="text-[#FF5A00]">10% off</span> your first week.
+            </span>
           </h1>
 
           {/* Subtext */}
@@ -222,6 +303,12 @@ const ThankYou: FC<ThankYouProps> = () => {
               this short video to see what happens next and how to get help faster.
             </p>
           </div>
+
+          {showTextCta && (
+            <div className="flex justify-center mt-4 sm:mt-8">
+              <ContactButtons onWhatsAppClick={apiCall} placement="thank_you_hero" />
+            </div>
+          )}
 
           {/* Video Container (Card Frame Matching Figma) */}
           <div className="w-full max-w-[1040px] mx-auto mt-4 sm:mt-8 md:mt-10">
@@ -258,9 +345,9 @@ const ThankYou: FC<ThankYouProps> = () => {
             </div>
           </div>
 
-          {/* Primary CTA + Microcopy + Benefit Checkmarks */}
+          {/* Primary CTA (below the video unless showTextCta) + Microcopy + Benefit Checkmarks */}
           <div className="flex flex-col items-center mt-4 sm:mt-8 md:mt-10">
-            <WhatsAppButton onClick={apiCall} />
+            {!showTextCta && <WhatsAppButton onClick={apiCall} />}
             <p className="text-[11px] sm:text-sm text-[#6B7280] font-medium mt-2 sm:mt-3.5 mb-2.5 sm:mb-4">
               Average response time: under 5 minutes
             </p>
@@ -348,7 +435,11 @@ const ThankYou: FC<ThankYouProps> = () => {
               </p>
             </div>
             <div className="flex-shrink-0 w-full md:w-auto flex justify-center md:justify-end">
-              <WhatsAppButton onClick={apiCall} className="md:w-[440px]" />
+              {showTextCta ? (
+                <ContactButtons onWhatsAppClick={apiCall} placement="thank_you_urgent_banner" />
+              ) : (
+                <WhatsAppButton onClick={apiCall} className="md:w-[440px]" />
+              )}
             </div>
           </div>
         </div>
@@ -419,7 +510,11 @@ const ThankYou: FC<ThankYouProps> = () => {
           </div>
 
           <div className="flex justify-center mt-5 sm:mt-10 md:mt-12">
-            <WhatsAppButton onClick={apiCall} />
+            {showTextCta ? (
+              <ContactButtons onWhatsAppClick={apiCall} placement="thank_you_proof" />
+            ) : (
+              <WhatsAppButton onClick={apiCall} />
+            )}
           </div>
         </div>
       </section>
@@ -483,10 +578,15 @@ const ThankYou: FC<ThankYouProps> = () => {
           </div>
 
           <div className="flex justify-center mt-6 sm:mt-10 md:mt-14 mb-4 sm:mb-8">
-            <WhatsAppButton onClick={apiCall} />
+            {showTextCta ? (
+              <ContactButtons onWhatsAppClick={apiCall} placement="thank_you_reviews" />
+            ) : (
+              <WhatsAppButton onClick={apiCall} />
+            )}
           </div>
         </div>
       </section>
+      {showTextCta && <MobileContactBar onWhatsAppClick={apiCall} />}
     </div>
   );
 };

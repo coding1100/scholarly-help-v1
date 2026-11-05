@@ -188,10 +188,6 @@ export const content = {
         title: "Marketing",
       },
       {
-        url: "/online-class/psychology",
-        title: "Psychology",
-      },
-      {
         title: "Philosophy",
       },
       {
@@ -389,11 +385,6 @@ export const onlineClassSubjects = [
     src: "/assets/Icon/computerscience.png",
     label: "Computer Science",
     url: "/online-class/computer-science/",
-  },
-  {
-    src: "/assets/Icon/anatomyandphysiology.png",
-    label: "Anatomy and Physiology",
-    url: "/online-class/anatomy/",
   },
 
   // {

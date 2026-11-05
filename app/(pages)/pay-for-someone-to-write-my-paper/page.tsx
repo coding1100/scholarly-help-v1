@@ -17,12 +17,7 @@ import { MetaData } from "@/app/metadata/metadata";
 import ProductSchema from "@/app/components/ProductSchema";
 // import Hero from "./components/Hero";
 
-const WhyScholarly = dynamic(
-  () => import("@/app/components/WhyScholarly/WhyScholarly"),
-  {
-    ssr: false,
-  }
-);
+import WhyScholarly from "@/app/components/WhyScholarly/WhyScholarlyClient";
 interface PageProps {}
 const Page: FC<PageProps> = ({}) => {
   const rawBaseUrl =

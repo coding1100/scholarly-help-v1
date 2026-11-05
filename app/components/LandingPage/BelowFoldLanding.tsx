@@ -7,7 +7,10 @@ import DeliveredOn from "@/app/(pages)/take-my-class/DeliveredOn";
 import { onlineClassSubjects } from "@/app/(pages)/online-class/content";
 import SubSubjectsSection from "./SubSubjects";
 import FinalCTA from "../FinalCTA/FinalCTA";
-import { pathnameIncludesTakeMyClass } from "@/app/lib/takeMyClassLandingRoutes";
+import {
+  isTakeMyClassLayoutPage,
+  pathnameIncludesTakeMyClass,
+} from "@/app/lib/takeMyClassLandingRoutes";
 import ServiceVideoSection from "./ServiceVideoSection";
 
 // Lightweight skeleton for below-the-fold sections
@@ -88,6 +91,10 @@ const GetQouteDynamic = dynamic(() => import("./GetQoute"), {
   loading: () => <LoadingSkeleton height="400px" />,
 });
 
+const StudyGuides = dynamic(() => import("./StudyGuides"), {
+  ssr: false,
+});
+
 const Faq = dynamic(() => import("./Faq"), {
   ssr: false,
   loading: () => <LoadingSkeleton height="400px" />,
@@ -110,6 +117,9 @@ export default function BelowFoldLanding({ children }: BelowFoldLandingProps) {
   const isAssignmentPage = currentPath.includes("assignment");
   const isHomeworkPage = currentPath.includes("homework");
   const isEssayWritingPage = currentPath.includes("essay-writing");
+  // /take-my-class runs its own order: grade screenshots (Success) under the
+  // university logos, support before pain points, process before reviews.
+  const isTakeMyClassPage = isTakeMyClassLayoutPage(currentPath);
 
   const isExamPage =
     currentPath.includes("exam") || currentPath.includes("exams");
@@ -155,7 +165,10 @@ export default function BelowFoldLanding({ children }: BelowFoldLandingProps) {
     };
   }, []);
 
-  if (!ready) return null;
+  // Hold one screen of space until the sections mount. Without it the footer
+  // is server-rendered straight under the hero, inside the first mobile
+  // viewport, and gets pushed down when the sections arrive (CLS 0.11).
+  if (!ready) return <div aria-hidden="true" className="min-h-screen" />;
 
   return (
     <>
@@ -170,9 +183,18 @@ export default function BelowFoldLanding({ children }: BelowFoldLandingProps) {
       ) : (
         <Ratings />
       )}{" "}
-      {showSuccessTop && <Success />}
-      <CardCarousel />
-      <Description />
+      {(showSuccessTop || isTakeMyClassPage) && <Success />}
+      {isTakeMyClassPage ? (
+        <>
+          <Description />
+          <CardCarousel />
+        </>
+      ) : (
+        <>
+          <CardCarousel />
+          <Description />
+        </>
+      )}
       {/* <Description2 /> */}
       {!isOnlineClassPage ||
         !isExamPage ||
@@ -184,9 +206,18 @@ export default function BelowFoldLanding({ children }: BelowFoldLandingProps) {
             <WhySlider />
           </>
         ))}
-      <CustomerReviews />
-      <ProcessSection />
-      {!showSuccessTop && <Success />}
+      {isTakeMyClassPage ? (
+        <>
+          <ProcessSection />
+          <CustomerReviews />
+        </>
+      ) : (
+        <>
+          <CustomerReviews />
+          <ProcessSection />
+        </>
+      )}
+      {!showSuccessTop && !isTakeMyClassPage && <Success />}
       {/* {(currentPath === "/" ||
         (currentPath.startsWith("/online-class/") &&
           currentPath !== "/online-class/")) && (
@@ -208,8 +239,9 @@ export default function BelowFoldLanding({ children }: BelowFoldLandingProps) {
         isEssayWritingPage ||
         currentPath === "/") && <PriceSection />}
       {!isOnlineClassPage || (currentPath === "/" && <GetQouteDynamic />)}
+      <StudyGuides path={currentPath} />
       {currentPath !== "/" && <Faq />}
-      {showSuccessTop && <FinalCTA />}
+      {(showSuccessTop || isTakeMyClassPage) && <FinalCTA />}
     </>
   );
 }

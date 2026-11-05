@@ -178,10 +178,6 @@ export const content = {
         title: "Marketing",
       },
       {
-        url: "/assignment/psychology",
-        title: "Psychology",
-      },
-      {
         url: "/assignment/philosophy",
         title: "Philosophy",
       },
@@ -192,10 +188,6 @@ export const content = {
       {
         url: "/assignment/physics",
         title: "Physics",
-      },
-      {
-        url: "/assignment/biology",
-        title: "Biology",
       },
       {
         url: "/assignment/engineering",
@@ -221,19 +213,11 @@ export const content = {
         title: "Organizational Behavior",
       },
       {
-        url: "/assignment/architecture",
-        title: "Architecture",
-      },
-      {
         title: "Ethics",
       },
       {
         url: "/assignment/sociology",
         title: "Sociology",
-      },
-      {
-        url: "/assignment/pharmacology",
-        title: "Pharmacology",
       },
       {
         url: "/assignment/economics",
@@ -369,24 +353,9 @@ export const assignmentSubject = [
     url: "/assignment/engineering/",
   },
   {
-    src: "/assets/Icon/psychology.png",
-    label: "Psychology",
-    url: "/assignment/psychology/",
-  },
-  {
-    src: "/assets/Icon/biology.png",
-    label: "Biology",
-    url: "/assignment/biology/",
-  },
-  {
     src: "/assets/Icon/chemistry.png",
     label: "Chemistry",
     url: "/assignment/chemistry/",
-  },
-  {
-    src: "/assets/Icon/architecture.png",
-    label: "Architecture",
-    url: "/assignment/architecture/",
   },
   {
     src: "/assets/Icon/history.png",
@@ -433,10 +402,5 @@ export const assignmentSubject = [
     src: "/assets/Icon/operationmanagement.png",
     label: "Operation Management",
     url: "/assignment/operation-management/",
-  },
-  {
-    src: "/assets/Icon/pharmacology.png",
-    label: "Pharmacology",
-    url: "/assignment/pharmacology/",
   },
 ];

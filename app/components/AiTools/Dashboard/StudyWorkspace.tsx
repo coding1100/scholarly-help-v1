@@ -39,6 +39,7 @@ import {
   TutorMessageDto,
 } from "@/app/utils/studyApiClient";
 import { tryConsumeGuestClick } from "@/app/lib/client/guestClickLimits";
+import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 import {
   getStudyRecordingSnapshot,
   onStudyRecordingChange,
@@ -57,11 +58,11 @@ const STUDY_MODE = "research" as const;
 type WorkspaceTab = "original" | "notes" | "summary" | "flashcards" | "quizzes";
 
 const TABS: Array<{ id: WorkspaceTab; label: string }> = [
-  { id: "original", label: "Original Content" },
   { id: "notes", label: "AI Notes" },
-  { id: "summary", label: "AI Summary" },
-  { id: "flashcards", label: "AI Flashcards" },
-  { id: "quizzes", label: "AI Quizzes" },
+  { id: "summary", label: "Summary" },
+  { id: "flashcards", label: "Flashcards" },
+  { id: "quizzes", label: "Quizzes" },
+  { id: "original", label: "Original" },
 ];
 
 const TAB_ICON: Record<WorkspaceTab, ReactNode> = {
@@ -536,7 +537,8 @@ export default function StudyWorkspace() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("sessionId");
 
-  const [activeTab, setActiveTab] = useState<WorkspaceTab>("original");
+  // New content opens on AI Notes; the Original tab stays one click away.
+  const [activeTab, setActiveTab] = useState<WorkspaceTab>("notes");
   // Per-artifact loading so regenerating one tab doesn't disable/​spin the other
   // three (they share no work). Keyed by StudyArtifactType.
   const [loadingByType, setLoadingByType] = useState<
@@ -670,13 +672,13 @@ export default function StudyWorkspace() {
     const onSourceAdded = (event: Event) => {
       const detail = (event as CustomEvent<{ sessionId?: string }>).detail;
       if (!detail?.sessionId || detail.sessionId !== sessionId) return;
-      setActiveTab("original");
+      setActiveTab("notes");
       setRefreshTick((prev) => prev + 1);
     };
     const onSessionChanged = (event: Event) => {
       const detail = (event as CustomEvent<{ sessionId?: string }>).detail;
       if (!detail?.sessionId || detail.sessionId !== sessionId) return;
-      setActiveTab("original");
+      setActiveTab("notes");
       setRefreshTick((prev) => prev + 1);
     };
     const onRecordingStarted = (event: Event) => {
@@ -1000,6 +1002,7 @@ export default function StudyWorkspace() {
       );
       return;
     }
+    trackToolGenerate({ toolName: "AI Tutor", action: type });
     const labels: Record<StudyArtifactType, string> = {
       outline: "Outline",
       syllabus: "Syllabus",
@@ -1142,6 +1145,7 @@ export default function StudyWorkspace() {
       );
       return;
     }
+    trackToolGenerate({ toolName: "AI Tutor", action: "chat" });
 
     const intent = detectStudyChatIntent(message);
     const targetTab = intentTargetTab(intent);
@@ -1395,7 +1399,7 @@ export default function StudyWorkspace() {
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
-                  className={`inline-flex items-center gap-2 rounded-md px-4 py-2.5 text-base font-medium transition ${
+                  className={`inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition ${
                     activeTab === tab.id
                       ? "bg-white text-[#202447] shadow-sm ring-1 ring-[#cfd6ff]"
                       : "text-[#5f6178] hover:bg-white/70 hover:text-[#2e335f]"

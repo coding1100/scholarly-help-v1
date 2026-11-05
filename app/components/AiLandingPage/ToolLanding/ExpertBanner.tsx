@@ -19,7 +19,7 @@ const ExpertBanner: FC<{ content: ExpertBannerContent }> = ({ content: c }) => (
     <div className="mx-auto grid max-w-[1240px] items-center gap-10 px-4 lg:grid-cols-[1.4fr_1fr]">
       <div>
         <p className="text-base text-white/85 md:text-lg">{c.tag}</p>
-        <h2 className="mt-3 text-3xl font-bold leading-tight text-white md:text-5xl">
+        <h2 className="mt-3 text-3xl font-bold leading-tight text-white md:text-5xl md:leading-tight">
           {c.title}
         </h2>
         <p className="mt-6 max-w-2xl text-base leading-8 text-white/85 md:text-lg">

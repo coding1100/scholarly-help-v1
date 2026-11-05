@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { FC, useEffect, useState } from "react";
 import { ColorRing } from "react-loader-spinner";
 import { isTakeMyClassLandingPage } from "@/app/lib/takeMyClassLandingRoutes";
+import { metaEventFields, newMetaEventId, pushMetaEvent } from "@/app/utils/metaEvent";
 
 type PhoneEmailPayload = {
   FBCLID: string;
@@ -87,7 +88,12 @@ const DetailsAndMsgForm: FC<DetailsAndMsgFormProps> = ({}) => {
     };
     const contact_details = contactDetails;
     try {
-      await axiosInstance.post(`/order/do-my-exam/`, payload);
+      const metaEventId = newMetaEventId();
+      await axiosInstance.post(`/order/do-my-exam/`, {
+        ...payload,
+        ...metaEventFields(metaEventId),
+      });
+      pushMetaEvent("contact", metaEventId);
       setWithPhoneLoading(false);
       setWithEmailLoading(false);
       router.push("/thank-you-2");

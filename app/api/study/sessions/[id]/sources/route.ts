@@ -125,14 +125,15 @@ async function fetchUrlText(url: string) {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const { id } = await params;
     const userId = await getAuthenticatedUserId(request);
     if (!userId) {
       return fail("Unauthorized", 401);
     }
-    const session = await getSession(params.id);
+    const session = await getSession(id);
     if (!session) {
       return fail("Session not found", 404);
     }
@@ -189,7 +190,7 @@ export async function POST(
       return fail("No readable content found after cleaning the source.");
     }
 
-    const source = await addSource(params.id, kind, name, text);
+    const source = await addSource(id, kind, name, text);
     return ok(source, 201);
   } catch (error) {
     console.error("study.source.POST", error);

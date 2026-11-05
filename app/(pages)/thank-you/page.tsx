@@ -20,7 +20,7 @@ const page = () => {
         metaDescription="Thank you for contacting Scholarly Help. Our team has received your request and will get back to you shortly with the academic help you need."
         pageUrl={`${baseUrl}/thank-you/`}
       />
-      <ThankYou />
+      <ThankYou showTextCta pillInHeader />
     </MainLayout>
   );
 };

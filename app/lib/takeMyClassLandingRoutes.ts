@@ -12,6 +12,8 @@ export const TAKE_MY_CLASS_3_PATH = "/take-my-class-3";
 export const TAKE_MY_CLASS_4_PATH = "/take-my-class-4";
 export const TAKE_MY_CLASS_5_PATH = "/take-my-class-5";
 export const TAKE_MY_CLASS_6_PATH = "/take-my-class-6";
+/** /take-my-class rendered after the free-tools lead form, with text-message CTAs. */
+export const TOOLS_THANK_YOU_PATH = "/tools-thank-you";
 
 const LANDING_PAGE_PATHS = [
   TAKE_MY_CLASS_PATH,
@@ -24,6 +26,7 @@ const LANDING_PAGE_PATHS = [
   TAKE_MY_CLASS_PROTECT_GPA_PATH,
   TAKE_MY_CLASS_ALWAYS_WORKING_HARDER_PATH,
   TAKE_MY_CLASS_SAVING_YOUR_FUTURE_PATH,
+  TOOLS_THANK_YOU_PATH,
 ] as const;
 
 const EMAIL_ONLY_HERO_FORM_PATHS = [
@@ -37,11 +40,13 @@ const EMAIL_ONLY_HERO_FORM_PATHS = [
 const HEADER_ROUTE_PATHS = [
   TAKE_MY_CLASS_PATH,
   "/take-my-class-2",
+  TAKE_MY_CLASS_3_PATH,
   TAKE_MY_CLASS_PROFESSOR_PATH,
   TAKE_MY_CLASS_STILL_DOING_PATH,
   TAKE_MY_CLASS_PROTECT_GPA_PATH,
   TAKE_MY_CLASS_ALWAYS_WORKING_HARDER_PATH,
   TAKE_MY_CLASS_SAVING_YOUR_FUTURE_PATH,
+  TOOLS_THANK_YOU_PATH,
 ] as const;
 
 export function normalizePathname(pathname: string | null | undefined): string {
@@ -76,12 +81,37 @@ export function isTakeMyClassLandingPathname(pathname: string | null | undefined
   );
 }
 
-/** take-my-class-3 only (distinct centered header layout). */
-export function isTakeMyClass3LandingPage(pathname: string | null | undefined): boolean {
+/**
+ * Pages that render the /take-my-class layout itself: /take-my-class,
+ * /take-my-class-3 and /tools-thank-you. Use for checks that mean "this
+ * layout", not "this URL".
+ */
+export function isTakeMyClassLayoutPage(
+  pathname: string | null | undefined,
+): boolean {
+  const path = normalizePathname(pathname);
+  return (
+    path === TAKE_MY_CLASS_PATH ||
+    path === TAKE_MY_CLASS_3_PATH ||
+    path === TOOLS_THANK_YOU_PATH
+  );
+}
+
+/** Pages whose quote forms are the two-step "what do you need help with" form. */
+export function usesStepQuoteForm(
+  pathname: string | null | undefined,
+): boolean {
   return normalizePathname(pathname) === TAKE_MY_CLASS_3_PATH;
 }
 
-/** take-my-class-4/5/6 (hero-copy-only duplicates of take-my-class-3). */
+/** Pages whose CTAs open a pre-filled text message instead of a quote form. */
+export function isTextCtaLandingPage(
+  pathname: string | null | undefined,
+): boolean {
+  return normalizePathname(pathname) === TOOLS_THANK_YOU_PATH;
+}
+
+/** take-my-class-4/5/6 (hero-copy-only variants with a centered header). */
 export function isTakeMyClassHeroCopyVariant(
   pathname: string | null | undefined,
 ): boolean {
@@ -137,8 +167,7 @@ export function isTakeMyClassEmailOnlyHeroFormPage(
 }
 
 /**
- * Header "special route" take-my-class group: original, variant 2, professor, still-doing, protect-gpa, always-working-harder, saving-your-future.
- * Excludes take-my-class-3 (handled separately).
+ * Header "special route" take-my-class group: original, variants 2 and 3, professor, still-doing, protect-gpa, always-working-harder, saving-your-future, tools-thank-you.
  */
 export function isTakeMyClassHeaderRoute(pathname: string | null | undefined): boolean {
   const path = normalizePathname(pathname);
@@ -179,5 +208,9 @@ export function getLandingHeroFormCtaText(
 /** Legacy substring check used for hero button visibility, DeliveredOn, etc. */
 export function pathnameIncludesTakeMyClass(pathname: string | null | undefined): boolean {
   const p = pathname || "";
-  return p.includes("/take-my-class") || p.startsWith("/landing/");
+  return (
+    p.includes("/take-my-class") ||
+    p.startsWith("/landing/") ||
+    isTextCtaLandingPage(p)
+  );
 }

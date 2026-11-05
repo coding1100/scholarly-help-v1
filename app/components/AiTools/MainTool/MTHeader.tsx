@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useContext, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { CgMenu } from "react-icons/cg";

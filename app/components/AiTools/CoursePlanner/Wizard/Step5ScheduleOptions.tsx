@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { FiCheckCircle, FiAlertTriangle, FiArrowRight, FiArrowLeft, FiMessageSquare, FiRefreshCw, FiSend, FiZap, FiX, FiCheck } from "react-icons/fi";
 import { CourseCatalogItem, CourseSection, ScheduleOption, ScheduleConflict } from "@/app/lib/client/coursePlanner/types";
 import { CoursePlannerService } from "@/app/lib/client/coursePlanner/service";
+import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 
 interface Props {
   semesterId: string;
@@ -109,6 +110,7 @@ export const Step5ScheduleOptions: React.FC<Props> = ({
     if (!chatQuery.trim() || !activeOption || isChatSending) return;
 
     guardAiClick(async () => {
+      trackToolGenerate({ toolName: "Course Planner", action: "chat" });
       const q = chatQuery.trim();
       setChatLog((prev) => [...prev, { sender: "user", text: q }]);
       setChatQuery("");

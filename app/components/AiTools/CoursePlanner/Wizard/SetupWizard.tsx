@@ -139,20 +139,24 @@ export const SetupWizard: React.FC<Props> = ({ activeSemester, priorSemesters, o
       setCourses((prev) => [...prev, ...imported]);
     });
 
-  // Step 4: Schedule preferences submit — this is the wizard's actual AI
-  // generation call, so guests get gated here just like every other tool.
+  // Step 4: Schedule preferences submit. Not guest-gated — the backend's
+  // schedules/generate route carries no @CheckSubscription/@CheckFreeRunQuota
+  // (see course-planner.controller.ts, which explicitly groups it with
+  // resolve-conflict as "local/deterministic ... ungated"), so wrapping it in
+  // guardAiClick here only spent a guest's shared, site-wide 1-lifetime-click
+  // allowance on a step the backend never intended to gate — with no visible
+  // difference to the user beyond the sign-up modal replacing their results,
+  // which reads as "my preferences didn't do anything."
   const handleStep4 = (newPrefs: SchedulePreferences) =>
-    guardAiClick(async () => {
-      await runStep(async () => {
-        if (!currentSemesterId) return;
-        setPrefs(newPrefs);
-        const options = await CoursePlannerService.generateSchedules(currentSemesterId, newPrefs);
-        setScheduleOptions(options);
-        if (options.length > 0) {
-          setSelectedOption(options[0]);
-        }
-        setStep(5);
-      });
+    runStep(async () => {
+      if (!currentSemesterId) return;
+      setPrefs(newPrefs);
+      const options = await CoursePlannerService.generateSchedules(currentSemesterId, newPrefs);
+      setScheduleOptions(options);
+      if (options.length > 0) {
+        setSelectedOption(options[0]);
+      }
+      setStep(5);
     });
 
   // Step 5: Option selected

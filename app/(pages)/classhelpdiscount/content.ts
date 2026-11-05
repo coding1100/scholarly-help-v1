@@ -192,10 +192,6 @@ export const content = {
         title: "Marketing",
       },
       {
-        url: "/online-class/psychology",
-        title: "Psychology",
-      },
-      {
         title: "Philosophy",
       },
       {

@@ -9,6 +9,8 @@ export default function ProductSchema({
   metaDescription,
   pageUrl,
 }: ProductSchemaProps) {
+  const schemaUrl = pageUrl.endsWith("/") ? pageUrl : `${pageUrl}/`;
+
   const schemaData = {
     "@context": "https://schema.org/",
     "@type": "Product",
@@ -23,7 +25,7 @@ export default function ProductSchema({
     sku: "sh1-200",
     offers: {
       "@type": "AggregateOffer",
-      url: pageUrl,
+      url: schemaUrl,
       priceCurrency: "USD",
       lowPrice: "1",
       highPrice: "100",

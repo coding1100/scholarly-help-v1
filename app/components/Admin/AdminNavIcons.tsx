@@ -73,6 +73,12 @@ export const ReportsNavIcon: FC<IconProps> = (props) => (
   </Svg>
 );
 
+export const BlogNavIcon: FC<IconProps> = (props) => (
+  <Svg {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+  </Svg>
+);
+
 /** Icons for duplicated pages listed under main menu (each href gets a stable distinct icon) */
 const dynamicMainIcons = [
   EssayWritingNavIcon,
@@ -92,6 +98,8 @@ const MAIN_NAV_ICON_BY_HREF: Record<string, FC<IconProps>> = {
   "/admin/online-class": OnlineClassNavIcon,
   "/admin/essay-writing": EssayWritingNavIcon,
   "/admin/tool-usage": ReportsNavIcon,
+  "/admin/team-usage": ReportsNavIcon,
+  "/admin/blog": BlogNavIcon,
 };
 
 function normalizeAdminHref(href: string): string {
@@ -124,5 +132,7 @@ export function buildMainNavigation(): AdminMainNavItem[] {
     { name: "Online Class", href: "/admin/online-class", icon: OnlineClassNavIcon },
     { name: "Essay Writing", href: "/admin/essay-writing", icon: EssayWritingNavIcon },
     { name: "Tool Usage", href: "/admin/tool-usage", icon: ReportsNavIcon },
+    { name: "Team Usage", href: "/admin/team-usage", icon: ReportsNavIcon },
+    { name: "Blog", href: "/admin/blog", icon: BlogNavIcon },
   ];
 }

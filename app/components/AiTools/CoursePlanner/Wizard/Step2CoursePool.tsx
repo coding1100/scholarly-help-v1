@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { FiUpload, FiPlus, FiTrash2, FiArrowRight, FiArrowLeft, FiLoader, FiZap } from "react-icons/fi";
 import { CourseCatalogItem, CourseSection, ExtractedSyllabusCourse } from "@/app/lib/client/coursePlanner/types";
 import { CoursePlannerService } from "@/app/lib/client/coursePlanner/service";
+import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
 
 const EXTRACT_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899", "#06b6d4"];
 const VALID_DAYS: CourseSection["days"][number][] = ["M", "T", "W", "Th", "F", "Sa", "Su"];
@@ -173,6 +174,7 @@ export const Step2CoursePool: React.FC<Props> = ({
     }
 
     guardAiClick(async () => {
+      trackToolGenerate({ toolName: "Course Planner", action: "extract_file" });
       setIsExtracting(true);
       setExtractionError(null);
       setExtractionNotice(null);
@@ -228,6 +230,7 @@ export const Step2CoursePool: React.FC<Props> = ({
     if (!syllabusText.trim() || isSyllabusOverLimit || isExtracting) return;
 
     guardAiClick(async () => {
+      trackToolGenerate({ toolName: "Course Planner", action: "extract_text" });
       setIsExtracting(true);
       setExtractionError(null);
       setExtractionNotice(null);

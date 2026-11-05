@@ -14,52 +14,52 @@ import type { FooterCtaContent } from "@/app/components/AiLandingPage/ToolLandin
 
 export const heroContent: LandingHeroContent = {
   badge: "2,140 students used this tool this week",
-  titleTop: "Find the perfect essay title",
-  titleAccent: "in seconds",
+  titleTop: "Find the perfect title with our",
+  titleAccent: "essay title generator",
   subtitle:
-    "Tell the essay title generator what your essay is about, and get clear, relevant titles to choose from in seconds.",
+    "Tell the essay title generator what your essay is about and get clear, relevant titles to choose from in seconds. Whether you need a title generator for essay assignments or several ideas to compare, ScholarlyHelp makes it easy to find a title that fits.",
   steps: ["Enter Topic", "Get Title Ideas", "Pick Your Favorite"],
 };
 
 export const useCasesContent: UseCasesContent = {
-  title: "An AI essay title for every situation.",
+  title: "An AI essay title for every situation",
   subtitle: "Start faster. Choose better. Write with confidence.",
   cards: [
     {
       icon: "📝",
       title: "No title yet",
       description:
-        "Turn your essay topic into clear, relevant titles that are ready to use in seconds.",
+        "Turn your essay topic into clear, relevant titles with our free essay title generator, ready to use in seconds.",
     },
     {
       icon: "💡",
       title: "A new topic",
       description:
-        "Add your topic or keywords, then generate title ideas that match your subject and main focus.",
+        "Add your topic or keywords, then use the title generator essay tool to create ideas that match your subject and main focus.",
     },
     {
       icon: "⚖️",
       title: "Comparing title ideas",
       description:
-        "Generate multiple title options and choose the one that best fits your essay.",
+        "Generate multiple options with an essay titles generator and choose the one that best fits your essay.",
     },
     {
       icon: "🎭",
       title: "Not sure of the tone",
       description:
-        "Create academic, creative, or simple titles that match your assignment and writing style.",
+        "Create academic, creative, or simple titles with an AI essay title generator that matches your assignment and writing style.",
     },
     {
       icon: "✨",
       title: "Making it stand out",
       description:
-        "Generate engaging titles that grab attention while staying relevant to your essay topic.",
+        "Make your topic more interesting with our title for essay generator, which creates relevant and engaging title ideas for your essay.",
     },
     {
       icon: "🖥️",
       title: "Staring at a blank screen",
       description:
-        "Break the hesitation the second you start. Turn a rough idea into clear, usable titles without wasting time.",
+        "Use a short essay title generator to turn a rough idea into a clear, usable title without wasting time.",
     },
   ],
 };
@@ -71,25 +71,25 @@ export const howItWorksContent: HowItWorksContent = {
     {
       title: "Enter your topic",
       description:
-        "Type your essay topic, keywords, or short description to begin generating title ideas.",
+        "Type your essay topic, keywords, or short description to start generating title ideas with our title generator for essay assignments.",
     },
     {
       title: "Choose your preferences",
       description:
-        "Select your subject, essay type, and preferred tone before generating your titles.",
+        "Select your subject, essay type, and preferred tone to create title ideas that match your assignment and writing needs.",
     },
     {
       title: "Generate titles",
       description:
-        "Instantly create a list of relevant titles based on the information you provided.",
+        "Instantly create relevant title ideas based on your information, then use the title essay generator to explore different approaches to your topic.",
     },
     {
-      title: "Pick your favourite",
+      title: "Pick your favorite",
       description:
-        "Choose the best title, make any final edits, and use it in your essay.",
+        "Choose the title that fits your essay, make any final edits, and use it confidently as the focus of your assignment.",
     },
   ],
-  ctaTitleStart: "Want all 16",
+  ctaTitleStart: "Want all",
   ctaTitleBrand: "ScholarlyHelp",
   ctaTitlePill: "Tools",
   ctaTitleEnd: "in one place?",
@@ -144,7 +144,7 @@ export const twoWaysContent: TwoWaysContent = {
       {
         title: "Enter your topic",
         description:
-          "Paste your topic or keywords to instantly generate a new list of essay title ideas.",
+          "Paste your topic or keywords to generate a new list of essay title ideas instantly.",
       },
       {
         title: "Generate title ideas",
@@ -159,7 +159,7 @@ export const twoWaysContent: TwoWaysContent = {
       {
         title: "Save and come back!",
         description:
-          "Enter your email to save your title ideas in your free, personalised ScholarlyHelp dashboard.",
+          "Enter your email to save your title ideas in your free, personalized ScholarlyHelp dashboard.",
       },
     ],
   },
@@ -172,7 +172,7 @@ export const twoWaysContent: TwoWaysContent = {
           "Send us your topic, your deadline, and any of the instructions your professor has given you.",
       },
       {
-        title: "Get matched to writer",
+        title: "Get matched to a writer",
         description:
           "Your topic is matched with a writer who specializes in your subject and your academic level.",
       },
@@ -209,7 +209,7 @@ export const reviewsContent: ReviewsContent = {
     },
     {
       quote:
-        "As an international student I never know what a title should sound like. Seeing ten proper academic titles for my topic made the whole thing clear, and I learn a bit more each time.",
+        "As an international student, I never knew what a title should sound like. Seeing ten proper academic titles for my topic made the whole thing clear, and I learned a bit more each time.",
       author: "Yuki T.",
       detail: "Business Management, Purdue — MSc",
     },
@@ -223,7 +223,7 @@ export const faqContent: FaqContent = {
     {
       question: "Is this tool really free?",
       answer:
-        "Yes! ScholarlyHelp's AI Essay Title Generator is 100% free to use. Enter your topic and generate essay title ideas in seconds.",
+        "Yes! ScholarlyHelp offers an essay title generator free to use. Simply enter your topic and generate relevant essay title ideas in seconds.",
     },
     {
       question: "How many titles will I get?",
@@ -238,12 +238,12 @@ export const faqContent: FaqContent = {
     {
       question: "Can I edit the titles it gives me?",
       answer:
-        "Absolutely. Use any generated title as it is, or edit it before submitting your essay.",
+        "Absolutely. You can use any generated title as it is or edit it to better fit your essay before submitting it. The tool can also generate concise options when you need a short essay title generator.",
     },
     {
       question: "What if I need the whole essay written?",
       answer:
-        "Our academic experts can research, write, edit, and format your essay, ready for submission.",
+        "Our academic experts can research, write, edit, and format your essay based on your requirements, helping you get a polished paper ready for submission.",
     },
   ],
 };

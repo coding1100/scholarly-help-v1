@@ -9,6 +9,7 @@ import { initializeAuthSession, installAxiosAuthRefresh } from "@/app/lib/authSe
 import { hasRefreshSessionHint } from "@/app/lib/accessTokenStore";
 import BillingGate from "@/app/components/AiTools/BillingGate";
 import CheckoutConfirmationOverlay from "@/app/components/AiTools/CheckoutConfirmationOverlay";
+import LiveChatLauncher from "@/app/components/LiveChatLauncher";
 
 /**
  * Global handler for the backend's two "you need to upgrade" gates:
@@ -42,6 +43,7 @@ declare global {
   interface Window {
     LiveChatWidget?: {
       call: (method: string, ...args: any[]) => void;
+      on: (event: string, callback: (...args: any[]) => void) => void;
     };
     __lc?: {
       license: number;
@@ -142,18 +144,8 @@ export default function ClientScripts() {
           own doc comment for why this exists alongside the invoice.paid webhook). */}
       <CheckoutConfirmationOverlay />
 
-      {/* LiveChat - load script only on home page */}
-      {ShowLiveChat && (
-        <Script id="livechat-script" strategy="lazyOnload">
-          {`
-          window.__lc = window.__lc || {};
-          window.__lc.license = 19303287;
-          window.__lc.integration_name = "manual_onboarding";
-          window.__lc.product_name = "livechat";
-          ;(function(n,t,c){function i(n){return e._h?e._h.apply(null,n):e._q.push(n)}var e={_q:[],_h:null,_v:"2.0",on:function(){i(["on",c.call(arguments)])},once:function(){i(["once",c.call(arguments)])},off:function(){i(["off",c.call(arguments)])},get:function(){if(!e._h)throw new Error("[LiveChatWidget] You can't use getters before load.");return i(["get",c.call(arguments)])},call:function(){i(["call",c.call(arguments)])},init:function(){var n=t.createElement("script");n.async=!0,n.type="text/javascript",n.src="https://cdn.livechatinc.com/tracking.js",t.head.appendChild(n)}};!n.__lc.asyncInit&&e.init(),n.LiveChatWidget=n.LiveChatWidget||e}(window,document,[].slice))
-        `}
-        </Script>
-      )}
+      {/* LiveChat - home page only, downloaded when the visitor opens it */}
+      {ShowLiveChat && <LiveChatLauncher />}
 
       {/* HelpCrunch - only on /about-us/ page, loaded lazily */}
       {isAboutPage && (

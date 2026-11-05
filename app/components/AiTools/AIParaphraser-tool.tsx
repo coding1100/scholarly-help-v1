@@ -8,6 +8,7 @@ import ActionButtons from "./ActionButtons";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { trackToolGenerate } from "@/app/utils/toolsSheetClient";
+import { recordToolRun } from "@/app/utils/toolHistoryClient";
 import ToolsApiLoader from "@/app/components/AiTools/ToolsApiLoader";
 import { useGuestGate } from "@/app/lib/client/useGuestGate";
 import { useToolDraftPersistence } from "@/app/lib/client/useToolDraftPersistence";
@@ -204,6 +205,12 @@ const AIParaphraser: FC<AIParaphraserProp> = ({ setFlag, variant = "default" }) 
     guardAiClick(async () => {
       trackToolGenerate({ toolName: "Paraphraser Tool" });
       await processinput();
+      void recordToolRun({
+        toolKey: "paraphraser",
+        toolName: "Paraphraser",
+        href: "/tools/paraphraser-tool",
+        title: inputText,
+      });
     });
   };
 

@@ -4,6 +4,8 @@ import {
   getSinglePathSegment,
   isReservedTopLevelSegment,
 } from "@/app/lib/staticPublicRoutes";
+import { isGoneBlogPath } from "@/app/lib/blog/gone";
+import { isGonePagePath } from "@/app/lib/gonePages";
 
 function decodeBase64Url(value: string): ArrayBuffer {
   const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
@@ -22,6 +24,24 @@ const REPORT_ADMIN_ALLOWED_PATHS = [
   "/api/admin/session",
   "/api/admin/logout",
 ] as const;
+
+const NOINDEX_PATHS = new Set([
+  "/tools/grammar-checker",
+  "/tools/research-question",
+  "/tools/study-workspace",
+  "/tools/essay-grader",
+  "/tools/paraphraser-tool",
+  "/tools/essay-studio",
+  "/tools/dashboard",
+  "/admin/login",
+  "/admin/tools",
+]);
+
+function shouldNoindex(pathname: string): boolean {
+  const normalizedPathname =
+    pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
+  return NOINDEX_PATHS.has(normalizedPathname);
+}
 
 function isReportAdminAllowedPath(pathname: string): boolean {
   return REPORT_ADMIN_ALLOWED_PATHS.some(
@@ -67,9 +87,10 @@ async function getAdminSessionRole(
   }
 }
 
-/** Rewrite unknown single-segment paths to /landing/{slug}/ (published check runs in the page). */
+// Rewrite unknown single-segment paths to /landing/{slug}/ with trace headers
 function maybeRewriteDynamicLanding(
   request: NextRequest,
+  requestHeaders: Headers,
 ): NextResponse | null {
   const segment = getSinglePathSegment(request.nextUrl.pathname);
   if (!segment || isReservedTopLevelSegment(segment)) {
@@ -81,11 +102,17 @@ function maybeRewriteDynamicLanding(
     request.url,
   );
   rewriteUrl.search = request.nextUrl.search;
-  return NextResponse.rewrite(rewriteUrl);
+  return NextResponse.rewrite(rewriteUrl, { request: { headers: requestHeaders } });
 }
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  if (isGoneBlogPath(pathname) || isGonePagePath(pathname)) {
+    return new NextResponse("410 Gone", {
+      status: 410,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
+  }
   const isAdminLogin =
     pathname === "/admin/login" ||
     pathname === "/admin/login/" ||
@@ -112,10 +139,18 @@ export async function middleware(request: NextRequest) {
   // a global client-side click allowance (see guestClickLimits) that opens an
   // in-app sign-in / sign-up gate on the 5th AI action — so there is no longer a
   // blanket middleware auth redirect for /tools/* routes.
-  const landingRewrite = maybeRewriteDynamicLanding(request);
-  if (landingRewrite) return landingRewrite;
+  // Distributed trace correlation identifier
+  const requestId = request.headers.get("x-request-id") || crypto.randomUUID();
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-request-id", requestId);
 
-  return NextResponse.next();
+  const landingRewrite = maybeRewriteDynamicLanding(request, requestHeaders);
+  const res = landingRewrite || NextResponse.next({ request: { headers: requestHeaders } });
+  res.headers.set("x-request-id", requestId);
+  if (shouldNoindex(pathname)) {
+    res.headers.set("X-Robots-Tag", "noindex");
+  }
+  return res;
 }
 
 export const config = {

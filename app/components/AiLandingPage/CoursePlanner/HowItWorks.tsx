@@ -56,7 +56,7 @@ const HowItWorks: FC = () => (
     {/* purple CTA band */}
     <section className="bg-[#8375D9] pb-20 pt-14 md:pb-24 md:pt-16">
       <div className="mx-auto max-w-[1240px] px-4 text-center">
-        <h2 className="text-3xl font-bold leading-tight text-white md:text-5xl">
+        <h2 className="text-3xl font-bold leading-tight text-white md:text-5xl md:leading-tight">
           {c.ctaTitleStart} {c.ctaTitleBrand}
           <span className="mt-3 flex items-center justify-center gap-4">
             <span className="inline-block -rotate-3 rounded-full bg-primary-400 px-7 py-1.5 shadow-[0_14px_30px_-10px_rgba(23,23,43,0.5)]">

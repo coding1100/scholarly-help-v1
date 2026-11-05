@@ -128,8 +128,8 @@ export function buildSmsHref(number: string, body: string): string {
   return `sms:${number}${sep}body=${encodeURIComponent(body)}`;
 }
 
-function buildSmsBody(referenceId: string): string {
-  return `Reference ID: ${referenceId}\n\nHi Scholarly Help,\n\nMessage: `;
+function buildSmsBody(referenceId: string, message?: string): string {
+  return `Reference ID: ${referenceId}\n\n${message ?? "Hi Scholarly Help,\n\nMessage: "}`;
 }
 
 /**
@@ -179,10 +179,12 @@ function postTrackingRow(payload: {
 /**
  * Click handler for the take-my-class "Text Us" button.
  * Prevents default, logs the row (only when an fbclid exists), then opens SMS.
+ * `message` pre-fills the text; with an fbclid it follows the reference ID.
  */
 export function handleTextUsClick(
   e: { preventDefault: () => void },
   number: string = SMS_NUMBER,
+  message?: string,
 ): void {
   e.preventDefault();
 
@@ -191,7 +193,7 @@ export function handleTextUsClick(
 
   const fbclid = resolveFbclid();
 
-  let href = `sms:${number}`;
+  let href = message ? buildSmsHref(number, message) : `sms:${number}`;
   if (fbclid) {
     const referenceId = generateReferenceId();
     postTrackingRow({
@@ -199,7 +201,7 @@ export function handleTextUsClick(
       userId: referenceId,
       landingPage: resolveLandingUrl(),
     });
-    href = buildSmsHref(number, buildSmsBody(referenceId));
+    href = buildSmsHref(number, buildSmsBody(referenceId, message));
   }
 
   if (isBrowser()) {

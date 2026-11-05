@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { FiPrinter, FiMapPin, FiBell } from "react-icons/fi";
 import { CourseCatalogItem, Coursework, AttendanceLog, Semester } from "@/app/lib/client/coursePlanner/types";
+import { DAY_LETTER_BY_INDEX, startHour } from "@/app/lib/client/coursePlanner/classSessions";
 
 interface Props {
   semester: Semester;
@@ -8,25 +9,6 @@ interface Props {
   coursework: Coursework[];
   attendanceLogs: AttendanceLog[];
 }
-
-// Parses "HH:MM" (optionally with an AM/PM suffix) to an hour integer for
-// row placement — matches the backend engine's own time handling closely
-// enough for display purposes (this only needs the hour, not the minute).
-const startHour = (time: string): number | null => {
-  const match = time.trim().match(/^(\d{1,2}):(\d{2})/);
-  if (!match) return null;
-  let hour = parseInt(match[1], 10);
-  if (Number.isNaN(hour)) return null;
-  if (/pm/i.test(time) && hour < 12) hour += 12;
-  if (/am/i.test(time) && hour === 12) hour = 0;
-  return hour;
-};
-
-// getDay() index -> the schedule's day-letter tokens, so a coursework due
-// date can be matched against a section's `days` array correctly (the
-// prior version matched by substring against the raw ISO string, which
-// spuriously matched "T"/"F" appearing anywhere inside a timestamp).
-const DAY_LETTER_BY_INDEX: Record<number, string> = { 0: "Su", 1: "M", 2: "T", 3: "W", 4: "Th", 5: "F", 6: "Sa" };
 
 export const ScheduleTab: React.FC<Props> = ({
   semester,

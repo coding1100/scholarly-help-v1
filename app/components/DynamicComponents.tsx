@@ -17,68 +17,67 @@ const LoadingMedium = () => (
 // Dynamic imports for shared components
 export const DynamicAcademicPartner = dynamic(
   () => import("@/app/components/AcademicPartner/AcademicPartner"),
-  { loading: LoadingLarge, suspense: true, ssr: true }
+  { loading: LoadingLarge, ssr: true }
 );
 
 export const DynamicCustomerReviews = dynamic(
   () => import("@/app/components/CustomerReviews/CustomerReviews"),
-  { loading: LoadingLarge, suspense: true, ssr: true }
+  { loading: LoadingLarge, ssr: true }
 );
 
 export const DynamicExamType = dynamic(
   () => import("@/app/components/ExamType/ExamType"),
-  { loading: LoadingLarge, suspense: true, ssr: true }
+  { loading: LoadingLarge, ssr: true }
 );
 
 export const DynamicExcellenceProof = dynamic(
   () => import("@/app/components/ExcellenceProof/ExcellenceProof"),
-  { loading: LoadingLarge, suspense: true, ssr: true }
+  { loading: LoadingLarge, ssr: true }
 );
 
 export const DynamicFaq = dynamic(() => import("@/app/components/Faq/Faq"), {
   loading: LoadingMedium,
-  suspense: true,
   ssr: true,
 });
 
 export const DynamicProcess = dynamic(
   () => import("@/app/components/Process/Process"),
-  { loading: LoadingLarge, suspense: true, ssr: true }
+  { loading: LoadingLarge, ssr: true }
 );
 
 export const DynamicQualities = dynamic(
   () => import("@/app/components/Qualities/Qualities"),
-  { loading: LoadingMedium, suspense: true, ssr: true }
+  { loading: LoadingMedium, ssr: true }
 );
 
 export const DynamicSamples = dynamic(
   () => import("@/app/components/Samples/Samples"),
-  { loading: LoadingLarge, suspense: true, ssr: true }
+  { loading: LoadingLarge, ssr: true }
 );
 
 export const DynamicSamplesAssignments = dynamic(
   () => import("@/app/components/SamplesAssignments/SamplesAssignments"),
-  { loading: LoadingLarge, suspense: true, ssr: true }
+  { loading: LoadingLarge, ssr: true }
 );
 
 export const DynamicSiteReviews = dynamic(
   () => import("@/app/components/SiteReviews/SiteReviews"),
-  { loading: LoadingMedium, suspense: true, ssr: true }
+  { loading: LoadingMedium, ssr: true }
 );
 
 export const DynamicSubjects = dynamic(
   () => import("@/app/components/Subjects/Subjects"),
-  { loading: LoadingLarge, suspense: true, ssr: true }
+  { loading: LoadingLarge, ssr: true }
 );
 
 export const DynamicVariousName = dynamic(
   () => import("@/app/components/VariousName/VariousName"),
-  { loading: LoadingLarge, suspense: true, ssr: true }
+  { loading: LoadingLarge, ssr: true }
 );
 
 export const DynamicWhyScholarly = dynamic(
-  () => import("@/app/components/WhyScholarly/WhyScholarly"),
-  { loading: LoadingLarge, suspense: true, ssr: false }
+  () => import("@/app/components/WhyScholarly/WhyScholarlyClient"),
+  { loading: LoadingLarge }
 );
 
 // Add any other shared components here...

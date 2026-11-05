@@ -114,7 +114,7 @@ const defaultPickTabTools: Record<string, PickToolItem[]> = {
       description:
         "Instant triangle problem solutions with step-by-step working shown. Understand the method, not just the answer.",
       buttonText: "Solve equation",
-      link: "https://scholarlyhelp.com/tools/ai-math-solver/",
+      link: "https://scholarlyhelp.com/tools/ai-math-helper/",
     },
   ],
   "study-tools": [
@@ -144,42 +144,6 @@ const defaultPickTabTools: Record<string, PickToolItem[]> = {
         "Calculate GPA and CGPA with an easy semester view to track your academic performance.",
       buttonText: "Calculate GPA",
       link: "/tools/cgpa-calculator",
-    },
-    {
-      iconKey: "tmIcon4",
-      tag: "New",
-      heading: "Exam Prep Tool",
-      description:
-        "Practice smarter with guided exam prep, quick drills, and focused revision sessions.",
-      buttonText: "Start prep",
-      link: "/tools/exam-prep",
-    },
-    {
-      iconKey: "tmIcon1",
-      tag: "New",
-      heading: "Language Practice",
-      description:
-        "Build fluency with structured language practice sessions tailored to your learning goals.",
-      buttonText: "Start practice",
-      link: "/tools/language-practice",
-    },
-    {
-      iconKey: "tmIcon2",
-      tag: "New",
-      heading: "Micro Learning",
-      description:
-        "Learn in short, guided steps you can finish anytime — perfect for busy study schedules.",
-      buttonText: "Start learning",
-      link: "/tools/micro-learning",
-    },
-    {
-      iconKey: "tmIcon3",
-      tag: "New",
-      heading: "AI Course Planner",
-      description:
-        "Build a conflict-free semester schedule, track attendance, and manage coursework in one workspace.",
-      buttonText: "Plan my semester",
-      link: "/tools/course-planner",
     },
   ],
 };

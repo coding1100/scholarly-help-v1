@@ -132,7 +132,7 @@ assert.match(cancelled.details.url, /session_id=/);
 console.log("Confirmation recovery checks passed: errors, timeouts, retry, URL preservation, cancellation, and success cleanup.");
 
 const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
-assert.match(layout, /id="gtm-script"\s+strategy="afterInteractive"/);
+assert.match(layout, /id="gtm-script"\s+strategy="lazyOnload"/);
 const gtmSource = layout.match(/__html: `([\s\S]*?)`/)?.[1];
 assert.ok(gtmSource);
 const queuedPurchase = { event: "tool_purchase", transaction_id: "cs_test_tracking" };
@@ -147,7 +147,8 @@ vm.runInNewContext(gtmSource, {
   },
 });
 assert.equal(insertedScripts.length, 1);
-assert.equal(insertedScripts[0].src, "https://www.googletagmanager.com/gtm.js?id=GTM-5ZHV46X");
+// GTM-5ZHV46X is served first-party through Google tag gateway (CloudFront /33uh/*).
+assert.equal(insertedScripts[0].src, "/33uh/");
 assert.equal(insertedScripts[0].async, true);
 assert.equal(trackingWindow.dataLayer[0], queuedPurchase);
 assert.equal(trackingWindow.dataLayer[1].event, "gtm.js");

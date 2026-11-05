@@ -71,13 +71,37 @@ function postUsageEvent(detail: ToolsSheetGenerateEventDetail) {
 }
 
 /**
- * Call this when the user clicks the "Generate" button in any tool.
+ * Push the run to GTM as a `tool_used` custom event. GTM tags fire on this
+ * event instead of matching button classes, labels or URLs, which break
+ * whenever a tool's markup or route changes.
+ */
+function pushToolUsedEvent(detail: ToolsSheetGenerateEventDetail) {
+  const toolName = (detail.toolName || "").trim();
+  if (!toolName) return;
+  try {
+    const w = window as Window & {
+      dataLayer?: Array<Record<string, unknown>>;
+    };
+    w.dataLayer = w.dataLayer || [];
+    w.dataLayer.push({
+      event: "tool_used",
+      tool_name: toolName,
+      tool_action: detail.action || "generate",
+    });
+  } catch {
+    // GTM unavailable or blocked: tracking must never affect the tool.
+  }
+}
+
+/**
+ * Call this when a tool run starts.
  * `MTSidebar` listens for this event and will post to `/api/toolssheet/` once per fbclid.
  */
 export function trackToolGenerate(detail: ToolsSheetGenerateEventDetail = {}) {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail }));
   postUsageEvent(detail);
+  pushToolUsedEvent(detail);
 }
 
 export const __TOOLS_SHEET_EVENT_NAME__ = EVENT_NAME;

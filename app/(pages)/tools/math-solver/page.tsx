@@ -5,6 +5,7 @@ import ToolsLayout from "@/app/components/AiTools/ToolsLayout";
 import MathSolver from "@/app/components/AiTools/MathSolver/MathSolver";
 import { ToolsSuspenseFallback } from "@/app/components/AiTools/ToolsApiLoader";
 import ToolWithExplore from "@/app/components/AiTools/ToolWithExplore";
+import DoneForYouCard from "@/app/components/AiTools/DoneForYouCard";
 import ProductSchema from "@/app/components/ProductSchema";
 // import ThemeToggle from "@/app/components/AiLandingPage/ThemeToggle";
 
@@ -29,7 +30,7 @@ export default function MathSolverPage() {
       />
       {/* <ThemeToggle top="top-12" /> */}
       <ToolsLayout setFlag={setFlag} flag={flag}>
-        <ToolWithExplore>
+        <ToolWithExplore rail={<DoneForYouCard placement="math_solver_done_for_you" />}>
           <MathSolver setFlag={setFlag} />
         </ToolWithExplore>
       </ToolsLayout>

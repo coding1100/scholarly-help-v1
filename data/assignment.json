@@ -157,10 +157,6 @@
         "title": "Marketing"
       },
       {
-        "url": "/assignment/psychology",
-        "title": "Psychology"
-      },
-      {
         "url": "/assignment/philosophy",
         "title": "Philosophy"
       },
@@ -171,10 +167,6 @@
       {
         "url": "/assignment/physics",
         "title": "Physics"
-      },
-      {
-        "url": "/assignment/biology",
-        "title": "Biology"
       },
       {
         "url": "/assignment/engineering",
@@ -200,19 +192,11 @@
         "title": "Organizational Behavior"
       },
       {
-        "url": "/assignment/architecture",
-        "title": "Architecture"
-      },
-      {
         "title": "Ethics"
       },
       {
         "url": "/assignment/sociology",
         "title": "Sociology"
-      },
-      {
-        "url": "/assignment/pharmacology",
-        "title": "Pharmacology"
       },
       {
         "url": "/assignment/economics",
