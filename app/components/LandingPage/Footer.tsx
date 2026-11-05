@@ -334,7 +334,6 @@ const Footer: FC<FooterProps> = () => {
       <div className="bg-[#2b1c50] py-6">
         <div className="container mx-auto px-10 text-white text-center text-sm flex flex-col gap-3">
           <p>Copyrights © 2025 All Rights Reserved by Scholarly Help</p>
-          <p>Website owned and operated by Eliya Enterprises.</p>
         </div>
       </div>
     </div>
