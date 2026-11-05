@@ -24,7 +24,6 @@ const CopyRight: FC<CopyRightProps> = ({}) => {
     <div className="bg-primary-500 pt-6 pb-16">
       <div className="container mx-auto px-10 text-white text-center text-sm flex flex-col gap-3">
         <p>Copyrights © {year} All Rights Reserved by Scholarly Help</p>
-        <p>Website owned and operated by Eliya Enterprises.</p>
       </div>
     </div>
   );
