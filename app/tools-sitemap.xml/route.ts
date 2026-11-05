@@ -11,6 +11,7 @@ const TOOL_PATHS = [
   "/tools/ai-course-planner/",
   "/tools/ai-detector/",
   "/tools/ai-essay-generator/",
+  "/tools/ai-exam-prep/",
   "/tools/ai-grammar-check/",
   "/tools/ai-humanizer/",
   "/tools/ai-math-helper/",
