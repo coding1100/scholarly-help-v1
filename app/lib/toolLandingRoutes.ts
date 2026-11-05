@@ -5,6 +5,7 @@ export const TOOL_LANDING_DESTINATIONS: Readonly<Record<string, string>> = {
   "/tools/ai-essay-generator": "/tools/essay-generator",
   "/tools/ai-essay-studio": "/tools/essay-studio",
   "/tools/ai-essay-title-generator": "/tools/essay-title",
+  "/tools/ai-exam-prep": "/tools/exam-prep",
   "/tools/ai-grammar-check": "/tools/grammar-checker",
   "/tools/ai-humanizer": "/tools/humanizer-tool",
   "/tools/ai-math-helper": "/tools/math-solver",
