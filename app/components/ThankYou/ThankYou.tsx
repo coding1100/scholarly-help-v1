@@ -22,11 +22,14 @@ import {
 } from "./ThankYouIcons";
 import { WHATSAPP_HREF, WHATSAPP_NUMBER_DISPLAY, SMS_NUMBER_DISPLAY } from "./contact";
 import { WhatsAppMobileButton, TextMobileButton } from "./MobileContactButtons";
+import RequestReceivedPill from "./RequestReceivedPill";
 import { useMobileCtaBar } from "../AiTools/useMobileCtaBar";
 
 type ThankYouProps = {
   /** Pair every WhatsApp CTA with a Text CTA (only /thank-you/ opts in). */
   showTextCta?: boolean;
+  /** The header carries the "Request received" pill, so the hero leaves it out. */
+  pillInHeader?: boolean;
 };
 
 interface WhatsAppButtonProps {
@@ -174,7 +177,7 @@ const NextArrow = (props: any) => {
   );
 };
 
-const ThankYou: FC<ThankYouProps> = ({ showTextCta = false }) => {
+const ThankYou: FC<ThankYouProps> = ({ showTextCta = false, pillInHeader = false }) => {
   const [GCLID, setGCLID] = useState("");
   const [url, setUrl] = useState("");
   // Browsers only allow unmuted playback to start from a real user gesture, so
@@ -271,15 +274,11 @@ const ThankYou: FC<ThankYouProps> = ({ showTextCta = false }) => {
       <section className="bg-gradient-to-b from-[#F5F2FD] via-[#FAF8FF] to-white pt-5 sm:pt-12 md:pt-16 pb-6 sm:pb-12 md:pb-16">
         <div className="container mx-auto max-w-[1240px] px-3 sm:px-4">
           {/* Top Pill Badge */}
-          <div className="flex justify-center mb-3 sm:mb-6">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 sm:px-5 sm:py-2 rounded-full bg-white border border-[#ECEAF4] shadow-[0_2px_8px_rgba(0,0,0,0.04)] text-xs sm:text-sm font-medium text-[#111827]">
-              <span className="font-medium text-xs sm:text-sm text-[#111827]">
-                <span className="text-[#16A34A]">✓</span> Request received{" "}
-                <span className="text-[#9CA3AF]">·</span>{" "}
-                <span className="font-semibold text-[#FF5A00]">1 step left</span>
-              </span>
+          {!pillInHeader && (
+            <div className="flex justify-center mb-3 sm:mb-6">
+              <RequestReceivedPill />
             </div>
-          </div>
+          )}
 
           {/* Headline */}
           <h1 className="text-2xl sm:text-4xl md:text-[46px] lg:text-[52px] font-bold text-[#111827] text-center leading-[1.25] md:leading-[1.24] max-w-4xl mx-auto tracking-[-0.02em]">

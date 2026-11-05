@@ -24,6 +24,8 @@ const hideHeaderFooterRoutes = [
   "/take-my-class-saving-your-future/",
   "/take-my-exam",
   "/take-my-exam/",
+  "/thank-you",
+  "/thank-you/",
 ];
 
 interface FooterGateProps {

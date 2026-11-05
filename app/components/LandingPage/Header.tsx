@@ -19,6 +19,7 @@ import { rememberFbclidFromUrl } from "@/app/lib/client/smsTracking";
 import { hasRefreshSessionHint } from "@/app/lib/accessTokenStore";
 import { getToolDashboardHref } from "@/app/lib/toolLandingRoutes";
 import { WhatsAppIcon } from "@/app/components/ThankYou/ThankYouIcons";
+import RequestReceivedPill from "@/app/components/ThankYou/RequestReceivedPill";
 import {
   WHATSAPP_HREF,
   SMS_HREF,
@@ -68,7 +69,9 @@ export default function Header() {
   const isTextCta = isTextCtaLandingPage(pathname);
 
   // /thank-you/ has its own "Free Quote On Whatsapp" CTA in-page, so the
-  // header's phone number is redundant there and hidden.
+  // header's phone number is redundant there and hidden. It is also a
+  // dead-end page: no navigation, no logo link, and the "Request received"
+  // pill sits in the header.
   const isThankYou = pathname === "/thank-you" || pathname === "/thank-you/";
 
   const trackHeaderWhatsAppClick = () => {
@@ -422,6 +425,17 @@ export default function Header() {
   // RSC payloads — 25% of this page's transfer weight — plus seven full
   // server renders, all inside the window that decides LCP.
 
+  const logo = (
+    <Image
+      src={LogoNormal}
+      alt="Scholarly Help"
+      width={138}
+      height={36}
+      priority
+      fetchPriority="high"
+    />
+  );
+
   return (
     <header
       className={`bg-white z-[9999] shadow-sm ${
@@ -431,6 +445,8 @@ export default function Header() {
       {/* Header Top Bar */}
       <div
         className={`max-w-7xl mx-auto max-[1320px]:px-3 flex items-center pt-2 min-h-[64px] ${
+          isThankYou ? "relative" : ""
+        } ${
           isTakeMyClassLayout
             ? "justify-center sm:justify-between"
             : isTakeMyClass3
@@ -439,7 +455,7 @@ export default function Header() {
         }`}
       >
         {/* Menu Button - Hidden for special routes */}
-        {!isSpecialRoute3 && (
+        {!isSpecialRoute3 && !isThankYou && (
           <button
             onClick={() => {
               setMobileOpen((prev) => {
@@ -469,25 +485,24 @@ export default function Header() {
             request finishing late tracked paint slipping from ~960ms to
             ~2540ms. Clicking the logo mid-session is rare enough to pay for
             with a normal navigation. */}
-        <Link href="/" prefetch={false}>
-          {/* <Image
-            src={LogoSmall}
-            alt="Scholarly Help Logo"
-            className="max-[480px]:block hidden max-w-[32px] min-w-[29px]"
-            width={32}
-            height={29}
-            priority
-          /> */}
-          <Image
-            src={LogoNormal}
-            alt="Scholarly Help"
-            className=""
-            width={138}
-            height={36}
-            priority
-            fetchPriority="high"
-          />
-        </Link>
+        {isThankYou ? (
+          logo
+        ) : (
+          <Link href="/" prefetch={false}>
+            {/* <Image
+              src={LogoSmall}
+              alt="Scholarly Help Logo"
+              className="max-[480px]:block hidden max-w-[32px] min-w-[29px]"
+              width={32}
+              height={29}
+              priority
+            /> */}
+            {logo}
+          </Link>
+        )}
+        {isThankYou && (
+          <RequestReceivedPill className="hidden md:inline-flex absolute left-1/2 -translate-x-1/2" />
+        )}
 
         {/* Rating Stars - Only for /take-my-class/ */}
         {isTextCta ? (
@@ -547,7 +562,7 @@ export default function Header() {
         {/* Desktop Navigation - Hidden for special routes */}
         {!isSpecialRoute && (
           <>
-            {!isTakeMyClass3 && (
+            {!isTakeMyClass3 && !isThankYou && (
               <nav className="hidden min-[1200px]:flex items-center font-medium text-gray-700 ">
                 {navItems.map((item, index) => (
                   <div
@@ -699,6 +714,11 @@ export default function Header() {
           </>
         )}
       </div>
+      {isThankYou && (
+        <div className="md:hidden flex justify-center pb-2">
+          <RequestReceivedPill />
+        </div>
+      )}
       {isTextCta ? (
         <p className="md:hidden px-3 py-2 text-center text-sm font-semibold text-gray-700">
           {TOOLS_SENT_MESSAGE}
