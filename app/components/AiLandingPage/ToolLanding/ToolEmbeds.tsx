@@ -4,6 +4,7 @@ import { useState } from "react";
 import AiDetectorTool from "@/app/components/AiTools/AiDetectorTool/AiDetectorTool";
 import { CoursePlannerTool } from "@/app/components/AiTools/CoursePlanner/CoursePlannerTool";
 import ExamPrepFlow from "@/app/components/AiTools/ExamPrep/ExamPrepFlow";
+import AIParaphraser from "@/app/components/AiTools/AIParaphraser-tool";
 import MathSolver from "@/app/components/AiTools/MathSolver/MathSolver";
 
 const embedClassName =
@@ -34,4 +35,9 @@ export const MathSolverEmbed = () => {
       <MathSolver setFlag={setFlag} />
     </div>
   );
+};
+
+export const ParaphraserEmbed = () => {
+  const [, setFlag] = useState(false);
+  return <AIParaphraser setFlag={setFlag} variant="landing" />;
 };

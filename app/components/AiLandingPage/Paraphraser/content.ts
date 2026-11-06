@@ -1,275 +1,495 @@
-// Copy for the /ai-paraphraser landing page (Figma: "SH - Ai Parapharaser").
-// All user-facing text for the page lives here so copy edits never require
-// touching layout code.
+// Copy for the /tools/ai-paraphraser landing page. Layout lives in the shared
+// LandingTemplate; all user-facing text for this page lives here.
+import { DONE_FOR_YOU_ID } from "../Template/ui";
+import type { LandingContent, LinkButton } from "../Template/types";
 
-export const heroContent = {
-  badge: "3,104 students used this tool this week",
-  titleTop: "The Free Paraphrasing Tool That",
-  titleAccent: "Rewrites Your Text in Seconds",
-  subtitle:
-    "Paste your text, pick a style, and our paraphrasing tool returns a clean, polished rewrite straight away.",
-  steps: ["Paste text", "Choose Style", "Get Rewrite"],
+export const paraphraserMeta = {
+  title: "Free AI Paraphraser Tool – Rewrite Text Easily",
+  description:
+    "Need to rewrite something? Use our free AI paraphrasing tool to change words, rewrite sentences, and keep the same meaning.",
 };
 
-export const beforeAfterContent = {
-  eyebrow: "Before vs after",
-  title: "From raw text to a clean rewrite",
-  subtitle:
-    "ScholarlyHelp's free paraphrasing tool rewrites your text into a clear, polished version while keeping your original meaning intact.",
-  pasteLabel: "What You Paste",
-  pasteText:
-    "In recent years, the widespread adoption of artificial intelligence across industries has significantly transformed the nature of employment, compelling organizations to reconsider the skills their workforce requires. As routine tasks become increasingly automated, employees are expected to develop competencies that machines cannot easily replicate.",
-  resultLabel: "What You Get Back",
-  resultText:
-    "AI has spread fast across nearly every industry, and it’s quietly reshaping what work looks like. As machines take over the repetitive tasks, companies now want people who bring the things software can’t copy: judgment, creativity, and a human touch.",
-  tags: [
-    { label: "Natural tone", className: "bg-[#EEEDFF] text-primary-400" },
-    { label: "Meaning preserved", className: "bg-[#D9F3E5] text-[#1C5F45]" },
-    { label: "Zero copied phrases.", className: "bg-[#FCEBC5] text-[#8A6116]" },
-  ],
-};
+const TOOL_ANCHOR_ID = "paraphraser-tool";
+const toTool = (label: string): LinkButton => ({ label, href: `#${TOOL_ANCHOR_ID}` });
 
-export const useCasesContent = {
-  title: "Every student has a reason to use a paraphraser",
-  subtitle: "Whether it's last-minute or long-term, this AI paraphrasing tool fits every situation.",
-  cards: [
-    {
-      icon: "📝",
-      title: "Deadline tonight",
-      description:
-        "Short on time? Turn complex paragraphs into submission-ready text in seconds using our paraphrasing tool free.",
-    },
-    {
-      icon: "🌐",
-      title: "Academic English",
-      description:
-        "Use Formal mode to hear how good academic English should sound in your subject, and learn from each result.",
-    },
-    {
-      icon: "📋",
-      title: "Aiming for a higher grade",
-      description:
-        "Run your draft through Formal mode to see how top-level academic writing handles the very same ideas.",
-    },
-    {
-      icon: "🏅",
-      title: "Stuck mid-draft",
-      description:
-        "Run your paragraph through another rewrite to see a clearer way of expressing exactly that same idea.",
-    },
-    {
-      icon: "📑",
-      title: "Maintain Academic Integrity:",
-      description:
-        "One draft won't fit everything, so switch modes until it sounds right for the essay or the post.",
-    },
-    {
-      icon: "✏️",
-      title: "Match the right tone",
-      description:
-        "Run your paragraph through another rewrite to see a clearer way of expressing the same idea.",
-    },
-  ],
-};
+export const paraphraserLanding: LandingContent = {
+  toolName: "AI Paraphraser",
+  toolAnchorId: TOOL_ANCHOR_ID,
+  placement: "paraphraser_tool_landing",
 
-export const howItWorksContent = {
-  eyebrow: "How it works",
-  title: "From rough draft to refined copy in 4 steps",
-  steps: [
-    {
-      title: "Paste your text",
-      description:
-        "Drop in a sentence, section, or paragraph up to 200 words for our AI paraphraser free tool to rewrite.",
-    },
-    {
-      title: "Choose your style",
-      description:
-        "Choose Standard, Creative, Formal, or Casual, or use Custom to spell out exactly what you want now.",
-    },
-    {
-      title: "Enter your email",
-      description:
-        "Enter your email to unlock the complete rewrite and access it in your free ScholarlyHelp dashboard.",
-    },
-    {
-      title: "Copy and submit",
-      description:
-        "Copy the full version, read it over, tweak anything that needs your voice, and it’s yours.",
-    },
-  ],
-  ctaTitleStart: "Want all",
-  ctaTitleBrand: "ScholarlyHelp",
-  ctaTitlePill: "tools",
-  ctaTitleEnd: "in one place?",
-  ctaBody:
-    "Get the paraphraser, essay studio, CGPA calculator, AI humanizer, and citation tool together in one free ScholarlyHelp dashboard.",
-  ctaButton: "Explore all tools →",
-  ctaHref: "/tools",
-};
-
-export const watchVideoContent = {
-  eyebrow: "Watch Video",
-  title: "From Rough Draft to Clean Academic Prose",
-  // https://youtu.be/vP6a1CMaTZg
-  youtubeEmbedUrl: "https://www.youtube.com/embed/vP6a1CMaTZg",
-};
-
-export const whyItWorksContent = {
-  eyebrow: "Why it works",
-  title: "A true AI paraphraser, not just a word swapper",
-  subtitle: "Every result is restructured, not just synonym-swapped.",
-  features: [
-    {
-      icon: "🎯",
-      title: "Meaning preserved",
-      description:
-        "Improve the sentence flow and vocabulary in your writing while keeping your own original meaning entirely intact.",
-    },
-    {
-      icon: "💬",
-      title: "Results in seconds",
-      description:
-        "No waiting at all: paste, click, done, with both versions sitting side by side so you can compare them instantly.",
-    },
-    {
-      icon: "🎓",
-      title: "Academic-grade output",
-      description:
-        "Formal mode gives you clear, university-level academic writing going beyond what basic AI paraphrasing tools produce.",
-    },
-  ],
-};
-
-export const twoWaysContent = {
-  eyebrow: "How to get help",
-  title: "Two ways to improve your writing",
-  subtitle:
-    "Use our free AI paraphraser tool yourself, or let our expert writers handle it for you.",
-  freeColumn: {
-    heading: "Free tool, do it yourself",
-    steps: [
-      {
-        title: "Paste your text",
-        description:
-          "Drop in up to 200 words, a sentence, paragraph, or section and let the free AI paraphrasing tool give it a clearer rewrite.",
-      },
-      {
-        title: "Get a rewrite in seconds",
-        description:
-          "Choose a style and then click Paraphrase, and both of the versions appear side by side almost straight away.",
-      },
-      {
-        title: "Unlock your rewrite",
-        description:
-          "See the first 50 words instantly. Enter your email to unlock the full, polished text in your free dashboard.",
-      },
-      {
-        title: "Copy and submit",
-        description: "Take whichever version you like best, make any final tweaks that it needs, and then you are completely done.",
-      },
-    ],
+  hero: {
+    titleLead: "Free AI Paraphraser -",
+    titleAccent: "Reword Any Text in Your Style Within Seconds",
+    subtitle:
+      "Reword any text with our Free AI Paraphraser while keeping its original meaning clear and intact. Choose your preferred writing style and get natural, easy-to-read results within seconds.",
   },
-  expertColumn: {
-    heading: "Expert services, done for you",
-    steps: [
-      {
-        title: "Submit your brief",
-        description:
-          "Provide your assignment details, subject, deadline, and any instructions from your professor to get started.",
-      },
-      {
-        title: "Get matched to a writer",
-        description:
-          "We match your project with a subject-specialist writer who meets the academic level your work requires.",
-      },
-      {
-        title: "Track progress",
-        description:
-          "Receive regular progress updates and communicate directly with your writer throughout the writing process.",
-      },
-      {
-        title: "Receive and review",
-        description:
-          "Download your completed paper and request free revisions until you are completely satisfied with the final version.",
-      },
-    ],
+
+  mobileBar: {
+    tool: toTool("Paraphrase my text"),
+    expert: { label: "Get expert help", href: `#${DONE_FOR_YOU_ID}` },
   },
-};
 
-export const expertBannerContent = {
-  tag: "Got more than 200 words?",
-  title: "Get a real expert to rewrite it for you",
-  body: "The free paraphrasing tool is ideal for short passages, but for full essays, dissertations, or reports, our ScholarlyHelp writers deliver properly reworded, plagiarism-free documents at any length.",
-  button: "Get expert help →",
-  buttonHref: "/order",
-  note: "Free quote in 2 min",
-};
+  sections: [
+    {
+      type: "whatIs",
+      title: "What is an AI Paraphraser?",
+      paragraphs: [
+        "An AI Paraphraser is an online tool that rewrites text using artificial intelligence. It changes words and sentences while keeping the original meaning. It helps you say the same thing in a different way, improve your sentences, and make your writing easier to read. You can use it when you want to change the wording but don't want to lose your main idea.",
+        "ScholarlyHelp's AI Paraphraser makes rewriting simple. Just paste your text into the tool, choose a writing style, and get a new version. You can use it for assignments, research papers, articles, emails, and other types of writing. It can help you change difficult sentences, avoid using the same words again and again, and make your content easier to understand.",
+      ],
+      glance: [
+        { label: "Price", value: "Free to use" },
+        { label: "Sign-up", value: "No sign-up required" },
+        {
+          label: "Works for",
+          value: "Students, researchers, teachers, writers, and professionals",
+        },
+        { label: "Language", value: "English" },
+      ],
+    },
 
-export const reviewsContent = {
-  eyebrow: "Student reviews",
-  title: "What students say about this tool",
-  ratingLine: "Rated 4.6/5 Based on 1000+ Reviews",
-  reviews: [
     {
-      quote:
-        "My essay was due at midnight, and it was already 11 pm. I ran it through this paraphrasing tool, reworked the draft, then added my own voice back. I submitted with 30 minutes to spare. It really saved me.",
-      author: "James K.",
-      detail: "Business, University of Michigan, Junior",
+      type: "steps",
+      title: "3 Simple Steps to Paraphrase Your Text",
+      subtitle:
+        "Rewriting text doesn't have to be difficult. Just add your text, choose a style, and let our AI Paraphraser do the work.",
+      steps: [
+        {
+          title: "Add Your Text",
+          description:
+            "Copy the text you want to rewrite and paste it into the box. You can also type it there.",
+          note: {
+            title: "Enter Your Text",
+            description: "You can add a sentence, paragraph, essay, assignment, or article.",
+          },
+        },
+        {
+          title: "Choose a Style",
+          description: "Select how you want your rewritten text to sound.",
+          note: {
+            title: "Pick the Style",
+            description:
+              "Choose a simple, natural, formal, or professional style depending on what you're writing.",
+          },
+        },
+        {
+          title: "Click the Paraphrase Button",
+          description:
+            "Once your text is ready, click the Paraphrase button. The tool will rewrite it using different words.",
+          note: {
+            title: "Copy Your New Text",
+            description:
+              "Read the rewritten version. If you want to change anything, edit it before copying the final text.",
+          },
+        },
+      ],
     },
+
     {
-      quote:
-        "The side-by-side view is what won me over. I could see my own writing next to the rewrite and just keep the parts I liked. Other tools replace everything, but this one actually helps you learn.",
-      author: "Sofia F.",
-      detail: "Psychology, Ohio State First year",
+      type: "cards",
+      title: "Why Choose Our AI Paraphrasing Tool?",
+      subtitle:
+        "Rewriting content doesn't have to take a lot of time. Our AI Paraphrasing Tool helps you reword sentences and paragraphs while keeping the original meaning. Whether you're improving an assignment, rewriting notes, or making your writing easier to understand, it offers a simple way to express your ideas differently.",
+      cards: [
+        {
+          title: "Save Time on Rewriting",
+          description:
+            "Skip the effort of changing every sentence manually. Enter your text and paraphrase it with one click, whether you need to rewrite a short sentence or a longer passage.",
+        },
+        {
+          title: "Make Your Writing Clearer",
+          description:
+            "Improve the way your ideas are expressed with reworded sentences that are easy to read and understand. Make your content clearer without losing your main message.",
+        },
+        {
+          title: "Preserve the Original Meaning",
+          description:
+            "Your message matters. The tool is designed to rephrase your text while keeping its original meaning and key ideas intact.",
+        },
+        {
+          title: "Enjoy an Ad-Free Experience",
+          description:
+            "Focus on your writing without unnecessary distractions. Our AI Paraphrasing Tool offers an ad-free experience, making it easier to work on your content.",
+        },
+        {
+          title: "Get Started Without Signing Up",
+          description:
+            "You don't need to create an account or go through a lengthy registration process. Simply enter your text and start paraphrasing.",
+        },
+        {
+          title: "Paraphrase for Free",
+          description:
+            "Rewrite your text without worrying about hidden fees or subscription costs. Our AI paraphraser tool is free to use whenever you need help rewording your content.",
+        },
+      ],
+      button: toTool("Try Our Free AI Paraphrasing Tool"),
     },
+
     {
-      quote:
-        "As an international student, writing academically in English is a real struggle. This AI paraphraser helps me hear how academic writing should actually sound. I've found it more useful than any class.",
-      author: "Taki K.",
-      detail: "Computer Science, Indiana MSc",
+      type: "detailCards",
+      title: "Who Can Use AI Paraphraser?",
+      subtitle:
+        "Our AI Paraphrasing Tool is designed for anyone who wants to rewrite content, improve sentence structure, or make their writing easier to understand.",
+      items: [
+        {
+          name: "Students and Researchers",
+          description:
+            "Students and researchers can use the tool to improve essays, assignments, research papers, and academic content.",
+          details: [
+            {
+              label: "Improve Academic Writing",
+              text: "Paraphrase complex sentences to make academic writing clearer while keeping the original meaning.",
+            },
+          ],
+        },
+        {
+          name: "Teachers and Educators",
+          description:
+            "Teachers can use the tool to prepare lesson plans, worksheets, presentations, and other educational materials.",
+          details: [
+            {
+              label: "Create Better Learning Materials",
+              text: "Rewrite teaching content in simple language to make lessons easier for students to understand.",
+            },
+          ],
+        },
+        {
+          name: "Writers, Bloggers, and Marketers",
+          description:
+            "Writers, bloggers, and marketers can use the tool to refresh articles, website content, and promotional materials.",
+          details: [
+            {
+              label: "Create Fresh Content",
+              text: "Rephrase existing content to improve readability and make it suitable for different audiences.",
+            },
+          ],
+        },
+      ],
+    },
+
+    {
+      type: "pointCards",
+      tone: "check",
+      title: "Key Features of Our AI Paraphrasing Tool",
+      items: [
+        {
+          title: "Keeps the Same Meaning",
+          description:
+            "The tool changes your words and sentences but keeps the main idea of your text the same.",
+        },
+        {
+          title: "Free to Use",
+          description: "Rewrite your text without paying any fees or signing up for a subscription.",
+        },
+        {
+          title: "Quick Results",
+          description:
+            "Get your rewritten text in seconds. Just paste your content and click the button.",
+        },
+        {
+          title: "Different Writing Modes",
+          description:
+            "Choose the style you need. You can use Standard, Fluency, Formal, Academic, or Shorten mode to rewrite your text.",
+        },
+      ],
+    },
+
+    {
+      type: "comparison",
+      title: "AI Paraphraser vs Research Question Generator vs AI Math Helper vs CGPA Calculator",
+      subtitle:
+        "ScholarlyHelp offers different tools to support students with their academic tasks. From rewriting content and developing research questions to solving math problems and calculating grades, each tool serves a specific purpose.",
+      columns: ["Research Question Generator", "AI Math Helper", "CGPA Calculator"],
+      highlight: "AI Paraphraser",
+      rows: [
+        {
+          label: "What it does",
+          values: [
+            "Generates research questions based on a topic or keywords",
+            "Helps solve math problems with AI",
+            "Calculates cumulative GPA",
+          ],
+          highlight: "Rewrites text while keeping its original meaning",
+        },
+        {
+          label: "Best for",
+          values: [
+            "Developing research questions",
+            "Understanding and solving math problems",
+            "Calculating academic performance",
+          ],
+          highlight: "Rewording sentences and paragraphs",
+        },
+        {
+          label: "Uses",
+          values: [
+            "Research papers, proposals, and academic projects",
+            "Math questions and equations",
+            "Semester grades and credit hours",
+          ],
+          highlight: "Essays, articles, and assignments",
+        },
+        {
+          label: "Main benefit",
+          values: [
+            "Helps students find a clear direction for research",
+            "Makes math problems easier to understand",
+            "Helps students track their overall academic performance",
+          ],
+          highlight: "Helps express ideas in different words",
+        },
+        {
+          label: "Cost on ScholarlyHelp",
+          values: ["Free", "Free", "Free"],
+          highlight: "Free",
+        },
+      ],
+    },
+
+    {
+      type: "pointCards",
+      tone: "cross",
+      title: "Common Mistakes to Avoid When Using an AI Paraphrasing Tool",
+      subtitle:
+        "An AI Paraphrasing Tool makes rewriting content easier, but a few common mistakes can affect the quality of your results. Keep these points in mind when using the tool.",
+      items: [
+        {
+          title: "Changing Too Much of the Original Text",
+          description:
+            "Avoid changing important details or ideas that are necessary to keep your original message clear.",
+        },
+        {
+          title: "Ignoring the Original Meaning",
+          description:
+            "Check that the paraphrased version keeps the main ideas and intended message of your original text.",
+        },
+        {
+          title: "Choosing Words That Don't Fit the Context",
+          description:
+            "Review the rewritten words and sentences to make sure they fit your topic and communicate your ideas naturally.",
+        },
+        {
+          title: "Relying Completely on AI",
+          description:
+            "Use the paraphrased text as a starting point and make any necessary changes to match your writing style.",
+        },
+      ],
+      note: {
+        before: "Want to make studying easier? Try our free ",
+        link: { label: "AI Study Workspace", href: "/tools/ai-study-workspace" },
+        after: " to organize your study materials, create notes, and get help with your learning.",
+      },
+    },
+
+    {
+      type: "ctaBand",
+      tag: "Rewrite your content in seconds",
+      titleStart: "Make your writing clearer and easier to understand with our AI Paraphrasing Tool.",
+      checks: [
+        "Rephrase sentences and paragraphs while keeping the original meaning",
+        "Improve sentence structure and readability",
+        "Choose a paraphrasing mode that suits your writing needs",
+      ],
+      submitLabel: "Try AI Paraphraser",
+      note: "Free to use · No sign-up required · AI-powered paraphrasing",
+    },
+
+    {
+      type: "guide",
+      blocks: [
+        { type: "heading", text: "What is the Difference Between Paraphrasing and Rephrasing?" },
+        {
+          type: "paragraph",
+          text: "Paraphrasing and rephrasing both involve rewriting text, but they serve slightly different purposes. Here's a quick comparison to help you understand the difference.",
+        },
+        {
+          type: "table",
+          head: ["", "Paraphrasing", "Rephrasing"],
+          rows: [
+            [
+              "Meaning",
+              "Rewrites text using different words and sentence structures.",
+              "Changes specific words or sentences to improve how they sound.",
+            ],
+            [
+              "Focus",
+              "Focuses on complete sentences, paragraphs, or longer passages.",
+              "Focuses on individual sentences or specific expressions.",
+            ],
+            [
+              "Purpose",
+              "Presents information in a different way while keeping the original meaning.",
+              "Helps improve sentence structure and make the text more natural.",
+            ],
+            [
+              "Changes",
+              "May change sentence structure, vocabulary, and wording.",
+              "Usually makes smaller changes to the original wording.",
+            ],
+            [
+              "Best for",
+              "Essays, research papers, articles, and longer content.",
+              "Improving sentences, fixing awkward wording, and refining drafts.",
+            ],
+          ],
+        },
+
+        { type: "heading", text: "How Does AI Paraphraser Work?" },
+        {
+          type: "paragraph",
+          text: "Our free Paraphrasing Tool uses artificial intelligence to understand your text and rewrite it using different words and sentence structures. It looks at the context of your sentences to create a new version while keeping the original message intact.",
+        },
+        {
+          type: "list",
+          ordered: true,
+          items: [
+            {
+              lead: "Understands Your Text:",
+              text: "AI analyzes the words, sentences, and context of your content to understand the main idea before rewriting it.",
+            },
+            {
+              lead: "Finds Alternative Words:",
+              text: "The tool identifies suitable words and phrases that can replace the original wording without changing the intended message.",
+            },
+            {
+              lead: "Rewrites Sentence Structure:",
+              text: "It adjusts sentence structure and word order to make your content sound different while keeping the same key information.",
+            },
+            {
+              lead: "Generates Paraphrased Content:",
+              text: "After processing your text, the AI generates a rewritten version that aims to sound clear, natural, and easy to understand.",
+            },
+            {
+              lead: "Review and Edit Your Text:",
+              text: "Read the paraphrased version and make any changes needed to match your writing style, context, and intended meaning.",
+            },
+          ],
+        },
+
+        { type: "heading", text: "How Can an AI Paraphraser Help Working Professionals?" },
+        {
+          type: "paragraph",
+          text: "Working professionals often need to write emails, reports, business documents, and other workplace content. Our AI Paraphraser helps make writing easier by improving clarity, adjusting tone, and making information easier to understand.",
+        },
+        {
+          type: "list",
+          items: [
+            {
+              lead: "Improve Professional Communication:",
+              text: "Rewrite emails, messages, and workplace communication to make them clearer, more professional, and easier to understand.",
+            },
+            {
+              lead: "Simplify Technical Language:",
+              text: "Rephrase complex technical terms and explanations into simpler language that different audiences can understand.",
+            },
+            {
+              lead: "Edit Reports and Memos:",
+              text: "Rewrite long reports and memos to improve their flow, readability, and overall structure.",
+            },
+            {
+              lead: "Adjust Content Length:",
+              text: "Expand or shorten sentences and paragraphs to make your documents more suitable for their intended purpose.",
+            },
+            {
+              lead: "Maintain Consistent Writing:",
+              text: "Improve the wording and flow of your content to maintain a consistent tone across business documents and professional communication.",
+            },
+            {
+              lead: "Save Time on Daily Writing Tasks:",
+              text: "Rephrase existing content instead of rewriting everything from scratch, helping you complete everyday writing tasks more efficiently.",
+            },
+          ],
+        },
+      ],
+    },
+
+    {
+      type: "moreTools",
+      title: "Discover More Free Academic Tools",
+      subtitle:
+        "Explore more free ScholarlyHelp tools to support your exam preparation, improve your writing, and manage your academic tasks with ease.",
+      items: [
+        {
+          name: "AI Humanizer",
+          description:
+            "Make AI-generated text sound more natural and human while keeping your original meaning.",
+          href: "/tools/ai-humanizer",
+        },
+        {
+          name: "Read My Essay",
+          description:
+            "Listen to your essays, notes, and study materials instead of reading everything on screen.",
+          href: "/tools/read-my-essay",
+        },
+        {
+          name: "Research Question Generator",
+          description: "Create research questions from your topic to guide your academic work.",
+          href: "/tools/research-question-generator",
+        },
+        {
+          name: "Online Exam Prep",
+          description:
+            "Create a personalized study schedule based on your exam date, subject, and available study time.",
+          href: "/tools/ai-exam-prep",
+        },
+      ],
+      button: { label: "Explore All Free Tools", href: "/tools" },
+    },
+
+    {
+      type: "faq",
+      title: "Frequently Asked Questions",
+      items: [
+        {
+          question: "Is the AI Paraphrasing Tool free to use?",
+          answer:
+            "Yes, our free AI paraphrasing tool lets you rewrite your text without paying any fees. You can use it to improve your sentences and make your writing clearer.",
+        },
+        {
+          question: "Can I paraphrase a full paragraph?",
+          answer:
+            "Yes, you can enter a complete paragraph into the AI paraphraser and get a rewritten version in seconds. It keeps your main ideas while changing the wording.",
+        },
+        {
+          question: "Does AI paraphrasing change the original meaning?",
+          answer:
+            "No, the tool is designed to keep your original meaning while changing the words and sentence structure. However, always review the results to make sure they match your message.",
+        },
+        {
+          question: "Who can use an AI Paraphrasing Tool?",
+          answer:
+            "Students, teachers, researchers, bloggers, and working professionals can use AI paraphrasing to improve assignments, reports, articles, emails, and other written content.",
+        },
+        {
+          question: "Can I use a paraphraser for academic assignments?",
+          answer:
+            "Yes, a paraphraser AI can help you improve essays, assignments, and research papers. Just remember to cite your sources when using information from other writers.",
+        },
+        {
+          question: "How does AI paraphrasing improve my writing?",
+          answer:
+            "AI paraphrasing helps you find better ways to express your ideas. It can improve sentence flow, replace repeated words, and make your content easier to read.",
+        },
+        {
+          question: "Can I use a free AI paraphrasing tool for professional writing?",
+          answer:
+            "Yes, you can use an AI paraphraser to rewrite work emails, business reports, website content, and other professional documents.",
+        },
+        {
+          question: "Does paraphrased content count as plagiarism?",
+          answer:
+            "Not automatically. Paraphrasing changes the wording, but if you use ideas or information from another source, you still need to give proper credit to the original author.",
+        },
+      ],
+    },
+
+    {
+      type: "finalCta",
+      titleStart: "Ready to rewrite your next",
+      titlePill: "paragraph?",
+      body: "A better version of your draft is only one step away. Use ScholarlyHelp’s AI paraphraser to make your writing clearer, smoother, and easier to review.",
+      primary: toTool("Paraphrase My Text"),
+      secondary: toTool("Try AI Paraphraser Free"),
     },
   ],
-};
-
-export const faqContent = {
-  title: "FAQ",
-  subtitle: "Common questions about this tool",
-  items: [
-    {
-      question: "Is this tool really free?",
-      answer:
-        "Yes, the free AI paraphrasing tool handles up to 200 words per request at no cost. Sign up for free to access more ScholarlyHelp tools from one dashboard.",
-    },
-    {
-      question: "What's the word limit?",
-      answer:
-        "The paraphraser tool handles up to 200 words per paraphrase. For longer work, our ScholarlyHelp writing service rewrites complete documents at any length, with a plagiarism-free guarantee.",
-    },
-    {
-      question: "What's the difference between the styles?",
-      answer:
-        "Standard gives a clean, neutral rewrite. Formal uses academic vocabulary and fuller sentences. Creative varies phrasing for more expressive language. Casual sounds more conversational. Custom lets you describe exactly what you need from an AI paraphrasing tool.",
-    },
-    {
-      question: "Will it change the meaning of my text?",
-      answer:
-        "No. Our paraphraser AI tool reshapes your sentences and refreshes your vocabulary while keeping your original argument intact. Always read the output carefully before submitting.",
-    },
-    {
-      question: "What if I need the whole assignment written?",
-      answer:
-        "ScholarlyHelp offers a full academic writing service with expert writers handling research, writing, citations, and formatting for assignments of any length, far beyond what any AI paraphrasing tool alone can do.",
-    },
-  ],
-};
-
-export const footerCtaContent = {
-  titleStart: "Your",
-  titlePill: "deadline",
-  titleEnd: "won't wait.",
-  body: "Use the free AI paraphrasing tool and get started in 30 seconds",
-  primaryButton: "Paraphrase my text for free",
-  primaryHref: "#paraphraser-tool",
-  secondaryButton: "Talk to an expert →",
-  secondaryHref: "/contact-us",
 };

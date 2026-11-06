@@ -1,64 +1,37 @@
-import { FC } from "react";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 import MainLayout from "@/app/MainLayout";
-import ParaphraserHero from "@/app/components/AiLandingPage/Paraphraser/ParaphraserHero";
-import BeforeAfter from "@/app/components/AiLandingPage/Paraphraser/BeforeAfter";
-import UseCases from "@/app/components/AiLandingPage/Paraphraser/UseCases";
-import HowItWorks from "@/app/components/AiLandingPage/Paraphraser/HowItWorks";
-import WatchVideo from "@/app/components/AiLandingPage/Paraphraser/WatchVideo";
-import WhyItWorks from "@/app/components/AiLandingPage/Paraphraser/WhyItWorks";
-import TwoWays from "@/app/components/AiLandingPage/Paraphraser/TwoWays";
-import ExpertBanner from "@/app/components/AiLandingPage/Paraphraser/ExpertBanner";
-import StudentReviews from "@/app/components/AiLandingPage/Paraphraser/StudentReviews";
-import ParaphraserFaq from "@/app/components/AiLandingPage/Paraphraser/ParaphraserFaq";
-import FooterCta from "@/app/components/AiLandingPage/Paraphraser/FooterCta";
 import ProductSchema from "@/app/components/ProductSchema";
+import LandingTemplate from "@/app/components/AiLandingPage/Template/LandingTemplate";
+import { ParaphraserEmbed } from "@/app/components/AiLandingPage/ToolLanding/ToolEmbeds";
+import {
+  paraphraserLanding,
+  paraphraserMeta,
+} from "@/app/components/AiLandingPage/Paraphraser/content";
 
-const Page: FC = () => {
-  const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
-  const normalizedBaseUrl = baseUrl.endsWith("/")
-    ? baseUrl.slice(0, -1)
-    : baseUrl;
+const path = "/tools/ai-paraphraser";
+
+const getBaseUrl = () => {
+  const value = process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
+  return value.endsWith("/") ? value.slice(0, -1) : value;
+};
+
+export default function ParaphraserLandingPage() {
   return (
     <MainLayout>
       <ProductSchema
-        productTitle="Free AI Paraphrasing Tool Rewrite Text | ScholarlyHelp"
-        metaDescription="Rewrite text with ScholarlyHelp’s free paraphrasing tool. Choose a style, keep your meaning, and create clear, natural wording. Start paraphrasing today."
-        pageUrl={`${normalizedBaseUrl}/tools/ai-paraphraser`}
+        productTitle={paraphraserMeta.title}
+        metaDescription={paraphraserMeta.description}
+        pageUrl={`${getBaseUrl()}${path}`}
       />
-      <div className="font-poppins">
-        <ParaphraserHero />
-        <BeforeAfter />
-        <UseCases />
-        <HowItWorks />
-        <WatchVideo />
-        <WhyItWorks />
-        <TwoWays />
-        <ExpertBanner />
-        <StudentReviews />
-        <ParaphraserFaq />
-        <FooterCta />
-      </div>
+      <LandingTemplate content={paraphraserLanding} tool={<ParaphraserEmbed />} />
     </MainLayout>
   );
-};
-export default Page;
+}
 
 export function generateMetadata(): Metadata {
-  const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL || "https://scholarlyhelp.com";
-  const normalizedBaseUrl = baseUrl.endsWith("/")
-    ? baseUrl.slice(0, -1)
-    : baseUrl;
-  const canonicalUrl = `${normalizedBaseUrl}/tools/ai-paraphraser`;
-
   return {
-    title: "Free AI Paraphrasing Tool Rewrite Text | ScholarlyHelp",
-    description:
-      "Rewrite text with ScholarlyHelp’s free paraphrasing tool. Choose a style, keep your meaning, and create clear, natural wording. Start paraphrasing today.",
-    alternates: {
-      canonical: canonicalUrl,
-    },
+    title: paraphraserMeta.title,
+    description: paraphraserMeta.description,
+    alternates: { canonical: `${getBaseUrl()}${path}` },
   };
 }
