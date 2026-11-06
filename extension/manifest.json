@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "ScholarlyHelp MCQ Practice Scanner",
+  "version": "0.1.0",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArzBlo5GUnImSsCsy7ntSZwbuPl39Q8qnvjDJi2AD7sqa+kNetW+pnlrUVSjaYt5KrwkC0WsVGAS+iHobwcYPplkUzfv7guhSoPC1sGu4cjHVwDWa2Q2Se4I3ubhAzB9nuG/L5jHLjhzCBtNcKd0nTLAgjIEtznulUmkAI090ZtX6LPb8B6UymczNjmMJGp7cywVLc5/Hwql/yFb6sB/fK+DHdfYz1DSAywP/X7bXyiiYEMGiEvo11IPox7vQkesYWA25l/tJ17RKKIoasZeGNvztsUoZejKaEOP+uL0voLb/qPZQ9W1zOSjXz147PB4teeHMKWRmSzdNzAgmECI6FQIDAQAB",
+  "description": "Reads the multiple-choice practice questions on your screen and explains the answers.",
+  "permissions": ["sidePanel", "storage"],
+  "host_permissions": ["https://api.scholarlyhelp.com/*"],
+  "optional_host_permissions": ["<all_urls>"],
+  "background": { "service_worker": "background.js" },
+  "action": { "default_title": "Open MCQ Practice Scanner" },
+  "side_panel": { "default_path": "sidepanel.html" },
+  "externally_connectable": {
+    "matches": ["https://scholarlyhelp.com/*", "https://www.scholarlyhelp.com/*"]
+  }
+}

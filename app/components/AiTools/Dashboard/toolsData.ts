@@ -3,6 +3,7 @@ import {
   FiBarChart,
   FiBookmark,
   FiCheckCircle,
+  FiCheckSquare,
   FiFileText,
   FiList,
   FiRepeat,
@@ -71,6 +72,18 @@ export const TOOLS: ToolCardData[] = [
     group: "study-lab",
     keywords: ["gpa", "cgpa", "grade", "calculator", "semester"],
     cta: "Calculate GPA",
+  },
+  {
+    name: "MCQ Practice Scanner",
+    description:
+      "A Chrome extension that reads practice questions on your screen and explains the answers.",
+    href: "/tools/mcq-practice",
+    icon: FiCheckSquare,
+    badge: "New",
+    category: "study-tools",
+    group: "study-lab",
+    keywords: ["mcq", "multiple choice", "quiz", "practice", "chrome extension"],
+    cta: "Get the extension",
   },
 
   // Essay writing

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>MCQ Practice Scanner</title>
+    <link rel="stylesheet" href="sidepanel.css" />
+  </head>
+  <body>
+    <header>
+      <h1>MCQ Practice Scanner</h1>
+      <p>Reads the questions on your screen and explains the answers.</p>
+      <p>
+        If a question is cut off at the bottom of your screen, its answer may be
+        wrong. Scroll until it is fully visible and scan again.
+      </p>
+    </header>
+
+    <div class="actions">
+      <button id="connect" type="button" hidden>Connect your account</button>
+      <button id="scan" type="button" hidden>Scan this screen</button>
+      <button id="clear" type="button" class="secondary" hidden>Clear</button>
+    </div>
+
+    <p id="status" role="status" aria-live="polite"></p>
+    <a id="upgrade" hidden target="_blank" rel="noopener">See plans</a>
+
+    <ol id="results"></ol>
+
+    <template id="question-template">
+      <li class="question">
+        <p class="question-text"></p>
+        <ul class="options"></ul>
+        <p class="explanation"></p>
+        <p class="confidence"></p>
+      </li>
+    </template>
+
+    <script type="module" src="sidepanel.js"></script>
+  </body>
+</html>
