@@ -35,6 +35,27 @@ declare global {
 const TOOLS_SENT_MESSAGE =
   "✅ Success! Your free tools guide has been sent to your inbox.";
 
+// sms: targets must be bare digits; the env value carries "+" and spaces.
+const MAIN_SMS_HREF = `sms:${(
+  process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER || "+1 646 480 6092"
+).replace(/\D/g, "")}`;
+
+/** Phone-width (below sm) "Text us" pill in the header. */
+const MobileTextUsButton: React.FC<{
+  href: string;
+  placement: string;
+  className?: string;
+}> = ({ href, placement, className = "" }) => (
+  <a
+    href={href}
+    onClick={() => pushTextCtaClick(placement)}
+    className={`sm:hidden inline-flex items-center gap-1 rounded-full border border-[#5B4FE0] bg-white px-2 py-[7.5px] text-sm font-semibold text-[#5B4FE0] whitespace-nowrap ${className}`}
+  >
+    <MessageSquare className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
+    Text us
+  </a>
+);
+
 const Star: React.FC<{ className?: string }> = ({ className }) => (
   <svg
     viewBox="0 0 24 24"
@@ -447,11 +468,9 @@ export default function Header() {
         className={`max-w-7xl mx-auto max-[1320px]:px-3 flex items-center pt-2 min-h-[64px] ${
           isThankYou ? "relative" : ""
         } ${
-          isTakeMyClassLayout
-            ? "justify-center sm:justify-between"
-            : isTakeMyClass3
-              ? "md:justify-between justify-center"
-              : "justify-between"
+          isTakeMyClass3
+            ? "justify-between sm:justify-center md:justify-between"
+            : "justify-between"
         }`}
       >
         {/* Menu Button - Hidden for special routes */}
@@ -466,7 +485,7 @@ export default function Header() {
                 return next;
               });
             }}
-            className="min-[1200px]:hidden text-gray-700 relative z-[10000] p-1 bg-[#EEEEEE] rounded-md"
+            className="min-[1200px]:hidden order-last ml-1.5 sm:order-none sm:ml-0 text-gray-700 relative z-[10000] p-1 bg-[#EEEEEE] rounded-md"
             aria-label={
               mobileOpen ? "Close navigation menu" : "Open navigation menu"
             }
@@ -662,28 +681,32 @@ export default function Header() {
               </div>
             )}
             {isThankYou && !isSignedIn && (
-              <div className="flex sm:hidden items-center gap-1.5">
+              <div className="flex sm:hidden items-center gap-1.5 max-[359px]:gap-0.5">
                 <a
                   href={WHATSAPP_HREF}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={trackHeaderWhatsAppClick}
-                  className="inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 bg-[#41A800] text-white text-xs font-semibold whitespace-nowrap"
+                  className="inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 max-[359px]:gap-0.5 max-[359px]:px-1 bg-[#41A800] text-white text-xs font-semibold whitespace-nowrap"
                 >
                   <WhatsAppIcon className="w-3.5 h-3.5" />
                   WhatsApp
                 </a>
-                <a
+                <MobileTextUsButton
                   href={SMS_HREF}
-                  onClick={() => pushTextCtaClick("header")}
-                  className="inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 bg-[#5B4FE0] text-white text-xs font-semibold whitespace-nowrap"
-                >
-                  <MessageSquare className="w-3.5 h-3.5 flex-shrink-0" />
-                  Text
-                </a>
+                  placement="header"
+                  className="max-[359px]:gap-0.5 max-[359px]:px-1 max-[359px]:text-[13px] max-[359px]:[&>svg]:w-3.5 max-[359px]:[&>svg]:h-3.5"
+                />
               </div>
             )}
           </>
+        )}
+        {!isThankYou && (
+          <MobileTextUsButton
+            href={MAIN_SMS_HREF}
+            placement="header_mobile"
+            className="ml-auto"
+          />
         )}
       </div>
       {isThankYou && (
