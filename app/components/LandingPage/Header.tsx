@@ -8,7 +8,7 @@ import toolsMegaMenuImage from "@/public/images/tools-mega-menu-image.webp";
 import Image from "next/image";
 import LogoSmall from "@/app/assets/Images/logoSmall.png";
 import LogoNormal from "@/app/assets/Images/logo.svg";
-import Phone from "@/app/assets/Icons/phone.webp";
+import TextOnlyNumber from "@/app/components/TextOnlyNumber";
 import {
   isTakeMyClassHeaderRoute,
   isTakeMyClassHeroCopyVariant,
@@ -533,22 +533,8 @@ export default function Header() {
         {/* Text-CTA pages show no phone number: their CTAs carry it. */}
         {!isTextCta && isSpecialRoute3 && (
           <div>
-            {/* Desktop: phone number that opens the dialer (call). */}
-            <a
-              href={`tel:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER || "16464806092"}`}
-              className="hidden sm:flex items-center text-primary-400 text-[#565add] transition"
-            >
-              <span className="w-6 mr-1 text-primary-400">
-                <Image
-                  src={Phone}
-                  alt="Phone"
-                  width={22}
-                  height={22}
-                  fetchPriority="high"
-                />
-              </span>
-              <span>+1 646 480 6092</span>
-            </a>
+            {/* Desktop only: text-only number, not a link. */}
+            <TextOnlyNumber className="hidden sm:flex text-[#565add]" />
           </div>
         )}
         {/* {isTakeMyClass3 && (
@@ -671,21 +657,7 @@ export default function Header() {
                     <span>Live Quote on Whatsapp</span>
                   </a>
                 ) : (
-                  <a
-                    href={`tel:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER || "17167081869"}`}
-                    className="flex items-center sm:text-primary-400 sm:text-[#565add] transition sm:bg-white bg-[#9F92EC] sm:rounded-none rounded-full sm:px-0 px-4 sm:py-0 py-1"
-                  >
-                    <span className="w-6 mr-1 text-primary-400 sm:block hidden">
-                      <Image
-                        src={Phone}
-                        alt="Phone"
-                        width={22}
-                        height={22}
-                        fetchPriority="high"
-                      />
-                    </span>
-                    <span className="sm:block hidden">+1 646 480 6092</span>
-                  </a>
+                  <TextOnlyNumber className="flex text-[#565add]" />
                 )}
               </div>
             )}

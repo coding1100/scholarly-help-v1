@@ -3,6 +3,7 @@
 import Facebook from "@/app/assets/Icons/Facebook";
 import Logo from "@/app/assets/Icons/Logo";
 import Phone from "@/app/assets/Icons/Phone";
+import TextOnlyNumber from "@/app/components/TextOnlyNumber";
 import AmericanExpress from "@/app/assets/Images/americanExpressIcon.webp";
 import Instagram from "@/app/assets/Images/instagram.webp";
 import Linkedin from "@/app/assets/Images/linkedIn.webp";
@@ -151,13 +152,18 @@ const Footer: FC<FooterProps> = ({}) => {
                 <div>
                   <p
                     // href={`tel:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER}`}
-                    className="flex"
+                    className="flex lg:hidden"
                   >
                     <span className="w-6 mr-1">
                       <Phone color="#2b1c51" />
                     </span>
                     +1 646 480 6092
                   </p>
+                  <TextOnlyNumber
+                    className="hidden lg:flex"
+                    iconClassName="text-[#2b1c51]"
+                    stacked
+                  />
                 </div>
                 <div className="flex flex-wrap my-2">
                   <div className="w-5 mr-1">
@@ -416,13 +422,18 @@ const Footer: FC<FooterProps> = ({}) => {
                   <div>
                     <a
                       href={`tel:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER}`}
-                      className="flex"
+                      className="flex lg:hidden"
                     >
                       <span className="w-6 mr-1">
                         <Phone color="#2b1c51" />
                       </span>
                       +1 646 480 6092
                     </a>
+                    <TextOnlyNumber
+                      className="hidden lg:flex"
+                      iconClassName="text-[#2b1c51]"
+                      stacked
+                    />
                   </div>
                   <div className="flex flex-wrap my-2">
                     <div className="w-5 mr-1">

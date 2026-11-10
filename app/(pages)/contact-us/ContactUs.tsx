@@ -8,6 +8,7 @@ import Instagram from "@/app/assets/Images/instagram.webp";
 import Linkedin from "@/app/assets/Images/linkedIn.webp";
 import Tiktok from "@/app/assets/Images/tiktok.webp";
 import PhoneIcon from "@/app/assets/Images/tollFree.webp";
+import TextOnlyNumber from "@/app/components/TextOnlyNumber";
 import Image from "next/image";
 import { FC } from "react";
 
@@ -65,7 +66,7 @@ const ContactUs: FC<ContactUsProps> = ({}) => {
             <div className=" mr-2">
               <Image className="max-w-8" src={PhoneIcon} alt="icon" />
             </div>
-            <div>
+            <div className="lg:hidden">
               <p className="text-xl text-[#000] font-bold mb-3">Toll-Free</p>
               <p className="text-[#000] leading-7">
                 Call us directly to get your urgent work done.
@@ -73,6 +74,13 @@ const ContactUs: FC<ContactUsProps> = ({}) => {
               <p className=" text-[#000] font-semibold leading-7">
                 +1 646 480 6092
               </p>
+            </div>
+            <div className="hidden lg:block">
+              <p className="text-xl text-[#000] font-bold mb-3">Text Us</p>
+              <p className="text-[#000] leading-7">
+                Text us to get your urgent work done.
+              </p>
+              <TextOnlyNumber className="flex text-[#000] font-semibold leading-7" />
             </div>
           </div>
         </div>
