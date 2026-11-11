@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { google } from "googleapis";
+import { toSheetRow } from "@/app/lib/server/sheetValues";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -81,7 +82,7 @@ export async function POST(request: NextRequest) {
       range: SHEET_RANGE,
       valueInputOption: "USER_ENTERED",
       insertDataOption: "INSERT_ROWS",
-      requestBody: { values: [row] },
+      requestBody: { values: [toSheetRow(row)] },
     });
 
     return NextResponse.json({

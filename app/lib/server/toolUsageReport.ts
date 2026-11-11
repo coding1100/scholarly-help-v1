@@ -201,9 +201,19 @@ export async function getToolUsageReport(filters: ToolUsageReportFilters = {}) {
         toolName: "$toolName",
         usedAt: "$usedAt",
         userKey: "$userKey",
+        // New events store a userType decided from a verified access token.
+        // Older events only carry browser-sent ids, where a guest_ prefixed
+        // userId is a guest id the client kept in localStorage.user_id.
         userType: {
           $switch: {
             branches: [
+              { case: { $in: ["$userType", ["registered", "guest"]] }, then: "$userType" },
+              {
+                case: {
+                  $regexMatch: { input: { $ifNull: ["$userId", ""] }, regex: /^guest_/ },
+                },
+                then: "guest",
+              },
               { case: { $ne: [{ $ifNull: ["$userId", null] }, null] }, then: "registered" },
               { case: { $ne: [{ $ifNull: ["$userEmail", null] }, null] }, then: "registered" },
               { case: { $ne: [{ $ifNull: ["$anonymousId", null] }, null] }, then: "guest" },

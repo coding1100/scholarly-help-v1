@@ -1,11 +1,65 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createHmac } from "crypto";
 import { getMongoDatabase } from "@/app/lib/mongodb";
+import { getClientIp } from "@/app/lib/server/study/http";
+import { TOOL_USAGE_TOOL_OPTIONS } from "@/app/lib/server/toolUsageReport";
+import { bearerToken, verifyUserAccessToken } from "@/app/lib/server/userAccessToken";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 const MAX_FIELD_LENGTH = 500;
+
+// Every body field is browser-controlled, so each one is either checked
+// against a fixed list or must parse as the exact shape the client sends.
+// Anything else is dropped, never stored as free text.
+const KNOWN_TOOL_NAMES: ReadonlySet<string> = new Set(TOOL_USAGE_TOOL_OPTIONS);
+const KNOWN_ACTIONS: ReadonlySet<string> = new Set([
+  "generate",
+  "chat",
+  "add_source",
+  "extract_file",
+  "extract_text",
+  // Study workspace artifact types (StudyArtifactType).
+  "outline",
+  "syllabus",
+  "notes",
+  "summary",
+  "flashcards",
+  "quizzes",
+]);
+const KNOWN_DEVICES: ReadonlySet<string> = new Set(["mobile", "tablet", "desktop"]);
+// Marketing parameters worth keeping from the page's query string.
+const KNOWN_SEARCH_PARAMS: ReadonlySet<string> = new Set([
+  "utm_source",
+  "utm_medium",
+  "utm_campaign",
+  "utm_term",
+  "utm_content",
+  "utm_id",
+  "fbclid",
+  "gclid",
+  "msclkid",
+  "ttclid",
+]);
+// Campaign names hold letters, digits, spaces and light punctuation. Quotes,
+// operators and markup characters are what injection payloads need.
+const SEARCH_VALUE_PATTERN = /^[\p{L}\p{N} ._~+|:,()-]{1,200}$/u;
+// The client mints a crypto.randomUUID(), or a base36 timestamp-random pair
+// where randomUUID is unavailable.
+const ANONYMOUS_ID_PATTERN = /^[a-z0-9-]{8,64}$/i;
+// A site path: slash-separated segments that never start with a dot.
+const PATH_PATTERN = /^(?:\/[A-Za-z0-9_~-][A-Za-z0-9._~-]*)*\/?$/;
+const TIME_ZONE_PATTERN = /^[A-Za-z0-9_+:\/-]{1,64}$/;
+const LANGUAGE_PATTERN = /^[A-Za-z0-9-]{2,35}$/;
+
+// One tool run posts one event, so a real visitor stays far below this.
+// PM2 runs a single process, so an in-memory window covers all traffic.
+const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
+const RATE_LIMIT_MAX_EVENTS = 120;
+const RATE_LIMIT_MAX_CLIENTS = 10_000;
+const rateWindows = new Map<string, { count: number; resetAt: number }>();
+
 let indexesReady: Promise<void> | null = null;
 
 function text(value: unknown, max = MAX_FIELD_LENGTH): string | undefined {
@@ -15,28 +69,90 @@ function text(value: unknown, max = MAX_FIELD_LENGTH): string | undefined {
   return trimmed.slice(0, max);
 }
 
-function email(value: unknown): string | undefined {
-  return text(value, 254)?.toLowerCase();
+function matching(value: unknown, pattern: RegExp): string | undefined {
+  return typeof value === "string" && pattern.test(value) ? value : undefined;
+}
+
+function listed(value: unknown, allowed: ReadonlySet<string>): string | undefined {
+  return typeof value === "string" && allowed.has(value) ? value : undefined;
+}
+
+function sitePath(value: unknown): string | undefined {
+  const path = matching(value, PATH_PATTERN);
+  return path && path.length <= 300 ? path : undefined;
+}
+
+/** Keeps only known marketing parameters whose values look like campaign data. */
+function marketingSearch(value: unknown): string | undefined {
+  if (typeof value !== "string" || value.length > 2_000) return undefined;
+  const kept = new URLSearchParams();
+  for (const [key, paramValue] of new URLSearchParams(value)) {
+    if (KNOWN_SEARCH_PARAMS.has(key) && SEARCH_VALUE_PATTERN.test(paramValue)) {
+      kept.set(key, paramValue);
+    }
+  }
+  const search = kept.toString();
+  return search ? `?${search}` : undefined;
+}
+
+/** The referring site's origin only: paths and queries can carry anything. */
+function referrerOrigin(value: unknown): string | undefined {
+  if (typeof value !== "string" || value.length > 2_000) return undefined;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || url.protocol === "http:" ? url.origin : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function timeZone(value: unknown): string | undefined {
+  const zone = matching(value, TIME_ZONE_PATTERN);
+  if (!zone) return undefined;
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: zone });
+    return zone;
+  } catch {
+    return undefined;
+  }
+}
+
+function language(value: unknown): string | undefined {
+  const tag = matching(value, LANGUAGE_PATTERN);
+  if (!tag) return undefined;
+  try {
+    return Intl.getCanonicalLocales(tag)[0];
+  } catch {
+    return undefined;
+  }
+}
+
+function consumeRateLimit(clientKey: string, now = Date.now()): boolean {
+  const current = rateWindows.get(clientKey);
+  if (current && current.resetAt > now) {
+    if (current.count >= RATE_LIMIT_MAX_EVENTS) return false;
+    current.count += 1;
+    return true;
+  }
+  if (rateWindows.size >= RATE_LIMIT_MAX_CLIENTS) {
+    for (const [key, window] of rateWindows) {
+      if (window.resetAt <= now) rateWindows.delete(key);
+    }
+    // Every tracked client is still inside its window: drop the oldest entry
+    // so memory stays bounded.
+    if (rateWindows.size >= RATE_LIMIT_MAX_CLIENTS) {
+      const oldestKey = rateWindows.keys().next().value;
+      if (oldestKey !== undefined) rateWindows.delete(oldestKey);
+    }
+  }
+  rateWindows.set(clientKey, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+  return true;
 }
 
 function hashIp(ip: string | null): string | undefined {
   const secret = process.env.TOOL_USAGE_HASH_SECRET || process.env.JWT_SECRET;
   if (!ip || !secret) return undefined;
   return createHmac("sha256", secret).update(ip).digest("hex");
-}
-
-function clientIp(request: NextRequest): string | null {
-  const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0]?.trim() || null;
-  return request.headers.get("x-real-ip");
-}
-
-function headerText(request: NextRequest, names: string[], max = 120): string | undefined {
-  for (const name of names) {
-    const value = text(request.headers.get(name), max);
-    if (value) return value;
-  }
-  return undefined;
 }
 
 type GeoLookup = { country?: string; region?: string; city?: string };
@@ -100,13 +216,12 @@ async function geolocateViaIpApiCom(ip: string): Promise<GeoLookup | null> {
 }
 
 /**
- * We don't sit behind Vercel/Cloudflare (no x-vercel-ip-country, cf-ipcountry,
- * etc. headers on EC2), so those CDN headers are always absent in production.
- * This is the fallback: a server-side lookup against a free geo-IP API
- * (no API key, no client-side call). Best-effort only — on any failure or
- * timeout this resolves to {} so tracking never blocks/fails on geo data.
- * Tries an HTTPS provider first, then an HTTP-only one, in case outbound
- * plain-HTTP is restricted on the host.
+ * Location comes only from a server-side lookup of the client IP. The app runs
+ * on EC2 behind nginx, not a CDN, so geo request headers (x-vercel-ip-*,
+ * cf-ipcountry, x-country, x-city) would be whatever the caller chose to send.
+ * Best-effort only: on any failure or timeout this resolves to {} so tracking
+ * never fails on geo data. Tries an HTTPS provider first, then an HTTP-only
+ * one, in case outbound plain HTTP is restricted on the host.
  */
 async function geolocateIp(ip: string | null): Promise<GeoLookup> {
   if (!ip || isPrivateIp(ip)) return {};
@@ -122,13 +237,8 @@ async function geolocateIp(ip: string | null): Promise<GeoLookup> {
   return value;
 }
 
-function userKey(input: {
-  userId?: string;
-  userEmail?: string;
-  anonymousId?: string;
-}) {
+function userKey(input: { userId?: string; anonymousId?: string }) {
   if (input.userId) return `user:${input.userId}`;
-  if (input.userEmail) return `email:${input.userEmail}`;
   if (input.anonymousId) return `anon:${input.anonymousId}`;
   return "unknown";
 }
@@ -146,11 +256,19 @@ async function ensureIndexes() {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const toolName = text(body?.toolName, 120);
-    if (!toolName) {
+    const resolvedIp = getClientIp(request);
+    if (!consumeRateLimit(hashIp(resolvedIp) || resolvedIp || "unknown")) {
       return NextResponse.json(
-        { success: false, error: "toolName is required" },
+        { success: false, error: "Too many requests" },
+        { status: 429 },
+      );
+    }
+
+    const body = await request.json().catch(() => null);
+    const toolName = text(body?.toolName, 120);
+    if (!toolName || !KNOWN_TOOL_NAMES.has(toolName)) {
+      return NextResponse.json(
+        { success: false, error: "Unknown toolName" },
         { status: 400 },
       );
     }
@@ -166,52 +284,41 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const userId = text(body?.userId, 120);
-    const userEmail = email(body?.userEmail);
-    const anonymousId = text(body?.anonymousId, 120);
+    // Identity comes from the access token only. userId, userEmail and
+    // userName in the body are browser-controlled (and userId holds a guest_
+    // id for guests), so they are never trusted.
+    const token = bearerToken(request);
+    const verifiedUser = token ? await verifyUserAccessToken(token) : null;
+    const anonymousId = verifiedUser
+      ? undefined
+      : matching(body?.anonymousId, ANONYMOUS_ID_PATTERN);
     const usedAt = new Date();
 
-    // CDN-injected headers first (present on Vercel/Cloudflare); this app
-    // runs on plain EC2, so those are normally absent and we fall back to a
-    // server-side geo-IP lookup instead.
-    let country = headerText(request, ["x-vercel-ip-country", "cf-ipcountry", "x-country"]);
-    let region = headerText(request, ["x-vercel-ip-country-region", "x-region"]);
-    let city = headerText(request, ["x-vercel-ip-city", "x-city"]);
-    if (!country && !region && !city) {
-      const resolvedIp = clientIp(request);
-      const geo = await geolocateIp(resolvedIp);
-      if (!geo.country && !geo.region && !geo.city) {
-        console.warn("tool-usage geo lookup empty", {
-          resolvedIp,
-          xForwardedFor: request.headers.get("x-forwarded-for"),
-          xRealIp: request.headers.get("x-real-ip"),
-        });
-      }
-      country = geo.country;
-      region = geo.region;
-      city = geo.city;
+    const geo = await geolocateIp(resolvedIp);
+    if (!geo.country && !geo.region && !geo.city) {
+      console.warn("tool-usage geo lookup empty", { resolvedIp });
     }
 
     await db.collection("tool_usage_events").insertOne({
       toolName,
-      action: text(body?.action, 80) || "generate",
+      action: listed(body?.action, KNOWN_ACTIONS) || "generate",
       usedAt,
-      userKey: userKey({ userId, userEmail, anonymousId }),
-      userId,
-      userEmail,
-      userName: text(body?.userName, 160),
+      userType: verifiedUser ? "registered" : "guest",
+      userKey: userKey({ userId: verifiedUser?.userId, anonymousId }),
+      userId: verifiedUser?.userId,
+      userEmail: verifiedUser?.email,
+      userName: verifiedUser?.name,
       anonymousId,
-      path: text(body?.path, 300),
-      search: text(body?.search, 500),
-      href: text(body?.href, 500),
-      referrer: text(body?.referrer, 500),
-      timezone: text(body?.timezone, 120),
-      language: text(body?.language, 40),
-      device: text(body?.device, 40),
-      country,
-      region,
-      city,
-      ipHash: hashIp(clientIp(request)),
+      path: sitePath(body?.path),
+      search: marketingSearch(body?.search),
+      referrer: referrerOrigin(body?.referrer),
+      timezone: timeZone(body?.timezone),
+      language: language(body?.language),
+      device: listed(body?.device, KNOWN_DEVICES),
+      country: geo.country,
+      region: geo.region,
+      city: geo.city,
+      ipHash: hashIp(resolvedIp),
       userAgent: text(request.headers.get("user-agent"), 500),
       createdAt: usedAt,
     });

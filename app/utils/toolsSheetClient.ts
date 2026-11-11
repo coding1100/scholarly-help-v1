@@ -1,3 +1,6 @@
+import { hasRefreshSessionHint, readMemoryAccessToken } from "@/app/lib/accessTokenStore";
+import { initializeAuthSession } from "@/app/lib/authSession";
+
 export type ToolsSheetGenerateEventDetail = {
   toolName?: string;
   action?: string;
@@ -28,7 +31,17 @@ function getDeviceLabel() {
   return "desktop";
 }
 
-function postUsageEvent(detail: ToolsSheetGenerateEventDetail) {
+/**
+ * The signed-in user's access token, waiting for the session restore that
+ * starts on page load when a tool runs before it finishes. Null for guests.
+ */
+async function currentAccessToken(): Promise<string | null> {
+  const token = readMemoryAccessToken();
+  if (token || !hasRefreshSessionHint()) return token;
+  return initializeAuthSession().catch(() => null);
+}
+
+async function postUsageEvent(detail: ToolsSheetGenerateEventDetail) {
   const toolName = (detail.toolName || "").trim();
   if (!toolName) {
     // A silent no-op here means a tool's usage is never recorded and never
@@ -47,22 +60,23 @@ function postUsageEvent(detail: ToolsSheetGenerateEventDetail) {
   const payload = {
     toolName,
     action: detail.action || "generate",
-    userId: window.localStorage.getItem("user_id") || undefined,
-    userEmail: window.localStorage.getItem("user_email") || undefined,
-    userName: window.localStorage.getItem("user_name") || undefined,
     anonymousId: getOrCreateAnonymousId(),
     path: window.location.pathname,
     search: window.location.search,
-    href: window.location.href,
     referrer: document.referrer || undefined,
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || undefined,
     language: navigator.language || undefined,
     device: getDeviceLabel(),
   };
 
-  void fetch("/api/tool-usage/track", {
+  // The server takes the user's identity from this token, never from the body.
+  const accessToken = await currentAccessToken();
+  await fetch("/api/tool-usage/track", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+    },
     body: JSON.stringify(payload),
     keepalive: true,
   }).catch(() => {
@@ -100,7 +114,7 @@ function pushToolUsedEvent(detail: ToolsSheetGenerateEventDetail) {
 export function trackToolGenerate(detail: ToolsSheetGenerateEventDetail = {}) {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail }));
-  postUsageEvent(detail);
+  void postUsageEvent(detail);
   pushToolUsedEvent(detail);
 }
 
