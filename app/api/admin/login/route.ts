@@ -1,8 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 import { timingSafeEqual } from "crypto";
 import jwt from "jsonwebtoken";
+import { getClientIp } from "@/app/lib/server/study/http";
 
 export const dynamic = "force-dynamic";
+
+// One shared password per role, so cap guesses per client IP. The app runs as
+// a single process (PM2 fork mode), so an in-memory window covers all traffic.
+const MAX_FAILED_ATTEMPTS = 5;
+const LOCKOUT_WINDOW_MS = 15 * 60 * 1000;
+const failedAttempts = new Map<string, { count: number; resetAt: number }>();
+
+function lockedForSeconds(clientKey: string, now: number): number {
+  const entry = failedAttempts.get(clientKey);
+  if (!entry || entry.resetAt <= now) return 0;
+  return entry.count >= MAX_FAILED_ATTEMPTS ? Math.ceil((entry.resetAt - now) / 1000) : 0;
+}
+
+function recordFailure(clientKey: string, now: number): void {
+  for (const [key, entry] of failedAttempts) {
+    if (entry.resetAt <= now) failedAttempts.delete(key);
+  }
+  const entry = failedAttempts.get(clientKey);
+  if (entry) entry.count += 1;
+  else failedAttempts.set(clientKey, { count: 1, resetAt: now + LOCKOUT_WINDOW_MS });
+}
 
 function safeEqual(left: string, right: string): boolean {
   const a = Buffer.from(left);
@@ -11,6 +33,15 @@ function safeEqual(left: string, right: string): boolean {
 }
 
 export async function POST(request: NextRequest) {
+  const clientKey = getClientIp(request) || "unknown";
+  const retryAfter = lockedForSeconds(clientKey, Date.now());
+  if (retryAfter > 0) {
+    return NextResponse.json(
+      { error: "Too many failed attempts. Try again later." },
+      { status: 429, headers: { "Retry-After": String(retryAfter) } },
+    );
+  }
+
   try {
     const { username, password } = await request.json();
     const configuredUsername = process.env.ADMIN_USERNAME;
@@ -25,6 +56,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (typeof username !== "string" || typeof password !== "string") {
+      recordFailure(clientKey, Date.now());
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
 
@@ -38,8 +70,10 @@ export async function POST(request: NextRequest) {
       safeEqual(password, reportPassword as string);
 
     if (!isAdmin && !isReportAdmin) {
+      recordFailure(clientKey, Date.now());
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
+    failedAttempts.delete(clientKey);
 
     const role = isAdmin ? "admin" : "report_admin";
     const token = jwt.sign({ username, role }, jwtSecret, {
