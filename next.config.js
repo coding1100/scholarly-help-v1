@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   trailingSlash: true,
+  // Don't advertise the framework and version to scanners (X-Powered-By: Next.js).
+  poweredByHeader: false,
 
   // Recompile everything modern to eliminate 12 KiB legacy polyfills
   transpilePackages: [

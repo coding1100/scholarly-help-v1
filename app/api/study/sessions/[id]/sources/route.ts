@@ -8,6 +8,12 @@ import {
 import { extractReadableTextFromHtml } from "@/app/lib/server/study/htmlExtract";
 import { cleanSourceText } from "@/app/lib/server/study/documentClean";
 import { StudySourceKind } from "@/app/lib/server/study/types";
+import {
+  createPublicUrlFetch,
+  nonPublicAddressCause,
+  readBodyWithLimit,
+  ResponseTooLargeError,
+} from "@/app/lib/server/publicUrlFetch";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +29,13 @@ const ALLOWED_SOURCE_KINDS = new Set<StudySourceKind>([
 // content. JS-heavy SPAs and bot walls typically strip down to a near-empty
 // shell, which would otherwise be saved as a useless source.
 const MIN_USABLE_URL_TEXT = 200;
+
+// Imported pages and PDFs are read into memory, so cap what one URL can return.
+const MAX_URL_RESPONSE_BYTES = 25 * 1024 * 1024;
+
+// Visitors choose these URLs, so the server only fetches public addresses: never
+// this machine, the private network or the cloud metadata service.
+const fetchPublicUrl = createPublicUrlFetch();
 
 // A stable marker the POST handler uses to map these failures to a 400 and to
 // tell, at a glance, that the URL simply can't be parsed (vs. a server error).
@@ -52,7 +65,7 @@ async function fetchUrlText(url: string) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 15000);
   try {
-    const res = await fetch(parsedUrl.toString(), {
+    const { response: res } = await fetchPublicUrl(parsedUrl, {
       method: "GET",
       signal: controller.signal,
       headers: {
@@ -62,8 +75,6 @@ async function fetchUrlText(url: string) {
         Accept:
           "text/html,application/xhtml+xml,application/pdf,application/xml;q=0.9,*/*;q=0.8",
       },
-      redirect: "follow",
-      cache: "no-store",
     });
     // 401/403/429 = the site is deliberately refusing automated access.
     if (res.status === 403 || res.status === 401 || res.status === 429) {
@@ -83,8 +94,7 @@ async function fetchUrlText(url: string) {
     // PDFs served over a URL must be parsed as binary, not read as text — the
     // previous text()/HTML-strip path returned unusable binary garbage.
     if (looksLikePdf) {
-      const arrayBuffer = await res.arrayBuffer();
-      const text = await parsePdfBuffer(Buffer.from(arrayBuffer));
+      const text = await parsePdfBuffer(await readBodyWithLimit(res, MAX_URL_RESPONSE_BYTES));
       if (text.length < MIN_USABLE_URL_TEXT) {
         throw new Error(
           `We fetched the PDF from ${host} but couldn't extract readable text (it may be a scanned/image-only PDF). Try uploading a text-based PDF instead.`,
@@ -93,7 +103,9 @@ async function fetchUrlText(url: string) {
       return text;
     }
 
-    const body = await res.text();
+    const body = new TextDecoder().decode(
+      await readBodyWithLimit(res, MAX_URL_RESPONSE_BYTES),
+    );
     if (!body.trim()) {
       throw new Error(siteRestrictedMessage(host));
     }
@@ -112,6 +124,16 @@ async function fetchUrlText(url: string) {
 
     return body.trim();
   } catch (error) {
+    if (nonPublicAddressCause(error)) {
+      throw new Error(
+        `We couldn't reach ${host}: the link points to a private or internal network address, so it can't be imported. Use a link to a public web page instead.`,
+      );
+    }
+    if (error instanceof ResponseTooLargeError) {
+      throw new Error(
+        `The page at ${host} is too large to import (over 25 MB). Download it and upload the file instead, or paste the text.`,
+      );
+    }
     if (error instanceof Error && error.name === "AbortError") {
       throw new Error(
         `${host} took too long to respond, so the import timed out. Try again, or paste the text directly.`,
