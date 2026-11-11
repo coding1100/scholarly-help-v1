@@ -1,5 +1,4 @@
 import axios from "axios";
-import { getScanAccessToken } from "@/app/lib/scanAccessTokenStore";
 
 // Create an instance of Axios with a custom configuration
 const axiosInstance = axios.create({
@@ -9,12 +8,6 @@ const axiosInstance = axios.create({
 // Request interceptor: This will be called before the request is sent
 axiosInstance.interceptors.request.use(
   (config) => {
-    // Do something with the request config (e.g., add headers)
-    const authToken = getScanAccessToken();
-
-    if (authToken) {
-      config.headers.Authorization = `Bearer ${authToken}`;
-    }
     // Distributed trace correlation identifier
     if (!config.headers["x-request-id"]) {
       config.headers["x-request-id"] =
@@ -26,23 +19,6 @@ axiosInstance.interceptors.request.use(
   },
   (error) => {
     // Handle request error
-    return Promise.reject(error);
-  },
-);
-
-// Response interceptor: This will be called when the response is received
-axiosInstance.interceptors.response.use(
-  (response) => {
-    // Do something with the response data
-    return response;
-  },
-  (error) => {
-    console.log(error);
-    if (error?.response?.status === 401) {
-      window.location.href = window.location.origin + "/scan/login";
-    }
-    // console.log(error);
-    // Handle response error
     return Promise.reject(error);
   },
 );
