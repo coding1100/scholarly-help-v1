@@ -298,6 +298,9 @@ export default function EssayStudio({
   initialStep?: EssayStudioStep;
 }) {
   const router = useRouter();
+  // On a landing page the page owns the H1 and the Done-for-you card.
+  const Heading = embedded ? "h2" : "h1";
+  const doneForYou = embedded ? null : <DoneForYouCard placement="essay_studio" />;
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const queryStep = searchParams?.get("step") as EssayStudioStep | null;
@@ -1571,9 +1574,9 @@ ${conclText}`;
 
             {/* Headline */}
             <div>
-              <h1 className="text-2xl font-bold tracking-tight text-[#171A2B] md:text-3xl">
+              <Heading className="text-2xl font-bold tracking-tight text-[#171A2B] md:text-3xl">
                 Write your essay without staring at a blank page
-              </h1>
+              </Heading>
               <p className="mt-1.5 text-sm text-[#3F4357]">
                 Paste your assignment or just type your topic. We&apos;ll handle
                 the rest, step by step.
@@ -1682,28 +1685,31 @@ ${conclText}`;
             </div>
           </div>
 
-          {/* Right Sidebar */}
-          <aside className="w-full lg:w-[300px] shrink-0 flex flex-col gap-4">
-            <DoneForYouCard placement="essay_studio" />
+          {/* Right Sidebar. A landing page shows its own Done-for-you card
+              beside the embedded tool, so the sidebar is left out there. */}
+          {!embedded && (
+            <aside className="w-full lg:w-[300px] shrink-0 flex flex-col gap-4">
+              <DoneForYouCard placement="essay_studio" />
 
-            {/* Discussion Post Banner in sidebar for perfect balance */}
-            <div className="flex flex-col gap-2.5 rounded-2xl border border-[#E4E5EE] bg-[#F8F9FC] p-4 text-left shadow-sm">
-              <div className="flex items-center gap-2.5 text-[#4F46E5]">
-                <FiMessageCircle className="h-5 w-5 shrink-0" />
-                <span className="text-xs font-bold text-[#171A2B]">Discussion Board Assistant</span>
+              {/* Discussion Post Banner in sidebar for perfect balance */}
+              <div className="flex flex-col gap-2.5 rounded-2xl border border-[#E4E5EE] bg-[#F8F9FC] p-4 text-left shadow-sm">
+                <div className="flex items-center gap-2.5 text-[#4F46E5]">
+                  <FiMessageCircle className="h-5 w-5 shrink-0" />
+                  <span className="text-xs font-bold text-[#171A2B]">Discussion Board Assistant</span>
+                </div>
+                <p className="text-xs text-[#5B6072] leading-relaxed">
+                  Need this week&apos;s discussion board post &amp; 2 classmate replies?
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setDiscussionInUrl(true)}
+                  className="mt-1 flex h-9 items-center justify-center gap-1.5 rounded-xl border border-[#CBD5E1] bg-white text-xs font-semibold text-[#4F46E5] hover:bg-gray-50 transition shadow-sm"
+                >
+                  Open Discussion Tool &rarr;
+                </button>
               </div>
-              <p className="text-xs text-[#5B6072] leading-relaxed">
-                Need this week&apos;s discussion board post &amp; 2 classmate replies?
-              </p>
-              <button
-                type="button"
-                onClick={() => setDiscussionInUrl(true)}
-                className="mt-1 flex h-9 items-center justify-center gap-1.5 rounded-xl border border-[#CBD5E1] bg-white text-xs font-semibold text-[#4F46E5] hover:bg-gray-50 transition shadow-sm"
-              >
-                Open Discussion Tool &rarr;
-              </button>
-            </div>
-          </aside>
+            </aside>
+          )}
         </div>
       )}
 
@@ -1976,7 +1982,7 @@ ${conclText}`;
                   </div>
                 </div>
               </div>
-              <DoneForYouCard placement="essay_studio" />
+              {doneForYou}
             </aside>
           </div>
         </div>
@@ -2236,7 +2242,7 @@ ${conclText}`;
                   </div>
                 </div>
               </div>
-              <DoneForYouCard placement="essay_studio" />
+              {doneForYou}
             </aside>
           </div>
         </div>
@@ -2433,9 +2439,11 @@ ${conclText}`;
               </div>
             </div>
 
-            <aside className="hidden w-[300px] shrink-0 flex-col gap-4 xl:flex">
-              <DoneForYouCard placement="essay_studio" />
-            </aside>
+            {!embedded && (
+              <aside className="hidden w-[300px] shrink-0 flex-col gap-4 xl:flex">
+                <DoneForYouCard placement="essay_studio" />
+              </aside>
+            )}
           </div>
         </div>
       )}
@@ -2720,7 +2728,7 @@ ${conclText}`;
                 )}
               </div>
 
-              <DoneForYouCard placement="essay_studio" />
+              {doneForYou}
             </aside>
           </div>
         </div>
@@ -2865,9 +2873,11 @@ ${conclText}`;
             </div>
 
             {/* Right: Done for you */}
-            <aside className="hidden w-[300px] shrink-0 flex-col gap-4 xl:flex">
-              <DoneForYouCard placement="essay_studio" />
-            </aside>
+            {!embedded && (
+              <aside className="hidden w-[300px] shrink-0 flex-col gap-4 xl:flex">
+                <DoneForYouCard placement="essay_studio" />
+              </aside>
+            )}
           </div>
         </div>
       )}
