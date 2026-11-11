@@ -63,7 +63,6 @@ async function postUsageEvent(detail: ToolsSheetGenerateEventDetail) {
     anonymousId: getOrCreateAnonymousId(),
     path: window.location.pathname,
     search: window.location.search,
-    href: window.location.href,
     referrer: document.referrer || undefined,
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || undefined,
     language: navigator.language || undefined,

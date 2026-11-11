@@ -9,11 +9,49 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 const MAX_FIELD_LENGTH = 500;
+
+// Every body field is browser-controlled, so each one is either checked
+// against a fixed list or must parse as the exact shape the client sends.
+// Anything else is dropped, never stored as free text.
 const KNOWN_TOOL_NAMES: ReadonlySet<string> = new Set(TOOL_USAGE_TOOL_OPTIONS);
+const KNOWN_ACTIONS: ReadonlySet<string> = new Set([
+  "generate",
+  "chat",
+  "add_source",
+  "extract_file",
+  "extract_text",
+  // Study workspace artifact types (StudyArtifactType).
+  "outline",
+  "syllabus",
+  "notes",
+  "summary",
+  "flashcards",
+  "quizzes",
+]);
+const KNOWN_DEVICES: ReadonlySet<string> = new Set(["mobile", "tablet", "desktop"]);
+// Marketing parameters worth keeping from the page's query string.
+const KNOWN_SEARCH_PARAMS: ReadonlySet<string> = new Set([
+  "utm_source",
+  "utm_medium",
+  "utm_campaign",
+  "utm_term",
+  "utm_content",
+  "utm_id",
+  "fbclid",
+  "gclid",
+  "msclkid",
+  "ttclid",
+]);
+// Campaign names hold letters, digits, spaces and light punctuation. Quotes,
+// operators and markup characters are what injection payloads need.
+const SEARCH_VALUE_PATTERN = /^[\p{L}\p{N} ._~+|:,()-]{1,200}$/u;
 // The client mints a crypto.randomUUID(), or a base36 timestamp-random pair
 // where randomUUID is unavailable.
 const ANONYMOUS_ID_PATTERN = /^[a-z0-9-]{8,64}$/i;
-const ACTION_PATTERN = /^[a-z][a-z0-9_-]{0,39}$/;
+// A site path: slash-separated segments that never start with a dot.
+const PATH_PATTERN = /^(?:\/[A-Za-z0-9_~-][A-Za-z0-9._~-]*)*\/?$/;
+const TIME_ZONE_PATTERN = /^[A-Za-z0-9_+:\/-]{1,64}$/;
+const LANGUAGE_PATTERN = /^[A-Za-z0-9-]{2,35}$/;
 
 // One tool run posts one event, so a real visitor stays far below this.
 // PM2 runs a single process, so an in-memory window covers all traffic.
@@ -33,6 +71,60 @@ function text(value: unknown, max = MAX_FIELD_LENGTH): string | undefined {
 
 function matching(value: unknown, pattern: RegExp): string | undefined {
   return typeof value === "string" && pattern.test(value) ? value : undefined;
+}
+
+function listed(value: unknown, allowed: ReadonlySet<string>): string | undefined {
+  return typeof value === "string" && allowed.has(value) ? value : undefined;
+}
+
+function sitePath(value: unknown): string | undefined {
+  const path = matching(value, PATH_PATTERN);
+  return path && path.length <= 300 ? path : undefined;
+}
+
+/** Keeps only known marketing parameters whose values look like campaign data. */
+function marketingSearch(value: unknown): string | undefined {
+  if (typeof value !== "string" || value.length > 2_000) return undefined;
+  const kept = new URLSearchParams();
+  for (const [key, paramValue] of new URLSearchParams(value)) {
+    if (KNOWN_SEARCH_PARAMS.has(key) && SEARCH_VALUE_PATTERN.test(paramValue)) {
+      kept.set(key, paramValue);
+    }
+  }
+  const search = kept.toString();
+  return search ? `?${search}` : undefined;
+}
+
+/** The referring site's origin only: paths and queries can carry anything. */
+function referrerOrigin(value: unknown): string | undefined {
+  if (typeof value !== "string" || value.length > 2_000) return undefined;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || url.protocol === "http:" ? url.origin : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function timeZone(value: unknown): string | undefined {
+  const zone = matching(value, TIME_ZONE_PATTERN);
+  if (!zone) return undefined;
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: zone });
+    return zone;
+  } catch {
+    return undefined;
+  }
+}
+
+function language(value: unknown): string | undefined {
+  const tag = matching(value, LANGUAGE_PATTERN);
+  if (!tag) return undefined;
+  try {
+    return Intl.getCanonicalLocales(tag)[0];
+  } catch {
+    return undefined;
+  }
 }
 
 function consumeRateLimit(clientKey: string, now = Date.now()): boolean {
@@ -209,7 +301,7 @@ export async function POST(request: NextRequest) {
 
     await db.collection("tool_usage_events").insertOne({
       toolName,
-      action: matching(body?.action, ACTION_PATTERN) || "generate",
+      action: listed(body?.action, KNOWN_ACTIONS) || "generate",
       usedAt,
       userType: verifiedUser ? "registered" : "guest",
       userKey: userKey({ userId: verifiedUser?.userId, anonymousId }),
@@ -217,13 +309,12 @@ export async function POST(request: NextRequest) {
       userEmail: verifiedUser?.email,
       userName: verifiedUser?.name,
       anonymousId,
-      path: text(body?.path, 300),
-      search: text(body?.search, 500),
-      href: text(body?.href, 500),
-      referrer: text(body?.referrer, 500),
-      timezone: text(body?.timezone, 120),
-      language: text(body?.language, 40),
-      device: text(body?.device, 40),
+      path: sitePath(body?.path),
+      search: marketingSearch(body?.search),
+      referrer: referrerOrigin(body?.referrer),
+      timezone: timeZone(body?.timezone),
+      language: language(body?.language),
+      device: listed(body?.device, KNOWN_DEVICES),
       country: geo.country,
       region: geo.region,
       city: geo.city,

