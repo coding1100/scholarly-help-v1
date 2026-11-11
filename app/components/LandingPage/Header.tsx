@@ -88,6 +88,9 @@ export default function Header() {
   const isTakeMyClassLayout = isTakeMyClassLayoutPage(pathname);
   // /tools-thank-you confirms the free-tools email in place of the rating.
   const isTextCta = isTextCtaLandingPage(pathname);
+  // /take-my-class and /take-my-class-3 show only the logo, centred, on
+  // phones: no "Text us" pill.
+  const isCenteredMobileLogo = isTakeMyClassLayout && !isTextCta;
 
   // /thank-you/ has its own "Free Quote On Whatsapp" CTA in-page, so the
   // header's phone number is redundant there and hidden. It is also a
@@ -468,9 +471,11 @@ export default function Header() {
         className={`max-w-7xl mx-auto max-[1320px]:px-3 flex items-center pt-2 min-h-[64px] ${
           isThankYou ? "relative" : ""
         } ${
-          isTakeMyClass3
-            ? "justify-between sm:justify-center md:justify-between"
-            : "justify-between"
+          isCenteredMobileLogo
+            ? "justify-center sm:justify-between"
+            : isTakeMyClass3
+              ? "justify-between sm:justify-center md:justify-between"
+              : "justify-between"
         }`}
       >
         {/* Menu Button - Hidden for special routes */}
@@ -701,7 +706,7 @@ export default function Header() {
             )}
           </>
         )}
-        {!isThankYou && (
+        {!isThankYou && !isCenteredMobileLogo && (
           <MobileTextUsButton
             href={MAIN_SMS_HREF}
             placement="header_mobile"
