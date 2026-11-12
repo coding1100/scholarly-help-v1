@@ -13,24 +13,13 @@
  * Phone) is handled separately and is out of scope here.
  */
 
+import { SMS_NUMBER } from "@/app/components/ThankYou/contact";
+
 const FBCLID_COOKIE = "sh_fbclid";
 const LANDING_COOKIE = "sh_landing";
 const FBCLID_SS_KEY = "sh:fbclid";
 const LANDING_SS_KEY = "sh:landingUrl";
 const COOKIE_MAX_AGE_DAYS = 90;
-
-/**
- * sms:/tel: targets must be bare digits — the env value may contain "+", spaces
- * or dashes (e.g. "+1-646-480-6092"), which breaks the link on iOS. Strip them.
- */
-function sanitizeNumber(raw: string): string {
-  return (raw || "").replace(/[^0-9]/g, "");
-}
-
-export const SMS_NUMBER =
-  sanitizeNumber(
-    process.env.NEXT_PUBLIC_TEXT_US_PHONE_NUMBER || "",
-  ) || "14108445419";
 
 function isBrowser(): boolean {
   return typeof window !== "undefined";

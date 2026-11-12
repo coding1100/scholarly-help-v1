@@ -4,6 +4,11 @@ import Facebook from "@/app/assets/Icons/Facebook";
 import Logo from "@/app/assets/Icons/Logo";
 import Phone from "@/app/assets/Icons/Phone";
 import TextOnlyNumber from "@/app/components/TextOnlyNumber";
+import {
+  SMS_HREF,
+  SMS_NUMBER_DISPLAY,
+  TEL_HREF,
+} from "@/app/components/ThankYou/contact";
 import AmericanExpress from "@/app/assets/Images/americanExpressIcon.webp";
 import Instagram from "@/app/assets/Images/instagram.webp";
 import Linkedin from "@/app/assets/Images/linkedIn.webp";
@@ -151,13 +156,13 @@ const Footer: FC<FooterProps> = ({}) => {
               <div className="">
                 <div>
                   <p
-                    // href={`tel:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER}`}
+                    // href={TEL_HREF}
                     className="flex lg:hidden"
                   >
                     <span className="w-6 mr-1">
                       <Phone color="#2b1c51" />
                     </span>
-                    +1 646 480 6092
+                    {SMS_NUMBER_DISPLAY}
                   </p>
                   <TextOnlyNumber
                     className="hidden lg:flex"
@@ -216,7 +221,7 @@ const Footer: FC<FooterProps> = ({}) => {
               className="fixed flex justify-between z-[98] left-0 bg-transparent border-none hidden md:flex"
             >
               <a
-                href={`sms:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER}`}
+                href={SMS_HREF}
                 className="fixed flex font-normal justify-between z-[98] bottom-[80px] left-0 text-[15px] py-[10px] px-[20px] no-underline bg-[#36454F] ml-[5px] rounded-[50px] items-center min-w-[44px] min-h-[44px]"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -235,7 +240,7 @@ const Footer: FC<FooterProps> = ({}) => {
               className="fixed flex justify-between z-[98] left-0 bg-transparent border-none md:hidden flex z-[99999]"
             >
               <a
-                href={`sms:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER}`}
+                href={SMS_HREF}
                 className="fixed flex font-normal justify-between z-[98] bottom-[55px] left-0 text-[15px] py-0 px-[5px] no-underline ml-[5px] rounded-[50px] items-center min-w-[44px] min-h-[44px]"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -421,13 +426,13 @@ const Footer: FC<FooterProps> = ({}) => {
                 <div className="">
                   <div>
                     <a
-                      href={`tel:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER}`}
+                      href={TEL_HREF}
                       className="flex lg:hidden"
                     >
                       <span className="w-6 mr-1">
                         <Phone color="#2b1c51" />
                       </span>
-                      +1 646 480 6092
+                      {SMS_NUMBER_DISPLAY}
                     </a>
                     <TextOnlyNumber
                       className="hidden lg:flex"
