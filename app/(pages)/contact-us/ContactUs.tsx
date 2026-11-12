@@ -9,6 +9,7 @@ import Linkedin from "@/app/assets/Images/linkedIn.webp";
 import Tiktok from "@/app/assets/Images/tiktok.webp";
 import PhoneIcon from "@/app/assets/Images/tollFree.webp";
 import TextOnlyNumber from "@/app/components/TextOnlyNumber";
+import { SMS_NUMBER_DISPLAY } from "@/app/components/ThankYou/contact";
 import Image from "next/image";
 import { FC } from "react";
 
@@ -72,7 +73,7 @@ const ContactUs: FC<ContactUsProps> = ({}) => {
                 Call us directly to get your urgent work done.
               </p>
               <p className=" text-[#000] font-semibold leading-7">
-                +1 646 480 6092
+                {SMS_NUMBER_DISPLAY}
               </p>
             </div>
             <div className="hidden lg:block">

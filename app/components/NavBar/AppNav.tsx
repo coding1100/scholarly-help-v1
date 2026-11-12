@@ -123,7 +123,6 @@ const AppNav: FC<AppNavProps> = ({}) => {
                 </a>
                 <TextOnlyNumber
                   className="hidden lg:flex text-primary-400"
-                  number={SMS_NUMBER_DISPLAY}
                 />
                 {/* <a href="javascript:void(Tawk_API.toggle())">
               <Button className="md:w-36 w-28 ">Chat Now</Button>
@@ -245,7 +244,6 @@ const AppNav: FC<AppNavProps> = ({}) => {
                 </Link>
                 <TextOnlyNumber
                   className="flex text-primary-400"
-                  number={SMS_NUMBER_DISPLAY}
                 />
                 {/* <a
                     href="mailto:support@scholarlyhelp.com"
@@ -408,7 +406,6 @@ const AppNav: FC<AppNavProps> = ({}) => {
                 </a>
                 <TextOnlyNumber
                   className="hidden lg:flex"
-                  number={SMS_NUMBER_DISPLAY}
                 />
               </div>
             )}

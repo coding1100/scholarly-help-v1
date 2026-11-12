@@ -1,4 +1,5 @@
 import { MessageSquare } from "lucide-react";
+import { SMS_NUMBER_DISPLAY } from "@/app/components/ThankYou/contact";
 
 type TextOnlyNumberProps = {
   /** Visibility and colour, e.g. "hidden lg:flex text-primary-400". */
@@ -6,8 +7,6 @@ type TextOnlyNumberProps = {
   iconClassName?: string;
   /** Put the number on its own line, for narrow columns such as the footer. */
   stacked?: boolean;
-  /** Displayed number; defaults to the main company number. */
-  number?: string;
 };
 
 /**
@@ -18,7 +17,6 @@ export default function TextOnlyNumber({
   className = "",
   iconClassName = "",
   stacked = false,
-  number = "+1 (646) 480-6092",
 }: TextOnlyNumberProps) {
   return (
     <p
@@ -31,10 +29,10 @@ export default function TextOnlyNumber({
       {stacked ? (
         <span>
           <span className="block">Text only:</span>
-          <span className="block">{number}</span>
+          <span className="block">{SMS_NUMBER_DISPLAY}</span>
         </span>
       ) : (
-        `Text only: ${number}`
+        `Text only: ${SMS_NUMBER_DISPLAY}`
       )}
     </p>
   );

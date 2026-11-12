@@ -4,6 +4,10 @@ import Facebook from "@/public/assets/Icon/Facebook.svg";
 import Logo from "@/public/assets/Icon/Logo.svg";
 import Phone from "@/public/assets/Icon/Phone.svg";
 import TextOnlyNumber from "@/app/components/TextOnlyNumber";
+import {
+  SMS_NUMBER_DISPLAY,
+  TEL_HREF,
+} from "@/app/components/ThankYou/contact";
 import AmericanExpress from "@/public/assets/Icon/americanExpressIcon.webp";
 import Instagram from "@/public/assets/Icon/instagram.webp";
 import Linkedin from "@/public/assets/Icon/linkedIn.webp";
@@ -214,14 +218,11 @@ const Footer: FC<FooterProps> = () => {
           <div>
             <p className="font-semibold text-lg mt-2 mb-3">Contact Info</p>
             <div>
-              <a
-                href={`tel:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER}`}
-                className="flex lg:hidden items-center"
-              >
+              <a href={TEL_HREF} className="flex lg:hidden items-center">
                 <span className="w-6 mr-1">
                   <Image src={Phone} alt="Phone" />
                 </span>
-                +1 646 480 6092
+                {SMS_NUMBER_DISPLAY}
               </a>
               <TextOnlyNumber
                 className="hidden lg:flex"

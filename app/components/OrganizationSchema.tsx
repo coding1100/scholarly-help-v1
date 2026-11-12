@@ -8,7 +8,7 @@ export default function OrganizationSchema() {
     logo: "https://scholarlyhelp.com/blog/wp-content/uploads/2025/12/scholarly-help-logo.png",
     contactPoint: {
       "@type": "ContactPoint",
-      telephone: "+1 646 480 6092",
+      telephone: "+1 734 530 3988",
       contactType: "customer service",
       areaServed: "US",
       availableLanguage: "en",

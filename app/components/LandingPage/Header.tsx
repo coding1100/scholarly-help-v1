@@ -23,7 +23,6 @@ import RequestReceivedPill from "@/app/components/ThankYou/RequestReceivedPill";
 import {
   WHATSAPP_HREF,
   SMS_HREF,
-  SMS_NUMBER_DISPLAY,
   pushTextCtaClick,
 } from "@/app/components/ThankYou/contact";
 
@@ -556,7 +555,6 @@ export default function Header() {
             {/* Desktop only: text-only number, not a link. */}
             <TextOnlyNumber
               className="hidden sm:flex text-[#565add]"
-              number={SMS_NUMBER_DISPLAY}
             />
           </div>
         )}
@@ -682,7 +680,6 @@ export default function Header() {
                 ) : (
                   <TextOnlyNumber
                     className="flex text-[#565add]"
-                    number={SMS_NUMBER_DISPLAY}
                   />
                 )}
               </div>
