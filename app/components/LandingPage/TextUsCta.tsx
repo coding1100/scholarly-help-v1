@@ -1,9 +1,9 @@
 "use client";
 
+import { SMS_NUMBER } from "@/app/components/ThankYou/contact";
 import { handleTextUsClick } from "@/app/lib/client/smsTracking";
 
 const TEXT_CTA_LABEL = "Secure My 'A' or 'B' Grades";
-const TEXT_CTA_NUMBER = "17345303988";
 const TEXT_CTA_NUMBER_DISPLAY = "+1 734 530 3988";
 const TEXT_CTA_MESSAGE = "Hi, I need A or B Grades Guaranteed";
 
@@ -32,7 +32,7 @@ export default function TextUsCta({
   return (
     <>
       <a
-        href={`sms:${TEXT_CTA_NUMBER}`}
+        href={`sms:${SMS_NUMBER}`}
         onClick={(e) => {
           try {
             window.dataLayer = window.dataLayer || [];
@@ -44,7 +44,7 @@ export default function TextUsCta({
           } catch {
             // Never block the SMS action if GTM is unavailable.
           }
-          handleTextUsClick(e, TEXT_CTA_NUMBER, TEXT_CTA_MESSAGE);
+          handleTextUsClick(e, SMS_NUMBER, TEXT_CTA_MESSAGE);
         }}
         className={`${buttonClassName} md:hidden`}
       >

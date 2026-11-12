@@ -4,7 +4,8 @@ import { FormEvent, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { FiCheck, FiMessageCircle, FiMessageSquare } from "react-icons/fi";
 import axiosInstance from "@/app/axios";
-import { SMS_NUMBER, handleTextUsClick } from "@/app/lib/client/smsTracking";
+import { SMS_NUMBER } from "@/app/components/ThankYou/contact";
+import { handleTextUsClick } from "@/app/lib/client/smsTracking";
 import { metaEventFields, newMetaEventId, pushMetaEvent } from "@/app/utils/metaEvent";
 import {
   EXPERT_WHATSAPP_HREF,
