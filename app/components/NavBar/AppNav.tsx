@@ -5,6 +5,10 @@ import Logo from "@/app/assets/Icons/Logo";
 import MenuThreeLines from "@/app/assets/Icons/MenuThreeLines";
 import Phone from "@/app/assets/Icons/Phone";
 import TextOnlyNumber from "@/app/components/TextOnlyNumber";
+import {
+  SMS_NUMBER_DISPLAY,
+  TEL_HREF,
+} from "@/app/components/ThankYou/contact";
 import { FC, useState } from "react";
 // import "./index.css";
 import useBreakpoint from "@/app/(pages)/hooks/useMediabreakpoint";
@@ -109,15 +113,18 @@ const AppNav: FC<AppNavProps> = ({}) => {
             {!isTakeMyClassPage && (
               <div className="mr-4">
                 <a
-                  href={`tel:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER}`}
+                  href={TEL_HREF}
                   className="flex lg:hidden items-center text-primary-400"
                 >
                   <span className="w-6 mr-1 text-primary-400">
                     <Phone color="#565ADD" />
                   </span>
-                  +1 646 480 6092
+                  {SMS_NUMBER_DISPLAY}
                 </a>
-                <TextOnlyNumber className="hidden lg:flex text-primary-400" />
+                <TextOnlyNumber
+                  className="hidden lg:flex text-primary-400"
+                  number={SMS_NUMBER_DISPLAY}
+                />
                 {/* <a href="javascript:void(Tawk_API.toggle())">
               <Button className="md:w-36 w-28 ">Chat Now</Button>
             </a> */}
@@ -236,7 +243,10 @@ const AppNav: FC<AppNavProps> = ({}) => {
                 >
                   Blogs
                 </Link>
-                <TextOnlyNumber className="flex text-primary-400" />
+                <TextOnlyNumber
+                  className="flex text-primary-400"
+                  number={SMS_NUMBER_DISPLAY}
+                />
                 {/* <a
                     href="mailto:support@scholarlyhelp.com"
                     target="_blank"
@@ -253,13 +263,13 @@ const AppNav: FC<AppNavProps> = ({}) => {
                 <div>
                   <div className="md:text-lg text-sm text-primary-400 mr-2">
                     <a
-                      href={`tel:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER}`}
+                      href={TEL_HREF}
                       className="flex items-center "
                     >
                       <span className="sm:w-6 w-4 mr-1 text-primary-400">
                         <Phone color="#565ADD" />
                       </span>
-                      +1 646 480 6092
+                      {SMS_NUMBER_DISPLAY}
                     </a>
                     {/* <a
                         href="mailto:support@scholarlyhelp.com"
@@ -388,15 +398,18 @@ const AppNav: FC<AppNavProps> = ({}) => {
             {!isTakeMyClassPage && (
               <div className="md:text-lg text-sm text-primary-400 mr-2">
                 <a
-                  href={`tel:${process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER}`}
+                  href={TEL_HREF}
                   className="flex lg:hidden items-center "
                 >
                   <span className="sm:w-6 w-4 mr-1 text-primary-400">
                     <Phone color="#565add" />
                   </span>
-                  +1 646 480 6092
+                  {SMS_NUMBER_DISPLAY}
                 </a>
-                <TextOnlyNumber className="hidden lg:flex" />
+                <TextOnlyNumber
+                  className="hidden lg:flex"
+                  number={SMS_NUMBER_DISPLAY}
+                />
               </div>
             )}
           </div>

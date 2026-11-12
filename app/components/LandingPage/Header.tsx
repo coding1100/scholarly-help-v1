@@ -23,6 +23,7 @@ import RequestReceivedPill from "@/app/components/ThankYou/RequestReceivedPill";
 import {
   WHATSAPP_HREF,
   SMS_HREF,
+  SMS_NUMBER_DISPLAY,
   pushTextCtaClick,
 } from "@/app/components/ThankYou/contact";
 
@@ -34,11 +35,6 @@ declare global {
 
 const TOOLS_SENT_MESSAGE =
   "✅ Success! Your free tools guide has been sent to your inbox.";
-
-// sms: targets must be bare digits; the env value carries "+" and spaces.
-const MAIN_SMS_HREF = `sms:${(
-  process.env.NEXT_PUBLIC_COMPANY_PHONE_NUMBER || "+1 646 480 6092"
-).replace(/\D/g, "")}`;
 
 /** Phone-width (below sm) "Text us" pill in the header. */
 const MobileTextUsButton: React.FC<{
@@ -558,7 +554,10 @@ export default function Header() {
         {!isTextCta && isSpecialRoute3 && (
           <div>
             {/* Desktop only: text-only number, not a link. */}
-            <TextOnlyNumber className="hidden sm:flex text-[#565add]" />
+            <TextOnlyNumber
+              className="hidden sm:flex text-[#565add]"
+              number={SMS_NUMBER_DISPLAY}
+            />
           </div>
         )}
         {/* {isTakeMyClass3 && (
@@ -681,7 +680,10 @@ export default function Header() {
                     <span>Live Quote on Whatsapp</span>
                   </a>
                 ) : (
-                  <TextOnlyNumber className="flex text-[#565add]" />
+                  <TextOnlyNumber
+                    className="flex text-[#565add]"
+                    number={SMS_NUMBER_DISPLAY}
+                  />
                 )}
               </div>
             )}
@@ -708,7 +710,7 @@ export default function Header() {
         )}
         {!isThankYou && !isCenteredMobileLogo && (
           <MobileTextUsButton
-            href={MAIN_SMS_HREF}
+            href={SMS_HREF}
             placement="header_mobile"
             className="ml-auto"
           />

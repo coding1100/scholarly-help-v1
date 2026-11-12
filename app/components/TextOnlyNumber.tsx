@@ -6,6 +6,8 @@ type TextOnlyNumberProps = {
   iconClassName?: string;
   /** Put the number on its own line, for narrow columns such as the footer. */
   stacked?: boolean;
+  /** Displayed number; defaults to the main company number. */
+  number?: string;
 };
 
 /**
@@ -16,6 +18,7 @@ export default function TextOnlyNumber({
   className = "",
   iconClassName = "",
   stacked = false,
+  number = "+1 (646) 480-6092",
 }: TextOnlyNumberProps) {
   return (
     <p
@@ -28,10 +31,10 @@ export default function TextOnlyNumber({
       {stacked ? (
         <span>
           <span className="block">Text only:</span>
-          <span className="block">+1 (646) 480-6092</span>
+          <span className="block">{number}</span>
         </span>
       ) : (
-        "Text only: +1 (646) 480-6092"
+        `Text only: ${number}`
       )}
     </p>
   );
