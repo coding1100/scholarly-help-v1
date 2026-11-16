@@ -58,6 +58,8 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${poppins.variable} ${poppinsRareWeights.variable} ${poppinsItalic.variable} font-poppins`}>
       <head>
+        {/* Bing Webmaster Tools site verification */}
+        <meta name="msvalidate.01" content="5C4FCBDEEF1C47EAC2A42106882FB6B8" />
         {/* Force HTTPS for all resources in production only */}
         {process.env.NODE_ENV === "production" &&
           process.env.DISABLE_HTTPS_HEADERS !== "true" && (
