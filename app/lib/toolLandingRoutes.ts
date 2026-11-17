@@ -8,6 +8,7 @@ export const TOOL_LANDING_DESTINATIONS: Readonly<Record<string, string>> = {
   "/tools/ai-exam-prep": "/tools/exam-prep",
   "/tools/ai-grammar-check": "/tools/grammar-checker",
   "/tools/ai-humanizer": "/tools/humanizer-tool",
+  "/tools/ai-language-practice": "/tools/language-practice",
   "/tools/ai-math-helper": "/tools/math-solver",
   "/tools/ai-paraphraser": "/tools/paraphraser-tool",
   "/tools/ai-study-workspace": "/tools/study-workspace",
