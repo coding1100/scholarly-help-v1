@@ -309,40 +309,41 @@ export const languagePracticeLanding: LandingContent = {
     },
 
     {
-      type: "cards",
-      title: "Why AI Language Practice Beats Traditional Language Learning",
-      subtitle:
-        "Learning a new language through books and notes can take time. You may struggle to decide what to learn first or how to practice different skills. Our AI Language Practice tool makes the process easier by guiding you through language selection, assessment, goal setting, and different practice activities.",
-      cards: [
+      type: "guide",
+      blocks: [
+        { type: "heading", text: "Why AI Language Practice Beats Traditional Language Learning" },
         {
-          title: "Save Time on Language Learning",
-          description:
-            "Practice vocabulary, grammar, conversations, and pronunciation in one place instead of searching for separate learning resources.",
+          type: "paragraph",
+          text: "Learning a new language through books and notes can take time. You may struggle to decide what to learn first or how to practice different skills. Our AI Language Practice tool makes the process easier by guiding you through language selection, assessment, goal setting, and different practice activities.",
         },
         {
-          title: "Follow a Structured Learning Path",
-          description:
-            "Move through eight guided stages, from selecting your language and completing an assessment to practicing different skills and checking your progress.",
-        },
-        {
-          title: "Set Clear Learning Goals",
-          description:
-            "Choose what you want to achieve and set learning goals based on your needs. This helps you stay focused on the language skills you want to improve.",
-        },
-        {
-          title: "Practice Different Language Skills",
-          description:
-            "Work on vocabulary, grammar, conversation, and pronunciation through separate learning stages. This gives you a chance to focus on different parts of the language.",
-        },
-        {
-          title: "Improve Your Everyday Communication",
-          description:
-            "Practice everyday conversations and pronunciation to become more comfortable using the language in different situations.",
-        },
-        {
-          title: "Keep Track of Your Learning Progress",
-          description:
-            "Review your progress as you move through the learning stages. This helps you see how your practice is developing and which areas may need more attention.",
+          type: "list",
+          items: [
+            {
+              lead: "Save Time on Language Learning:",
+              text: "Practice vocabulary, grammar, conversations, and pronunciation in one place instead of searching for separate learning resources.",
+            },
+            {
+              lead: "Follow a Structured Learning Path:",
+              text: "Move through eight guided stages, from selecting your language and completing an assessment to practicing different skills and checking your progress.",
+            },
+            {
+              lead: "Set Clear Learning Goals:",
+              text: "Choose what you want to achieve and set learning goals based on your needs. This helps you stay focused on the language skills you want to improve.",
+            },
+            {
+              lead: "Practice Different Language Skills:",
+              text: "Work on vocabulary, grammar, conversation, and pronunciation through separate learning stages. This gives you a chance to focus on different parts of the language.",
+            },
+            {
+              lead: "Improve Your Everyday Communication:",
+              text: "Practice everyday conversations and pronunciation to become more comfortable using the language in different situations.",
+            },
+            {
+              lead: "Keep Track of Your Learning Progress:",
+              text: "Review your progress as you move through the learning stages. This helps you see how your practice is developing and which areas may need more attention.",
+            },
+          ],
         },
       ],
     },
