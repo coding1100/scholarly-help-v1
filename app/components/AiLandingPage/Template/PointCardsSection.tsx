@@ -13,6 +13,10 @@ const TONES = {
   },
 } as const;
 
+// Six cards fill two rows of three instead of a full row and a half-empty one.
+const desktopColumns = (c: PointCardsSectionContent) =>
+  c.items.length === 6 ? "md:grid-cols-3" : "md:grid-cols-4";
+
 /** Four short cards on a tinted band, each marked with a check or a cross. */
 const PointCardsSection: FC<{ content: PointCardsSectionContent }> = ({
   content: c,
@@ -23,7 +27,7 @@ const PointCardsSection: FC<{ content: PointCardsSectionContent }> = ({
     <section className="bg-[#F3F3FA]">
       <div className={`${SECTION_WIDTH} flex flex-col gap-2.5 py-7 md:py-14`}>
         <SectionHeading title={c.title} subtitle={c.subtitle} />
-        <div className="flex flex-col gap-2.5 md:grid md:grid-cols-4 md:gap-3.5 md:pt-3.5">
+        <div className={`flex flex-col gap-2.5 md:grid ${desktopColumns(c)} md:gap-3.5 md:pt-3.5`}>
           {c.items.map((item) => (
             <div
               key={item.title}
