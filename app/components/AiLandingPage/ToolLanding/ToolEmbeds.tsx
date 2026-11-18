@@ -4,6 +4,7 @@ import { useState } from "react";
 import AiDetectorTool from "@/app/components/AiTools/AiDetectorTool/AiDetectorTool";
 import { CoursePlannerTool } from "@/app/components/AiTools/CoursePlanner/CoursePlannerTool";
 import ExamPrepFlow from "@/app/components/AiTools/ExamPrep/ExamPrepFlow";
+import HumanizerTool from "@/app/components/AiTools/HumanizerTool/HumanizerTool";
 import LanguageFlow from "@/app/components/AiTools/LanguagePractice/LanguageFlow";
 import AIParaphraser from "@/app/components/AiTools/AIParaphraser-tool";
 import MathSolver from "@/app/components/AiTools/MathSolver/MathSolver";
@@ -26,6 +27,12 @@ export const CoursePlannerEmbed = () => (
 export const ExamPrepEmbed = () => (
   <div className={embedClassName}>
     <ExamPrepFlow />
+  </div>
+);
+
+export const HumanizerEmbed = () => (
+  <div className={embedClassName}>
+    <HumanizerTool />
   </div>
 );
 
