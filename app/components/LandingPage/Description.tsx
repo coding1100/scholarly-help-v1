@@ -3,7 +3,11 @@
 import React, { useState } from "react";
 import { usePathname } from "next/navigation";
 import { usePageData } from "./usePageData";
-import { isTextCtaLandingPage } from "@/app/lib/takeMyClassLandingRoutes";
+import {
+  isTextCtaLandingPage,
+  STEP_QUOTE_FORM_CTA,
+  usesStepQuoteForm,
+} from "@/app/lib/takeMyClassLandingRoutes";
 import TextUsCta from "./TextUsCta";
 import { styleDescriptionMainHeading } from "./descriptionHeadingUtils";
 
@@ -25,7 +29,8 @@ function styleLinksOrange(html: string): string {
 const HowWeHelp: React.FC = () => {
   const data = usePageData();
   const description = data?.description;
-  const isTextCta = isTextCtaLandingPage(usePathname());
+  const pathname = usePathname();
+  const isTextCta = isTextCtaLandingPage(pathname);
   const [expandedIndices, setExpandedIndices] = useState<Set<number>>(
     new Set(),
   );
@@ -199,7 +204,9 @@ const HowWeHelp: React.FC = () => {
               onClick={scrollToQuote}
               className="rounded-md px-6 cursor-pointer bg-[#ff641a] text-white border border-transparent transition duration-300 text-[15px] max-[768px]:w-full font-medium flex items-center justify-center hover:bg-white hover:text-[#ff641a] hover:border-[#ff641a] h-[54px]"
             >
-              {description?.ctaButton?.text || "Secure My 'A' or 'B' Grades"}
+              {usesStepQuoteForm(pathname)
+                ? STEP_QUOTE_FORM_CTA
+                : description?.ctaButton?.text || "Secure My 'A' or 'B' Grades"}
             </button>
           )}
         </div>

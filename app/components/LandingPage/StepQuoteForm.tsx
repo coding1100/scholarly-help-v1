@@ -2,6 +2,7 @@
 
 import React, { FormEvent, useEffect, useRef, useState } from "react";
 import { useQuoteLead } from "./useQuoteLead";
+import { STEP_QUOTE_FORM_CTA } from "@/app/lib/takeMyClassLandingRoutes";
 import { QuoteLeadError, QuoteLeadNote } from "./QuoteLeadFields";
 
 const HELP_OPTIONS = [
@@ -95,7 +96,7 @@ export default function StepQuoteForm({ variant, stickyCta = false }: StepQuoteF
   });
   const styles = STYLES[variant];
   // This form only renders on /take-my-class-3; all its CTAs use this label.
-  const ctaLabel = "Text Me Free Quote";
+  const ctaLabel = STEP_QUOTE_FORM_CTA;
 
   useEffect(() => {
     if (step === 2) emailRef.current?.focus();

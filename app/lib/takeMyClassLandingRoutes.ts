@@ -97,6 +97,9 @@ export function isTakeMyClassLayoutPage(
   );
 }
 
+/** CTA label for the two-step quote form and the buttons that scroll to it. */
+export const STEP_QUOTE_FORM_CTA = "Text Me Free Quote";
+
 /** Pages whose quote forms are the two-step "what do you need help with" form. */
 export function usesStepQuoteForm(
   pathname: string | null | undefined,
