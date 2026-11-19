@@ -2,7 +2,6 @@
 
 import React, { FormEvent, useEffect, useRef, useState } from "react";
 import { useQuoteLead } from "./useQuoteLead";
-import { usePageData } from "./usePageData";
 import { QuoteLeadError, QuoteLeadNote } from "./QuoteLeadFields";
 
 const HELP_OPTIONS = [
@@ -95,9 +94,8 @@ export default function StepQuoteForm({ variant, stickyCta = false }: StepQuoteF
     logToLandingSheet: variant === "hero",
   });
   const styles = STYLES[variant];
-  // Same CTA as /take-my-class (HeroForm2's label).
-  const ctaLabel =
-    usePageData()?.getQuote?.ctaButton?.text || "Secure My 'A' or 'B' Grades";
+  // This form only renders on /take-my-class-3; all its CTAs use this label.
+  const ctaLabel = "Text Me Free Quote";
 
   useEffect(() => {
     if (step === 2) emailRef.current?.focus();
