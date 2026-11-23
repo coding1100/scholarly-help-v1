@@ -65,7 +65,7 @@ const defaultPickTabTools: Record<string, PickToolItem[]> = {
       heading: "Plagiarism Checker",
       description: "Check academic writing for matching text and review the original sources.",
       buttonText: "Check plagiarism",
-      link: "/tools/plagiarism-checker",
+      link: "/tools/ai-plagiarism-checker",
     },
   ],
   research: [

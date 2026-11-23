@@ -439,7 +439,7 @@ export const grammarCheckerLanding: LandingContent = {
           name: "Plagiarism Checker",
           description:
             "Check your text for matching content and find sections that may need proper citations.",
-          href: "/tools/plagiarism-checker",
+          href: "/tools/ai-plagiarism-checker",
         },
       ],
       button: { label: "Explore All Free Tools", href: "/tools" },
