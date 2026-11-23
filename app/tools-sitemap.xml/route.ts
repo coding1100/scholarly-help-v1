@@ -17,6 +17,7 @@ const TOOL_PATHS = [
   "/tools/ai-language-practice/",
   "/tools/ai-math-helper/",
   "/tools/ai-paraphraser/",
+  "/tools/ai-plagiarism-checker/",
   "/tools/ai-study-workspace/",
   "/tools/citation-generator/",
   "/tools/cumulative-gpa-calculator/",

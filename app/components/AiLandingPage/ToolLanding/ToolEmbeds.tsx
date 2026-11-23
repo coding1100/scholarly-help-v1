@@ -8,6 +8,7 @@ import HumanizerTool from "@/app/components/AiTools/HumanizerTool/HumanizerTool"
 import LanguageFlow from "@/app/components/AiTools/LanguagePractice/LanguageFlow";
 import AIParaphraser from "@/app/components/AiTools/AIParaphraser-tool";
 import MathSolver from "@/app/components/AiTools/MathSolver/MathSolver";
+import PlagiarismCheckerTool from "@/app/components/AiTools/PlagiarismCheckerTool/PlagiarismCheckerTool";
 
 const embedClassName =
   "overflow-hidden rounded-2xl bg-white shadow-[0_30px_70px_-20px_rgba(43,28,80,0.35)] [&>*]:!mx-0 [&>*]:!w-full [&>*]:!max-w-none [&>*]:!px-0 [&>*]:!py-0";
@@ -50,6 +51,12 @@ export const MathSolverEmbed = () => {
     </div>
   );
 };
+
+export const PlagiarismCheckerEmbed = () => (
+  <div className={embedClassName}>
+    <PlagiarismCheckerTool />
+  </div>
+);
 
 export const ParaphraserEmbed = () => {
   const [, setFlag] = useState(false);
