@@ -685,22 +685,17 @@ export default function Header() {
               </div>
             )}
             {isThankYou && !isSignedIn && (
-              <div className="flex sm:hidden items-center gap-1.5 max-[359px]:gap-0.5">
+              <div className="flex sm:hidden items-center">
                 <a
                   href={WHATSAPP_HREF}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={trackHeaderWhatsAppClick}
-                  className="inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 max-[359px]:gap-0.5 max-[359px]:px-1 bg-[#41A800] text-white text-xs font-semibold whitespace-nowrap"
+                  className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 bg-[#41A800] text-white text-sm font-semibold whitespace-nowrap"
                 >
-                  <WhatsAppIcon className="w-3.5 h-3.5" />
+                  <WhatsAppIcon className="w-4 h-4" />
                   WhatsApp
                 </a>
-                <MobileTextUsButton
-                  href={SMS_HREF}
-                  placement="header"
-                  className="max-[359px]:gap-0.5 max-[359px]:px-1 max-[359px]:text-[13px] max-[359px]:[&>svg]:w-3.5 max-[359px]:[&>svg]:h-3.5"
-                />
               </div>
             )}
           </>
