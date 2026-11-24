@@ -9,7 +9,7 @@ import {
   isTakeMyClassLayoutPage,
   isTextCtaLandingPage,
   STEP_QUOTE_FORM_CTA,
-  usesStepQuoteForm,
+  usesTextMeQuoteCta,
 } from "@/app/lib/takeMyClassLandingRoutes";
 import TextUsCta from "./TextUsCta";
 
@@ -175,7 +175,7 @@ const AcademicPartners: FC<AcademicPartnersProps> = ({
                 onClick={scrollToQuote}
                 className="rounded-md px-6 cursor-pointer bg-[#ff641a] text-white border border-transparent transition duration-300 text-[15px] max-[768px]:w-full font-medium flex items-center justify-center hover:bg-white hover:text-[#ff641a] hover:border-[#ff641a] h-[54px]"
               >
-                {usesStepQuoteForm(currentPathname)
+                {usesTextMeQuoteCta(currentPathname)
                   ? STEP_QUOTE_FORM_CTA
                   : content?.ctaButton?.text || "Secure My 'A' or 'B' Grades"}
               </button>

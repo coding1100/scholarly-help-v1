@@ -17,7 +17,9 @@ import TextUsCta from "../LandingPage/TextUsCta";
 import StepQuoteForm from "../LandingPage/StepQuoteForm";
 import {
   isTextCtaLandingPage,
+  STEP_QUOTE_FORM_CTA,
   usesStepQuoteForm,
+  usesTextMeQuoteCta,
 } from "@/app/lib/takeMyClassLandingRoutes";
 interface FinalCTAProps {}
 
@@ -44,6 +46,7 @@ const FinalCTA: FC<FinalCTAProps> = ({}) => {
   const [phone, setPhone] = useState("");
   const { submit, sending, error } = useQuoteLead();
   const pathname = usePathname();
+  const submitLabel = usesTextMeQuoteCta(pathname) ? STEP_QUOTE_FORM_CTA : buttonText;
   const detailsField = getDetailsField(pathname);
   const isTextCta = isTextCtaLandingPage(pathname);
 
@@ -140,7 +143,7 @@ const FinalCTA: FC<FinalCTAProps> = ({}) => {
                 disabled={sending}
                 className={`${quoteButtonClass} w-full`}
               >
-                {sending ? "Sending..." : buttonText}
+                {sending ? "Sending..." : submitLabel}
               </button>
               <QuoteLeadError message={error} />
               <QuoteLeadNote text="No spam · No card needed" />

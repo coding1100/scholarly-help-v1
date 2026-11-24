@@ -100,6 +100,14 @@ export function isTakeMyClassLayoutPage(
 /** CTA label for the two-step quote form and the buttons that scroll to it. */
 export const STEP_QUOTE_FORM_CTA = "Text Me Free Quote";
 
+/** Pages whose quote CTAs all read STEP_QUOTE_FORM_CTA. */
+export function usesTextMeQuoteCta(
+  pathname: string | null | undefined,
+): boolean {
+  const path = normalizePathname(pathname);
+  return path === TAKE_MY_CLASS_PATH || path === TAKE_MY_CLASS_3_PATH;
+}
+
 /** Pages whose quote forms are the two-step "what do you need help with" form. */
 export function usesStepQuoteForm(
   pathname: string | null | undefined,

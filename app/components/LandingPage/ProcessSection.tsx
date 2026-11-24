@@ -7,7 +7,9 @@ import { getProcessFormCopy } from "./processFormCopy";
 import { useQuoteLead } from "./useQuoteLead";
 import {
   isTextCtaLandingPage,
+  STEP_QUOTE_FORM_CTA,
   usesStepQuoteForm,
+  usesTextMeQuoteCta,
 } from "@/app/lib/takeMyClassLandingRoutes";
 import TextUsCta from "./TextUsCta";
 import StepQuoteForm from "./StepQuoteForm";
@@ -118,7 +120,11 @@ function StepOneForm() {
                 className={`${quoteInputClass} sm:flex-1`}
               />
               <button type="submit" disabled={sending} className={quoteButtonClass}>
-                {sending ? "Sending..." : "Get My Match"}
+                {sending
+                  ? "Sending..."
+                  : usesTextMeQuoteCta(pathname)
+                  ? STEP_QUOTE_FORM_CTA
+                  : "Get My Match"}
               </button>
             </div>
           )}

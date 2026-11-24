@@ -10,6 +10,8 @@ import {
 import {
   isTakeMyClassEmailOnlyHeroFormPage,
   isTextCtaLandingPage,
+  STEP_QUOTE_FORM_CTA,
+  usesTextMeQuoteCta,
 } from "@/app/lib/takeMyClassLandingRoutes";
 import { usePathname, useRouter } from "next/navigation";
 import React, { FC, useEffect, useState, useRef } from "react";
@@ -43,6 +45,8 @@ const HeroForm2: FC<ZohoForm2Props> = ({
   const isTextCta = isTextCtaLandingPage(pathname);
   const ctaButtonText = isEmailOnlyFormPage
     ? "Get My Academic Plan Now"
+    : usesTextMeQuoteCta(pathname)
+    ? STEP_QUOTE_FORM_CTA
     : getQuote?.ctaButton?.text || "SECURE MY 'A' OR 'B' GRADES";
 
   const [formData, setFormData] = useState({
