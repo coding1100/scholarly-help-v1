@@ -6,6 +6,7 @@ import {
   isTextCtaLandingPage,
   pathnameIncludesTakeMyClass,
   usesStepQuoteForm,
+  usesTextMeQuoteCta,
 } from "./takeMyClassLandingRoutes";
 
 describe("/tools-thank-you route helpers", () => {
@@ -36,5 +37,16 @@ describe("/take-my-class-3 route helpers", () => {
     }
     expect(usesStepQuoteForm("/take-my-class/")).toBe(false);
     expect(usesStepQuoteForm("/tools-thank-you/")).toBe(false);
+  });
+});
+
+describe("Text Me Free Quote CTAs", () => {
+  it("applies to /take-my-class and /take-my-class-3 only", () => {
+    for (const path of ["/take-my-class", "/take-my-class/", "/take-my-class-3/"]) {
+      expect(usesTextMeQuoteCta(path)).toBe(true);
+    }
+    for (const path of ["/tools-thank-you/", "/take-my-class-4/", "/landing/take-my-class/", "/"]) {
+      expect(usesTextMeQuoteCta(path)).toBe(false);
+    }
   });
 });
