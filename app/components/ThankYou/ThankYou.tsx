@@ -4,7 +4,6 @@ import React, { FC, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import axios from "axios";
 import Slider from "react-slick";
-import { MessageSquare } from "lucide-react";
 import "slick-carousel/slick/slick.css";
 import styles from "./ThankYou.module.css";
 import { content } from "./content";
@@ -20,13 +19,13 @@ import {
   OrangeUnderlineFlourish,
   WhatsAppIcon,
 } from "./ThankYouIcons";
-import { WHATSAPP_HREF, WHATSAPP_NUMBER_DISPLAY, SMS_NUMBER_DISPLAY } from "./contact";
-import { WhatsAppMobileButton, TextMobileButton } from "./MobileContactButtons";
+import { WHATSAPP_HREF, WHATSAPP_NUMBER_DISPLAY } from "./contact";
+import { WhatsAppMobileButton } from "./MobileContactButtons";
 import RequestReceivedPill from "./RequestReceivedPill";
 import { useMobileCtaBar } from "../AiTools/useMobileCtaBar";
 
 type ThankYouProps = {
-  /** Pair every WhatsApp CTA with a Text CTA (only /thank-you/ opts in). */
+  /** Use the contact-button layout with the WhatsApp number (only /thank-you/ opts in). */
   showTextCta?: boolean;
   /** The header carries the "Request received" pill, so the hero leaves it out. */
   pillInHeader?: boolean;
@@ -66,42 +65,27 @@ const ContactLines: FC<{ label: string; number: string }> = ({ label, number }) 
   </span>
 );
 
-const contactButtonBase =
-  "hidden md:flex w-full min-w-0 items-center justify-center gap-3 h-[62px] px-5 rounded-xl text-white no-underline select-none";
-
-interface ContactButtonsProps {
-  onWhatsAppClick: () => void;
-  /** Where the buttons sit, reported to GTM with Text taps. */
-  placement: string;
-}
-
 /**
- * WhatsApp + Text CTA pair. Mobile shows the compact WhatsApp / Text Us
- * buttons; desktop shows both numbers, with Text as plain text because
- * desktops have no SMS app.
+ * WhatsApp CTA. Mobile shows the compact full-width WhatsApp button;
+ * desktop shows the WhatsApp number.
  */
-const ContactButtons: FC<ContactButtonsProps> = ({ onWhatsAppClick, placement }) => (
-  <div className="flex w-full max-w-[600px] gap-2 md:gap-4">
-    <WhatsAppMobileButton onClick={onWhatsAppClick} className="flex-1 md:hidden" />
-    <TextMobileButton placement={placement} className="flex-1 md:hidden" />
+const ContactButtons: FC<{ onWhatsAppClick: () => void }> = ({ onWhatsAppClick }) => (
+  <div className="flex w-full max-w-[420px]">
+    <WhatsAppMobileButton onClick={onWhatsAppClick} className="w-full md:hidden" />
     <a
       href={WHATSAPP_HREF}
       target="_blank"
       rel="noopener noreferrer"
       onClick={onWhatsAppClick}
-      className={`${contactButtonBase} bg-[#41A800] hover:bg-[#368F00] active:scale-[0.98] shadow-[0_6px_20px_rgba(65,168,0,0.30)] transition-all duration-200`}
+      className="hidden md:flex w-full md:min-w-[360px] items-center justify-center gap-3 h-[62px] px-8 rounded-xl text-white no-underline select-none bg-[#41A800] hover:bg-[#368F00] active:scale-[0.98] shadow-[0_6px_20px_rgba(65,168,0,0.30)] transition-all duration-200"
     >
-      <WhatsAppIcon className="w-5 h-5" />
+      <WhatsAppIcon className="w-6 h-6" />
       <ContactLines label="WhatsApp us" number={WHATSAPP_NUMBER_DISPLAY} />
     </a>
-    <div className={`${contactButtonBase} bg-[#5B4FE0] shadow-[0_6px_20px_rgba(91,79,224,0.30)]`}>
-      <MessageSquare className="w-5 h-5 flex-shrink-0" />
-      <ContactLines label="Text us" number={SMS_NUMBER_DISPLAY} />
-    </div>
   </div>
 );
 
-/** Sticky bottom bar on phones with the WhatsApp and Text buttons. */
+/** Sticky bottom bar on phones with the WhatsApp button. */
 const MobileContactBar: FC<{ onWhatsAppClick: () => void }> = ({ onWhatsAppClick }) => {
   const barRef = useRef<HTMLDivElement>(null);
   useMobileCtaBar(barRef);
@@ -114,10 +98,7 @@ const MobileContactBar: FC<{ onWhatsAppClick: () => void }> = ({ onWhatsAppClick
       <p className="text-center text-xs font-semibold text-[#FF5A00] mb-1.5">
         Message now, 10% off your first week
       </p>
-      <div className="flex gap-2">
-        <WhatsAppMobileButton onClick={onWhatsAppClick} className="flex-1" />
-        <TextMobileButton placement="thank_you_sticky_bar" className="flex-1" />
-      </div>
+      <WhatsAppMobileButton onClick={onWhatsAppClick} className="w-full" />
     </div>
   );
 };
@@ -306,7 +287,7 @@ const ThankYou: FC<ThankYouProps> = ({ showTextCta = false, pillInHeader = false
 
           {showTextCta && (
             <div className="flex justify-center mt-4 sm:mt-8">
-              <ContactButtons onWhatsAppClick={apiCall} placement="thank_you_hero" />
+              <ContactButtons onWhatsAppClick={apiCall} />
             </div>
           )}
 
@@ -436,7 +417,7 @@ const ThankYou: FC<ThankYouProps> = ({ showTextCta = false, pillInHeader = false
             </div>
             <div className="flex-shrink-0 w-full md:w-auto flex justify-center md:justify-end">
               {showTextCta ? (
-                <ContactButtons onWhatsAppClick={apiCall} placement="thank_you_urgent_banner" />
+                <ContactButtons onWhatsAppClick={apiCall} />
               ) : (
                 <WhatsAppButton onClick={apiCall} className="md:w-[440px]" />
               )}
@@ -511,7 +492,7 @@ const ThankYou: FC<ThankYouProps> = ({ showTextCta = false, pillInHeader = false
 
           <div className="flex justify-center mt-5 sm:mt-10 md:mt-12">
             {showTextCta ? (
-              <ContactButtons onWhatsAppClick={apiCall} placement="thank_you_proof" />
+              <ContactButtons onWhatsAppClick={apiCall} />
             ) : (
               <WhatsAppButton onClick={apiCall} />
             )}
@@ -579,7 +560,7 @@ const ThankYou: FC<ThankYouProps> = ({ showTextCta = false, pillInHeader = false
 
           <div className="flex justify-center mt-6 sm:mt-10 md:mt-14 mb-4 sm:mb-8">
             {showTextCta ? (
-              <ContactButtons onWhatsAppClick={apiCall} placement="thank_you_reviews" />
+              <ContactButtons onWhatsAppClick={apiCall} />
             ) : (
               <WhatsAppButton onClick={apiCall} />
             )}
