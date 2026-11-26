@@ -25,7 +25,7 @@ const SampleSubjectCard: FC<SampleSubjectCardProps> = ({ content }) => {
         <div className="grid grid-cols-12 items-center border-b border-[#C7C8C9] pb-4">
           <div className="col-span-8 flex items-center">
             <div className="max-w-[40px] mr-2">
-              <Image src={SamplePdfImg} alt="" />
+              <Image src={SamplePdfImg} alt="PDF" />
             </div>
             <div className="font-bold text-[#000]">{content.title}</div>
           </div>
