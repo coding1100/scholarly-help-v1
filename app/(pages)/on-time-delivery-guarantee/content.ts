@@ -35,18 +35,21 @@ export const Content = {
     details: [
       {
         imge: I1,
+        alt: "Smiling graduate in a cap and gown celebrating with arms raised",
         title: "Academic Deadlines Are Non-Negotiable",
         description:
           "We respect the importance of your schedule and treat every deadline with absolute priority. Our team works with focus and discipline to ensure your tasks are delivered exactly when you need them.",
       },
       {
         imge: I2,
+        alt: "Student writing notes at a desk surrounded by stacks of books",
         title: "We Manage Workloads with Precision",
         description:
           "Every project is planned, organized, and executed through a streamlined workflow. This allows us to handle multiple tasks efficiently while maintaining quality and timely delivery.",
       },
       {
         imge: I3,
+        alt: "Tired student resting his head in his hands in a library",
         title: "Your Trust Is Our Responsibility",
         description:
           "When you rely on us, we make sure your work arrives on time without stress or uncertainty. Our commitment to punctual delivery protects your academic standing and helps you submit confidently.",

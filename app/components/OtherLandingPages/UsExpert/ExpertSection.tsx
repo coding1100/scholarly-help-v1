@@ -83,7 +83,7 @@ const ExpertSection: FC<ExpertSectionProps> = ({ content }) => {
                     boxShadow: "rgba(149, 157, 165, 0.2) 0px 8px 24px",
                   }}
                 >
-                  <Image src={expert.img} alt="" className="mb-5" />
+                  <Image src={expert.img} alt={`Portrait of ${expert.expertName}`} className="mb-5" />
                   <p className="text-[28px] font-bold text-black text-center">
                     {expert.expertName}
                   </p>
