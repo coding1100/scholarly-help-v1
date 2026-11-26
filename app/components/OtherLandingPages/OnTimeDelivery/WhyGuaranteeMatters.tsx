@@ -8,6 +8,7 @@ interface WhyGuaranteeMattersProps {
     heading2: string;
     details: {
       imge: StaticImageData;
+      alt: string;
       title: string;
       description: string;
     }[];
@@ -33,7 +34,7 @@ const WhyGuaranteeMatters: FC<WhyGuaranteeMattersProps> = ({ content }) => {
         <div className="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-6 text-start">
           {content.details.map((item, index) => (
             <div key={index} className="col-span-1 bg-[#565ADD]">
-              <Image src={item.imge} alt="" />
+              <Image src={item.imge} alt={item.alt} />
               <div className="text-white px-10 pb-8">
                 <p className="lg:text-[30px] text-[24px] lg:font-bold font-semibold lg:leading-[35px] leading-[28px] mb-5">
                   {item.title}

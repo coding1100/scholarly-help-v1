@@ -44,7 +44,8 @@ const Home: NextPage = async () => {
         details: pageData.whyGuarantee.details && pageData.whyGuarantee.details.length > 0
           ? pageData.whyGuarantee.details.map((detail: any, index: number) => ({
               ...detail,
-              imge: Content.whyGuarantee.details[index]?.imge || detail.imge // Use static image if available
+              imge: Content.whyGuarantee.details[index]?.imge || detail.imge, // Use static image if available
+              alt: Content.whyGuarantee.details[index]?.alt ?? "",
             }))
           : Content.whyGuarantee.details // Use static details if MongoDB doesn't have them
       }
